@@ -1,0 +1,1737 @@
+<template>
+  <div class="app-container">
+    <div class="edit-container">
+      <el-form
+        ref="dataSubmitForm"
+        :rules="settings.rules"
+        :model="dataJson.tempJson"
+        label-position="right"
+        label-width="150px"
+        status-icon
+      >
+        <el-alert
+          title="基本信息"
+          type="info"
+          :closable="false"
+        />
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="labelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          style="padding-right: 10px;padding-left: 10px;"
+          border
+        >
+
+          <el-descriptions-item label="应付账款编号">
+            {{ dataJson.tempJson.code }}
+          </el-descriptions-item>
+
+          <el-descriptions-item />
+          <el-descriptions-item />
+
+          <el-descriptions-item label="主体企业（付款方）">
+            <el-form-item
+              prop="purchaser_name"
+              label-width="0"
+            >
+              {{ dataJson.tempJson.purchaser_name }}
+
+              <!--              <input-search-->
+              <!--                v-model.trim="dataJson.tempJson.purchaser_name"-->
+              <!--                @onInputSearch="handlePurchaserDialog"-->
+              <!--              />-->
+            </el-form-item>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="供应商（收款方）">
+            <el-form-item
+              prop="supplier_name"
+              label-width="0"
+            >
+              {{ dataJson.tempJson.supplier_name }}
+
+              <!--              <input-search-->
+              <!--                v-model.trim="dataJson.tempJson.supplier_name"-->
+              <!--                @onInputSearch="handleSupplierDialog"-->
+              <!--              />-->
+            </el-form-item>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="付款状态">
+            {{ dataJson.tempJson.pay_status_name == null ? '-': dataJson.tempJson.pay_status_name }}
+          </el-descriptions-item>
+
+          <el-descriptions-item label="备注" span="3">
+            <el-input
+              v-model.trim="dataJson.tempJson.remark"
+              clearable
+              :maxlength="dataJson.inputSettings.maxLength.remark"
+            />
+          </el-descriptions-item>
+
+          <el-descriptions-item label="付款附件材料" span="3">
+            <el-row style="display: flex;flex-wrap: wrap;">
+              <el-col :span="1">
+                <Simple-upload-mutil-file
+                  :accept="'*'"
+                  @upload-success="handlePaymentUploadFileSuccess"
+                  @upload-error="handleFileError"
+                />
+              </el-col>
+              <el-col
+                v-for="(item, i) in dataJson.payment_doc_att"
+                :key="i"
+                :offset="1"
+                :span="3"
+              >
+                <PreviewCard
+                  :file-name="item.fileName"
+                  :url="item.url"
+                  :time="item.timestamp"
+                  @removeFile="removePaymentFile"
+                />
+              </el-col>
+            </el-row>
+          </el-descriptions-item>
+
+        </el-descriptions>
+        <el-alert
+          title="业务单据信息"
+          type="info"
+          :closable="false"
+        />
+        <el-descriptions
+          title=""
+          :column="2"
+          :label-style="twoLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
+        >
+          <el-descriptions-item label="申请付款总金额">
+            {{ dataJson.tempJson.payable_amount == null ? '-': formatCurrency(dataJson.tempJson.payable_amount, true) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="已付款总金额">
+            {{ dataJson.tempJson.paid_amount == null? '-': formatCurrency(dataJson.tempJson.paid_amount, true) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="未付款总金额">
+            {{ dataJson.tempJson.unpay_amount == null? '-': formatCurrency(dataJson.tempJson.unpay_amount, true) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="付款中金额">
+            {{ dataJson.tempJson.paying_amount == null? '-': formatCurrency(dataJson.tempJson.paying_amount, true) }}
+          </el-descriptions-item>
+        </el-descriptions>
+        <el-table
+          ref="multipleTable"
+          v-loading="settings.loading"
+          :data="dataJson.tempJson.poOrderListData"
+          :element-loading-text="'正在拼命加载中...'"
+          element-loading-background="rgba(255, 255, 255, 0.5)"
+          stripe
+          border
+          fit
+          highlight-current-row
+          :default-sort="{prop: 'u_time', order: 'descending'}"
+          style="width: calc(100% - 20px )"
+          height="200px"
+          @row-click="handlePoOrderRowClick"
+          @current-change="handlePoOrderCurrentChange"
+        >
+          <el-table-column
+            type="index"
+            width="45"
+            label="No"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="po_contract_code"
+            label="合同编号"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="po_order_code"
+            label="订单编号"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="po_goods"
+            label="商品"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="po_qty"
+            label="总采购数量"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="po_amount"
+            label="订单总金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.po_amount == null? '-' : formatCurrency(scope.row.po_amount,true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="po_advance_payment_amount"
+            label="预付款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.po_advance_payment_amount == null? '': formatCurrency(scope.row.po_advance_payment_amount, true) }}
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="po_can_advance_payment_amount"
+            label="可申请预付款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.po_can_advance_payment_amount == null? '': formatCurrency(scope.row.po_can_advance_payment_amount, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="200"
+            prop="order_amount"
+            label="本次申请金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              <div style="display: flex; align-items: center;">
+                <numeric
+                  v-model="scope.row.order_amount"
+                  :decimal-places="2"
+                  :currency-symbol="'¥'"
+                  style="flex: 1; margin-right: 8px;"
+                  @change.native="handlePoOrderCheck(scope.row)"
+                />
+                <el-button
+                  size="mini"
+                  type="primary"
+                  @click="handleFullAmountApply(scope.row)"
+                >
+                  全额申请
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="remark"
+            label="备注"
+            align="right"
+          >
+            <template v-slot="scope">
+              <el-input
+                v-model="scope.row.remark"
+                clearable
+                :maxlength="dataJson.inputSettings.maxLength.remark"
+              />
+            </template>
+          </el-table-column>
+
+        </el-table>
+
+        <el-alert
+          title="付款信息"
+          type="info"
+          :closable="false"
+        />
+        <el-descriptions
+          title=""
+          :column="1"
+          :label-style="threeLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
+        >
+          <el-descriptions-item label="付款总金额">
+            {{ dataJson.tempJson.detail_payable_amount == null ? '-': formatCurrency(dataJson.tempJson.detail_payable_amount, true) }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <div class="tour-three">
+          <el-button-group>
+            <el-button
+              :disabled="true"
+              type="primary"
+              icon="el-icon-circle-plus-outline"
+              :loading="settings.loading"
+              @click="handleBankInsert"
+            >添加</el-button>
+            <el-button
+              :disabled="true"
+              type="primary"
+              icon="el-icon-circle-close"
+              :loading="settings.loading"
+              @click="handleBankDelete"
+            >删除</el-button>
+          </el-button-group>
+        </div>
+        <el-table
+          ref="multipleTable"
+          v-loading="settings.loading"
+          :data="dataJson.tempJson.bankListData"
+          :element-loading-text="'正在拼命加载中...'"
+          element-loading-background="rgba(255, 255, 255, 0.5)"
+          stripe
+          border
+          fit
+          highlight-current-row
+          :default-sort="{prop: 'u_time', order: 'descending'}"
+          style="width: calc(100% - 20px )"
+          height="200px"
+          @row-click="handleBankRowClick"
+          @current-change="handleBankCurrentChange"
+        >
+          <el-table-column
+            type="index"
+            width="45"
+            label="No"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="name"
+            label="付款账户名"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="bank_name"
+            label="开户行"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="account_number"
+            label="银行账号"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="accounts_purpose_type_name"
+            label="类型"
+            align="left"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="200"
+            prop="payable_amount"
+            label="付款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              <div style="display: flex; align-items: center;">
+                <numeric
+                  v-model="scope.row.payable_amount"
+                  :decimal-places="2"
+                  :currency-symbol="'¥'"
+                  style="flex: 1; margin-right: 8px;"
+                  @input="handlePayableAmountChange"
+                />
+                <el-button
+                  size="mini"
+                  type="primary"
+                  @click="handleFullPaymentApply(scope.row)"
+                >
+                  全额付款
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="remark"
+            label="备注"
+          >
+            <template v-slot="scope">
+              <el-input
+                v-model="scope.row.remark"
+                clearable
+                :maxlength="dataJson.inputSettings.maxLength.remark"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-form>
+    </div>
+    <div
+      slot="footer"
+      class="dialog-footer"
+    >
+      <el-divider />
+
+      <!-- 隐藏跳过指引按钮 -->
+      <!--
+      <el-checkbox
+        v-model="skipTourGuide"
+        class="skip-tour-checkbox"
+        @change="handleSkipTourGuideChange"
+      >跳过指引</el-checkbox>
+      -->
+      <el-button
+        size="medium"
+        type="primary"
+        :disabled="settings.loading"
+        @click="startProcess()"
+      >提交审批并保存</el-button>
+      <el-button
+        size="medium"
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >返回</el-button>
+    </div>
+
+    <!--供应商-->
+    <supplier-dialog
+      v-if="popSettingsData.supplierDialogData.visible"
+      :visible="popSettingsData.supplierDialogData.visible"
+      :data="popSettingsData.supplierDialogData.data"
+      :title="'供应商选择'"
+      @closeMeOk="handleSupplierCloseOk"
+      @closeMeCancel="handleSupplierCloseCancel"
+    />
+
+    <!--主体企业-->
+    <supplier-dialog
+      v-if="popSettingsData.purchaserDialogData.visible"
+      :visible="popSettingsData.purchaserDialogData.visible"
+      :data="popSettingsData.purchaserDialogData.data"
+      :title="'主体企业选择'"
+      @closeMeOk="handlePurchaserCloseOk"
+      @closeMeCancel="handlePurchaserCloseCancel"
+    />
+
+    <!-- 审批流程设置：选择人 -->
+    <bpm-dialog
+      v-if="popSettingsData.sponsorDialog.visible"
+      :visible="popSettingsData.sponsorDialog.visible"
+      :form-data="popSettingsData.sponsorDialog.form_data"
+      :serial-type="popSettingsData.sponsorDialog.serial_type"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
+    />
+
+    <!--采购订单-列表弹窗-->
+    <poorder_list_template
+      v-if="popSettingsData.poOrderDialog.visible"
+      :visible="popSettingsData.poOrderDialog.visible"
+      :data="popSettingsData.poOrderDialog.data"
+      title="添加关联单-采购订单"
+      @closeMeOk="handlePoOrderCloseOk"
+      @closeMeCancel="handlePoOrderCloseCancel"
+    />
+
+    <!--(关联单号)采购订单-列表弹窗-->
+    <poorder_list_template
+      v-if="popSettingsData.poOrderFountDialog.visible"
+      :visible="popSettingsData.poOrderFountDialog.visible"
+      :data="popSettingsData.poOrderFountDialog.data"
+      title="添加关联单-采购订单"
+      @closeMeOk="handlePoOrderFountCloseOk"
+      @closeMeCancel="handlePoOrderFountCloseCancel"
+    />
+
+    <!--企业银行账户-弹窗-->
+    <bank_list_template
+      v-if="popSettingsData.bankDialog.visible"
+      :visible="popSettingsData.bankDialog.visible"
+      :data="popSettingsData.bankDialog.data"
+      title="申请付款-付款信息"
+      @closeMeOk="handleBankCloseOk"
+      @closeMeCancel="handleBankCloseCancel"
+    />
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
+  </div>
+</template>
+
+<style scoped>
+.edit-container {
+  height: calc(100vh - 160px);
+  overflow-x: auto;
+}
+.dialog-footer {
+  text-align: center;
+}
+.el-form-item .el-select {
+  width: 100%;
+}
+
+.required-mark::before {
+  content: '*';
+  color: #ff4949;
+  margin-right: 4px;
+}
+.el-descriptions {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.el-button-group {
+  margin-left: 10px;
+}
+.el-table {
+  margin: 10px;
+}
+.el-form-item--mini.el-form-item {
+  margin-bottom: 0px;
+}
+.skip-tour-checkbox {
+  font-size: 12px;
+  margin-right: 10px;
+  width:80px;
+}
+</style>
+
+<script>
+import constants_para from '@/common/constants/constants_para'
+import elDragDialog from '@/directive/el-drag-dialog'
+import deepCopy from 'deep-copy'
+import SupplierDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
+import constants_dict from '@/common/constants/constants_dict'
+import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
+import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import { EventBus } from '@/common/eventbus/eventbus'
+import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { getTypeApi, getApi, validateApi, updateApi } from '@/api/40_business/ap/ap'
+import poorder_list_template from '@/views/40_business/poorder/dialog/list/index.vue'
+import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
+import numeric from '@/components/40_input/numeric/index.vue'
+import { getPurchaser } from '@/api/20_master/bankaccounts/bankaccounts'
+
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+import PreviewCard from '@/components/50_preview_card/preview_card.vue'
+export default {
+  directives: { elDragDialog },
+  components: { numeric, poorder_list_template, bank_list_template, BpmDialog, SupplierDialog, SimpleUploadMutilFile, PreviewCard },
+  mixins: [],
+  props: {
+    data: {
+      type: Object,
+      default: null
+    }
+  },
+  data () {
+    return {
+      // 监听器
+      watch: {
+        unwatch_tempJson: null
+      },
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
+      twoLabelStyle: {
+        width: '5.5%',
+        'text-align': 'right'
+      },
+      threeLabelStyle: {
+        width: '2.3%',
+        'text-align': 'right'
+      },
+      popSettingsData: {
+        // 供应商
+        supplierDialogData: {
+          // 弹出框显示参数
+          visible: false,
+          data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          }
+        },
+        // 主体企业
+        purchaserDialogData: {
+          // 弹出框显示参数
+          visible: false,
+          data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          }
+        },
+        // 审批流程
+        sponsorDialog: {
+          // 弹出框显示参数
+          visible: false,
+          form_data: { },
+          serial_type: constants_dict.DICT_B_AP,
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          },
+          // 审批流程
+          initial_process: null,
+          // 自选用户
+          process_users: {}
+        },
+        // 采购订单弹窗
+        poOrderDialog: {
+          // 弹出框显示参数
+          visible: false,
+          data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          }
+        },
+        // 采购订单弹窗(添加关联单号)
+        poOrderFountDialog: {
+          // 弹出框显示参数
+          visible: false,
+          data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          }
+        },
+        // 企业银行账户弹窗
+        bankDialog: {
+          // 弹出框显示参数
+          visible: false,
+          data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          }
+        }
+      },
+      dataJson: {
+        typeListDate: [],
+        bankTypeListDate: [],
+        // 用于监听
+        actual_count: 0,
+        // 单条数据 json的，初始化原始数据
+        tempJsonOriginal: {
+          supplier_id: null,
+          supplier_name: '',
+          supplier_code: '',
+          po_order_code: null,
+          po_contract_code: null,
+          project_code: null,
+          purchaser_id: null,
+          purchaser_name: '',
+          purchaser_code: '',
+          // 采购订单
+          poOrderListData: [],
+          // 银行账户
+          bankListData: [],
+          // 类型
+          type: null,
+          detailListData: [],
+          // 申请付款总金额
+          payable_amount: null,
+          // 未付款总金额
+          unpay_amount: null,
+          // 已付款总金额
+          paid_amount: null,
+          // 付款中金额
+          paying_amount: null,
+          // 付款信息付款总额
+          detail_payable_amount: null,
+          // 付款附件材料
+          payment_doc_att_files: []
+        },
+        // 单条数据 json
+        tempJson: {
+          bankListData: [],
+          poOrderListData: [],
+          // 付款附件材料
+          payment_doc_att: [],
+          payment_doc_att_file: [],
+          payment_doc_att_files: []
+        },
+        searchForm: {
+          reset: false
+        },
+        inputSettings: {
+          maxLength: {
+            remark: 100
+          }
+        },
+        // 付款附件材料
+        payment_doc_att: [],
+        payment_doc_att_file: [],
+        payment_doc_att_files: []
+      },
+      // 页面设置json
+      settings: {
+        // loading 状态
+        loading: true,
+        // 采购订单状态：是否可用，false:可用，true不可用
+        btnPoOrderDisabledStatus: {
+          disabledInsert: true,
+          disabledDelete: true
+        },
+        // 企业银行账户按钮状态：是否可用，false:可用，true不可用
+        btnBankDisabledStatus: {
+          disabledInsert: true,
+          disabledDelete: true
+        },
+        // pop的check内容
+        rules: {
+          type: [
+            { required: true, message: '请选择业务类型', trigger: 'change' }
+          ],
+          po_order_code: [
+            { required: true, message: '请添加关联单号', trigger: 'change' }
+          ],
+          order_amount: [
+            { required: true, message: '请添加申请金额', trigger: 'change' }
+          ],
+          paid_amount: [
+            { required: true, message: '请添加付款金额', trigger: 'change' }
+          ]
+        }
+      },
+      // 跳过指引控制
+      skipTourGuide: false,
+      // vue-tour组件
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonSkip: '跳过指引', // 跳过文案
+          buttonPrevious: '上一步', // 上一步文案
+          buttonNext: '下一步', // 下一步文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.tour-one', // 当前项的id或class或data-v-step属性
+          content: '第一步，选择业务类型！', // 当前项指引内容
+          params: {
+            placement: 'left', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        },
+        {
+          target: '.tour-two', // 当前项的id或class或data-v-step属性
+          content: '第二步，添加关联单号！', // 当前项指引内容
+          params: {
+            placement: 'left', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        },
+        {
+          target: '.tour-three', // 当前项的id或class或data-v-step属性
+          content: '第三步，添加付款方账户信息！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
+    }
+  },
+  computed: {
+    CONSTANTS () {
+      return constants_dict
+    },
+    // 计算添加关联单号按钮是否禁用
+    isAddRelatedOrderDisabled () {
+      // 1、当业务类型数据没有选择时，添加关联单号按钮组都不可用
+      if (!this.dataJson.tempJson.type) {
+        return true
+      }
+
+      // 3、当主体企业（付款方）中有数据时，添加关联单号按钮不可用
+      if (this.dataJson.tempJson.purchaser_id && this.dataJson.tempJson.purchaser_name) {
+        return true
+      }
+
+      // 当业务单据信息区域的el-table中有数据时，添加关联单号按钮组都不可用
+      if (this.dataJson.tempJson.poOrderListData && this.dataJson.tempJson.poOrderListData.length > 0) {
+        return true
+      }
+
+      return false
+    },
+    // 计算业务类型是否禁用
+    isBusinessTypeDisabled () {
+      // 3、当主体企业（付款方）中有数据时,业务类型这个控件都不可用
+      if (this.dataJson.tempJson.purchaser_id && this.dataJson.tempJson.purchaser_name) {
+        return true
+      }
+
+      return false
+    },
+    // 计算重置清空页面按钮是否禁用
+    isResetPageDisabled () {
+      // 3、当主体企业（付款方）中有数据时,重置清空页面可用
+      if (this.dataJson.tempJson.purchaser_id && this.dataJson.tempJson.purchaser_name) {
+        return false
+      }
+
+      // 其他情况下重置按钮不可用
+      return true
+    }
+  },
+
+  // 监听器
+  watch: {
+    'dataJson.tempJson.poOrderListData': {
+      handler: 'calculatePayableAmounts',
+      deep: true,
+      immediate: true
+    },
+    'dataJson.tempJson.bankListData': {
+      handler: 'handleBankListDataChange',
+      deep: true,
+      immediate: true
+    },
+    'dataJson.tempJson.purchaser_id': {
+      handler: 'updateButtonStatusByPurchaser',
+      deep: true,
+      immediate: true
+    }
+  },
+  created () {
+  },
+  mounted () {
+    // 描绘完成
+    this.init()
+  },
+  destroyed () {
+    this.unWatch()
+  },
+  methods: {
+    // 初始化处理
+    async init () {
+      // 初始化跳过指引状态
+      this.initSkipTourGuide()
+      // 根据跳过指引状态决定是否启动tour
+      if (!this.skipTourGuide) {
+        this.$tours['myTour'].start()
+      }
+      this.getData()
+      // 初始化业务类型
+      this.initTypeList()
+      // 初始化款项类型
+      this.initBankTypeList()
+      // 初始化watch
+      this.setWatch()
+      this.settings.loading = false
+    },
+    initTempJsonOriginal () {
+      // 单条数据 json的，初始化原始数据
+      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
+    },
+    getData () {
+      // 查询逻辑
+      this.settings.loading = true
+      getApi(this.data).then(response => {
+        this.dataJson.tempJson = deepCopy(response.data)
+        this.dataJson.tempJsonOriginal = deepCopy(response.data)
+        this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
+        this.dataJson.tempJson.bankListData = [...response.data.bankListData]
+
+        // 初始化付款附件数据
+        if (response.data.doc_att_files && response.data.doc_att_files.length > 0) {
+          this.dataJson.payment_doc_att = [...response.data.doc_att_files]
+          this.dataJson.payment_doc_att_file = response.data.doc_att_files.map(item => item.url)
+          this.dataJson.tempJson.payment_doc_att_files = [...response.data.doc_att_files]
+        } else {
+          this.dataJson.payment_doc_att = []
+          this.dataJson.payment_doc_att_file = []
+          this.dataJson.tempJson.payment_doc_att_files = []
+        }
+
+        // 触发金额计算
+        this.calculatePayableAmounts()
+        this.calculateDetailPayableAmount()
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
+    // 设置监听器
+    setWatch () {
+      this.unWatch()
+      // 监听页面上面是否有修改，有修改按钮高亮
+      this.watch.unwatch_tempJson = this.$watch(
+        'dataJson.tempJson',
+        (newVal, oldVal) => {
+
+        },
+        { deep: true }
+      )
+
+      // 监听采购订单列表数据变化，触发金额计算
+      this.watch.unwatch_poOrderListData = this.$watch(
+        'dataJson.tempJson.poOrderListData',
+        (newVal, oldVal) => {
+          // 当采购订单列表数据发生变化时，重新计算申请付款金额
+          this.calculatePayableAmounts()
+          console.log('采购订单列表数据发生变化，重新计算金额')
+
+          // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
+          if (!newVal || newVal.length === 0) {
+            this.settings.btnPoOrderDisabledStatus.disabledDelete = true
+          }
+        },
+        { deep: true, immediate: true }
+      )
+
+      // 监听银行账户列表数据变化
+      this.watch.unwatch_bankListData = this.$watch(
+        'dataJson.tempJson.bankListData',
+        (newVal, oldVal) => {
+          // 当银行账户列表数据发生变化时的处理逻辑
+          console.log('银行账户列表数据发生变化', newVal)
+
+          // 重新计算付款总金额
+          this.calculateDetailPayableAmount()
+
+          // 可以在这里添加银行账户数据变化时的业务逻辑
+          if (newVal && newVal.length > 0) {
+            console.log('可用银行账户数量:', newVal.length)
+          }
+
+          // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
+          if (!newVal || newVal.length === 0) {
+            this.settings.btnBankDisabledStatus.disabledDelete = true
+          }
+        },
+        { deep: true, immediate: true }
+      )
+
+      // 监听主体企业变化，控制按钮状态
+      this.watch.unwatch_purchaser = this.$watch(
+        () => ({
+          purchaser_id: this.dataJson.tempJson.purchaser_id,
+          purchaser_name: this.dataJson.tempJson.purchaser_name
+        }),
+        (newVal, oldVal) => {
+          // 当主体企业有数据时，更新按钮状态
+          this.updateButtonStatusByPurchaser()
+        },
+        { deep: true, immediate: true }
+      )
+    },
+    unWatch () {
+      // 取消监听器
+      if (this.watch.unwatch_tempJson) {
+        this.watch.unwatch_tempJson()
+      }
+      if (this.watch.unwatch_poOrderListData) {
+        this.watch.unwatch_poOrderListData()
+      }
+      if (this.watch.unwatch_bankListData) {
+        this.watch.unwatch_bankListData()
+      }
+      if (this.watch.unwatch_purchaser) {
+        this.watch.unwatch_purchaser()
+      }
+    },
+    // 取消按钮
+    handleCancel () {
+      this.$emit('closeMeCancel')
+    },
+    // 修改
+    doUpdate () {
+      // 开始综合验证
+      this.$refs['dataSubmitForm'].validate(valid => {
+        if (valid) {
+          const tempData = deepCopy(this.dataJson.tempJson)
+          // 审批流程启动数据
+          tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process // 流程
+          tempData.form_data = this.popSettingsData.sponsorDialog.form_data // 表单参数
+          tempData.process_users = this.popSettingsData.sponsorDialog.process_users // 自选用户
+
+          // 确保付款附件材料数据被包含
+          tempData.doc_att_files = this.dataJson.payment_doc_att
+
+          if (tempData.poOrderListData == null || tempData.poOrderListData.length === 0) {
+            this.showErrorMsg('至少选择一个采购订单')
+            return
+          }
+
+          if (tempData.bankListData == null || tempData.bankListData.length === 0) {
+            this.showErrorMsg('请选择银行账户')
+            return
+          }
+
+          // 1. 重新计算申请付款总金额：业务单据信息表格合计本次申请金额
+          let totalPayableAmount = 0
+          if (tempData.poOrderListData && tempData.poOrderListData.length > 0) {
+            totalPayableAmount = tempData.poOrderListData.reduce((sum, item) => {
+              const orderAmount = parseFloat(item.order_amount) || 0
+              return sum + orderAmount
+            }, 0)
+          }
+          tempData.payable_amount = totalPayableAmount
+          this.dataJson.tempJson.payable_amount = totalPayableAmount
+
+          // 2. 重新计算付款总金额：付款账户信息表格合计付款金额
+          let totalDetailPayableAmount = 0
+          if (tempData.bankListData && tempData.bankListData.length > 0) {
+            totalDetailPayableAmount = tempData.bankListData.reduce((sum, item) => {
+              const payableAmount = parseFloat(item.payable_amount) || 0
+              return sum + payableAmount
+            }, 0)
+          }
+          tempData.detail_payable_amount = totalDetailPayableAmount
+          this.dataJson.tempJson.detail_payable_amount = totalDetailPayableAmount
+
+          // 3. 校验付款总金额与申请付款总金额
+          console.log('校验金额 - 申请付款总金额:', totalPayableAmount)
+          console.log('校验金额 - 付款总金额:', totalDetailPayableAmount)
+          console.log('校验金额 - 差异:', Math.abs(totalDetailPayableAmount - totalPayableAmount))
+
+          if ((totalDetailPayableAmount - totalPayableAmount) !== 0) {
+            const errorMsg = `付款数据校验失败：请确保各账户付款金额之和与申请付款金额完全一致。申请付款总金额：${this.formatCurrency(totalPayableAmount, true)}，付款总金额：${this.formatCurrency(totalDetailPayableAmount, true)}`
+            this.showErrorMsg(errorMsg)
+            return
+          }
+
+          this.settings.loading = true
+          this.showLoading('正在保存，请稍后...')
+          updateApi(tempData)
+            .then(
+              _data => {
+                this.closeLoading()
+                this.$emit('closeMeOk', _data.data)
+                // 通知兄弟组件，新增数据更新
+                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_UPDATE_OK, _data.data)
+                this.$notify({
+                  title: '修改成功',
+                  message: _data.data.message,
+                  type: 'success',
+                  duration: this.settings.duration
+                })
+              },
+              _error => {
+                this.closeLoading()
+                this.$notify({
+                  title: '修改失败',
+                  message: _error.error.message,
+                  type: 'error',
+                  duration: this.settings.duration
+                })
+              }
+            )
+            .finally(() => {
+              this.closeLoading()
+            })
+        } else {
+          this.closeLoading()
+        }
+      })
+    },
+    // 采购订单弹窗
+    handlePoOrderInsert () {
+      this.popSettingsData.poOrderDialog.data = {
+        supplier_id: this.dataJson.tempJson.supplier_id,
+        supplier_name: this.dataJson.tempJson.supplier_name,
+        supplier_code: this.dataJson.tempJson.supplier_code,
+        purchaser_id: this.dataJson.tempJson.purchaser_id,
+        purchaser_name: this.dataJson.tempJson.purchaser_name,
+        purchaser_code: this.dataJson.tempJson.supplier_code
+      }
+      this.popSettingsData.poOrderDialog.visible = true
+    },
+    // 采购订单选中
+    handlePoOrderRowClick (row) {
+      this.popSettingsData.poOrderDialog.rowIndex = this.getPoOrderRowIndex(row)
+    },
+    // 采购订单获取行索引
+    getPoOrderRowIndex (row) {
+      const _index = this.dataJson.tempJson.poOrderListData.lastIndexOf(row)
+      return _index
+    },
+    // 采购订单按钮
+    handlePoOrderCurrentChange (row) {
+      this.dataJson.currentJson = Object.assign({}, row) // copy obj
+      this.dataJson.currentJson.index = this.getPoOrderRowIndex(row)
+      this.settings.btnPoOrderDisabledStatus.disabledDelete = false
+    },
+    // 采购订单选择完成
+    handlePoOrderCloseOk (val) {
+      this.popSettingsData.poOrderDialog.visible = false
+
+      // 设置到table中绑定的业务单据信息
+      const tempData = {}
+      tempData.po_order_code = val.code
+      tempData.po_order_id = val.id
+      tempData.project_code = val.project_code
+      tempData.po_contract_code = val.po_contract_code
+      tempData.po_goods = val.goods_name
+      tempData.po_qty = val.order_total
+      tempData.po_amount = val.order_amount_sum
+      tempData.po_advance_payment_amount = val.advance_pay_price
+      tempData.po_can_advance_payment_amount = val.advance_amount_total
+      tempData.order_amount = 0
+      tempData.remark = null
+
+      if (this.dataJson.tempJson.poOrderListData.find(item => item.po_order_code === tempData.po_order_code)) {
+        this.showErrorMsg('您选择的数据已经在表格中，添加失败！')
+        return false
+      }
+
+      this.dataJson.tempJson.poOrderListData.push(tempData)
+
+      // 添加后重新计算申请付款总金额
+      this.calculatePayableAmounts()
+
+      this.$notify({
+        title: '新增处理成功',
+        message: '新增处理成功',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+    // 采购订单选择关闭
+    handlePoOrderCloseCancel () {
+      this.popSettingsData.poOrderDialog.visible = false
+    },
+    // 采购订单选择删除
+    handlePoOrderDelete () {
+      if (this.popSettingsData.poOrderDialog.rowIndex === null) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      // 删除
+      this.$confirm('是否确认删除该条数据', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.$nextTick(() => {
+          this.settings.btnPoOrderDisabledStatus.disabledDelete = true
+          // this.settings.btnPoOrderDisabledStatus.disabledInsert = false // 注释掉：保持按钮不可用
+          // 设置到table中绑定的json数据源
+          this.dataJson.tempJson.poOrderListData.splice(this.popSettingsData.poOrderDialog.rowIndex, 1)
+
+          // 删除后重新计算申请付款总金额
+          this.calculatePayableAmounts()
+        })
+      }).catch(action => {
+        this.settings.btnPoOrderDisabledStatus.disabledDelete = false
+      })
+    },
+    // 添加关联单选择弹窗
+    handlePoOrderFountInsert () {
+      this.popSettingsData.poOrderFountDialog.data = {
+        supplier_id: this.dataJson.tempJson.supplier_id,
+        supplier_name: this.dataJson.tempJson.supplier_name,
+        supplier_code: this.dataJson.tempJson.supplier_code,
+        purchaser_id: this.dataJson.tempJson.purchaser_id,
+        purchaser_name: this.dataJson.tempJson.purchaser_name,
+        purchaser_code: this.dataJson.tempJson.supplier_code
+      }
+      this.popSettingsData.poOrderFountDialog.visible = true
+    },
+    // 重置
+    handlePoOrderFountRest () {
+      // 数据重新初始化
+      this.initTempJsonOriginal()
+      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      // 清空付款附件数据
+      this.dataJson.payment_doc_att = []
+      this.dataJson.payment_doc_att_file = []
+      // 控制按钮
+      this.initButtonShowStatus()
+    },
+    // 添加关联单选择完成
+    handlePoOrderFountCloseOk (val) {
+      this.popSettingsData.poOrderFountDialog.visible = false
+
+      // 基本信息（添加关联单号）
+      this.dataJson.tempJson.po_order_code = val.code
+      this.dataJson.tempJson.po_order_id = val.id
+      this.dataJson.tempJson.project_code = val.project_code
+      this.dataJson.tempJson.po_contract_code = val.po_contract_code
+      this.dataJson.tempJson.supplier_id = val.supplier_id
+      this.dataJson.tempJson.supplier_name = val.supplier_name
+      this.dataJson.tempJson.supplier_code = val.supplier_code
+      this.dataJson.tempJson.purchaser_id = val.purchaser_id
+      this.dataJson.tempJson.purchaser_name = val.purchaser_name
+      this.dataJson.tempJson.purchaser_code = val.purchaser_code
+
+      // 设置到table中绑定的业务单据信息
+      const tempData = {}
+      tempData.po_order_code = val.code
+      tempData.po_order_id = val.id
+      tempData.project_code = val.project_code
+      tempData.po_contract_code = val.po_contract_code
+      tempData.po_goods = val.goods_name
+      tempData.po_qty = val.order_total
+      tempData.po_amount = val.order_amount_sum
+      tempData.po_advance_payment_amount = val.advance_pay_price
+      tempData.po_can_advance_payment_amount = val.advance_amount_total
+      tempData.order_amount = 0
+      tempData.remark = null
+
+      if (this.dataJson.tempJson.poOrderListData.find(item => item.po_order_code === tempData.po_order_code)) {
+        this.showErrorMsg('您选择的数据已经在表格中，添加失败！')
+        return false
+      }
+
+      if (this.dataJson.tempJson.poOrderListData.length > 0) {
+        this.showErrorMsg('只能选择一条数据！')
+        return false
+      }
+
+      this.dataJson.tempJson.poOrderListData.push(tempData)
+
+      // 查询主体企业是否有默认账户
+      this.queryPurchaserBankAccount(val.purchaser_id)
+
+      // 添加关联单后重新计算申请付款总金额
+      this.calculatePayableAmounts()
+
+      this.$notify({
+        title: '添加关联单处理成功',
+        message: '添加关联单处理成功',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+    // 查询主体企业是否有默认账户
+    queryPurchaserBankAccount (id) {
+      getPurchaser({ enterprise_id: id })
+        .then(_data => {
+          if (_data.data != null) {
+            // 检查是否已经存在相同的银行账户
+            if (this.dataJson.tempJson.bankListData.find(item => item.bank_accounts_id === _data.data.id)) {
+              console.log('默认银行账户已存在，跳过添加')
+              return
+            }
+
+            const tempData = {}
+            tempData.name = _data.data.name
+            tempData.bank_name = _data.data.bank_name
+            tempData.account_number = _data.data.account_number
+            tempData.bank_accounts_id = _data.data.id
+            tempData.bank_accounts_code = _data.data.code
+            tempData.payable_amount = 0
+
+            // 款项类型
+            for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
+              const element = this.dataJson.bankTypeListDate[i]
+              if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE &&
+                element.code === constants_dict.DICT_M_BANK_TYPE_THREE) {
+                tempData.bank_accounts_type_id = element.id
+                tempData.bank_accounts_type_code = element.code
+                tempData.accounts_purpose_type_name = element.name
+                break
+              } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
+                element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
+                tempData.bank_accounts_type_id = element.id
+                tempData.bank_accounts_type_code = element.code
+                tempData.accounts_purpose_type_name = element.name
+                break
+              } else {
+                tempData.bank_accounts_type_id = element.id
+                tempData.bank_accounts_type_code = element.code
+                tempData.accounts_purpose_type_name = element.name
+                break
+              }
+            }
+
+            tempData.remark = null
+            this.dataJson.tempJson.bankListData = []
+            this.dataJson.tempJson.bankListData.push(tempData)
+
+            // 添加后重新计算付款总金额
+            this.calculateDetailPayableAmount()
+          } else {
+            // 控制按钮
+            // this.settings.btnBankDisabledStatus.disabledInsert = false // 注释掉：保持按钮不可用
+          }
+        }).catch(_error => {
+          this.showErrorMsg(_error.error.message)
+        })
+    },
+    // 添加关联单选择关闭
+    handlePoOrderFountCloseCancel () {
+      this.popSettingsData.poOrderFountDialog.visible = false
+    },
+    // 企业银行账户弹窗
+    handleBankInsert () {
+      this.popSettingsData.bankDialog.data = {
+        accounts_purpose_type: constants_dict.DICT_M_BANK_TYPE_ONE,
+        enterprise_code: this.dataJson.tempJson.purchaser_code,
+        enterprise_name: this.dataJson.tempJson.purchaser_name }
+
+      this.popSettingsData.bankDialog.visible = true
+    },
+    // 企业银行账户选中
+    handleBankRowClick (row) {
+      this.popSettingsData.bankDialog.rowIndex = this.getBankRowIndex(row)
+    },
+    // 企业银行账户获取行索引
+    getBankRowIndex (row) {
+      const _index = this.dataJson.tempJson.bankListData.lastIndexOf(row)
+      return _index
+    },
+    // 企业银行按钮
+    handleBankCurrentChange (row) {
+      this.dataJson.currentJson = Object.assign({}, row) // copy obj
+      this.dataJson.currentJson.index = this.getBankRowIndex(row)
+      // this.settings.btnBankDisabledStatus.disabledDelete = false // 注释掉：保持按钮不可用
+    },
+    // 企业银行选择完成
+    handleBankCloseOk (val) {
+      // 检查是否已经存在相同的银行账户（根据bank_accounts_id判断）
+      if (this.dataJson.tempJson.bankListData.find(item => item.bank_accounts_id === val.id)) {
+        this.showErrorMsg('付款账户添加失败：该付款账户在表格中已经存在，不能添加重复的付款账户！')
+        return false
+      }
+
+      const tempData = {}
+      tempData.name = val.name
+      tempData.bank_name = val.bank_name
+      tempData.account_number = val.account_number
+      tempData.bank_accounts_id = val.id
+      tempData.bank_accounts_code = val.code
+
+      // todo 款项类型
+      for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
+        const element = this.dataJson.bankTypeListDate[i]
+        if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE &&
+          element.code === constants_dict.DICT_M_BANK_TYPE_THREE) {
+          tempData.bank_accounts_type_id = element.id
+          tempData.bank_accounts_type_code = element.code
+          tempData.accounts_purpose_type_name = element.name
+          break
+        } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
+          element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
+          tempData.bank_accounts_type_id = element.id
+          tempData.bank_accounts_type_code = element.code
+          tempData.accounts_purpose_type_name = element.name
+          break
+        } else {
+          tempData.bank_accounts_type_id = element.id
+          tempData.bank_accounts_type_code = element.code
+          tempData.accounts_purpose_type_name = element.name
+          break
+        }
+      }
+
+      tempData.payable_amount = 0
+      tempData.remark = null
+      this.dataJson.tempJson.bankListData.push(tempData)
+      this.popSettingsData.bankDialog.visible = false
+
+      // 添加后重新计算付款总金额
+      this.calculateDetailPayableAmount()
+
+      this.$notify({
+        title: '新增付款信息处理成功',
+        message: '新增付款信息处理成功',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+    // 企业银行选择关闭
+    handleBankCloseCancel () {
+      this.popSettingsData.bankDialog.visible = false
+    },
+    // 企业银行选择删除
+    handleBankDelete () {
+      if (this.popSettingsData.bankDialog.rowIndex === null) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      // 删除
+      this.$confirm('是否确认删除该条数据', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        // 设置到table中绑定的json数据源
+        this.dataJson.tempJson.bankListData.splice(this.popSettingsData.bankDialog.rowIndex, 1)
+
+        this.settings.btnBankDisabledStatus.disabledDelete = true
+        // this.settings.btnBankDisabledStatus.disabledInsert = false // 注释掉：保持按钮不可用
+
+        // 删除后重新计算付款总金额
+        this.calculateDetailPayableAmount()
+      }).catch(action => {
+
+      })
+    },
+    // 供应商
+    handleSupplierDialog () {
+      this.popSettingsData.supplierDialogData.visible = true
+      this.popSettingsData.supplierDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
+    },
+    // 供应商：关闭对话框：确定
+    handleSupplierCloseOk (val) {
+      this.popSettingsData.supplierDialogData.selectedDataJson = val
+      this.dataJson.tempJson.supplier_id = val.id
+      this.dataJson.tempJson.supplier_code = val.code
+      this.dataJson.tempJson.supplier_name = val.name
+      this.popSettingsData.supplierDialogData.visible = false
+    },
+    // 供应商：关闭对话框：取消
+    handleSupplierCloseCancel () {
+      this.popSettingsData.supplierDialogData.visible = false
+    },
+    // 主体企业
+    handlePurchaserDialog () {
+      this.popSettingsData.purchaserDialogData.visible = true
+      this.popSettingsData.purchaserDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
+    },
+    // 主体企业：关闭对话框：确定
+    handlePurchaserCloseOk (val) {
+      this.popSettingsData.purchaserDialogData.selectedDataJson = val
+      this.dataJson.tempJson.purchaser_id = val.id
+      this.dataJson.tempJson.purchaser_code = val.code
+      this.dataJson.tempJson.purchaser_name = val.name
+      this.popSettingsData.purchaserDialogData.visible = false
+    },
+    // 主体企业：关闭对话框：取消
+    handlePurchaserCloseCancel () {
+      this.popSettingsData.purchaserDialogData.visible = false
+    },
+    // 校验数据 获取审批流程
+    startProcess () {
+      this.showLoading('正在保存，请稍后...')
+      // 校验业务数据
+      const tempData = deepCopy(this.dataJson.tempJson)
+      tempData.check_type = constants_para.UPDATE_CHECK_TYPE
+
+      // 确保付款附件材料数据被包含
+      tempData.payment_doc_att_files = this.dataJson.payment_doc_att
+
+      this.$refs['dataSubmitForm'].validate(valid => {
+        if (valid) {
+          validateApi(tempData).then(_data => {
+            if (_data.success) {
+              // 获取审批流程
+              this.getFlow()
+            } else {
+              this.closeLoading()
+              this.$notify({
+                title: '校验失败',
+                message: _data.data.message,
+                type: 'error',
+                duration: this.settings.duration
+              })
+            }
+          }).catch(error => {
+            console.log('校验出错', error)
+            this.closeLoading()
+          })
+        } else {
+          this.closeLoading()
+        }
+      })
+    },
+    // 获取审批流程
+    getFlow () {
+      // 校验是否存在审批流程
+      getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
+        .then((rsp) => {
+          if (rsp.data === null) {
+            this.$message.error('未找到审批流程，请联系管理员')
+          } else {
+            // 流程参数
+            this.popSettingsData.sponsorDialog.form_data = { }
+            // 启动审批流弹窗
+            this.popSettingsData.sponsorDialog.visible = true
+          }
+        }).catch((err) => {
+          this.closeLoading()
+          this.$message.error(err)
+        }).finally(() => {
+          this.closeLoading()
+        })
+    },
+    // 取消
+    handleBpmDialogCancel () {
+      this.popSettingsData.sponsorDialog.visible = false
+      this.closeLoading()
+    },
+    // 审批流确定
+    handleBpmDialogOk (data) {
+      this.popSettingsData.sponsorDialog.initial_process = data.processData
+      this.popSettingsData.sponsorDialog.process_users = data.process_users
+      this.popSettingsData.sponsorDialog.visible = false
+      this.doUpdate()
+    },
+    // 初始化业务类型
+    initTypeList () {
+      const _this = this
+      getTypeApi().then(response => {
+        if (response.data.length !== 0) {
+          _this.dataJson.typeListDate = _this.dataJson.typeListDate.concat(response.data)
+          _this.dataJson.typeListDate.forEach(item => {
+            item.checked = false
+          })
+        } else {
+          this.showErrorMsg('业务类型数据为空,请联系管理员')
+        }
+      })
+    },
+    // 初始化款项类型
+    initBankTypeList () {
+      const _this = this
+      getBankTypeApi().then(response => {
+        if (response.data.length !== 0) {
+          _this.dataJson.bankTypeListDate = _this.dataJson.bankTypeListDate.concat(response.data)
+        } else {
+          this.showErrorMsg('款项类型数据为空,请联系管理员')
+        }
+      })
+    },
+    // 处理类型变化
+    handleTypeChange (val) {
+      this.dataJson.tempJson.type = val
+    },
+    // 付款附件上传成功
+    handlePaymentUploadFileSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.payment_doc_att.push(res.response.data)
+      this.dataJson.payment_doc_att_file.push(res.response.data.url)
+      this.dataJson.tempJson.payment_doc_att_files = this.dataJson.payment_doc_att
+    },
+    // 付款附件文件移除
+    removePaymentFile (val) {
+      // 获取下标
+      const _index = this.dataJson.payment_doc_att_file.lastIndexOf(val)
+      // 从数组中移除
+      this.dataJson.payment_doc_att.splice(_index, 1)
+      this.dataJson.payment_doc_att_file.splice(_index, 1)
+      this.dataJson.tempJson.payment_doc_att_files = this.dataJson.payment_doc_att
+    },
+    // 上传失败
+    handleFileError () {
+      console.debug('文件上传失败')
+      this.$notify({
+        title: '上传错误',
+        message: '文件上传发生错误！',
+        type: 'error',
+        duration: 0
+      })
+    },
+    /**
+     * 处理全额申请：本次申请金额=可申请预付款金额
+     * @param val
+     */
+    handleFullAmountApply (val) {
+      val.order_amount = val.po_can_advance_payment_amount
+      // 触发金额重新计算
+      this.calculatePayableAmounts()
+    },
+    /**
+     * 处理全额付款：付款金额=申请付款总金额，其他行付款金额设为0
+     * @param val 当前行数据
+     */
+    handleFullPaymentApply (val) {
+      console.log('全额付款按钮点击事件触发', val)
+
+      // 1. 把其他行的付款金额设置为0
+      if (this.dataJson.tempJson.bankListData && this.dataJson.tempJson.bankListData.length > 0) {
+        this.dataJson.tempJson.bankListData.forEach(item => {
+          if (item !== val) {
+            item.payable_amount = 0
+          }
+        })
+      }
+
+      // 2. 当前行的付款金额设置为申请付款总金额
+      val.payable_amount = this.dataJson.tempJson.payable_amount || 0
+
+      // 3. 触发付款总金额重新计算
+      this.calculateDetailPayableAmount()
+    },
+    /**
+     * 采购订单金额填写处理
+     * 当业务单据信息表中的本次申请金额发生变化时触发
+     * @param val 当前行数据
+     */
+    handlePoOrderCheck (val) {
+      console.log('采购订单金额填写处理', val)
+
+      // 申请金额不能大于可申请预付款金额
+      if (val.po_can_advance_payment_amount && val.order_amount > val.po_can_advance_payment_amount) {
+        val.order_amount = null
+        this.showErrorMsg('申请金额不能大于可申请预付款金额')
+        return
+      }
+
+      // 触发金额重新计算
+      this.calculatePayableAmounts()
+    },
+    // 初始化跳过指引状态
+    initSkipTourGuide () {
+      const SKIP_TOUR_KEY = 'ap_edit_skip_tour_guide'
+      const savedSkipTour = localStorage.getItem(SKIP_TOUR_KEY)
+
+      if (savedSkipTour) {
+        try {
+          const skipTourData = JSON.parse(savedSkipTour)
+          const now = Date.now()
+
+          // 检查是否过期（1年 = 365 * 24 * 60 * 60 * 1000 毫秒）
+          if (now < skipTourData.expiry) {
+            this.skipTourGuide = skipTourData.value
+          } else {
+            // 过期了，删除localStorage中的数据
+            localStorage.removeItem(SKIP_TOUR_KEY)
+            this.skipTourGuide = false
+          }
+        } catch (error) {
+          // localStorage数据格式错误，删除并重置
+          localStorage.removeItem(SKIP_TOUR_KEY)
+          this.skipTourGuide = false
+        }
+      } else {
+        this.skipTourGuide = false
+      }
+    },
+    // 处理跳过指引勾选框变化
+    handleSkipTourGuideChange (value) {
+      const SKIP_TOUR_KEY = 'ap_edit_skip_tour_guide'
+      const now = Date.now()
+      // 设置过期时间为1年后
+      const expiry = now + (365 * 24 * 60 * 60 * 1000)
+
+      const skipTourData = {
+        value: value,
+        expiry: expiry
+      }
+
+      localStorage.setItem(SKIP_TOUR_KEY, JSON.stringify(skipTourData))
+
+      // 如果取消勾选跳过指引，立即启动tour
+      if (!value) {
+        this.$tours['myTour'].start()
+      }
+    },
+    // 处理付款金额变化
+    handlePayableAmountChange (value) {
+      console.log('付款金额变化', value)
+      // 触发付款总金额重新计算
+      this.calculateDetailPayableAmount()
+    },
+    // 计算付款金额
+    calculatePayableAmounts () {
+      // 1. 申请付款总金额：业务单据信息表的所有本次申请金额的汇总值
+      let totalPayableAmount = 0
+      if (this.dataJson.tempJson.poOrderListData && this.dataJson.tempJson.poOrderListData.length > 0) {
+        totalPayableAmount = this.dataJson.tempJson.poOrderListData.reduce((sum, item) => {
+          const orderAmount = parseFloat(item.order_amount) || 0
+          return sum + orderAmount
+        }, 0)
+      }
+
+      // 设置申请付款总金额
+      this.dataJson.tempJson.payable_amount = totalPayableAmount
+
+      // 2. 已付款总金额：设置为null（显示为"-"）
+      this.dataJson.tempJson.paid_amount = null
+
+      // 3. 未付款总金额：等于申请付款总金额
+      this.dataJson.tempJson.unpay_amount = totalPayableAmount
+
+      // 4. 付款中金额：设置为null（显示为"-"）
+      this.dataJson.tempJson.paying_amount = null
+
+      console.log('计算金额 - 申请付款总金额:', totalPayableAmount)
+    },
+    // 计算付款账户信息的付款总金额
+    calculateDetailPayableAmount () {
+      // 付款总金额：付款账户信息表格所有行的付款金额的合计
+      let totalDetailPayableAmount = 0
+      if (this.dataJson.tempJson.bankListData && this.dataJson.tempJson.bankListData.length > 0) {
+        totalDetailPayableAmount = this.dataJson.tempJson.bankListData.reduce((sum, item) => {
+          const payableAmount = parseFloat(item.payable_amount) || 0
+          return sum + payableAmount
+        }, 0)
+      }
+
+      // 设置付款总金额
+      this.dataJson.tempJson.detail_payable_amount = totalDetailPayableAmount
+
+      console.log('计算金额 - 付款总金额:', totalDetailPayableAmount)
+    },
+    handleBankListDataChange (newVal, oldVal) {
+      // 当银行账户列表数据发生变化时的处理逻辑
+      console.log('银行账户列表数据发生变化', newVal)
+
+      // 重新计算付款总金额
+      this.calculateDetailPayableAmount()
+
+      // 可以在这里添加银行账户数据变化时的业务逻辑
+      if (newVal && newVal.length > 0) {
+        console.log('可用银行账户数量:', newVal.length)
+      }
+
+      // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
+      if (!newVal || newVal.length === 0) {
+        this.settings.btnBankDisabledStatus.disabledDelete = true
+      }
+    },
+    // 根据主体企业状态更新按钮状态
+    updateButtonStatusByPurchaser () {
+      const hasPurchaser = this.dataJson.tempJson.purchaser_id && this.dataJson.tempJson.purchaser_name
+
+      if (hasPurchaser) {
+        // 5、业务单据信息的按钮逻辑：当基本信息的主体企业（付款方）有数据时，添加按钮可点击
+        // this.settings.btnPoOrderDisabledStatus.disabledInsert = false // 注释掉：保持按钮不可用
+
+        // 6、付款账户信息的按钮逻辑：当基本信息的主体企业（付款方）有数据时，添加按钮可点击
+        // this.settings.btnBankDisabledStatus.disabledInsert = false // 注释掉：保持按钮不可用
+      } else {
+        // 如果没有主体企业数据，按钮不可用
+        this.settings.btnPoOrderDisabledStatus.disabledInsert = true
+        this.settings.btnBankDisabledStatus.disabledInsert = true
+      }
+    },
+    // 初始化按钮状态
+    initButtonShowStatus () {
+      // 初始化按钮状态：重置为默认值
+      this.settings.btnPoOrderDisabledStatus.disabledInsert = true
+      this.settings.btnPoOrderDisabledStatus.disabledDelete = true
+      this.settings.btnBankDisabledStatus.disabledInsert = true
+      this.settings.btnBankDisabledStatus.disabledDelete = true
+    }
+  }
+
+}
+</script>
