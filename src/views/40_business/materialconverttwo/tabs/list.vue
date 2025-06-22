@@ -452,7 +452,6 @@
 }
 .el-button-group {
   margin-bottom: 10px;
-  max-width: 50%;
 }
 .el-input-group__append_select,
 .el-input-group__append {

@@ -38,12 +38,8 @@ export default {
             val = val + listRefsNames[i].$el.offsetHeight
           }
         }
-        let rtnVal = elementHeight - val - 95
+        const rtnVal = elementHeight - val - 95
 
-        // 判断是否是弹出框
-        if (this.meDialogStatus) {
-          rtnVal = rtnVal - 170
-        }
         // 此处使用的是页面上的值
         this.settings.tableHeight = rtnVal
         return rtnVal

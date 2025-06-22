@@ -794,7 +794,7 @@ import { isNotEmpty } from '@/utils'
 import { getCountApi, getDetailApi, getOnlyOneUnitCalcApi } from '@/api/30_wms/spec/unit/unitCalc'
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
+// import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 export default {
   components: { SelectWarehouse, InputSearch, orderDialog, SelectDict, consignorDialog, ownerDialog, specDialog, previewCard, SimpleUploadMutilFile, numeric, unitCalculatorDialog },
@@ -1143,15 +1143,15 @@ export default {
     // 皮重, 毛重控制开关
     getWeightControlConfig () {
       this.settings.loading = true
-      getWeightControlConfigApi().then((_data) => {
-        const data = _data.data
-
-        if (data.weight_control_config === '1') {
-          this.settings.weight_control_config = true
-        }
-      }).finally(() => {
-        this.settings.loading = false
-      })
+      // getWeightControlConfigApi().then((_data) => {
+      //   const data = _data.data
+      //
+      //   if (data.weight_control_config === '1') {
+      //     this.settings.weight_control_config = true
+      //   }
+      // }).finally(() => {
+      //   this.settings.loading = false
+      // })
     },
     initTempJsonOriginal () {
       // 单条数据 json的，初始化原始数据

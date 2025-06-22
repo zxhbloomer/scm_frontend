@@ -671,7 +671,7 @@ import { getDetailApi, getCountApi, getOnlyOneUnitCalcApi, getListApi } from '@/
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
 import inventoryDetailDialog from '@/views/50_query/inventory_detail/dialog/dialog'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
+// import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
 
 export default {
   directives: { elDragDialog },
@@ -1056,12 +1056,8 @@ export default {
     // 皮重， 毛重开关
     getWeightControlConfig () {
       this.settings.loading = true
-      getWeightControlConfigApi().then((_data) => {
-        const data = _data.data
-        this.settings.weight_control_config = data.weight_control_config === '1'
-      }).finally(() => {
-        this.settings.loading = false
-      })
+      //
+      // })
     },
     // 新增时的初始化
     initInsertModel () {

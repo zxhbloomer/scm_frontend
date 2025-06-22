@@ -425,7 +425,7 @@ import { isNotEmpty } from '@/utils'
 import binDialog from '@/views/30_wms/bin/dialog/dialog.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
-import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
+// import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
 
 export default {
   directives: { elDragDialog },
@@ -1145,12 +1145,12 @@ export default {
     // 皮重， 毛重开关控制
     getWeightControlConfig () {
       this.settings.loading = true
-      getWeightControlConfigApi().then((_data) => {
-        const data = _data.data
-        this.settings.weight_control_config = data.weight_control_config === '1'
-      }).finally(() => {
-        this.settings.loading = false
-      })
+      // getWeightControlConfigApi().then((_data) => {
+      //   const data = _data.data
+      //   this.settings.weight_control_config = data.weight_control_config === '1'
+      // }).finally(() => {
+      //   this.settings.loading = false
+      // })
     },
     // 计算出库金额
     reCalcTotalPrice () {

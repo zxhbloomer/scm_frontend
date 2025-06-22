@@ -404,7 +404,7 @@ import { getApi } from '@/api/40_business/delivery/delivery'
 import previewCard from '@/components/50_preview_card/preview_card'
 import locationDialog from '@/views/30_wms/location/dialog/dialog'
 import binDialog from '@/views/30_wms/bin/dialog/dialog'
-import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
+// import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
 
 export default {
   components: { previewCard, locationDialog, binDialog },
@@ -656,12 +656,12 @@ export default {
     // 皮重, 毛重控制开关
     getWeightControlConfig () {
       this.settings.loading = true
-      getWeightControlConfigApi().then((_data) => {
-        const data = _data.data
-        this.settings.weight_control_config = data.weight_control_config === '1'
-      }).finally(() => {
-        this.settings.loading = false
-      })
+      // getWeightControlConfigApi().then((_data) => {
+      //   const data = _data.data
+      //   this.settings.weight_control_config = data.weight_control_config === '1'
+      // }).finally(() => {
+      //   this.settings.loading = false
+      // })
     },
     initTempJsonOriginal () {
       // 单条数据 json的，初始化原始数据

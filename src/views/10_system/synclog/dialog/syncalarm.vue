@@ -150,7 +150,7 @@ import resizeMixin from '../mixin/resizeHandlerMixin'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import { syncApi as syncInPlanApi } from '@/api/40_business/inplan/inplan'
+// import { syncApi as syncInPlanApi } from '@/api/40_business/inplan/inplan'
 import { syncApi as syncInApi } from '@/api/40_business/in/in'
 import { syncApi as syncOutPlanApi } from '@/api/40_business/outplan/outplan'
 import { syncApi as syncOutApi } from '@/api/40_business/out/out'
@@ -347,12 +347,12 @@ export default {
     // 入库计划单同步
     handleInPlanSync (val) {
       // 开始同步
-      syncInPlanApi(val).then((_data) => {
-        // this.getDataList(val)
-      }, (_error) => {
-      }).finally(() => {
-        // this.settings.loading = false
-      })
+      // syncInPlanApi(val).then((_data) => {
+      //   // this.getDataList(val)
+      // }, (_error) => {
+      // }).finally(() => {
+      //   // this.settings.loading = false
+      // })
     },
     // 入库单同步
     handleInSync (val) {

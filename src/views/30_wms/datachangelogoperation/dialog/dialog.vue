@@ -40,7 +40,7 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import myPage from '@/views/40_business/inplan/tabs/list'
+import myPage from '@/views/40_business/inplan/tabs/10_list/index.vue'
 
 export default {
   components: { myPage },

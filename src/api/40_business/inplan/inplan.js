@@ -1,43 +1,31 @@
 import request from '@/utils/request'
 
 /**
- * 查询逻辑
+ * 分页查询入库计划列表
  * @param {*} data
  */
 export function getListApi (query) {
   return request({
-    url: '/api/v1/inplan/list',
+    url: '/api/v1/inplan/pagelist',
     method: 'post',
     data: query
   })
 }
 
 /**
- * 查询逻辑
- * @param {*} data
- */
-export function getTodoCountApi (query) {
-  return request({
-    url: '/api/v1/inplan/todo/count',
-    method: 'post',
-    data: query
-  })
-}
-
-/**
- * 查询逻辑
+ * 查询入库计划汇总统计
  * @param {*} data
  */
 export function getListSumApi (query) {
   return request({
-    url: '/api/v1/inplan/list/sum',
+    url: '/api/v1/inplan/sum',
     method: 'post',
     data: query
   })
 }
 
 /**
- * 详情查询逻辑
+ * 根据ID获取入库计划详情
  * @param {*} data
  */
 export function getApi (query) {
@@ -49,31 +37,7 @@ export function getApi (query) {
 }
 
 /**
- * 查询入库数量
- * @param {*} data
- */
-export function countApi (query) {
-  return request({
-    url: '/api/v1/inplan/checkcount',
-    method: 'post',
-    data: query
-  })
-}
-
-/**
- * 详情查询逻辑
- * @param {*} data
- */
-export function getPlanDetailApi (query) {
-  return request({
-    url: '/api/v1/inplan/getplandetail',
-    method: 'post',
-    data: query
-  })
-}
-
-/**
- * 更新api
+ * 修改入库计划
  * @param {*} data
  */
 export function updateApi (data) {
@@ -85,7 +49,7 @@ export function updateApi (data) {
 }
 
 /**
- * 插入api
+ * 新增入库计划
  * @param {*} data
  */
 export function insertApi (data) {
@@ -97,139 +61,19 @@ export function insertApi (data) {
 }
 
 /**
- * 提交api
+ * 导入入库计划数据
  * @param {*} data
  */
-export function submitApi (data) {
+export function importDataApi (data) {
   return request({
-    url: '/api/v1/inplan/submit',
+    url: '/api/v1/inplan/import',
     method: 'post',
     data
   })
 }
 
 /**
- * 审核api
- * @param {*} data
- */
-export function auditApi (data) {
-  return request({
-    url: '/api/v1/inplan/audit',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 驳回api
- * @param {*} data
- */
-export function returnApi (data) {
-  return request({
-    url: '/api/v1/inplan/return',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废审核api
- * @param {*} data
- */
-export function cancelAuditApi (data) {
-  return request({
-    url: '/api/v1/inplan/cancelaudit',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废驳回api
- * @param {*} data
- */
-export function cancelReturnApi (data) {
-  return request({
-    url: '/api/v1/inplan/cancelreturn',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废api
- * @param {*} data
- */
-export function cancelApi (data) {
-  return request({
-    url: '/api/v1/inplan/cancel',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 完成api
- * @param {*} data
- */
-export function finishApi (data) {
-  return request({
-    url: '/api/v1/inplan/finish',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 入库操作api
- * @param {*} data
- */
-export function operateApi (data) {
-  return request({
-    url: '/api/v1/inplan/operate',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 提货操作api
- * @param {*} data
- */
-export function operateDeliveryApi (data) {
-  return request({
-    url: '/api/v1/inplan/operateDelivery',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 同步所有数据
- * @param {*} data
- */
-export function syncAllApi (data) {
-  return request({
-    url: '/api/v1/inplan/syncall',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 同步选中数据
- * @param {*} data
- */
-export function syncApi (data) {
-  return request({
-    url: '/api/v1/inplan/sync',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 导出逻辑
+ * 导出入库计划数据
  * @param {*} data
  */
 export function exportApi (data) {
@@ -242,7 +86,7 @@ export function exportApi (data) {
 }
 
 /**
- * 导出逻辑
+ * 导出所有入库计划数据
  * @param {*} data
  */
 export function exportAllApi (data) {
@@ -255,48 +99,58 @@ export function exportAllApi (data) {
 }
 
 /**
- * 查询选中的数据是否包含多个详情
+ * 删除入库计划
  * @param {*} data
  */
-export function getIsHaveMoreDetailApi (data) {
+export function delApi (data) {
   return request({
-    url: '/api/v1/inplan/get_detail_count',
+    url: '/api/v1/inplan/delete',
     method: 'post',
     data
   })
 }
 
 /**
- * 查询超收配置
+ * 验证入库计划数据
  * @param {*} data
  */
-export function getOverReceiveConfigApi (query) {
+export function validateApi (data) {
   return request({
-    url: '/api/v1/inplan/over_receive/get',
+    url: '/api/v1/inplan/validate',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取打印数据
+ */
+export function printApi (query) {
+  return request({
+    url: '/api/v1/inplan/print',
     method: 'post',
     data: query
   })
 }
 
 /**
- * 查询 皮重, 毛重 开关控制
- * @param {*} data
+ * 作废入库计划
  */
-export function getWeightControlConfigApi (query) {
+export function cancelApi (query) {
   return request({
-    url: '/api/v1/inplan/weight_control/get',
-    method: 'get',
+    url: '/api/v1/inplan/cancel',
+    method: 'post',
     data: query
   })
 }
 
 /**
- * 查询 皮重, 毛重 开关控制
+ * 完成入库计划
  * @param {*} data
  */
-export function getCountApi (query) {
+export function finishApi (query) {
   return request({
-    url: '/api/v1/inplan/count',
+    url: '/api/v1/inplan/finish',
     method: 'post',
     data: query
   })

@@ -954,7 +954,7 @@ import { getDetailApi, getCountApi, getOnlyOneUnitCalcApi } from '@/api/30_wms/s
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
 import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
+// import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
 import selectUnit from '@/views/30_wms/spec/unit/selectUnit/selectUnit'
 
 export default {
@@ -1304,12 +1304,12 @@ export default {
     // 皮重, 毛重控制开关
     getWeightControlConfig () {
       this.settings.loading = true
-      getWeightControlConfigApi().then((_data) => {
-        const data = _data.data
-        this.settings.weight_control_config = data.weight_control_config === '1'
-      }).finally(() => {
-        this.settings.loading = false
-      })
+      // getWeightControlConfigApi().then((_data) => {
+      //   const data = _data.data
+      //   this.settings.weight_control_config = data.weight_control_config === '1'
+      // }).finally(() => {
+      //   this.settings.loading = false
+      // })
     },
     initTempJsonOriginal () {
       // 单条数据 json的，初始化原始数据
