@@ -227,18 +227,22 @@
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="po_qty"
+            prop="qty_total"
             align="right"
             label="总采购数量"
-          />
+          >
+            <template v-slot="scope">
+              {{ scope.row.qty_total == null? '-' : formatNumber(scope.row.qty_total,true,4) }}
+            </template>
+          </el-table-column>
           <el-table-column
             min-width="150"
-            prop="po_amount"
+            prop="amount_total"
             label="订单总金额"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.po_amount == null? '-' : formatCurrency(scope.row.po_amount,true) }}
+              {{ scope.row.amount_total == null? '-' : formatCurrency(scope.row.amount_total,true) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -1207,8 +1211,8 @@ export default {
       tempData.project_code = val.project_code
       tempData.po_contract_code = val.po_contract_code
       tempData.po_goods = val.goods_name
-      tempData.po_qty = val.order_total
-      tempData.po_amount = val.order_amount_sum
+      tempData.qty_total = val.order_total
+      tempData.amount_total = val.order_amount_sum
       tempData.po_advance_payment_amount = val.advance_pay_price
       tempData.po_can_advance_payment_amount = val.advance_amount_total
       tempData.order_amount = 0
@@ -1332,8 +1336,8 @@ export default {
       tempData.project_code = val.project_code
       tempData.po_contract_code = val.po_contract_code
       tempData.po_goods = val.goods_name
-      tempData.po_qty = val.order_total
-      tempData.po_amount = val.order_amount_sum
+      tempData.qty_total = val.order_total
+      tempData.amount_total = val.order_amount_sum
       tempData.po_advance_payment_amount = val.advance_pay_price
       tempData.po_can_advance_payment_amount = val.advance_amount_total
       tempData.order_amount = 0

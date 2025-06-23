@@ -163,19 +163,19 @@
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="po_qty"
+            prop="qty_total"
             label="总采购数量"
             align="right"
           />
           <el-table-column
             show-overflow-tooltip
             min-width="150"
-            prop="po_amount"
+            prop="amount_total"
             label="订单总金额"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.po_amount == null? '-' : formatCurrency(scope.row.po_amount, true) }}
+              {{ scope.row.amount_total == null? '-' : formatCurrency(scope.row.amount_total, true) }}
             </template>
           </el-table-column>
           <el-table-column
