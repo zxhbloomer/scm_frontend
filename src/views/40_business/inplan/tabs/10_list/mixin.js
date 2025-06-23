@@ -18,7 +18,7 @@ export default {
   },
   // 生命周期结束时销毁事件
   destroyed () {
-    if (this.resizeListener) removeResizeListener(window.document.body, this.doResize)
+    removeResizeListener(window.document.body, this.doResize)
   },
   methods: {
     doResize () {
@@ -26,7 +26,19 @@ export default {
     },
     setUIheight () {
       try {
-        const rtnVal = 1111 - 95
+        // 定义高度
+        const elementHeight = document.documentElement.clientHeight - 90
+        // 获取所有的ref，主要判断minus的refs
+        const listRefsNames = Object.keys(this.$refs).map((key) => {
+          return this.$refs[key]
+        })
+        let val = 0
+        for (let i = 0; i < Object.keys(this.$refs).length; i++) {
+          if (Object.keys(this.$refs)[i].indexOf('minus') >= 0) {
+            val = val + listRefsNames[i].$el.offsetHeight
+          }
+        }
+        const rtnVal = elementHeight - val - 95
 
         // 此处使用的是页面上的值
         this.settings.tableHeight = rtnVal
@@ -34,19 +46,6 @@ export default {
       } catch (error) {
         console.log('mixin error')
       }
-    },
-    /**
-     * 判断是否显示placeholder
-     */
-    isPlaceholderShow (placeholder) {
-      return placeholder
-    },
-
-    /**
-     * 获取标签位置
-     */
-    getLabelPosition () {
-      return 'right'
     }
   }
 }

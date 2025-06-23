@@ -105,7 +105,7 @@ export default {
       default: null
     }
   },
-  data() {
+  data () {
     return {
       editMode: false,
       dataJson: {
@@ -128,10 +128,10 @@ export default {
     //   }
     // }
   },
-  created() {
+  created () {
   },
   methods: {
-    onFieldClick() {
+    onFieldClick () {
       this.dataJson.form.data = this.value
       this.settings.showModal = true
       this.editMode = true
@@ -142,15 +142,15 @@ export default {
         }
       })
     },
-    onInputChange(val) {
+    onInputChange (val) {
       this.$emit('input', val)
     },
-    handleSubmit() {
+    handleSubmit () {
       this.$refs.popover.doClose()
       this.settings.showModal = false
       this.$emit('closeMeOk', this.rowData, this.dataJson.form.data)
     },
-    handleReset() {
+    handleReset () {
       this.dataJson.form.data = this.value
       this.$nextTick(() => {
         const inputRef = this.$refs.input

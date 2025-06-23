@@ -75,7 +75,7 @@
                 :para="CONSTANTS.DICT_B_PO_CONTRACT_TYPE"
                 @change="handleTypeChange"
               />
-            </el-form-item>
+            </el-form-item>p
           </el-descriptions-item>
           <!--          <el-descriptions-item label="订单量">-->
           <!--            <el-form-item-->
@@ -380,19 +380,14 @@
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="sku_name"
-            label="物料名称"
+            prop="goods_name"
+            label="商品名称"
           />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="50"
-            prop="pm"
-            label="品名"
-          />
+
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="spec"
+            prop="sku_name"
             label="规格"
           />
           <el-table-column

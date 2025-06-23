@@ -183,9 +183,17 @@ const EMIT_MST_B_AP_PAY_BPM_OK = 'global:mst:b_ap_pay:bpm:ok'
  * 入库计划管理，新增完成
  * @type {string}
  */
-const EMIT_MST_B_IN_PLAN_V2_NEW_OK = 'global:mst:b_in_plan_v2:new:ok'
-const EMIT_MST_B_IN_PLAN_V2_UPDATE_OK = 'global:mst:b_in_plan_v2:update:ok'
-const EMIT_MST_B_IN_PLAN_V2_BPM_OK = 'global:mst:b_in_plan_v2:bpm:ok'
+const EMIT_MST_B_IN_PLAN_NEW_OK = 'global:mst:b_in_plan:new:ok'
+const EMIT_MST_B_IN_PLAN_UPDATE_OK = 'global:mst:b_in_plan:update:ok'
+const EMIT_MST_B_IN_PLAN_BPM_OK = 'global:mst:b_in_plan:bpm:ok'
+
+/**
+ * 入库计划模块(inplan)，新增完成
+ * @type {string}
+ */
+const EMIT_MST_INPLAN_NEW_OK = 'global:mst:inplan:new:ok'
+const EMIT_MST_INPLAN_UPDATE_OK = 'global:mst:inplan:update:ok'
+const EMIT_MST_INPLAN_BPM_OK = 'global:mst:inplan:bpm:ok'
 
 /**
  * 消息通知
@@ -281,9 +289,13 @@ export default {
   EMIT_MST_B_AP_PAY_UPDATE_OK,
   EMIT_MST_B_AP_PAY_BPM_OK,
 
-  EMIT_MST_B_IN_PLAN_V2_NEW_OK,
-  EMIT_MST_B_IN_PLAN_V2_UPDATE_OK,
-  EMIT_MST_B_IN_PLAN_V2_BPM_OK,
+  EMIT_MST_B_IN_PLAN_NEW_OK,
+  EMIT_MST_B_IN_PLAN_UPDATE_OK,
+  EMIT_MST_B_IN_PLAN_BPM_OK,
+
+  EMIT_MST_INPLAN_NEW_OK,
+  EMIT_MST_INPLAN_UPDATE_OK,
+  EMIT_MST_INPLAN_BPM_OK,
 
   EMIT_NOTISE_BPM
 }

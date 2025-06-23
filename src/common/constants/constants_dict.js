@@ -1,4 +1,3 @@
-
 /** 隐藏显示类型： 0：显示 1：隐藏 null:全部 */
 const DICT_SYS_VISIBLE_TYPE = 'sys_visible_type'
 const DICT_SYS_VISIBLE_TYPE_SHOW = '0'
@@ -176,6 +175,11 @@ const DICT_B_IN_V2_STATUS_THREE = '3'
 const DICT_B_IN_V2_STATUS_FOUR = '4'
 const DICT_B_IN_V2_STATUS_FIVE = '5'
 const DICT_B_IN_V2_STATUS_SIX = '6'
+
+/** 入库计划表 审批流 */
+const DICT_B_IN_PLAN = 'b_in_plan'
+/** 入库计划表 审批作废流 */
+const DICT_B_IN_PLAN_CANCEL = 'b_in_plan_cancel'
 
 /** 入库计划V2表 审批流 */
 const DICT_B_IN_PLAN_V2 = 'b_in_plan_v2'
@@ -1165,9 +1169,10 @@ export default {
   DICT_B_IN_V2_STATUS_FIVE,
   DICT_B_IN_V2_STATUS_SIX,
 
-  /** 入库计划V2表 */
-  DICT_B_IN_PLAN_V2,
-  DICT_B_IN_PLAN_V2_CANCEL,
+  /** 入库计划表 审批流 */
+  DICT_B_IN_PLAN,
+  /** 入库计划表 审批作废流 */
+  DICT_B_IN_PLAN_CANCEL,
 
   /** 入库单状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成*/
   DICT_B_IN_PLAN_STATUS,
@@ -1262,7 +1267,7 @@ export default {
   DICT_B_OUT_TYPE_TH,
   DICT_B_OUT_TYPE_LL,
 
-  /**  出库计划单据类型:0供应链业务 1代理业务 2直销业务 3废钢业务 4直销出库*/
+  /**  出库计划单据类型:0供应链业务 1代理业务 2直销业务 3废钢业务 4直销业务*/
   DICT_B_OUT_PLAN_BUSINESS_TYPE,
   DICT_B_OUT_PLAN_BUSINESS_TYPE_GYL,
   DICT_B_OUT_PLAN_BUSINESS_TYPE_DL,
@@ -1825,7 +1830,7 @@ export default {
   /**  采购订单表 */
   DICT_B_PO_ORDER,
 
-  /**  采购订单审批状态  0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成*/
+  /**  采购订单审批状态  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
   DICT_B_PO_ORDER_CANCEL,
   DICT_B_PO_ORDER_STATUS,
   DICT_B_PO_ORDER_STATUS_ZERO,
@@ -1865,7 +1870,7 @@ export default {
   /**  销售订单表 */
   DICT_B_SO_ORDER,
 
-  /**  销售订单审批状态  0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成*/
+  /**  销售订单审批状态  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
   DICT_B_SO_ORDER_CANCEL,
   DICT_B_SO_ORDER_STATUS,
   DICT_B_SO_ORDER_STATUS_ZERO,
@@ -1928,7 +1933,7 @@ export default {
   DICT_B_AP_TYPE_TWO,
   DICT_B_AP_TYPE_THREE,
 
-  /** 应付账款管理审批状态0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成*/
+  /** 应付账款管理审批状态 0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成 */
   DICT_B_AP_STATUS,
   DICT_B_AP_STATUS_ZERO,
   DICT_B_AP_STATUS_ONE,
@@ -1945,10 +1950,15 @@ export default {
   DICT_B_AP_PAY_STATUS_TWO,
   DICT_B_AP_PAY_STATUS_STOP,
 
-  /** 应付退款管理表 */
-  DICT_B_AP_REFUND,
+  /** 付款单状态：状态（0-待付款、1已付款、2-作废、-1-中止付款） */
+  DICT_B_AP_PAY_BILL_STATUS,
+  DICT_B_AP_PAY_BILL_STATUS_ZERO,
+  DICT_B_AP_PAY_BILL_STATUS_ONE,
+  DICT_B_AP_PAY_BILL_STATUS_TWO,
+  DICT_B_AP_PAY_BILL_STATUS_STOP,
 
   /** 应付退款管理业务类型 1-应付、2-预付、3-其他支出 */
+  DICT_B_AP_REFUND,
   DICT_B_AP_REFUND_CANCEL,
   DICT_B_AP_REFUND_TYPE,
   DICT_B_AP_REFUND_TYPE_ONE,
@@ -1986,10 +1996,7 @@ export default {
   DICT_S_TAX_TYPE_THREE,
   DICT_S_TAX_TYPE_FOUR,
 
-  /** 付款单状态：状态（0-待付款、1已付款、2-作废、-1-中止付款） */
-  DICT_B_AP_PAY_BILL_STATUS,
-  DICT_B_AP_PAY_BILL_STATUS_ZERO,
-  DICT_B_AP_PAY_BILL_STATUS_ONE,
-  DICT_B_AP_PAY_BILL_STATUS_TWO,
-  DICT_B_AP_PAY_BILL_STATUS_STOP
+  /** 入库计划V2表 */
+  DICT_B_IN_PLAN_V2,
+  DICT_B_IN_PLAN_V2_CANCEL
 }

@@ -1,6 +1,6 @@
 import { validatorCode } from './regCheck.js'
 import { isNotEmpty } from '@/utils/index.js'
-export default function install(Vue) {
+export default function install (Vue) {
   /**
    * @desc () => {
    * 全局正则校验封装
@@ -22,7 +22,7 @@ export default function install(Vue) {
    * </el-form-item>
    * }
    */
-  Vue.prototype.regCheck = function(item) {
+  Vue.prototype.regCheck = function (item) {
     const rules = []
     const _trigger = item.trigger || 'blur'
     // required

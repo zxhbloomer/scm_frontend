@@ -60,21 +60,21 @@ export default {
       default: 'blur'
     }
   },
-  data() {
+  data () {
     return {
       editMode: false
     }
   },
   computed: {
     model: {
-      get() {
+      get () {
         return this.value
       },
-      set(val) {
+      set (val) {
         this.$emit('input', val)
       }
     },
-    listeners() {
+    listeners () {
       return {
         [this.closeEvent]: this.onInputExit,
         ...this.$listeners
@@ -82,7 +82,7 @@ export default {
     }
   },
   methods: {
-    onFieldClick() {
+    onFieldClick () {
       this.editMode = true
       this.$nextTick(() => {
         const inputRef = this.$refs.input
@@ -91,10 +91,10 @@ export default {
         }
       })
     },
-    onInputExit() {
+    onInputExit () {
       this.editMode = false
     },
-    onInputChange(val) {
+    onInputChange (val) {
       this.$emit('input', val)
     }
   }

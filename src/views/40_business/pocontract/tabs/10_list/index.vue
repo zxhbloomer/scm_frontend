@@ -635,7 +635,7 @@
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            > {{ item.sku_name }}
+            > {{ item.goods_name }}
             </div>
           </template>
         </el-table-column>
@@ -651,7 +651,7 @@
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            > {{ item.spec }}
+            > {{ item.sku_name }}
             </div>
           </template>
         </el-table-column>

@@ -65,7 +65,7 @@
         <el-form-item label="">
           <select-se-customer
             v-model.trim="dataJson.searchForm.owner_name"
-            :placeholder="isPlaceholderShow('请选择货主')"
+            placeholder="请选择货主"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleOwnerReturnDataName"
@@ -75,7 +75,7 @@
         <el-form-item label="">
           <select-se-customer
             v-model.trim="dataJson.searchForm.consignor_name"
-            :placeholder="isPlaceholderShow('请选择委托方')"
+            placeholder="请选择委托方"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleConsignorReturnDataName"
@@ -85,7 +85,7 @@
         <el-form-item label="">
           <select-warehouse
             v-model.trim="dataJson.searchForm.warehouse_name"
-            :placeholder="isPlaceholderShow('请选择仓库')"
+            placeholder="请选择仓库"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleWarehouseReturnDataName"
@@ -95,7 +95,7 @@
         <el-form-item label="">
           <select-cp-supplier
             v-model.trim="dataJson.searchForm.supplier_name"
-            :placeholder="isPlaceholderShow('请选择供应商')"
+            placeholder="请选择供应商"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleSupplierReturnDataName"
@@ -321,6 +321,40 @@
       >查看
       </el-button>
       <el-button
+        v-permission="'P_IN_PLAN:IMPORT'"
+        type="primary"
+        icon="el-icon-upload"
+        :loading="settings.loading"
+        @click="handleOpenImportDialog"
+      >导入
+      </el-button>
+      <!--      导出按钮 开始-->
+      <el-button
+        v-if="!settings.btnStatus.hidenExport"
+        v-permission="'P_IN_PLAN:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnStatus.hidenExport"
+        v-permission="'P_IN_PLAN:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnStatus.hidenExport"
+        v-permission="'P_IN_PLAN:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
+      >导出</el-button>
+      <!--      导出按钮 结束-->
+      <el-button
         v-permission="'P_IN_PLAN:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
@@ -328,26 +362,6 @@
         :loading="settings.loading"
         @click="handlePrint"
       >打印
-      </el-button>
-    </el-button-group>
-
-    <!-- 数据导入导出按钮 -->
-    <el-button-group style="margin-left: 10px;">
-      <el-button
-        v-permission="'P_IN_PLAN:IMPORT'"
-        type="success"
-        icon="el-icon-upload"
-        :loading="settings.loading"
-        @click="handleImport"
-      >导入
-      </el-button>
-      <el-button
-        v-permission="'P_IN_PLAN:EXPORT'"
-        type="success"
-        icon="el-icon-download"
-        :loading="settings.loading"
-        @click="handleExport"
-      >导出
       </el-button>
     </el-button-group>
 
@@ -366,17 +380,30 @@
 
     <!-- 数据表格 -->
     <el-table
-      ref="minusTable"
+      ref="multipleTable"
       v-loading="settings.loading"
       :data="dataJson.list"
+      :element-loading-text="'正在拼命加载中...'"
+      element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="settings.tableHeight"
-      border
       stripe
+      border
+      fit
       highlight-current-row
+      :default-sort="{prop: 'u_time', order: 'descending'}"
+      style="width: 100%"
+      @row-click="handleRowClick"
+      @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
+      @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
     >
-      <el-table-column type="selection" width="55" />
+      <el-table-column
+        v-if="settings.exportModel"
+        type="selection"
+        width="45"
+        prop="id"
+      />
       <el-table-column
         type="index"
         width="50"
@@ -418,7 +445,7 @@
 
     <!-- 分页组件 -->
     <pagination_for_list
-      ref="pagination"
+      ref="minusPaging"
       :total="dataJson.total"
       :page.sync="dataJson.pageInfo.pageIndex"
       :limit.sync="dataJson.pageInfo.pageSize"
@@ -431,11 +458,43 @@
       :data="cancelDialogData"
       @success="handleCancelOk"
     />
+
+    <!-- 导入对话框 -->
+    <el-dialog
+      title="导入入库计划"
+      :visible.sync="popSettingsImport.dialogFormVisible"
+      width="500px"
+      :before-close="handlCloseDialog"
+    >
+      <simple-upload
+        :accept="'.xlsx,.xls'"
+        :multiple="false"
+        :file-size="50"
+        :limit="1"
+        action="/api/file/upload"
+        @uploadSuccess="handleUploadFileSuccess"
+        @uploadError="handleUploadFileError"
+      />
+      <div v-if="popSettingsImport.errorFileUrl" class="error-info">
+        <el-link
+          type="danger"
+          :href="popSettingsImport.errorFileUrl"
+          target="_blank"
+        >
+          点击下载错误信息文件
+        </el-link>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handlCloseDialog">关闭</el-button>
+        <el-button type="primary" @click="getImportTemplate">下载模板</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getListApi, getListSumApi, delApi, finishApi } from '@/api/40_business/inplan/inplan'
+import { getListApi, getListSumApi, delApi, finishApi, exportApi, importDataApi } from '@/api/40_business/inplan/inplan'
+import { getPageApi } from '@/api/10_system/pages/page'
 import FloatMenu from '@/components/FloatMenu'
 import pagination_for_list from '@/components/Pagination/index'
 import mixin from './mixin'
@@ -445,6 +504,8 @@ import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/cou
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import permission from '@/directive/permission/index.js' // 权限判断指令
+import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
+import deepCopy from 'deep-copy'
 
 export default {
   name: 'InPlanList',
@@ -455,7 +516,8 @@ export default {
     SelectSeCustomer,
     SelectCpSupplier,
     SelectWarehouse,
-    SelectDicts
+    SelectDicts,
+    SimpleUpload
   },
   directives: { permission },
   mixins: [mixin],
@@ -519,11 +581,24 @@ export default {
           total_unprocessed_amount: 0 // 未处理金额
         }
       },
+      // 导入窗口的状态
+      popSettingsImport: {
+        // 弹出窗口会否显示
+        dialogFormVisible: false,
+        // 模版文件地址
+        templateFilePath: '',
+        // 错误数据文件
+        errorFileUrl: ''
+      },
       // 页面设置
       settings: {
         loading: false,
         duration: 4000, // 消息提示持续时间
         tableHeight: this.setUIheight(),
+        // 表格排序规则
+        sortOrders: ['ascending', 'descending'],
+        // 导出模式
+        exportModel: false,
         btnStatus: {
           showUpdate: false,
           showDel: false,
@@ -531,9 +606,35 @@ export default {
           showApprove: false,
           showFinish: false,
           showView: false,
-          showPrint: false
+          showPrint: false,
+          showExport: false,
+          hidenExport: true
         }
       },
+      // vue-tour组件
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ],
       screenNum: 0, // 高级查询条件数量
       showCancelDialog: false, // 显示作废对话框
       cancelDialogData: null // 作废对话框数据
@@ -626,14 +727,58 @@ export default {
     updateBtnStatus () {
       const current = this.dataJson.currentRow
 
-      this.settings.btnStatus = {
-        showUpdate: current && ['SUBMITTED', 'RETURN'].includes(current.status),
-        showDel: current && ['SUBMITTED', 'RETURN'].includes(current.status),
-        showCancel: current && current.status === 'APPROVED',
-        showApprove: current && ['SUBMITTED'].includes(current.status),
-        showFinish: current && current.status === 'APPROVED',
-        showView: !!current,
-        showPrint: !!current
+      if (current && current.id) {
+        // 基础按钮：有选中数据时可用
+        this.settings.btnStatus.showView = true
+        this.settings.btnStatus.showPrint = true
+
+        // 修改按钮：待审批(0)或驳回(3)
+        if (current.status === '0' || current.status === '3') {
+          this.settings.btnStatus.showUpdate = true
+        } else {
+          this.settings.btnStatus.showUpdate = false
+        }
+
+        // 删除按钮：仅待审批(0)
+        if (current.status === '0') {
+          this.settings.btnStatus.showDel = true
+        } else {
+          this.settings.btnStatus.showDel = false
+        }
+
+        // 作废按钮：仅执行中(2)(已审批)
+        if (current.status === '2') {
+          this.settings.btnStatus.showCancel = true
+        } else {
+          this.settings.btnStatus.showCancel = false
+        }
+
+        // 审批按钮：审批中(1)或作废审批中(4)
+        if (current.status === '1' || current.status === '4') {
+          this.settings.btnStatus.showApprove = true
+        } else {
+          this.settings.btnStatus.showApprove = false
+        }
+
+        // 完成按钮：仅执行中(2)(已审批)
+        if (current.status === '2') {
+          this.settings.btnStatus.showFinish = true
+        } else {
+          this.settings.btnStatus.showFinish = false
+        }
+      } else {
+        // 没有选中数据时，所有依赖选中数据的按钮都不可用
+        this.settings.btnStatus = {
+          showUpdate: false,
+          showDel: false,
+          showCancel: false,
+          showApprove: false,
+          showFinish: false,
+          showView: false,
+          showPrint: false,
+          showExport: false,
+          hidenExport: true
+        }
       }
     },
 
@@ -854,28 +999,187 @@ export default {
      * 打印
      */
     handlePrint () {
-      // 打印逻辑实现
+      const currentRow = this.dataJson.currentRow
+      if (!currentRow) {
+        this.$message.warning('请选择要打印的记录')
+        return
+      }
+
+      this.$emit('emitPrint', {
+        data: currentRow,
+        editStatus: 'print',
+        operate_tab_info: { name: '打印-入库计划' }
+      })
     },
 
     /**
-     * 导入
+     * 完成导出
      */
-    handleImport () {
-      // 导入逻辑实现
+    handleExportOk () {
+      this.settings.btnStatus.hidenExport = true
+      this.settings.btnStatus.showExport = false
+      this.settings.exportModel = false
     },
 
     /**
-     * 导出
+     * 切换到导出模式
      */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+
+    // 导出按钮
     handleExport () {
-      // 导出逻辑实现
+      // 没有选择任何数据的情况
+      if (this.dataJson.multipleSelection.length <= 0) {
+        this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        }).then(() => {
+          this.settings.btnStatus.showExport = false
+        })
+      } else if (this.dataJson.multipleSelection.length === this.dataJson.list.length) {
+        // 选择全部的时候
+        this.$confirm('请选择：当前页数据导出，全数据导出？', '确认信息', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '全部导出',
+          cancelButtonText: '当前页数据导出'
+        }).then(() => {
+          this.handleExportAllData()
+        }).catch(action => {
+          // 右上角X
+          if (action !== 'close') {
+            // 当前页所选择的数据导出
+            this.handleExportSelectionData()
+          }
+        })
+      } else {
+        // 部分数据导出
+        this.handleExportSelectionData()
+      }
+    },
+
+    // 部分数据导出
+    handleExportSelectionData () {
+      // loading
+      this.settings.loading = true
+      const selectionJson = []
+      this.dataJson.multipleSelection.forEach(function (value, index, array) {
+        selectionJson.push(value.id)
+      })
+      const searchData = { ids: selectionJson }
+      // 开始导出
+      exportApi(searchData).then(response => {
+        this.settings.loading = false
+      })
+    },
+
+    // 全部数据导出
+    handleExportAllData () {
+      // loading
+      this.settings.loading = true
+      // 开始导出
+      exportApi(this.dataJson.searchForm).then(response => {
+        this.settings.loading = false
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
+
+    // 数据批量导入按钮
+    handleOpenImportDialog () {
+      this.popSettingsImport.dialogFormVisible = true
+    },
+
+    // 文件上传成功
+    handleUploadFileSuccess (res) {
+      this.settings.loading = true
+      this.showLoading('正在上传，请稍后...')
+      // 开始导入
+      const tempData = res.response.data
+      tempData.page_code = this.$route.meta.page_code
+      importDataApi(tempData).then(response => {
+        this.popSettingsImport.errorFileUrl = ''
+        if (response.system_code !== 0) {
+          this.popSettingsImport.errorFileUrl = response.data.url
+          this.showErrorMsg('您上传的excel数据有错误，请点击错误信息进行查看！')
+        } else if (response.system_code === 0) {
+          const successList = '成功导入 ' + response.data.length + ' 条数据'
+          this.$alert(successList, '导入成功', {
+            confirmButtonText: '关闭',
+            type: 'success'
+          }).then(() => {
+            this.popSettingsImport.dialogFormVisible = false
+          })
+        }
+      }, (_error) => {
+        console.log('发生了异常，请联系管理员！:' + JSON.stringify(_error))
+      }).finally(() => {
+        this.settings.loading = false
+        this.closeLoading()
+      })
+    },
+
+    // 文件上传失败
+    handleUploadFileError () {
+      console.debug('文件上传失败')
+      this.$notify({
+        title: '导入错误',
+        message: '文件上传发生错误！',
+        type: 'error',
+        duration: 0
+      })
+    },
+
+    getImportTemplate () {
+      const tempData = {}
+      tempData.code = this.$route.meta.page_code
+      getPageApi(tempData).then(response => {
+        this.settings.loading = false
+        this.popSettingsImport.templateFilePath = response.data.template_url
+      }, (_error) => {
+        console.log('发生了异常，请联系管理员！:' + JSON.stringify(_error))
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
+
+    // 关闭弹出窗口
+    handlCloseDialog () {
+      this.popSettingsImport.dialogFormVisible = false
+    },
+
+    /**
+     * 行点击
+     */
+    handleRowClick (row) {
+      this.$refs.multipleTable.setCurrentRow(row)
+      this.dataJson.currentRow = row
+      this.updateBtnStatus()
+    },
+
+    /**
+     * 行双击
+     */
+    handleRowDbClick (row) {
+      this.handleView()
+    },
+
+    /**
+     * 排序变化
+     */
+    handleSortChange ({ column, prop, order }) {
+      // 处理排序逻辑
+      this.handleSearch()
     },
 
     /**
      * 重置搜索
      */
     doResetSearch () {
-      this.dataJson.searchForm = {
+      const defaultSearchForm = {
         code: '', // 计划编号
         po_order_code: '', // 合同编号
         owner_name: '', // 货主
@@ -895,6 +1199,7 @@ export default {
         po_contract_code: '', // 采购合同编号（高级查询）
         po_order_code_advanced: '' // 采购订单编号（高级查询）
       }
+      this.dataJson.searchForm = deepCopy(defaultSearchForm)
       this.screenNum = 0
     },
 
@@ -969,7 +1274,10 @@ export default {
   border-left: 1px solid #dfe6ec;
   border-right: 1px solid #dfe6ec;
 }
-
+::v-deep .el-tabs__item {
+  height: 30px;
+  line-height: 30px;
+}
 .right {
   position: absolute;
   right: 10px;

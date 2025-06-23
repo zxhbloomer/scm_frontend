@@ -47,14 +47,12 @@
               />
             </el-form-item>
           </el-descriptions-item>
-          <el-descriptions-item label="物料名称">
-            {{ dataJson.tempJson.sku_name }}
-          </el-descriptions-item>
-          <el-descriptions-item label="品名">
-            {{ dataJson.tempJson.pm }}
+          <el-descriptions-item />
+          <el-descriptions-item label="商品名称">
+            {{ dataJson.tempJson.goods_name }}
           </el-descriptions-item>
           <el-descriptions-item label="规格">
-            {{ dataJson.tempJson.spec }}
+            {{ dataJson.tempJson.sku_name }}
           </el-descriptions-item>
           <el-descriptions-item>
             <div
@@ -400,9 +398,10 @@ export default {
     handleSpecCloseOk (val) {
       this.popSettingsData.specDialog.selectedDataJson = val
       this.dataJson.searchForm.sku_id = val.id
-      this.dataJson.tempJson.sku_name = val.goods_name
+      this.dataJson.tempJson.goods_name = val.goods_name
+      this.dataJson.tempJson.sku_name = val.spec
       this.dataJson.tempJson.goods_id = val.goods_id
-      this.dataJson.tempJson.spec = val.spec
+      this.dataJson.tempJson.goods_code = val.goods_code
       this.dataJson.tempJson.pm = val.pm
       this.dataJson.tempJson.sku_code = val.code
       this.popSettingsData.specDialog.visible = false

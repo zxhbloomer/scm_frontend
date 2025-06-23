@@ -130,8 +130,8 @@
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="sku_name"
-            label="物料名称"
+            prop="goods_name"
+            label="商品名称"
           />
           <el-table-column
             show-overflow-tooltip
@@ -142,7 +142,7 @@
           <el-table-column
             show-overflow-tooltip
             min-width="130"
-            prop="spec"
+            prop="sku_name"
             label="规格"
           />
           <el-table-column

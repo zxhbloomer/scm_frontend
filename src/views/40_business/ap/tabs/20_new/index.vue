@@ -1211,9 +1211,9 @@ export default {
       tempData.project_code = val.project_code
       tempData.po_contract_code = val.po_contract_code
       tempData.po_goods = val.goods_name
-      tempData.qty_total = val.order_total
-      tempData.amount_total = val.order_amount_sum
-      tempData.po_advance_payment_amount = val.advance_pay_price
+      tempData.qty_total = val.qty_total
+      tempData.amount_total = val.amount_total
+      tempData.po_advance_payment_amount = val.advance_amount_total
       tempData.po_can_advance_payment_amount = val.advance_amount_total
       tempData.order_amount = 0
       tempData.remark = null
@@ -1336,13 +1336,13 @@ export default {
       tempData.project_code = val.project_code
       tempData.po_contract_code = val.po_contract_code
       tempData.po_goods = val.goods_name
-      tempData.qty_total = val.order_total
-      tempData.amount_total = val.order_amount_sum
-      tempData.po_advance_payment_amount = val.advance_pay_price
+      tempData.po_advance_payment_amount = val.advance_amount_total
       tempData.po_can_advance_payment_amount = val.advance_amount_total
       tempData.order_amount = 0
       tempData.remark = null
       tempData.po_contract_id = val.po_contract_id
+      tempData.qty_total = val.qty_total
+      tempData.amount_total = val.amount_total
 
       if (this.dataJson.tempJson.poOrderListData.find(item => item.po_order_code === tempData.po_order_code)) {
         this.showErrorMsg('业务单据添加失败：该采购订单编号在表格中已经存在，不能添加重复的采购订单！')

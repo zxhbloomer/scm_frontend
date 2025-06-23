@@ -18,7 +18,7 @@ export default {
   },
   // 生命周期结束时销毁事件
   destroyed () {
-    if (this.resizeListener) removeResizeListener(window.document.body, this.doResize)
+    removeResizeListener(window.document.body, this.doResize)
   },
   methods: {
     doResize () {

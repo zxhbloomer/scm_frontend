@@ -73,6 +73,16 @@ export default {
     value: {
       type: Number,
       default: 0
+    },
+    // 正百分比参数：只支持正百分比
+    positivePercentage: {
+      type: Boolean,
+      default: false
+    },
+    // 百分比参数：支持正负百分比
+    percentage: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -80,14 +90,7 @@ export default {
       amount: this.value,
       dataJson: {
         // autonumeric的配置
-        options: {
-          currencySymbol: this.currencySymbol,
-          emptyInputBehavior: this.emptyInputBehavior,
-          minimumValue: this.minimumValue,
-          maximumValue: this.maximumValue,
-          decimalPlaces: this.decimalPlaces
-          // readOnly: this.disabled // 若不去掉禁止输入会有问题
-        }
+        options: this.getOptionsValue()
       }
     }
   },
@@ -101,11 +104,37 @@ export default {
     value: function (newVal, oldVal) {
       this.amount = newVal
       this.$emit('input', newVal)
+    },
+    // 监听百分比参数变化
+    positivePercentage: function () {
+      this.dataJson.options = this.getOptionsValue()
+    },
+    percentage: function () {
+      this.dataJson.options = this.getOptionsValue()
     }
   },
   mounted () {
   },
   methods: {
+    // 根据百分比参数获取options值
+    getOptionsValue () {
+      // 如果正百分比参数为true
+      if (this.positivePercentage) {
+        return 'percentageUS2decPos'
+      }
+      // 如果百分比参数为true
+      if (this.percentage) {
+        return 'percentageUS2dec'
+      }
+      // 其他情况返回原来的对象格式
+      return {
+        currencySymbol: this.currencySymbol,
+        emptyInputBehavior: this.emptyInputBehavior,
+        minimumValue: this.minimumValue,
+        maximumValue: this.maximumValue,
+        decimalPlaces: this.decimalPlaces
+      }
+    },
     getClass () {
       if (this.disabled) {
         return 'el-input el-input--mini is-disabled el-input--suffix'
