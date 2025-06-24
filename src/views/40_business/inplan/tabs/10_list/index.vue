@@ -410,15 +410,6 @@
         width="50"
         label="序号"
       />
-      <!--      <el-table-column-->
-      <!--        sortable="custom"-->
-      <!--        :sort-orders="settings.sortOrders"-->
-      <!--        :auto-fit="true"-->
-      <!--        min-width="150"-->
-      <!--        prop="code"-->
-      <!--        label="编号"-->
-      <!--        align="left"-->
-      <!--      />-->
       <!-- 入库计划主表 -->
       <el-table-column label="入库计划主表" align="center">
         <el-table-column
@@ -473,144 +464,219 @@
       </el-table-column>
 
       <!-- 入库计划明细 -->
-      <el-table-column label="入库计划明细" align="center">
+      <el-table-column
+        label="入库计划明细"
+        align="center"
+        :merge-group="true"
+      >
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="80"
-          prop="no"
           label="序号"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.no }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="150"
-          prop="contract_code"
           label="合同编号"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.contract_code }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="150"
-          prop="order_code"
           label="订单编号"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.order_code }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="150"
-          prop="warehouse_name"
           label="入库仓库"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.warehouse_name }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="150"
-          prop="supplier_name"
           label="供应商"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.supplier_name }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="120"
-          prop="order_qty"
           label="订单量"
           align="right"
         >
-          <template slot-scope="scope">
-            {{ formatNumber(scope.row.order_qty, true, 4) }}
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.order_qty == null ? '' : formatNumber(item.order_qty, true, 4) }}
+            </div>
           </template>
         </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="200"
-          prop="goods_name"
           label="物料名称"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.goods_name }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="120"
-          prop="sku_name"
           label="规格"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.sku_name }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="120"
-          prop="qty"
           label="计划入库数量"
           align="right"
         >
-          <template slot-scope="scope">
-            {{ formatNumber(scope.row.qty, true, 4) }}
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.qty == null ? '' : formatNumber(item.qty, true, 4) }}
+            </div>
           </template>
         </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="80"
-          prop="unit_name"
           label="单位"
           align="center"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.unit_name || '吨' }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="100"
-          prop="processed_qty"
           label="已入库"
           align="right"
         >
-          <template slot-scope="scope">
-            {{ formatNumber(scope.row.processed_qty, true, 4) }}
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.processed_qty == null ? '' : formatNumber(item.processed_qty, true, 4) }}
+            </div>
           </template>
         </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="100"
-          prop="unprocessed_qty"
           label="待入库"
           align="right"
         >
-          <template slot-scope="scope">
-            {{ formatNumber(scope.row.unprocessed_qty, true, 4) }}
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.unprocessed_qty == null ? '' : formatNumber(item.unprocessed_qty, true, 4) }}
+            </div>
           </template>
         </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="120"
-          prop="processing_qty"
           label="入库确认中"
           align="right"
         >
-          <template slot-scope="scope">
-            {{ formatNumber(scope.row.processing_qty, true, 4) }}
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.processing_qty == null ? '' : formatNumber(item.processing_qty, true, 4) }}
+            </div>
           </template>
         </el-table-column>
+
       </el-table-column>
 
       <!-- 系统字段 -->
@@ -1493,12 +1559,84 @@ export default {
         this.dataJson.searchForm.supplier = ''
         this.dataJson.searchForm.supplier_name = ''
       }
+    },
+
+    /**
+     * 获取明细数据行的CSS类
+     * 根据明细数据的索引和总数返回不同的CSS类来控制边框显示
+     */
+    getClass (index, length) {
+      if (length === 1) {
+        return 'merge_cells0 cell'
+      } else if (index === 0) {
+        return 'merge_cells1 cell'
+      } else if (index === length - 1) {
+        return 'merge_cells3 cell'
+      } else {
+        return 'merge_cells2 cell'
+      }
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+// 入库计划明细循环展示时的边框样式控制
+.merge_cells0 {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 23px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 6px;
+}
+
+.merge_cells1 {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 23px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #dfe6ec;
+}
+
+.merge_cells2 {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 23px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #dfe6ec;
+}
+
+.merge_cells3 {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 23px;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 6px;
+}
+
 .div-sum {
   width: 100%;
   height: 35px;
