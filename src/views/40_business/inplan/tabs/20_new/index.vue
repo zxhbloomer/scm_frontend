@@ -36,12 +36,12 @@
               入库类型
             </div>
             <el-form-item
-              prop="type_name"
+              prop="type"
               label-width="0"
             >
               <radio-dict
-                v-model="dataJson.tempJson.type_name"
-                :value="dataJson.tempJson.type_name"
+                v-model="dataJson.tempJson.type"
+                :value="dataJson.tempJson.type"
                 :para="CONSTANTS.DICT_B_IN_PLAN_TYPE"
                 :disabled="settings.inputDisabledStatus.disabledTypeSelect"
                 @change="handleTypeChange"
@@ -184,7 +184,7 @@
               show-overflow-tooltip
               min-width="120"
               label="合同编号｜订单编号"
-              align="center"
+              align="left"
             >
               <template v-slot="scope">
                 <div style="line-height: 1.2;">
@@ -197,7 +197,7 @@
               show-overflow-tooltip
               min-width="150"
               label="商品名称｜规格"
-              align="center"
+              align="left"
             >
               <template v-slot="scope">
                 <div style="line-height: 1.2;">
@@ -222,8 +222,12 @@
               min-width="80"
               prop="unit"
               label="单位"
-              align="center"
-            />
+              align="left"
+            >
+              <template v-slot="scope">
+                {{ scope.row.unit_name || scope.row.unit || '吨' }}
+              </template>
+            </el-table-column>
           </el-table-column>
 
           <!-- 历史入库 -->
@@ -269,7 +273,7 @@
               show-overflow-tooltip
               min-width="150"
               label="仓库/库区/库位"
-              align="center"
+              align="left"
             >
               <template v-slot="scope">
                 <div style="line-height: 1.2;">
@@ -283,15 +287,15 @@
 
           <!-- 操作 -->
           <el-table-column
-            label="操作"
+            label="入库计划"
             width="120"
             align="center"
             fixed="right"
           >
             <template v-slot="scope">
               <el-button
-                type="text"
-                size="small"
+                type="primary"
+                size="mini"
                 @click="handlePlanDetail(scope.$index, scope.row)"
               >
                 入库计划
@@ -355,7 +359,7 @@
       @closeMeOk="handleBpmDialogOk"
     />
 
-    <!--采购订单关联单号弹窗-->
+    <!--采购订单关联单号弹窗（入库类型选择时使用）-->
     <po-order-list-dialog
       v-if="popSettingsData.poContractDialog.visible"
       :visible="popSettingsData.poContractDialog.visible"
@@ -363,6 +367,25 @@
       title="添加关联单-采购订单"
       @closeMeOk="handlePoContractCloseOk"
       @closeMeCancel="handlePoContractCloseCancel"
+    />
+
+    <!--采购订单关联单号弹窗（新增按钮使用）-->
+    <po-order-list-dialog
+      v-if="popSettingsData.poContractAddDialog.visible"
+      :visible="popSettingsData.poContractAddDialog.visible"
+      :data="popSettingsData.poContractAddDialog.data"
+      title="新增入库明细-采购订单"
+      @closeMeOk="handlePoContractAddCloseOk"
+      @closeMeCancel="handlePoContractAddCloseCancel"
+    />
+
+    <!--仓库设置弹窗-->
+    <warehouse-set-dialog
+      v-if="popSettingsData.warehouseSetDialog.visible"
+      :visible="popSettingsData.warehouseSetDialog.visible"
+      :data="popSettingsData.warehouseSetDialog.data"
+      @closeMeOk="handleWarehouseSetCloseOk"
+      @closeMeCancel="handleWarehouseSetCloseCancel"
     />
   </div>
 </template>
@@ -429,7 +452,7 @@ import constants_para from '@/common/constants/constants_para'
 import constants_dict from '@/common/constants/constants_dict'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import { insertApi, validateApi } from '@/api/40_business/inplan/inplan'
+import { insertApi, validateApi, initPlanDataApi } from '@/api/40_business/inplan/inplan'
 import OwnerDialog from '@/views/20_master/enterprise/dialog/customer/system_enterprise/index.vue'
 import GoodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
@@ -439,6 +462,7 @@ import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import PoOrderListDialog from '@/views/40_business/poorder/dialog/list/index.vue'
+import WarehouseSetDialog from '@/views/40_business/inplan/dialog/warehouse/plan/index.vue'
 
 export default {
   directives: { elDragDialog, permission },
@@ -450,7 +474,8 @@ export default {
     GoodsDialog,
     RadioDict,
     numeric,
-    PoOrderListDialog
+    PoOrderListDialog,
+    WarehouseSetDialog
   },
   mixins: [],
   props: {
@@ -505,8 +530,18 @@ export default {
           // 自选用户
           process_users: {}
         },
-        // 采购合同关联单号弹窗
+        // 采购合同关联单号弹窗（入库类型选择时使用）
         poContractDialog: {
+          visible: false,
+          data: {}
+        },
+        // 采购合同关联单号弹窗（新增按钮使用）
+        poContractAddDialog: {
+          visible: false,
+          data: {}
+        },
+        // 仓库设置弹窗
+        warehouseSetDialog: {
           visible: false,
           data: {}
         }
@@ -517,6 +552,7 @@ export default {
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           detailListData: [],
+          type: '',
           type_name: '',
           owner_id: null,
           owner_name: '',
@@ -533,6 +569,7 @@ export default {
         // 单条数据 json
         tempJson: {
           detailListData: [],
+          type: '',
           type_name: '',
           owner_id: null,
           owner_name: '',
@@ -573,7 +610,7 @@ export default {
           disabledTypeSelect: false
         },
         rules: {
-          type_name: [
+          type: [
             { required: true, message: '请选择入库类型', trigger: 'change' }
           ],
           plan_time: [
@@ -627,15 +664,6 @@ export default {
     handleCancel () {
       this.$emit('closeMeCancel')
     },
-    // 显示错误信息
-    showErrorMsg (msg) {
-      this.$notify({
-        title: '操作提示',
-        message: msg,
-        type: 'error',
-        duration: this.settings.duration
-      })
-    },
     /**
      * 新增数据
      */
@@ -644,8 +672,10 @@ export default {
       // 校验业务数据
       const tempData = deepCopy(this.dataJson.tempJson)
       tempData.check_type = constants_para.INSERT_CHECK_TYPE
-      tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process
-      tempData.process_users = this.popSettingsData.sponsorDialog.process_users
+      // 审批流程启动数据
+      tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process // 流程
+      tempData.form_data = this.popSettingsData.sponsorDialog.form_data // 表单参数
+      tempData.process_users = this.popSettingsData.sponsorDialog.process_users // 自选用户
 
       this.$refs['dataSubmitForm'].validate(valid => {
         if (valid) {
@@ -673,12 +703,7 @@ export default {
               },
               _error => {
                 this.closeLoading()
-                this.$notify({
-                  title: '新增失败',
-                  message: _error.error.message,
-                  type: 'error',
-                  duration: this.settings.duration
-                })
+                this.showErrorMsg(_error.error.message)
               }
             )
             .finally(() => {
@@ -698,11 +723,18 @@ export default {
       return _index
     },
     handleCurrentChange (row) {
-      this.dataJson.currentJson = Object.assign({}, row) // copy obj
-      this.dataJson.currentJson.index = this.getRowIndex(row)
-      this.dataJson.rowIndex = this.getRowIndex(row)
-      this.settings.btnTableDisabledStatus.disabledInsert = false
-      this.settings.btnTableDisabledStatus.disabledDelete = false
+      if (row) {
+        this.dataJson.currentJson = Object.assign({}, row) // copy obj
+        this.dataJson.currentJson.index = this.getRowIndex(row)
+        this.dataJson.rowIndex = this.getRowIndex(row)
+        // 有选中行时，删除按钮可用
+        this.settings.btnTableDisabledStatus.disabledDelete = false
+      } else {
+        // 没有选中行时，删除按钮不可用
+        this.dataJson.currentJson = {}
+        this.dataJson.rowIndex = null
+        this.settings.btnTableDisabledStatus.disabledDelete = true
+      }
     },
     // 商品数据选择
     handleGoodsInsert () {
@@ -711,10 +743,12 @@ export default {
         this.showErrorMsg('请先选择货主')
         return
       }
-      // 新增
-      this.popSettingsData.goodsDialog.visible = true
-      this.popSettingsData.goodsDialog.data = {
-        owner_id: this.dataJson.tempJson.owner_id
+      // 弹出新增专用的采购订单选择弹窗
+      this.popSettingsData.poContractAddDialog.visible = true
+      this.popSettingsData.poContractAddDialog.data = {
+        purchaser_id: this.dataJson.tempJson.owner_id,
+        purchaser_name: this.dataJson.tempJson.owner_name,
+        purchaser_code: this.dataJson.tempJson.owner_code
       }
     },
     // 商品数据删除
@@ -740,7 +774,7 @@ export default {
 
       })
     },
-    // 商品选择完成
+    // 商品选择完成（现在只用于商品弹窗，不再用于采购订单选择）
     handleGoodsCloseOk (val) {
       this.doGoodsInsert(val)
     },
@@ -822,12 +856,7 @@ export default {
     // 上传失败
     handleFileError () {
       console.debug('文件上传失败')
-      this.$notify({
-        title: '上传错误',
-        message: '文件上传发生错误！',
-        type: 'error',
-        duration: 0
-      })
+      this.showErrorMsg('文件上传发生错误！')
     },
     /**
      * 校验数据 获取审批流程
@@ -842,12 +871,7 @@ export default {
         if (valid) {
           if (this.dataJson.tempJson.detailListData.length === 0) {
             this.closeLoading()
-            this.$notify({
-              title: '校验失败',
-              message: '请至少添加一条入库商品明细',
-              type: 'error',
-              duration: this.settings.duration
-            })
+            this.showErrorMsg('请至少添加一条入库商品明细')
             return
           }
           validateApi(tempData).then(_data => {
@@ -856,12 +880,7 @@ export default {
               this.getFlow()
             } else {
               this.closeLoading()
-              this.$notify({
-                title: '校验失败',
-                message: _data.data.message,
-                type: 'error',
-                duration: this.settings.duration
-              })
+              this.showErrorMsg(_data.data.message)
             }
           }).catch(error => {
             console.log('校验出错', error)
@@ -880,7 +899,7 @@ export default {
       getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
         .then((rsp) => {
           if (rsp.data === null) {
-            this.$message.error('未找到审批流程，请联系管理员')
+            this.showErrorMsg('未找到审批流程，请联系管理员')
             this.closeLoading()
           } else {
             // 流程参数
@@ -890,7 +909,7 @@ export default {
           }
         }).catch((err) => {
           this.closeLoading()
-          this.$message.error(err)
+          this.showErrorMsg(err)
         })
     },
     // 取消
@@ -937,16 +956,29 @@ export default {
     },
     // 入库计划按钮点击处理
     handlePlanDetail (index, row) {
-      // 处理入库计划详情设置
-      console.log('入库计划详情设置:', index, row)
-      // 这里可以打开一个对话框来设置仓库、库区、库位信息
-      // 或者直接在行内编辑
-      this.$message.info('入库计划详情设置功能待实现')
+      // 打开仓库设置弹窗
+      this.popSettingsData.warehouseSetDialog.visible = true
+      this.popSettingsData.warehouseSetDialog.data = {
+        contract_code: row.contract_code || '',
+        order_code: row.order_code || '',
+        goods_name: row.goods_name || '',
+        sku_name: row.sku_name || '',
+        qty: row.qty || null,
+        warehouse_id: row.warehouse_id || null,
+        warehouse_code: row.warehouse_code || '',
+        warehouse_name: row.warehouse_name || '',
+        location_id: row.location_id || null,
+        location_code: row.location_code || '',
+        location_name: row.location_name || '',
+        bin_id: row.bin_id || null,
+        bin_code: row.bin_code || '',
+        bin_name: row.bin_name || '',
+        rowIndex: index // 传递行索引用于更新数据
+      }
     },
     // 采购合同关联单号弹窗：确定
     handlePoContractCloseOk (val) {
       this.popSettingsData.poContractDialog.visible = false
-
       // 设置采购订单相关信息
       this.dataJson.tempJson.po_order_id = val.id
       this.dataJson.tempJson.po_order_code = val.code
@@ -957,19 +989,54 @@ export default {
       this.dataJson.tempJson.owner_id = val.purchaser_id
       this.dataJson.tempJson.owner_name = val.purchaser_name
       this.dataJson.tempJson.owner_code = val.purchaser_code
-
       // 禁用入库类型选择
       this.settings.inputDisabledStatus.disabledTypeSelect = true
 
       // 启用新增按钮（选择采购订单后可以添加商品明细）
       this.settings.btnTableDisabledStatus.disabledInsert = false
+      // 调用初始化入库计划数据接口
+      this.showLoading('正在初始化入库计划数据...')
+      initPlanDataApi({ order_id: val.id })
+        .then(response => {
+          this.closeLoading()
+          if (response.success && response.data) {
+            // 将返回的数据绑定到入库货物明细列表
+            this.dataJson.tempJson.detailListData = response.data
+            // 重新计算总数量
+            this.calculateTotal()
+            // 清除表格选择状态
+            this.$nextTick(() => {
+              if (this.$refs.multipleTable) {
+                this.$refs.multipleTable.setCurrentRow()
+              }
+            })
 
-      this.$notify({
-        title: '关联成功',
-        message: '已关联采购订单：' + val.code,
-        type: 'success',
-        duration: this.settings.duration
-      })
+            this.$notify({
+              title: '初始化成功',
+              message: '已成功加载入库计划数据，共' + response.data.length + '条明细',
+              type: 'success',
+              duration: this.settings.duration
+            })
+          } else {
+            this.$notify({
+              title: '关联成功',
+              message: '已关联采购订单：' + val.code,
+              type: 'success',
+              duration: this.settings.duration
+            })
+          }
+        })
+        .catch(error => {
+          this.closeLoading()
+          console.error('初始化入库计划数据失败:', error)
+          // 即使初始化失败，也要提示关联成功
+          this.$notify({
+            title: '关联成功',
+            message: '已关联采购订单：' + val.code + '，但初始化数据失败',
+            type: 'warning',
+            duration: this.settings.duration
+          })
+        })
     },
     // 采购合同关联单号弹窗：取消
     handlePoContractCloseCancel () {
@@ -983,6 +1050,124 @@ export default {
         type: 'info',
         duration: this.settings.duration
       })
+    },
+    // 新增专用的采购合同关联单号弹窗：确定
+    handlePoContractAddCloseOk (val) {
+      this.popSettingsData.poContractAddDialog.visible = false
+      // 调用初始化入库计划数据接口，使用新选择的采购订单ID
+      this.showLoading('正在初始化入库计划数据...')
+      initPlanDataApi({ order_id: val.id })
+        .then(response => {
+          this.closeLoading()
+          if (response.success && response.data) {
+            // 检查重复的order_detail_id并过滤
+            const validData = []
+            const duplicateItems = []
+            response.data.forEach(newItem => {
+              // 检查当前列表中是否已存在相同的order_detail_id
+              const existingItem = this.dataJson.tempJson.detailListData.find(
+                existingData => existingData.order_detail_id === newItem.order_detail_id
+              )
+              if (existingItem) {
+                // 如果存在重复，记录重复项信息
+                duplicateItems.push({
+                  contract_code: newItem.contract_code || '-',
+                  order_code: newItem.order_code || '-',
+                  goods_name: newItem.goods_name || '-',
+                  sku_name: newItem.sku_name || '-'
+                })
+              } else {
+                // 如果不重复，加入有效数据列表
+                validData.push(newItem)
+              }
+            })
+
+            // 如果有重复项，显示错误信息
+            if (duplicateItems.length > 0) {
+              let errorMessage = '以下入库计划数据在列表中已经存在：\n'
+              duplicateItems.forEach(item => {
+                errorMessage += `[合同编号｜订单编号：${item.contract_code}｜${item.order_code}；商品｜规格：${item.goods_name}｜${item.sku_name}]\n`
+              })
+
+              this.showErrorMsg(errorMessage)
+            }
+
+            // 如果有有效数据，则追加到列表
+            if (validData.length > 0) {
+              this.dataJson.tempJson.detailListData.push(...validData)
+              // 重新计算总数量
+              this.calculateTotal()
+              // 清除表格选择状态
+              this.$nextTick(() => {
+                if (this.$refs.multipleTable) {
+                  this.$refs.multipleTable.setCurrentRow()
+                }
+              })
+
+              this.$notify({
+                title: '新增成功',
+                message: `已成功追加入库计划数据，新增${validData.length}条明细${duplicateItems.length > 0 ? `，跳过${duplicateItems.length}条重复数据` : ''}`,
+                type: 'success',
+                duration: this.settings.duration
+              })
+            } else if (duplicateItems.length > 0) {
+              // 如果全部都是重复数据
+              this.$notify({
+                title: '操作提示',
+                message: '所选数据均已存在，未新增任何明细',
+                type: 'warning',
+                duration: this.settings.duration
+              })
+            }
+          } else {
+            this.$notify({
+              title: '提示',
+              message: '没有获取到有效的入库计划数据',
+              type: 'warning',
+              duration: this.settings.duration
+            })
+          }
+        })
+        .catch(error => {
+          this.closeLoading()
+          console.error('初始化入库计划数据失败:', error)
+          this.showErrorMsg('获取入库计划数据失败，请重试')
+        })
+    },
+    // 新增专用的采购合同关联单号弹窗：取消
+    handlePoContractAddCloseCancel () {
+      this.popSettingsData.poContractAddDialog.visible = false
+    },
+    // 仓库设置弹窗：确定
+    handleWarehouseSetCloseOk (data) {
+      this.popSettingsData.warehouseSetDialog.visible = false
+      const rowIndex = this.popSettingsData.warehouseSetDialog.data.rowIndex
+      if (rowIndex !== undefined && this.dataJson.tempJson.detailListData[rowIndex]) {
+        // 更新对应行的数据
+        const targetRow = this.dataJson.tempJson.detailListData[rowIndex]
+        targetRow.qty = data.qty
+        targetRow.warehouse_id = data.warehouse_id
+        targetRow.warehouse_code = data.warehouse_code
+        targetRow.warehouse_name = data.warehouse_name
+        targetRow.location_id = data.location_id
+        targetRow.location_code = data.location_code
+        targetRow.location_name = data.location_name
+        targetRow.bin_id = data.bin_id
+        targetRow.bin_code = data.bin_code
+        targetRow.bin_name = data.bin_name
+        // 重新计算总数量
+        this.calculateTotal()
+        this.$notify({
+          title: '设置成功',
+          message: '仓库信息已更新',
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }
+    },
+    // 仓库设置弹窗：取消
+    handleWarehouseSetCloseCancel () {
+      this.popSettingsData.warehouseSetDialog.visible = false
     },
     handleReset () {
       // 确认重置操作

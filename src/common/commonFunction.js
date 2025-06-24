@@ -90,14 +90,26 @@ export default {
 
     /** 数字格式化 */
     Vue.prototype.formatNumber = function (data, decimal = false, decimalDigits = 2) {
-      if (data === null) {
+      // 检查无效值
+      if (data == null || data === '' || isNaN(data)) {
         return null
-      } else {
-        return data.toLocaleString('zh-CN', {
+      }
+
+      // 确保是数字类型
+      const num = Number(data)
+      if (isNaN(num)) {
+        return null
+      }
+
+      try {
+        return num.toLocaleString('zh-CN', {
           style: 'decimal',
-          minimumFractionDigits: decimal ? decimalDigits : 0,
+          minimumFractionDigits: decimal ? Math.min(decimalDigits, 4) : 0,
           maximumFractionDigits: 4
         })
+      } catch (error) {
+        console.warn('formatNumber error:', error, 'data:', data)
+        return decimal ? num.toFixed(Math.min(decimalDigits, 4)) : num.toString()
       }
     }
     /** 数字格式化 */

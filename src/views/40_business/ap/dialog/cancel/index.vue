@@ -58,7 +58,7 @@
                 type="textarea"
                 clearable
                 show-word-limit
-                :placeholder="isPlaceholderShow('请输入')"
+                placeholder="请输入"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -249,7 +249,6 @@ export default {
         },
         // 以下为pop的内容：数据弹出框
         selection: [],
-        dialogStatus: this.dialogStatus,
         // pop的check内容
         rules: {
           cancel_reason: [
@@ -262,13 +261,6 @@ export default {
   computed: {
     listenVisible () {
       return this.visible
-    },
-    isViewModel () {
-      if (this.settings.dialogStatus === this.PARAMETERS.STATUS_VIEW) {
-        return true
-      } else {
-        return false
-      }
     }
   },
   // 监听器
@@ -311,14 +303,6 @@ export default {
       this.settings.btnDisabledStatus = this.$options.data.call(
         this
       ).settings.btnDisabledStatus
-    },
-    // Placeholder设置
-    isPlaceholderShow (val) {
-      if (this.isViewModel) {
-        return ''
-      } else {
-        return val
-      }
     },
     // 设置监听器
     setWatch () {

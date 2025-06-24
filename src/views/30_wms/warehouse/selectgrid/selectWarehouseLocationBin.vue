@@ -31,7 +31,7 @@
         ref="popover"
         v-model="settings.visible"
         :title="title"
-        width="700"
+        width="650"
         trigger="manual"
         popper-class="normal_popper"
         :placement="placement"
@@ -77,29 +77,9 @@
                   :sort-orders="settings.sortOrders"
                   :auto-fit="true"
                   min-width="130"
-                  prop="warehouse_short_name"
-                  label="简称"
-                />
-                <el-table-column
-                  sortable="custom"
-                  :sort-orders="settings.sortOrders"
-                  :auto-fit="true"
-                  min-width="130"
                   prop="warehouse_type_name"
                   label="仓库类型"
                 />
-                <el-table-column
-                  sortable="custom"
-                  :sort-orders="settings.sortOrders"
-                  :auto-fit="true"
-                  min-width="130"
-                  prop="warehouse_enable"
-                  label="状态"
-                >
-                  <template v-slot="scope">
-                    {{ scope.row.warehouse_enable === true?'启用':'未启用' }}
-                  </template>
-                </el-table-column>
                 <!-- <el-table-column
                   sortable="custom"
                   :sort-orders="settings.sortOrders"

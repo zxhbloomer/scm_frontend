@@ -155,3 +155,15 @@ export function finishApi (query) {
     data: query
   })
 }
+
+/**
+ * 初始化入库计划数据
+ * @param {*} data
+ */
+export function initPlanDataApi (data) {
+  return request({
+    url: '/api/v1/inplan/init/plan/data',
+    method: 'post',
+    data
+  })
+}
