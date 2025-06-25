@@ -19,7 +19,7 @@
         <template slot="label">审批中</template>
       </el-tab-pane>
       <el-tab-pane name="3">
-        <template slot="label">已审批</template>
+        <template slot="label">执行中</template>
       </el-tab-pane>
       <el-tab-pane name="4">
         <template slot="label">已完成</template>
@@ -279,7 +279,7 @@
         v-permission="'P_IN_PLAN:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDel"
       >删除
@@ -288,7 +288,7 @@
         v-permission="'P_IN_PLAN:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
-        icon="el-icon-close"
+        icon="el-icon-error"
         :loading="settings.loading"
         @click="handleCancel"
       >作废
@@ -297,7 +297,7 @@
         v-permission="'P_IN_PLAN:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-s-check"
         :loading="settings.loading"
         @click="handleApprove"
       >审批
@@ -310,15 +310,6 @@
         :loading="settings.loading"
         @click="handleFinish"
       >完成
-      </el-button>
-      <el-button
-        v-permission="'P_IN_PLAN:INFO'"
-        :disabled="!settings.btnStatus.showView"
-        type="primary"
-        icon="el-icon-view"
-        :loading="settings.loading"
-        @click="handleView"
-      >查看
       </el-button>
       <el-button
         v-permission="'P_IN_PLAN:IMPORT'"
@@ -362,6 +353,15 @@
         :loading="settings.loading"
         @click="handlePrint"
       >打印
+      </el-button>
+      <el-button
+        v-permission="'P_IN_PLAN:INFO'"
+        :disabled="!settings.btnStatus.showView"
+        type="primary"
+        icon="el-icon-view"
+        :loading="settings.loading"
+        @click="handleView"
+      >查看
       </el-button>
     </el-button-group>
 
@@ -741,7 +741,8 @@
     <cancel-dialog
       :visible.sync="showCancelDialog"
       :data="cancelDialogData"
-      @success="handleCancelOk"
+      @closeMeOk="handleCancelOk"
+      @closeMeCancel="handleCancelCancel"
     />
 
     <!-- 导入对话框 -->
@@ -1322,10 +1323,13 @@ export default {
     /**
      * 作废对话框确认
      */
-    handleCancelOk () {
+    handleCancelOk (val) {
+      // 关闭作废对话框
       this.showCancelDialog = false
+      // 刷新数据列表
       this.getDataList()
-      this.showMsg('作废申请提交成功')
+      // 注意：成功消息已经在作废对话框中显示，这里不再重复显示
+      // 参考采购合同的实现，但避免重复消息提示
     },
 
     /**
@@ -1775,4 +1779,8 @@ export default {
     margin-right: 5%;
   }
 }
+::v-deep .el-tabs__header {
+  margin: 0 0 5px;
+}
+
 </style>

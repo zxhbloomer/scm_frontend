@@ -166,7 +166,7 @@
         v-permission="'P_AP:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-edit"
         :loading="settings.loading"
         @click="handleUpdate"
       >修改
@@ -175,7 +175,7 @@
         v-permission="'P_AP:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDel"
       >删除
@@ -255,7 +255,7 @@
         v-permission="'P_AP:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
       >查看

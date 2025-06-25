@@ -47,12 +47,12 @@
               作废理由
             </div>
             <el-form-item
-              prop="cancel_reason"
+              prop="remark"
               label-width="0"
             >
               <el-input
                 ref="refFocusOne"
-                v-model.trim="dataJson.tempJson.cancel_reason"
+                v-model.trim="dataJson.tempJson.remark"
                 type="textarea"
                 clearable
                 show-word-limit
@@ -95,15 +95,15 @@
         <el-divider />
         <el-button
           plain
-          :disabled="settings.loading"
-          @click="handleCancel()"
-        >取消</el-button>
-        <el-button
-          plain
           type="primary"
           :disabled="settings.loading"
           @click="startProcess()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
       </div>
     </el-dialog>
 
@@ -224,7 +224,7 @@ export default {
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
-          cancel_reason: '',
+          remark: '',
           cancel_files: []
         },
         // 单条数据 json
@@ -239,9 +239,8 @@ export default {
         duration: 4000,
         // pop的check内容
         rules: {
-          cancel_reason: [
-            { required: true, message: '请输入作废理由', trigger: 'change' },
-            { min: 10, message: '作废理由至少10个字符', trigger: 'change' }
+          remark: [
+            { required: true, message: '请输入作废理由', trigger: 'change' }
           ]
         }
       }
@@ -253,7 +252,18 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 监听弹窗显示状态，每次打开时重新初始化数据
+    visible: {
+      handler (newVal) {
+        if (newVal === true) {
+          // 弹窗打开时，重新初始化所有数据
+          this.resetData()
+        }
+      },
+      immediate: false
+    }
+  },
   created () {
     this.init()
   },
@@ -267,12 +277,39 @@ export default {
     // 初始化处理
     init () {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      // 初始化watch
+      this.setWatch()
+      this.settings.loading = false
+    },
+
+    // 重置数据 - 每次弹窗打开时调用
+    resetData () {
+      // 重置表单数据
+      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+
+      // 清空附件数据
+      this.dataJson.cancel_data = []
+      this.dataJson.cancel_file = []
+      this.dataJson.cancel_files = []
+
+      // 重置审批流程数据
+      this.popSettingsData.sponsorDialog.visible = false
+      this.popSettingsData.sponsorDialog.form_data = {}
+      this.popSettingsData.sponsorDialog.initial_process = null
+      this.popSettingsData.sponsorDialog.process_users = {}
+
       // 设置当前数据ID
       if (this.data && this.data.id) {
         this.dataJson.tempJson.id = this.data.id
       }
-      // 初始化watch
-      this.setWatch()
+
+      // 清除表单验证状态
+      this.$nextTick(() => {
+        if (this.$refs['dataSubmitForm']) {
+          this.$refs['dataSubmitForm'].clearValidate()
+        }
+      })
+
       this.settings.loading = false
     },
     // 设置监听器
@@ -333,7 +370,6 @@ export default {
           cancelApi(tempData)
             .then(
               _data => {
-                this.closeLoading()
                 // 通知兄弟组件，数据更新
                 EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK, _data.data)
                 this.$notify({
@@ -342,11 +378,8 @@ export default {
                   type: 'success',
                   duration: this.settings.duration
                 })
-                // 触发成功回调
-                this.$emit('success')
               },
               _error => {
-                this.closeLoading()
                 this.$notify({
                   title: '作废申请失败',
                   message: _error.error.message,
@@ -356,6 +389,7 @@ export default {
               }
             )
             .finally(() => {
+              // 在finally中调用closeMeOk事件，确保无论成功失败都会关闭弹窗
               this.$emit('closeMeOk', tempData)
               this.closeLoading()
             })

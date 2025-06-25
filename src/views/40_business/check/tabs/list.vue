@@ -100,7 +100,7 @@
         v-permission="'P_INVENTORY_CHECK:DELETE'"
         :disabled="!settings.btnStatus.showEnable"
         type="primary"
-        icon="el-icon-close"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDelete"
       >删除</el-button>

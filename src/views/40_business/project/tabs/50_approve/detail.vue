@@ -11,13 +11,13 @@
         status-icon
       >
         <el-alert
-          v-if="dataJson.tempJson.status === constants_para.DICT_B_PROJECT_STATUS_FOUR || dataJson.tempJson.status === constants_para.DICT_B_PROJECT_STATUS_FIVE"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_PROJECT_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_PROJECT_STATUS_FIVE"
           title="作废理由"
           type="error"
           :closable="false"
         />
         <el-descriptions
-          v-if="dataJson.tempJson.status === constants_para.DICT_B_PROJECT_STATUS_FOUR || dataJson.tempJson.status === constants_para.DICT_B_PROJECT_STATUS_FIVE"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_PROJECT_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_PROJECT_STATUS_FIVE"
           title=""
           :column="3"
           :label-style="labelStyle"

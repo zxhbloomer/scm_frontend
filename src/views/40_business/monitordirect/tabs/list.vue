@@ -411,7 +411,7 @@
         v-permission="'P_MONITOR_DIRECT:DELETE'"
         :disabled="!settings.btnShowStatus.showDelete"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDelete"
       >删除</el-button>

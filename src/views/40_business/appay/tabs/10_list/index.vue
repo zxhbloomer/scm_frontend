@@ -143,7 +143,7 @@
         v-permission="'P_AP_PAY:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
-        icon="el-icon-circle-close"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
       >查看

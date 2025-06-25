@@ -85,7 +85,7 @@
       <el-button
         v-permission="'P_ENTERPRISE:ADD'"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
         @click="handleNew"
       >新增</el-button>
@@ -94,7 +94,7 @@
         v-permission="'P_ENTERPRISE:UPDATE'"
         :disabled="!settings.btnShowStatus.showUpdate"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-edit"
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
@@ -102,7 +102,7 @@
         v-permission="'P_ENTERPRISE:DELETE'"
         :disabled="!settings.btnShowStatus.showDel"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDel"
       >删除</el-button>
@@ -117,7 +117,7 @@
       <el-button
         v-permission="'P_ENTERPRISE:IMPORT'"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-upload"
         :loading="settings.loading"
         @click="handleOpenImportDialog"
       >导入</el-button>
@@ -159,7 +159,7 @@
         v-permission="'P_ENTERPRISE:INFO'"
         :disabled="!settings.btnShowStatus.showView"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
       >查看</el-button>

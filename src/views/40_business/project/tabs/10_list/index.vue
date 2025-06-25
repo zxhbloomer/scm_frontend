@@ -188,7 +188,7 @@
         v-permission="'B_PROJECT:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDel"
       >删除
@@ -224,7 +224,7 @@
         v-permission="'B_PROJECT:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-success"
         :loading="settings.loading"
         @click="handleFinish"
       >完成
@@ -268,7 +268,7 @@
         v-permission="'B_PROJECT:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
       >查看

@@ -63,7 +63,7 @@
         v-permission="'P_CONTAINER:DELETE'"
         :disabled="!settings.btnShowStatus.showDelete"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDelete"
       >删除</el-button>

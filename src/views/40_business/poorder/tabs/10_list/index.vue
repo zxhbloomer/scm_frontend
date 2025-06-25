@@ -203,7 +203,7 @@
         v-permission="'P_PO_ORDER:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDel"
       >删除
@@ -239,7 +239,7 @@
         v-permission="'P_PO_ORDER:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-success"
         :loading="settings.loading"
         @click="handleView"
       >完成
@@ -283,7 +283,7 @@
         v-permission="'P_PO_ORDER:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
-        icon="el-icon-zoom-in"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
       >查看
