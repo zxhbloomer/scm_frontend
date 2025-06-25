@@ -1283,12 +1283,12 @@ export default {
         }
 
         // _this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        //   if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_YTJ && value.status !== constants_type.DICT_B_IN_PLAN_STATUS_CANCEL_BEING_AUDITED) {
+        //   if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ONE && value.status !== constants_type.DICT_B_IN_PLAN_STATUS_FOUR) {
         //     // 非已提交状态不可审核/驳回
         //     _this.settings.btnStatus.showApprove = false
         //   }
         //
-        //   if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_TG) {
+        //   if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_TWO) {
         //     // 非审核通过状态不可完成
         //     _this.settings.btnStatus.showFinish = false
         //   }

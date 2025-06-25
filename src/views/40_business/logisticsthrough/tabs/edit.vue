@@ -1905,7 +1905,7 @@ export default {
     // 入库计划
     handleInPlanDialog () {
       this.popSettingsData.searchDialogDataTwelve.data = {
-        status: this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TG,
+        status: this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO,
         type: this.CONSTANTS.DICT_B_IN_PLAN_TYPE_TIH
       }
       this.popSettingsData.searchDialogDataTwelve.visible = true

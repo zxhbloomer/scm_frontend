@@ -75,7 +75,7 @@
                 :para="CONSTANTS.DICT_B_PO_CONTRACT_TYPE"
                 @change="handleTypeChange"
               />
-            </el-form-item>p
+            </el-form-item>
           </el-descriptions-item>
           <!--          <el-descriptions-item label="订单量">-->
           <!--            <el-form-item-->

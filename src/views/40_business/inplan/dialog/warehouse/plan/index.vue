@@ -46,24 +46,69 @@
           <el-descriptions-item label="规格">
             {{ dataJson.tempJson.sku_name || '-' }}
           </el-descriptions-item>
+          <el-descriptions-item label="订单数量">
+            {{ dataJson.tempJson.order_qty == null ? '-' : formatNumber(dataJson.tempJson.order_qty, true, 4) }}
+          </el-descriptions-item>
+          <el-descriptions-item>
+            <!-- 预留空位置 -->
+          </el-descriptions-item>
+          <el-descriptions-item label="已入库数量">
+            {{ dataJson.tempJson.processed_qty == null ? '-' : formatNumber(dataJson.tempJson.processed_qty, true, 4) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="待入库数量">
+            {{ dataJson.tempJson.unprocessed_qty == null ? '-' : formatNumber(dataJson.tempJson.unprocessed_qty, true, 4) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="订单单价">
+            {{ dataJson.tempJson.order_price == null ? '-' : formatCurrency(dataJson.tempJson.order_price, true) }}
+          </el-descriptions-item>
           <el-descriptions-item>
             <div
               slot="label"
               class="required-mark"
             >
-              入库数量（吨）
+              入库单价
+            </div>
+            <el-form-item
+              prop="price"
+              label-width="0"
+            >
+              <numeric
+                v-model="dataJson.tempJson.price"
+                :decimal-places="4"
+                :currency-symbol="''"
+                style="width: 100%"
+                placeholder="请输入入库单价"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >
+              本次计划入库数量（吨）
             </div>
             <el-form-item
               prop="qty"
               label-width="0"
             >
-              <numeric
-                v-model="dataJson.tempJson.qty"
-                :decimal-places="4"
-                :currency-symbol="''"
-                style="width: 100%"
-                placeholder="请输入入库数量"
-              />
+              <el-row :gutter="10">
+                <el-col :span="18">
+                  <numeric
+                    v-model="dataJson.tempJson.qty"
+                    :decimal-places="4"
+                    :currency-symbol="''"
+                    style="width: 100%"
+                    placeholder="请输入入库数量"
+                  />
+                </el-col>
+                <el-col :span="6">
+                  <el-button
+                    type="primary"
+                    @click="handleSetFullQuantity"
+                  >全部</el-button>
+                </el-col>
+              </el-row>
             </el-form-item>
           </el-descriptions-item>
           <el-descriptions-item>
@@ -96,15 +141,15 @@
         <el-divider />
         <el-button
           plain
-          :disabled="settings.loading"
-          @click="handleCancel()"
-        >关闭</el-button>
-        <el-button
-          plain
           type="primary"
           :disabled="settings.loading"
           @click="handleOk()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >关闭</el-button>
       </div>
     </el-dialog>
   </div>
@@ -187,8 +232,12 @@ export default {
         // 校验规则
         rules: {
           qty: [
-            { required: true, message: '请输入入库数量', trigger: 'blur' },
+            { required: true, message: '请输入本次计划入库数量', trigger: 'blur' },
             { validator: this.qty_validator, trigger: 'blur' }
+          ],
+          price: [
+            { required: true, message: '请输入入库单价', trigger: 'blur' },
+            { validator: this.price_validator, trigger: 'blur' }
           ],
           wlb_data: [
             { required: true, validator: this.wlb_data_validator, trigger: 'blur' }
@@ -215,7 +264,13 @@ export default {
           location_name: '',
           bin_id: null,
           bin_code: '',
-          bin_name: ''
+          bin_name: '',
+          // 新增字段
+          order_qty: 0, // 订单数量
+          order_price: 0, // 订单单价
+          processed_qty: 0, // 已入库数量
+          unprocessed_qty: 0, // 待入库数量
+          price: null // 入库单价
         },
         tempJsonOriginal: {}
       }
@@ -253,6 +308,13 @@ export default {
         this.dataJson.tempJson.goods_name = this.data.goods_name || ''
         this.dataJson.tempJson.sku_name = this.data.sku_name || ''
         this.dataJson.tempJson.qty = this.data.qty || null
+        // 新增字段初始化
+        this.dataJson.tempJson.order_qty = this.data.order_qty || 0
+        this.dataJson.tempJson.order_price = this.data.order_price || 0
+        this.dataJson.tempJson.processed_qty = this.data.processed_qty || 0
+        this.dataJson.tempJson.unprocessed_qty = this.data.unprocessed_qty || 0
+        // 入库单价默认等于订单单价，如果已经有设置过的价格则使用设置的价格
+        this.dataJson.tempJson.price = this.data.price || this.data.order_price || null
         // 如果有已设置的仓库信息，则回填
         if (this.data.warehouse_id) {
           this.dataJson.tempJson.warehouse_id = this.data.warehouse_id
@@ -290,6 +352,7 @@ export default {
           // 构建返回数据
           const resultData = {
             qty: this.dataJson.tempJson.qty,
+            price: this.dataJson.tempJson.price,
             warehouse_id: this.dataJson.tempJson.warehouse_id,
             warehouse_code: this.dataJson.tempJson.warehouse_code,
             warehouse_name: this.dataJson.tempJson.warehouse_name,
@@ -343,7 +406,17 @@ export default {
     // 入库数量校验
     qty_validator (rule, value, callback) {
       if (value <= 0) {
-        callback(new Error('入库数量必须大于0'))
+        callback(new Error('本次计划入库数量必须大于0'))
+      } else {
+        callback()
+      }
+    },
+    // 入库单价校验
+    price_validator (rule, value, callback) {
+      if (value == null || value === '' || value === undefined) {
+        callback(new Error('请输入入库单价'))
+      } else if (value <= 0) {
+        callback(new Error('入库单价必须大于0'))
       } else {
         callback()
       }
@@ -354,6 +427,26 @@ export default {
         callback()
       } else {
         callback(new Error('请选择仓库/库区/库位'))
+      }
+    },
+
+    /**
+     * 全部按钮点击处理
+     * 设置入库数量 = 订单数量 - 已入库数量 - 待入库数量
+     */
+    handleSetFullQuantity () {
+      const orderQty = this.dataJson.tempJson.order_qty || 0
+      const processedQty = this.dataJson.tempJson.processed_qty || 0
+      const unprocessedQty = this.dataJson.tempJson.unprocessed_qty || 0
+
+      // 计算可入库数量
+      const availableQty = orderQty - processedQty - unprocessedQty
+
+      // 设置入库数量
+      this.dataJson.tempJson.qty = availableQty > 0 ? availableQty : 0
+
+      if (availableQty <= 0) {
+        this.$message.warning('无可入库数量')
       }
     }
   }

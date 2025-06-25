@@ -186,15 +186,15 @@ const DICT_B_IN_PLAN_V2 = 'b_in_plan_v2'
 /** 入库计划V2表 审批作废流 */
 const DICT_B_IN_PLAN_V2_CANCEL = 'b_in_plan_v2_cancel'
 
-/** 入库计划状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成 */
+/** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_PLAN_STATUS = 'b_in_plan_status'
-const DICT_B_IN_PLAN_STATUS_ZD = '0'
-const DICT_B_IN_PLAN_STATUS_YTJ = '1'
-const DICT_B_IN_PLAN_STATUS_TG = '2'
-const DICT_B_IN_PLAN_STATUS_BH = '3'
-const DICT_B_IN_PLAN_STATUS_ZF = '4'
-const DICT_B_IN_PLAN_STATUS_FINISH = '5'
-const DICT_B_IN_PLAN_STATUS_CANCEL_BEING_AUDITED = '6'
+const DICT_B_IN_PLAN_STATUS_ZERO = '0'
+const DICT_B_IN_PLAN_STATUS_ONE = '1'
+const DICT_B_IN_PLAN_STATUS_TWO = '2'
+const DICT_B_IN_PLAN_STATUS_THREE = '3'
+const DICT_B_IN_PLAN_STATUS_FOUR = '4'
+const DICT_B_IN_PLAN_STATUS_FIVE = '5'
+const DICT_B_IN_PLAN_STATUS_SIX = '6'
 
 /**  入库计划审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
 const DICT_B_IN_PLAN_V2_STATUS = 'b_in_plan_v2_status'
@@ -1174,15 +1174,15 @@ export default {
   /** 入库计划表 审批作废流 */
   DICT_B_IN_PLAN_CANCEL,
 
-  /** 入库单状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成*/
+  /** 入库计划状态  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
   DICT_B_IN_PLAN_STATUS,
-  DICT_B_IN_PLAN_STATUS_ZD,
-  DICT_B_IN_PLAN_STATUS_YTJ,
-  DICT_B_IN_PLAN_STATUS_TG,
-  DICT_B_IN_PLAN_STATUS_BH,
-  DICT_B_IN_PLAN_STATUS_ZF,
-  DICT_B_IN_PLAN_STATUS_FINISH,
-  DICT_B_IN_PLAN_STATUS_CANCEL_BEING_AUDITED,
+  DICT_B_IN_PLAN_STATUS_ZERO,
+  DICT_B_IN_PLAN_STATUS_ONE,
+  DICT_B_IN_PLAN_STATUS_TWO,
+  DICT_B_IN_PLAN_STATUS_THREE,
+  DICT_B_IN_PLAN_STATUS_FOUR,
+  DICT_B_IN_PLAN_STATUS_FIVE,
+  DICT_B_IN_PLAN_STATUS_SIX,
 
   /** 入库计划审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
   DICT_B_IN_PLAN_V2_STATUS,

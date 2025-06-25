@@ -1106,7 +1106,7 @@ export default {
       }
 
       // 审核通过可入库操作
-      if (this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_TG) {
+      if (this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_TWO) {
         this.settings.btnStatus.showOperate = true
       } else {
         this.settings.btnStatus.showOperate = false

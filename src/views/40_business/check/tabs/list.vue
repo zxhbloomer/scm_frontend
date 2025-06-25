@@ -772,14 +772,14 @@ export default {
       }
 
       // 制单，驳回可修改
-      if ((this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_ZD || this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_BH)) {
+      if ((this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_ZERO || this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_THREE)) {
         this.settings.btnStatus.showUpdate = true
       } else {
         this.settings.btnStatus.showUpdate = false
       }
 
       // 审核通过可入库操作
-      if (this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_TG) {
+      if (this.dataJson.currentJson.status === constants_type.DICT_B_IN_PLAN_STATUS_TWO) {
         this.settings.btnStatus.showOperate = true
       } else {
         this.settings.btnStatus.showOperate = false

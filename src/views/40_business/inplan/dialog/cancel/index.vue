@@ -1,60 +1,176 @@
 <template>
-  <el-dialog
-    title="作废申请"
-    :visible.sync="dialogVisible"
-    width="600px"
-    :close-on-click-modal="false"
-    @close="handleClose"
-  >
-    <el-form
-      ref="cancelForm"
-      :model="formData"
-      :rules="rules"
-      label-width="100px"
+  <div>
+    <!-- 作废审批提交弹窗 -->
+    <el-dialog
+      v-if="listenVisible"
+      v-el-drag-dialog
+      v-loading="settings.loading"
+      element-loading-text="拼命加载中，请稍后..."
+      element-loading-background="rgba(255, 255, 255, 0.7)"
+      title="作废审批提交"
+      :visible="visible"
+      :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
+      :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
+      :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
+      :append-to-body="true"
+      :modal-append-to-body="true"
+      width="950px"
+      destroy-on-close
     >
-      <el-form-item label="入库计划" prop="code">
-        <el-input v-model="formData.code" disabled />
-      </el-form-item>
-
-      <el-form-item label="作废原因" prop="cancel_reason">
-        <el-input
-          v-model="formData.cancel_reason"
-          type="textarea"
-          :rows="4"
-          placeholder="请输入作废原因"
-          maxlength="500"
-          show-word-limit
-        />
-      </el-form-item>
-
-      <el-form-item label="附件">
-        <file-upload
-          v-model="formData.cancel_files"
-          :limit="5"
-          :file-size="10"
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png"
-        />
-      </el-form-item>
-    </el-form>
-
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button
-        type="primary"
-        :loading="loading"
-        @click="handleConfirm"
+      <el-form
+        ref="dataSubmitForm"
+        :rules="settings.rules"
+        :model="dataJson.tempJson"
+        label-position="rigth"
+        label-width="0px"
+        status-icon
       >
-        确定
-      </el-button>
-    </div>
-  </el-dialog>
+        <el-alert
+          title="作废理由"
+          type="info"
+          :closable="false"
+        />
+        <el-descriptions
+          title=""
+          :column="1"
+          :label-style="fileLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
+        >
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >
+              作废理由
+            </div>
+            <el-form-item
+              prop="cancel_reason"
+              label-width="0"
+            >
+              <el-input
+                ref="refFocusOne"
+                v-model.trim="dataJson.tempJson.cancel_reason"
+                type="textarea"
+                clearable
+                show-word-limit
+                :rows="4"
+                maxlength="500"
+                :placeholder="'请输入作废理由'"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+          <el-descriptions-item label="附件">
+            <el-row style="display: flex;flex-wrap: wrap;">
+              <el-col :span="1">
+                <Simple-upload-mutil-file
+                  :accept="'*'"
+                  @upload-success="handleOtherUploadFileSuccess"
+                  @upload-error="handleFileError"
+                />
+              </el-col>
+              <el-col
+                v-for="(item, i) in dataJson.cancel_data"
+                :key="i"
+                :offset="3"
+                :span="5"
+              >
+                <previewCard
+                  :file-name="item.fileName"
+                  :url="item.url"
+                  :time="item.timestamp"
+                  @removeFile="removeOtherFile"
+                />
+              </el-col>
+            </el-row>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-form>
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-divider />
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
+        <el-button
+          plain
+          type="primary"
+          :disabled="settings.loading"
+          @click="startProcess()"
+        >确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 审批流程设置：选择人 -->
+    <bpm-dialog
+      v-if="popSettingsData.sponsorDialog.visible"
+      :visible="popSettingsData.sponsorDialog.visible"
+      :form-data="popSettingsData.sponsorDialog.form_data"
+      :serial-type="popSettingsData.sponsorDialog.serial_type"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
+    />
+  </div>
 </template>
 
+<style scoped>
+.edit-container {
+  height: calc(100vh - 160px);
+  overflow-x: auto;
+}
+.el-form-item--mini.el-form-item {
+  margin-bottom: 0px;
+}
+.required-mark::before {
+  content: '*';
+  color: #ff4949;
+  margin-right: 4px;
+}
+.dialog-footer {
+  text-align: center;
+}
+.floatRight {
+  float: right;
+}
+.floatLeft {
+  float: left;
+}
+.el-form-item .el-select {
+  width: 100%;
+}
+.el-button-group {
+  margin-bottom: 15px;
+}
+.el-popup-border-color >>> .el-input__inner {
+  border-color: #1890ff;
+}
+.el-descriptions {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+</style>
+
 <script>
+import elDragDialog from '@/directive/el-drag-dialog'
+import PreviewCard from '@/components/50_preview_card/preview_card.vue'
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/inplan/inplan'
+import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
+import constants_dict from '@/common/constants/constants_dict'
+import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   name: 'InPlanCancelDialog',
+  components: { BpmDialog, SimpleUploadMutilFile, PreviewCard },
+  directives: { elDragDialog },
   props: {
     visible: {
       type: Boolean,
@@ -62,108 +178,229 @@ export default {
     },
     data: {
       type: Object,
-      default: () => ({})
+      default: null
     }
   },
   data () {
     return {
-      loading: false,
-      formData: {
-        id: null,
-        code: '',
-        cancel_reason: '',
-        cancel_files: []
+      fileLabelStyle: {
+        width: '3%',
+        'text-align': 'right'
       },
-      rules: {
-        cancel_reason: [
-          { required: true, message: '请输入作废原因', trigger: 'blur' },
-          { min: 10, message: '作废原因至少10个字符', trigger: 'blur' }
-        ]
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
+      // 监听器
+      watch: {
+        unwatch_tempJson: null
+      },
+      popSettingsData: {
+        // 审批流程
+        sponsorDialog: {
+          serial_type: constants_dict.DICT_B_IN_PLAN_CANCEL,
+          // 弹出框显示参数
+          visible: false,
+          form_data: {},
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          },
+          // 审批流程
+          initial_process: null,
+          // 自选用户
+          process_users: {}
+        }
+      },
+      dataJson: {
+        // 附件
+        cancel_data: [],
+        cancel_file: [],
+        cancel_files: [],
+
+        // 单条数据 json的，初始化原始数据
+        tempJsonOriginal: {
+          id: undefined,
+          cancel_reason: '',
+          cancel_files: []
+        },
+        // 单条数据 json
+        tempJson: null,
+        inputSettings: {
+        }
+      },
+      // 页面设置json
+      settings: {
+        // loading 状态
+        loading: false,
+        duration: 4000,
+        // pop的check内容
+        rules: {
+          cancel_reason: [
+            { required: true, message: '请输入作废理由', trigger: 'change' },
+            { min: 10, message: '作废理由至少10个字符', trigger: 'change' }
+          ]
+        }
       }
     }
   },
   computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
+    listenVisible () {
+      return this.visible
     }
   },
-  watch: {
-    visible (val) {
-      if (val) {
-        this.initData()
-      }
-    }
+  // 监听器
+  watch: {},
+  created () {
+    this.init()
+  },
+  mounted () {
+    // 描绘完成
+  },
+  destroyed () {
+    this.unWatch()
   },
   methods: {
-    /**
-     * 初始化数据
-     */
-    initData () {
-      if (this.data) {
-        this.formData.id = this.data.id
-        this.formData.code = this.data.code
-        this.formData.cancel_reason = ''
-        this.formData.cancel_files = []
+    // 初始化处理
+    init () {
+      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      // 设置当前数据ID
+      if (this.data && this.data.id) {
+        this.dataJson.tempJson.id = this.data.id
+      }
+      // 初始化watch
+      this.setWatch()
+      this.settings.loading = false
+    },
+    // 设置监听器
+    setWatch () {
+      this.unWatch()
+      // 监听页面上面是否有修改，有修改按钮高亮
+      this.watch.unwatch_tempJson
+    },
+    unWatch () {
+      if (this.watch.unwatch_tempJson) {
+        this.watch.unwatch_tempJson()
       }
     },
 
-    /**
-     * 确认作废
-     */
-    async handleConfirm () {
-      try {
-        await this.$refs.cancelForm.validate()
-
-        this.$confirm('确定要申请作废此入库计划吗？', '确认操作', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(async () => {
-          try {
-            this.loading = true
-
-            await cancelApi(this.formData)
-
-            this.$message.success('作废申请提交成功')
-            this.$emit('success')
-            this.handleClose()
-          } catch (error) {
-            console.error('作废申请失败:', error)
-            this.$message.error('作废申请失败')
-          } finally {
-            this.loading = false
-          }
-        })
-      } catch (error) {
-        // 表单验证失败
-      }
-    },
-
-    /**
-     * 取消
-     */
+    // 取消按钮
     handleCancel () {
-      this.handleClose()
+      this.$emit('closeMeCancel')
     },
+    // 其他附件上传成功
+    handleOtherUploadFileSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.cancel_data.push(res.response.data)
+      this.dataJson.cancel_file.push(res.response.data.url)
+      this.dataJson.tempJson.cancel_files = this.dataJson.cancel_data
+    },
+    // 其他附件附件文件移除
+    removeOtherFile (val) {
+      // 获取下标
+      const _index = this.dataJson.cancel_file.lastIndexOf(val)
+      // 从数组中移除
+      this.dataJson.cancel_data.splice(_index, 1)
+      this.dataJson.cancel_file.splice(_index, 1)
+      this.dataJson.tempJson.cancel_files = this.dataJson.cancel_data
+    },
+    // 上传失败
+    handleFileError () {
+      console.debug('文件上传失败')
+      this.$notify({
+        title: '上传错误',
+        message: '文件上传发生错误！',
+        type: 'error',
+        duration: this.settings.duration
+      })
+    },
+    // 作废提交逻辑
+    doInsert () {
+      // 开始综合验证
+      this.$refs['dataSubmitForm'].validate(valid => {
+        if (valid) {
+          const tempData = deepCopy(this.dataJson.tempJson)
+          tempData.id = this.data.id
+          // 审批流程启动数据
+          tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process // 流程
+          tempData.form_data = this.popSettingsData.sponsorDialog.form_data // 表单参数
+          tempData.process_users = this.popSettingsData.sponsorDialog.process_users // 自选用户
 
-    /**
-     * 关闭对话框
-     */
-    handleClose () {
-      this.dialogVisible = false
-      this.$refs.cancelForm.resetFields()
+          this.settings.loading = true
+          cancelApi(tempData)
+            .then(
+              _data => {
+                this.closeLoading()
+                // 通知兄弟组件，数据更新
+                EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK, _data.data)
+                this.$notify({
+                  title: '作废申请成功',
+                  message: _data.data.message,
+                  type: 'success',
+                  duration: this.settings.duration
+                })
+                // 触发成功回调
+                this.$emit('success')
+              },
+              _error => {
+                this.closeLoading()
+                this.$notify({
+                  title: '作废申请失败',
+                  message: _error.error.message,
+                  type: 'error',
+                  duration: this.settings.duration
+                })
+              }
+            )
+            .finally(() => {
+              this.$emit('closeMeOk', tempData)
+              this.closeLoading()
+            })
+        } else {
+          this.closeLoading()
+        }
+      })
+    },
+    // 获取审批流程
+    startProcess () {
+      this.settings.loading = true
+      // 校验是否存在审批流程
+      getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
+        .then((rsp) => {
+          if (rsp.data === null) {
+            this.$message.error('未找到作废审批流程，请联系管理员')
+            this.settings.loading = false
+          } else {
+            // 流程参数
+            this.popSettingsData.sponsorDialog.form_data = {}
+            // 启动审批流弹窗
+            this.popSettingsData.sponsorDialog.visible = true
+            this.settings.loading = false
+          }
+        }).catch((err) => {
+          this.settings.loading = false
+          this.$message.error('获取审批流程失败：' + err.message)
+        })
+    },
+    // 取消审批流程选择
+    handleBpmDialogCancel () {
+      this.popSettingsData.sponsorDialog.visible = false
+      this.settings.loading = false
+    },
+    // 审批流确定
+    handleBpmDialogOk (data) {
+      this.popSettingsData.sponsorDialog.initial_process = data.processData
+      this.popSettingsData.sponsorDialog.process_users = data.process_users
+      this.popSettingsData.sponsorDialog.visible = false
+      this.doInsert()
+    },
+    // 关闭加载状态
+    closeLoading () {
+      this.settings.loading = false
     }
   }
 }
 </script>
-
-<style lang="scss" scoped>
-.dialog-footer {
-  text-align: right;
-}
-</style>

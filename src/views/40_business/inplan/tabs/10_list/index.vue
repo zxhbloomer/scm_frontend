@@ -791,6 +791,7 @@ import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import deepCopy from 'deep-copy'
+import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 
 export default {
   name: 'InPlanList',
@@ -957,10 +958,70 @@ export default {
       }
     }
   },
+  created () {
+    // 监听新增成功事件
+    EventBus.$on(this.EMITS.EMIT_MST_INPLAN_NEW_OK, this.handleNewDataSuccess)
+  },
   mounted () {
     this.handleSearch()
   },
+  destroyed () {
+    // 移除事件监听，避免内存泄漏
+    EventBus.$off(this.EMITS.EMIT_MST_INPLAN_NEW_OK, this.handleNewDataSuccess)
+  },
   methods: {
+    /**
+     * 处理新增成功事件 - 将新数据插入到列表第一行
+     */
+    handleNewDataSuccess (newData) {
+      console.log('收到新增成功事件，数据：', newData)
+
+      // 将新数据插入到列表第一行
+      this.dataJson.listData.unshift(newData)
+
+      // 如果当前列表超出页面大小限制，移除最后一行以保持分页一致性
+      if (this.dataJson.listData.length > this.dataJson.paging.size) {
+        this.dataJson.listData.pop()
+      }
+
+      // 更新总数据数量
+      this.dataJson.paging.total++
+
+      // 设置新增行为当前选中行
+      this.$nextTick(() => {
+        this.dataJson.currentJson = Object.assign({}, newData)
+        // 设置表格当前行
+        if (this.$refs.multipleTable) {
+          this.$refs.multipleTable.setCurrentRow(newData)
+        }
+
+        // 重新计算统计数据
+        this.refreshSumData()
+      })
+
+      // 显示成功提示
+      this.$notify({
+        title: '数据更新成功',
+        message: '新增的入库计划已添加到列表首行',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+
+    /**
+     * 刷新统计数据
+     */
+    refreshSumData () {
+      // 重新查询统计数据
+      getListSumApi(this.dataJson.searchForm).then(response => {
+        if (response.data !== null) {
+          this.dataJson.sumData = response.data
+        }
+      }).catch(error => {
+        console.warn('刷新统计数据失败：', error)
+      })
+    },
+
     /**
      * 搜索
      */
@@ -1028,25 +1089,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = ['0']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = ['1']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ONE]
           break
-        case '3': // 已审批
-          this.dataJson.searchForm.status_list = ['2']
+        case '3': // 执行中
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = ['5']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = ['3']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = ['6']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = ['4']
+          this.dataJson.searchForm.status_list = [this.CONSTANTS.DICT_B_IN_PLAN_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）
@@ -1075,35 +1136,37 @@ export default {
         this.settings.btnStatus.showPrint = true
 
         // 修改按钮：待审批(0)或驳回(3)
-        if (this.dataJson.currentJson.status === '0' || this.dataJson.currentJson.status === '3') {
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO ||
+          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
         // 删除按钮：仅待审批(0)
-        if (this.dataJson.currentJson.status === '0') {
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
-        // 作废按钮：仅执行中(2)(已审批)
-        if (this.dataJson.currentJson.status === '2') {
+        // 作废按钮：仅执行中(2)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
-        // 审批按钮：审批中(1)或作废审批中(6)
-        if (this.dataJson.currentJson.status === '1' || this.dataJson.currentJson.status === '6') {
+        // 审批按钮：审批中(1)或作废审批中(4)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ONE ||
+          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
 
-        // 完成按钮：仅执行中(2)(已审批)
-        if (this.dataJson.currentJson.status === '2') {
+        // 完成按钮：仅执行中(2)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
         } else {
           this.settings.btnStatus.showFinish = false
@@ -1189,8 +1252,9 @@ export default {
       _data.serial_type = this.CONSTANTS.DICT_B_INPLAN
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
-      if (_data.status === '6' || _data.status === '4') {
-        _data.bpm_instance_code = _data.bmp_cancel_instance_code
+      if (_data.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_FOUR ||
+          _data.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_FIVE) {
+        _data.bpm_instance_code = _data.bpm_cancel_instance_code
       }
 
       const operate_tab_data = {
@@ -1209,7 +1273,7 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批才可以删除
-      if (_data.status.toString() !== '0') {
+      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO) {
         this.showErrorMsg('入库计划状态异常')
         return
       }

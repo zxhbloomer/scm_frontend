@@ -586,11 +586,11 @@ export default {
         }
 
         _this.dataJson.multipleSelection.forEach(function (value, index, array) {
-          // console.log(constants_type.DICT_B_IN_PLAN_STATUS_ZD)
+          // console.log(constants_type.DICT_B_IN_PLAN_STATUS_ZERO)
           // console.log(value.status)
-          // console.log(value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZD)
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZD) {
-            if (value.status === constants_type.DICT_B_IN_PLAN_STATUS_BH) {
+          // console.log(value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZERO)
+          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZERO) {
+            if (value.status === constants_type.DICT_B_IN_PLAN_STATUS_THREE) {
               // 审核驳回状态可再次提交
               _this.settings.btnStatus.showSubmit = true
             } else {
@@ -598,13 +598,13 @@ export default {
               _this.settings.btnStatus.showSubmit = false
             }
           }
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_YTJ && value.status !== constants_type.DICT_B_IN_PLAN_STATUS_CANCEL_BEING_AUDITED) {
+          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ONE && value.status !== constants_type.DICT_B_IN_PLAN_STATUS_FOUR) {
             // 非已提交状态不可审核/驳回
             _this.settings.btnStatus.showAudit = false
             _this.settings.btnStatus.showReject = false
           }
 
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_TG) {
+          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_TWO) {
             // 非审核通过状态不可完成
             _this.settings.btnStatus.showFinish = false
           }

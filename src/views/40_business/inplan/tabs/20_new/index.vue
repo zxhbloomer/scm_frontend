@@ -109,17 +109,17 @@
 
           <el-descriptions-item label="附件材料" span="3">
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleOtherUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="3"
               >
                 <previewCard
@@ -168,6 +168,7 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px )"
+          :row-class-name="getRowClassName"
           @row-click="handleRowClick"
           @current-change="handleCurrentChange"
         >
@@ -208,6 +209,17 @@
             </el-table-column>
             <el-table-column
               show-overflow-tooltip
+              min-width="120"
+              prop="supplier_name"
+              label="供应商"
+              align="left"
+            >
+              <template v-slot="scope">
+                {{ scope.row.supplier_name || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              show-overflow-tooltip
               min-width="100"
               prop="order_qty"
               label="订单数量"
@@ -222,10 +234,32 @@
               min-width="80"
               prop="unit"
               label="单位"
-              align="left"
+              align="center"
             >
               <template v-slot="scope">
                 {{ scope.row.unit_name || scope.row.unit || '吨' }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              show-overflow-tooltip
+              min-width="100"
+              prop="order_price"
+              label="订单单价"
+              align="right"
+            >
+              <template v-slot="scope">
+                {{ scope.row.order_price == null? '-' : formatCurrency(scope.row.order_price,true) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              show-overflow-tooltip
+              min-width="100"
+              prop="order_amount"
+              label="订单金额"
+              align="right"
+            >
+              <template v-slot="scope">
+                {{ scope.row.order_amount == null? '-' : formatCurrency(scope.row.order_amount,true) }}
               </template>
             </el-table-column>
           </el-table-column>
@@ -398,6 +432,29 @@
 .dialog-footer {
   text-align: center;
 }
+
+/* 校验错误行的样式 - 使用更强的选择器覆盖Element UI默认样式 */
+::v-deep .el-table__body tr.validation-error-row td {
+  background-color: #fef0f0 !important;
+}
+
+::v-deep .el-table__body tr.validation-error-row:hover td {
+  background-color: #fde2e2 !important;
+}
+
+/* 覆盖条纹表格的样式 */
+::v-deep .el-table--striped .el-table__body tr.validation-error-row.el-table__row--striped td {
+  background-color: #fef0f0 !important;
+}
+
+::v-deep .el-table--striped .el-table__body tr.validation-error-row.el-table__row--striped:hover td {
+  background-color: #fde2e2 !important;
+}
+
+/* 覆盖鼠标悬停的默认样式 */
+::v-deep .el-table--enable-row-hover .el-table__body tr.validation-error-row:hover td {
+  background-color: #fde2e2 !important;
+}
 .el-descriptions {
   margin-top: 10px;
   margin-bottom: 10px;
@@ -564,7 +621,8 @@ export default {
           po_order_id: null,
           po_order_code: '',
           po_contract_code: '',
-          project_code: ''
+          project_code: '',
+          doc_att_files: []
         },
         // 单条数据 json
         tempJson: {
@@ -581,7 +639,8 @@ export default {
           po_order_id: null,
           po_order_code: '',
           po_contract_code: '',
-          project_code: ''
+          project_code: '',
+          doc_att_files: []
         },
         currentJson: {},
         rowIndex: null,
@@ -685,7 +744,7 @@ export default {
               _data => {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
-                // 通知兄弟组件，新增数据更新
+                // 通知兄弟组件，新增数据更新 - 将完整数据传递给列表页面
                 EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_NEW_OK, _data.data)
                 this.$notify({
                   title: '新增成功',
@@ -863,6 +922,15 @@ export default {
      */
     startProcess () {
       this.showLoading('正在保存，请稍后...')
+
+      // 校验入库货物明细的入库计划设置
+      const validationResult = this.validateInPlanDetails()
+      if (!validationResult.isValid) {
+        this.closeLoading()
+        this.showErrorMsg('校验出错：入库货物明细，存在尚未完成设置的数据。')
+        return
+      }
+
       // 校验业务数据
       const tempData = deepCopy(this.dataJson.tempJson)
       tempData.check_type = constants_para.INSERT_CHECK_TYPE
@@ -890,6 +958,44 @@ export default {
           this.closeLoading()
         }
       })
+    },
+
+    /**
+     * 校验入库货物明细的入库计划设置
+     * 检查每一行是否都设置了入库数量
+     */
+    validateInPlanDetails () {
+      // 重置所有行的错误状态
+      this.dataJson.tempJson.detailListData.forEach(item => {
+        this.$set(item, 'hasValidationError', false)
+      })
+
+      let hasError = false
+
+      // 检查每一行的入库数量
+      this.dataJson.tempJson.detailListData.forEach((item, index) => {
+        // 检查入库数量是否为空
+        if (item.qty == null || item.qty === '' || item.qty === undefined || item.qty <= 0) {
+          // 标记该行有校验错误
+          this.$set(item, 'hasValidationError', true)
+          hasError = true
+        }
+      })
+
+      return {
+        isValid: !hasError
+      }
+    },
+
+    /**
+     * 获取表格行的CSS类名
+     * 用于给校验失败的行添加红色背景
+     */
+    getRowClassName ({ row, rowIndex }) {
+      if (row.hasValidationError) {
+        return 'validation-error-row'
+      }
+      return ''
     },
     /**
      * 获取审批流程
@@ -931,7 +1037,7 @@ export default {
      * @param val
      */
     handleTypeChange (val) {
-      this.dataJson.tempJson.type_name = val
+      this.dataJson.tempJson.type = val
       // 如果选择采购入库，打开关联单号弹窗
       if (val === this.CONSTANTS.DICT_B_IN_PLAN_TYPE_CG) {
         this.popSettingsData.poContractDialog.visible = true
@@ -973,6 +1079,12 @@ export default {
         bin_id: row.bin_id || null,
         bin_code: row.bin_code || '',
         bin_name: row.bin_name || '',
+        // 新增字段
+        order_qty: row.order_qty || 0, // 订单数量
+        order_price: row.order_price || 0, // 订单单价
+        processed_qty: row.processed_qty || 0, // 已入库数量
+        unprocessed_qty: row.unprocessed_qty || 0, // 待入库数量
+        price: row.price || null, // 入库单价
         rowIndex: index // 传递行索引用于更新数据
       }
     },
@@ -1146,6 +1258,7 @@ export default {
         // 更新对应行的数据
         const targetRow = this.dataJson.tempJson.detailListData[rowIndex]
         targetRow.qty = data.qty
+        targetRow.price = data.price
         targetRow.warehouse_id = data.warehouse_id
         targetRow.warehouse_code = data.warehouse_code
         targetRow.warehouse_name = data.warehouse_name
