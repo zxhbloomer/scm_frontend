@@ -303,6 +303,14 @@
       >审批
       </el-button>
       <el-button
+        :disabled="!settings.btnStatus.showInbound"
+        type="primary"
+        icon="el-icon-box"
+        :loading="settings.loading"
+        @click="handleInbound"
+      >入库操作
+      </el-button>
+      <el-button
         v-permission="'P_IN_PLAN:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
@@ -310,14 +318,6 @@
         :loading="settings.loading"
         @click="handleFinish"
       >完成
-      </el-button>
-      <el-button
-        v-permission="'P_IN_PLAN:IMPORT'"
-        type="primary"
-        icon="el-icon-upload"
-        :loading="settings.loading"
-        @click="handleOpenImportDialog"
-      >导入
       </el-button>
       <!--      导出按钮 开始-->
       <el-button
@@ -745,52 +745,28 @@
       @closeMeCancel="handleCancelCancel"
     />
 
-    <!-- 导入对话框 -->
-    <el-dialog
-      title="导入入库计划"
-      :visible.sync="popSettingsImport.dialogFormVisible"
-      width="500px"
-      :before-close="handlCloseDialog"
-    >
-      <simple-upload
-        :accept="'.xlsx,.xls'"
-        :multiple="false"
-        :file-size="50"
-        :limit="1"
-        action="/api/file/upload"
-        @uploadSuccess="handleUploadFileSuccess"
-        @uploadError="handleUploadFileError"
-      />
-      <div v-if="popSettingsImport.errorFileUrl" class="error-info">
-        <el-link
-          type="danger"
-          :href="popSettingsImport.errorFileUrl"
-          target="_blank"
-        >
-          点击下载错误信息文件
-        </el-link>
-      </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="handlCloseDialog">关闭</el-button>
-        <el-button type="primary" @click="getImportTemplate">下载模板</el-button>
-      </span>
-    </el-dialog>
+    <!-- 入库货物明细选择弹窗 -->
+    <select-goods-dialog
+      :visible.sync="showSelectGoodsDialog"
+      :in-plan-id="selectedInPlanId"
+      @next="handleSelectGoodsNext"
+      @close="handleSelectGoodsClose"
+    />
   </div>
 </template>
 
 <script>
-import { getListApi, getListSumApi, delApi, finishApi, exportApi, importDataApi } from '@/api/40_business/inplan/inplan'
-import { getPageApi } from '@/api/10_system/pages/page'
+import { getListApi, getListSumApi, delApi, finishApi, exportApi } from '@/api/40_business/inplan/inplan'
 import FloatMenu from '@/components/FloatMenu'
 import pagination_for_list from '@/components/Pagination/index'
 import mixin from './mixin'
 import CancelDialog from '../../dialog/cancel/index.vue'
+import SelectGoodsDialog from '../../dialog/select_goods/index.vue'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer'
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import deepCopy from 'deep-copy'
 import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 
@@ -800,11 +776,11 @@ export default {
     FloatMenu,
     pagination_for_list,
     CancelDialog,
+    SelectGoodsDialog,
     SelectSeCustomer,
     SelectCpSupplier,
     SelectWarehouse,
-    SelectDicts,
-    SimpleUpload
+    SelectDicts
   },
   directives: { permission },
   mixins: [mixin],
@@ -877,15 +853,6 @@ export default {
           total_unprocessed_amount: 0 // 未处理金额
         }
       },
-      // 导入窗口的状态
-      popSettingsImport: {
-        // 弹出窗口会否显示
-        dialogFormVisible: false,
-        // 模版文件地址
-        templateFilePath: '',
-        // 错误数据文件
-        errorFileUrl: ''
-      },
       // 打印窗口的状态
       popPrint: {
         dialogVisible: false,
@@ -905,6 +872,7 @@ export default {
           showDel: false,
           showCancel: false,
           showApprove: false,
+          showInbound: false,
           showFinish: false,
           showView: false,
           showPrint: false,
@@ -938,7 +906,9 @@ export default {
       ],
       screenNum: 0, // 高级查询条件数量
       showCancelDialog: false, // 显示作废对话框
-      cancelDialogData: null // 作废对话框数据
+      cancelDialogData: null, // 作废对话框数据
+      showSelectGoodsDialog: false, // 显示入库货物选择弹窗
+      selectedInPlanId: null // 选中的入库计划ID
     }
   },
   computed: {
@@ -1166,6 +1136,13 @@ export default {
           this.settings.btnStatus.showApprove = false
         }
 
+        // 入库操作按钮：仅执行中(2)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO) {
+          this.settings.btnStatus.showInbound = true
+        } else {
+          this.settings.btnStatus.showInbound = false
+        }
+
         // 完成按钮：仅执行中(2)
         if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
@@ -1177,6 +1154,7 @@ export default {
         this.settings.btnStatus.showUpdate = false
         this.settings.btnStatus.showDel = false
         this.settings.btnStatus.showApprove = false
+        this.settings.btnStatus.showInbound = false
         this.settings.btnStatus.showPrint = false
         this.settings.btnStatus.showFinish = false
       }
@@ -1269,6 +1247,37 @@ export default {
     },
 
     /**
+     * 入库操作
+     */
+    handleInbound () {
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (_data.id === undefined) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+
+      // 检查状态：仅执行中状态可以进行入库操作
+      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_PLAN_STATUS_TWO) {
+        this.showErrorMsg('只有执行中状态的入库计划才能进行入库操作')
+        return
+      }
+
+      // 记录日志
+      console.log('入库操作按钮被点击', {
+        action: '入库操作',
+        planId: _data.id,
+        planCode: _data.code,
+        status: _data.status,
+        timestamp: new Date().toISOString(),
+        user: this.$store.getters.name || 'unknown'
+      })
+
+      // 打开入库货物明细选择弹窗
+      this.selectedInPlanId = _data.id
+      this.showSelectGoodsDialog = true
+    },
+
+    /**
      * 删除
      */
     handleDel () {
@@ -1337,6 +1346,33 @@ export default {
      */
     handleCancelCancel () {
       this.showCancelDialog = false
+    },
+
+    /**
+     * 入库货物选择弹窗 - 下一步事件
+     */
+    handleSelectGoodsNext (data) {
+      // 处理下一步逻辑
+      console.log('入库货物选择弹窗 - 下一步事件处理', {
+        selectedRow: data.selectedRow,
+        planData: data.planData,
+        timestamp: new Date().toISOString()
+      })
+
+      // 关闭弹窗
+      this.showSelectGoodsDialog = false
+      this.selectedInPlanId = null
+
+      // 这里可以跳转到下一个页面或打开下一个弹窗
+      this.showSuccessMsg(`已选择货物明细：${data.selectedRow.goods_name}，准备进入下一步操作`)
+    },
+
+    /**
+     * 入库货物选择弹窗 - 关闭事件
+     */
+    handleSelectGoodsClose () {
+      this.showSelectGoodsDialog = false
+      this.selectedInPlanId = null
     },
 
     /**
@@ -1461,69 +1497,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-    },
-
-    // 数据批量导入按钮
-    handleOpenImportDialog () {
-      this.popSettingsImport.dialogFormVisible = true
-    },
-
-    // 文件上传成功
-    handleUploadFileSuccess (res) {
-      this.settings.loading = true
-      this.showLoading('正在上传，请稍后...')
-      // 开始导入
-      const tempData = res.response.data
-      tempData.page_code = this.$route.meta.page_code
-      importDataApi(tempData).then(response => {
-        this.popSettingsImport.errorFileUrl = ''
-        if (response.system_code !== 0) {
-          this.popSettingsImport.errorFileUrl = response.data.url
-          this.showErrorMsg('您上传的excel数据有错误，请点击错误信息进行查看！')
-        } else if (response.system_code === 0) {
-          const successList = '成功导入 ' + response.data.length + ' 条数据'
-          this.$alert(successList, '导入成功', {
-            confirmButtonText: '关闭',
-            type: 'success'
-          }).then(() => {
-            this.popSettingsImport.dialogFormVisible = false
-          })
-        }
-      }, (_error) => {
-        console.log('发生了异常，请联系管理员！:' + JSON.stringify(_error))
-      }).finally(() => {
-        this.settings.loading = false
-        this.closeLoading()
-      })
-    },
-
-    // 文件上传失败
-    handleUploadFileError () {
-      console.debug('文件上传失败')
-      this.$notify({
-        title: '导入错误',
-        message: '文件上传发生错误！',
-        type: 'error',
-        duration: 0
-      })
-    },
-
-    getImportTemplate () {
-      const tempData = {}
-      tempData.code = this.$route.meta.page_code
-      getPageApi(tempData).then(response => {
-        this.settings.loading = false
-        this.popSettingsImport.templateFilePath = response.data.template_url
-      }, (_error) => {
-        console.log('发生了异常，请联系管理员！:' + JSON.stringify(_error))
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-
-    // 关闭弹出窗口
-    handlCloseDialog () {
-      this.popSettingsImport.dialogFormVisible = false
     },
 
     /**
