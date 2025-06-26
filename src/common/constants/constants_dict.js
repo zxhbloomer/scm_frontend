@@ -181,11 +181,6 @@ const DICT_B_IN_PLAN = 'b_in_plan'
 /** 入库计划表 审批作废流 */
 const DICT_B_IN_PLAN_CANCEL = 'b_in_plan_cancel'
 
-/** 入库计划V2表 审批流 */
-const DICT_B_IN_PLAN_V2 = 'b_in_plan_v2'
-/** 入库计划V2表 审批作废流 */
-const DICT_B_IN_PLAN_V2_CANCEL = 'b_in_plan_v2_cancel'
-
 /** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_PLAN_STATUS = 'b_in_plan_status'
 const DICT_B_IN_PLAN_STATUS_ZERO = '0'
@@ -249,6 +244,22 @@ const DICT_B_IN_TYPE_SC = '5'
 const DICT_B_IN_TYPE_JG = '9'
 const DICT_B_IN_TYPE_PT = '10'
 
+/** 入库单状态：0-待审批 1-审批中 2-执行中 3-驳回 4-已完成 5-已作废 6-作废审批中 */
+const DICT_B_IN_STATUS_NEW = 'b_in_status_new'
+const DICT_B_IN_STATUS_ZERO = '0'
+const DICT_B_IN_STATUS_ONE = '1'
+const DICT_B_IN_STATUS_TWO = '2'
+const DICT_B_IN_STATUS_THREE = '3'
+const DICT_B_IN_STATUS_FOUR = '4'
+const DICT_B_IN_STATUS_FIVE = '5'
+const DICT_B_IN_STATUS_SIX = '6'
+
+/** 入库单业务流程标识 */
+const DICT_B_IN = 'b_in'
+
+/** 入库单作废流程标识 */
+const DICT_B_IN_CANCEL = 'b_in_cancel'
+
 /**  单据类型:0供应链业务 1代理业务 2直销业务 3废钢业务 */
 const DICT_B_IN_BUSINESS_TYPE = 'b_in_bill_type'
 const DICT_B_IN_BUSINESS_TYPE_GYL = '0'
@@ -275,7 +286,7 @@ const DICT_B_OUT_PLAN_TYPE_TH = '6'
 const DICT_B_OUT_PLAN_TYPE_LL = '7'
 const DICT_B_OUT_PLAN_TYPE_ZC = '8'
 
-/** 出库单类型：0调拨出库，1库存调整，2盘亏出库，3监管出库，4普通出库， 5销售出库,6退货出库，7领料出库 */
+/** 出库单类型：0调拨出库，1库存调整，2盘亏出库，3监管出库，4普通出库， 5销售出库，6退货出库，7领料出库 */
 const DICT_B_OUT_TYPE = 'b_out_plan_type'
 const DICT_B_OUT_TYPE_DB = '0'
 const DICT_B_OUT_TYPE_KC = '1'
@@ -321,19 +332,6 @@ const DICT_B_ADJUST_RULE_ONE = '1'
 const DICT_B_ADJUST_RULE_TWO = '2'
 const DICT_B_ADJUST_RULE_THREE = '3'
 
-/** 待办类型 入库计划 */
-const TODO_TYPE_B_IN_PLAN_DETAIL = 'b_in_plan_detail'
-/** 待办类型 入库单 */
-const TODO_TYPE_B_IN = 'b_in'
-/** 出库计划 */
-const TODO_TYPE_B_OUT_PLAN_DETAIL = 'b_out_plan_detail'
-/** 出库单 */
-const TODO_TYPE_B_OUT = 'b_out'
-/** 盘点任务管理 */
-const TODO_TYPE_B_CHECK = 'b_check'
-
-/** 出库计划明细编号 */
-const DICT_SYS_CODE_TYPE_B_OUT_PLAN_DETAIL = 'b_out_plan_detail'
 /** 入库计划明细编号 */
 const DICT_SYS_CODE_TYPE_B_IN_PLAN_DETAIL = 'b_in_plan_detail'
 
@@ -1317,19 +1315,6 @@ export default {
   DICT_SUPPLIER,
   /** 入库计划明细编号 */
   DICT_SYS_CODE_TYPE_B_IN_PLAN_DETAIL,
-  /** 出库计划明细编号 */
-  DICT_SYS_CODE_TYPE_B_OUT_PLAN_DETAIL,
-
-  /** 待办类型 入库计划 */
-  TODO_TYPE_B_IN_PLAN_DETAIL,
-  /** 待办类型 入库单 */
-  TODO_TYPE_B_IN,
-  /** 出库计划 */
-  TODO_TYPE_B_OUT_PLAN_DETAIL,
-  /** 出库单 */
-  TODO_TYPE_B_OUT,
-  /** 盘点 */
-  TODO_TYPE_B_CHECK,
   /** 定时任务组:00系统、01每日库存 */
   DICT_SYS_JOB_GROUP_TYPE,
   DICT_SYS_JOB_GROUP_TYPE_SYS,
@@ -1996,7 +1981,20 @@ export default {
   DICT_S_TAX_TYPE_THREE,
   DICT_S_TAX_TYPE_FOUR,
 
-  /** 入库计划V2表 */
-  DICT_B_IN_PLAN_V2,
-  DICT_B_IN_PLAN_V2_CANCEL
+  /** 入库单状态：0-待审批 1-审批中 2-执行中 3-驳回 4-已完成 5-已作废 6-作废审批中 */
+  DICT_B_IN_STATUS_NEW,
+  DICT_B_IN_STATUS_ZERO,
+  DICT_B_IN_STATUS_ONE,
+  DICT_B_IN_STATUS_TWO,
+  DICT_B_IN_STATUS_THREE,
+  DICT_B_IN_STATUS_FOUR,
+  DICT_B_IN_STATUS_FIVE,
+  DICT_B_IN_STATUS_SIX,
+
+  /** 入库单业务流程标识 */
+  DICT_B_IN,
+
+  /** 入库单作废流程标识 */
+  DICT_B_IN_CANCEL
+
 }

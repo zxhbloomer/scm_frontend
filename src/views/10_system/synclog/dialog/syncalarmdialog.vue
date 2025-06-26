@@ -155,7 +155,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 // import { syncApi as syncInPlanApi } from '@/api/40_business/inplan/inplan'
-import { syncApi as syncInApi } from '@/api/40_business/in/in'
+// import { syncApi as syncInApi } from '@/api/40_business/in/in'
 import { syncApi as syncOutPlanApi } from '@/api/40_business/outplan/outplan'
 import { syncApi as syncOutApi } from '@/api/40_business/out/out'
 // import Pagination from '@/components/Pagination_no_count'
@@ -361,12 +361,12 @@ export default {
     // 入库单同步
     handleInSync (val) {
       // 开始同步
-      syncInApi(val).then((_data) => {
-        // this.getDataList(val)
-      }, (_error) => {
-      }).finally(() => {
-        // this.settings.loading = false
-      })
+      // syncInApi(val).then((_data) => {
+      //   // this.getDataList(val)
+      // }, (_error) => {
+      // }).finally(() => {
+      //   // this.settings.loading = false
+      // })
     },
     // 出库计划单同步
     handleOutPlanSync (val) {

@@ -18,7 +18,7 @@ export default {
   },
   // 生命周期结束时销毁事件
   destroyed () {
-    if (this.resizeListener) removeResizeListener(window.document.body, this.doResize)
+    removeResizeListener(window.document.body, this.doResize)
   },
   methods: {
     doResize () {
@@ -27,7 +27,7 @@ export default {
     setUIheight () {
       try {
         // 定义高度
-        const elementHeight = document.documentElement.clientHeight - 85
+        const elementHeight = document.documentElement.clientHeight - 90
         // 获取所有的ref，主要判断minus的refs
         const listRefsNames = Object.keys(this.$refs).map((key) => {
           return this.$refs[key]
@@ -38,17 +38,10 @@ export default {
             val = val + listRefsNames[i].$el.offsetHeight
           }
         }
-
-        let rtnVal = elementHeight - val - 97
+        const rtnVal = elementHeight - val - 95
 
         // 此处使用的是页面上的值
         this.settings.tableHeight = rtnVal
-
-        // 判断是否是弹出框
-        if (this.meDialogStatus) {
-          rtnVal = rtnVal - 170
-        }
-
         return rtnVal
       } catch (error) {
         console.log('mixin error')

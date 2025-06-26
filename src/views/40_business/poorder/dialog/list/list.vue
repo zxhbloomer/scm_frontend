@@ -826,15 +826,15 @@ import {
   getListApi
 } from '@/api/40_business/poorder/poorder'
 import constants_para from '@/common/constants/constants_para'
-import Pagination from '@/components/Pagination'
+import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin'
-import permission from '@/directive/permission/index.js'
+import permission from '@/directive/permission'
 import constants_dict from '@/common/constants/constants_dict'
 import print_template from '@/views/40_business/poorder/tabs/60_print/index.vue'
-import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
-import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer'
+import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
+import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 
 export default {

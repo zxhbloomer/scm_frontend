@@ -685,7 +685,7 @@ import previewCard from '@/components/50_preview_card/preview_card_zl'
 import editInDialog from '@/views/40_business/monitor/tabs/dialog/inedit'
 import editOutDialog from '@/views/40_business/monitor/tabs/dialog/outedit'
 import getTrackDialog from '@/views/40_business/monitor/tabs/dialog/gettrack'
-import { cancelDirectApi as cancelInApi } from '@/api/40_business/in/in'
+// import { cancelDirectApi as cancelInApi } from '@/api/40_business/in/in'
 import { cancelDirectApi as cancelOutApi } from '@/api/40_business/out/out'
 import inCancelConfirmDialog from '@/views/40_business/monitor/tabs/dialog/incancelconfirm'
 import outCancelConfirmDialog from '@/views/40_business/monitor/tabs/dialog/outcancelconfirm'
@@ -2731,27 +2731,27 @@ export default {
 
       this.showLoading('正在保存，请稍后...')
       // 开始作废
-      cancelInApi(selectionJson).then((_data) => {
-        this.$notify({
-          title: '作废成功',
-          message: _data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.popSettings.five.visible = false
-        this.getData()
-        // loading
-      }, (_error) => {
-        this.$notify({
-          title: '作废错误',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-        this.closeLoading()
-      })
+      // cancelInApi(selectionJson).then((_data) => {
+      //   this.$notify({
+      //     title: '作废成功',
+      //     message: _data.message,
+      //     type: 'success',
+      //     duration: this.settings.duration
+      //   })
+      //   this.popSettings.five.visible = false
+      //   this.getData()
+      //   // loading
+      // }, (_error) => {
+      //   this.$notify({
+      //     title: '作废错误',
+      //     message: _error.message,
+      //     type: 'error',
+      //     duration: this.settings.duration
+      //   })
+      // }).finally(() => {
+      //   this.settings.loading = false
+      //   this.closeLoading()
+      // })
     },
     handleCloseDialogFiveCancel () {
       this.popSettings.five.visible = false

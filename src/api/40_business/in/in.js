@@ -1,43 +1,57 @@
 import request from '@/utils/request'
 
+// 入库单管理API
+
 /**
- * 查询逻辑
- * @param {*} data
+ * 获取入库单列表
+ * @param {Object} params 查询参数
  */
-export function getListApi (query) {
+export function getInListApi (params) {
   return request({
-    url: '/api/v1/in/list',
+    url: '/api/v1/in/pagelist',
     method: 'post',
-    data: query
+    data: params
   })
 }
 
 /**
- * 查询逻辑
- * @param {*} data
+ * 查询入库单汇总统计
+ * @param {Object} params 查询参数
  */
-export function getTodoCountApi (query) {
+export function getListSumApi (params) {
   return request({
-    url: '/api/v1/in/todo/count',
+    url: '/api/v1/in/sum',
     method: 'post',
-    data: query
+    data: params
   })
 }
 
 /**
- * 查询逻辑
- * @param {*} data
+ * 获取入库单详情
+ * @param {Number} id 入库单ID
  */
-export function getListSumApi (query) {
+export function getInDetailApi (id) {
   return request({
-    url: '/api/v1/in/list/sum',
-    method: 'post',
-    data: query
+    url: '/api/v1/in/detail',
+    method: 'get',
+    params: { id }
   })
 }
 
 /**
- * 查询明细逻辑
+ * 创建入库单
+ * @param {Object} data 入库单数据
+ */
+export function createInApi (data) {
+  return request({
+    url: '/api/v1/in/create',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 根据ID获取入库单详情
  * @param {*} data
  */
 export function getApi (query) {
@@ -49,92 +63,32 @@ export function getApi (query) {
 }
 
 /**
- * 更新api
- * @param {*} data
+ * 更新入库单
+ * @param {Object} data 入库单数据
  */
-export function updateApi (data) {
+export function updateInApi (data) {
   return request({
-    url: '/api/v1/in/save',
+    url: '/api/v1/in/update',
     method: 'post',
     data
   })
 }
 
 /**
- * 插入api
- * @param {*} data
+ * 删除入库单
+ * @param {Number} id 入库单ID
  */
-export function insertApi (data) {
+export function deleteInApi (id) {
   return request({
-    url: '/api/v1/in/insert',
+    url: '/api/v1/in/delete',
     method: 'post',
-    data
+    data: { id }
   })
 }
 
 /**
- * 提交api
- * @param {*} data
- */
-export function submitApi (data) {
-  return request({
-    url: '/api/v1/in/submit',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 审核api
- * @param {*} data
- */
-export function auditApi (data) {
-  return request({
-    url: '/api/v1/in/audit',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 驳回api
- * @param {*} data
- */
-export function returnApi (data) {
-  return request({
-    url: '/api/v1/in/return',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废审核api
- * @param {*} data
- */
-export function cancelAuditApi (data) {
-  return request({
-    url: '/api/v1/in/cancelaudit',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废驳回api
- * @param {*} data
- */
-export function cancelReturnApi (data) {
-  return request({
-    url: '/api/v1/in/cancelreturn',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 作废api
- * @param {*} data
+ * 作废入库单
+ * @param {Object} data 作废数据
  */
 export function cancelApi (data) {
   return request({
@@ -145,87 +99,64 @@ export function cancelApi (data) {
 }
 
 /**
- * 作废api
- * @param {*} data
+ * 审批入库单
+ * @param {Object} data 审批数据
  */
-export function cancelDirectApi (data) {
+export function approveInApi (data) {
   return request({
-    url: '/api/v1/in/canceldirect',
+    url: '/api/v1/in/approve',
     method: 'post',
     data
   })
 }
 
 /**
- * 同步所有数据
- * @param {*} data
+ * 提交入库单审批
+ * @param {Object} data 提交数据
  */
-export function syncAllApi (data) {
+export function submitInApi (data) {
   return request({
-    url: '/api/v1/in/syncall',
+    url: '/api/v1/in/submit',
     method: 'post',
     data
   })
 }
 
 /**
- * 同步选中数据
+ * 验证入库单数据
  * @param {*} data
  */
-export function syncApi (data) {
+export function validateApi (data) {
   return request({
-    url: '/api/v1/in/sync',
+    url: '/api/v1/in/validate',
     method: 'post',
     data
   })
 }
 
 /**
- * 导入逻辑
+ * 新增入库单
  * @param {*} data
  */
-export function importBInApi (data) {
+export function insertApi (data) {
   return request({
-    url: '/api/v1/in/import',
+    url: '/api/v1/in/insert',
     method: 'post',
     data
   })
 }
 
-/**
- * 导出逻辑
- * @param {*} data
- */
-export function exportBInApi (data) {
-  return request({
-    url: '/api/v1/in/export',
-    method: 'post',
-    data,
-    responseType: 'arraybuffer'
-  })
-}
-
-/**
- * 导出逻辑
- * @param {*} data
- */
-export function exportAllBInApi (data) {
-  return request({
-    url: '/api/v1/in/export_all',
-    method: 'post',
-    data,
-    responseType: 'arraybuffer'
-  })
-}
-
-/**
- * 查询逻辑
- * @param {*} data
- */
-export function getCountApi (query) {
-  return request({
-    url: '/api/v1/in/list/count',
-    method: 'post',
-    data: query
-  })
+export default {
+  getInListApi,
+  getListSumApi,
+  getInDetailApi,
+  createInApi,
+  getApi,
+  updateInApi,
+  deleteInApi,
+  cancelApi,
+  approveInApi,
+  submitInApi,
+  validateApi,
+  insertApi
 }

@@ -55,9 +55,18 @@
 
         <el-form-item>
           <el-input
-            v-model.trim="dataJson.searchForm.po_order_code"
+            v-model.trim="dataJson.searchForm.contract_code"
             clearable
             placeholder="合同编号"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-input
+            v-model.trim="dataJson.searchForm.order_code"
+            clearable
+            placeholder="订单编号"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
@@ -69,16 +78,6 @@
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleOwnerReturnDataName"
-          />
-        </el-form-item>
-
-        <el-form-item label="">
-          <select-se-customer
-            v-model.trim="dataJson.searchForm.consignor_name"
-            placeholder="请选择委托方"
-            placement="left"
-            @keyup.enter.native="handleSearch"
-            @onReturnData="handleConsignorReturnDataName"
           />
         </el-form-item>
 
@@ -193,49 +192,13 @@
 
         <el-form-item label="计划时间">
           <el-date-picker
-            v-model="dataJson.searchForm.plan_time"
+            v-model="dataJson.searchForm.plan_times"
             type="datetimerange"
             range-separator="至"
             start-placeholder="计划时间开始"
             end-placeholder="计划时间结束"
             format="yyyy-MM-dd HH:mm:ss"
             value-format="yyyy-MM-dd HH:mm:ss"
-            @keyup.enter.native="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="商品编码">
-          <el-input
-            v-model.trim="dataJson.searchForm.goods_code"
-            clearable
-            placeholder="商品编码"
-            @keyup.enter.native="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="SKU编码">
-          <el-input
-            v-model.trim="dataJson.searchForm.sku_code"
-            clearable
-            placeholder="SKU编码"
-            @keyup.enter.native="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="采购合同编号">
-          <el-input
-            v-model.trim="dataJson.searchForm.po_contract_code"
-            clearable
-            placeholder="采购合同编号"
-            @keyup.enter.native="handleSearch"
-          />
-        </el-form-item>
-
-        <el-form-item label="采购订单编号">
-          <el-input
-            v-model.trim="dataJson.searchForm.po_order_code_advanced"
-            clearable
-            placeholder="采购订单编号"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
@@ -370,11 +333,7 @@
       class="div-sum"
     >
       <div class="right">
-        <span class="count-title">计划总数量：</span><span class="count-data">{{ dataJson.sumData.total_qty == null ? 0 : formatNumber(dataJson.sumData.total_qty,true,4) }}</span>
-        <span class="count-title">已入库数量：</span><span class="count-data">{{ dataJson.sumData.total_processed_qty == null ? 0 : formatNumber(dataJson.sumData.total_processed_qty,true,4) }}</span>
-        <span class="count-title">入库确认中数量：</span><span class="count-data">{{ dataJson.sumData.total_processing_qty == null ? 0 : formatNumber(dataJson.sumData.total_processing_qty,true,4) }}</span>
-        <span class="count-title">待入库数量：</span><span class="count-data">{{ dataJson.sumData.total_unprocessed_qty == null ? 0 : formatNumber(dataJson.sumData.total_unprocessed_qty,true,4) }}</span>
-        <span class="count-title">计划总金额：</span><span class="count-data">{{ dataJson.sumData.total_amount == null ? 0 : formatCurrency(dataJson.sumData.total_amount,true) }}</span>
+        <span class="count-title">总入库数量：</span><span class="count-data">{{ dataJson.sumData.qty_sum == null ? 0 : formatNumber(dataJson.sumData.qty_sum,true,4) }}</span>
       </div>
     </div>
     <!-- 数据表格 -->
@@ -441,6 +400,14 @@
           min-width="120"
           prop="status_name"
           label="状态"
+          align="left"
+        />
+        <el-table-column
+          sortable="custom"
+          :auto-fit="true"
+          min-width="150"
+          prop="next_approve_name"
+          label="审批流程情况"
           align="left"
         />
         <el-table-column
@@ -679,52 +646,56 @@
 
       </el-table-column>
 
-      <!-- 系统字段 -->
-      <el-table-column label="系统字段" align="center">
-        <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
-          min-width="120"
-          prop="c_name"
-          label="创建人"
-          align="left"
-        />
-        <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
-          min-width="180"
-          prop="c_time"
-          label="创建时间"
-          align="left"
-        >
-          <template slot-scope="scope">
-            {{ formatDateTime(scope.row.c_time) }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
-          min-width="120"
-          prop="u_name"
-          label="更新人"
-          align="left"
-        />
-        <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
-          min-width="180"
-          prop="u_time"
-          label="更新时间"
-          align="left"
-        >
-          <template slot-scope="scope">
-            {{ formatDateTime(scope.row.u_time) }}
-          </template>
-        </el-table-column>
+      <!-- 创建人 -->
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="c_name"
+        label="创建人"
+        align="left"
+      />
+
+      <!-- 创建时间 -->
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="180"
+        prop="c_time"
+        label="创建时间"
+        align="left"
+      >
+        <template slot-scope="scope">
+          {{ formatDateTime(scope.row.c_time) }}
+        </template>
+      </el-table-column>
+
+      <!-- 更新人 -->
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="u_name"
+        label="更新人"
+        align="left"
+      />
+
+      <!-- 更新时间 -->
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="180"
+        prop="u_time"
+        label="更新时间"
+        align="left"
+      >
+        <template slot-scope="scope">
+          {{ formatDateTime(scope.row.u_time) }}
+        </template>
       </el-table-column>
     </el-table>
 
@@ -805,23 +776,19 @@ export default {
           // 当前被激活的页签
           active_tabs_index: '',
           code: '', // 计划编号
-          po_order_code: '', // 合同编号
-          owner_name: '', // 货主
-          own_id: '', // 货主ID
-          consignor_name: '', // 委托方
-          warehouse_name: '', // 仓库
+          contract_code: '', // 合同编号
+          order_code: '', // 订单编号
+          owner_name: '', // 货主名称
+          owner_id: '', // 货主ID
+          warehouse_name: '', // 仓库名称
           warehouse_id: '', // 仓库ID
-          supplier_name: '', // 供应商
-          supplier: '', // 供应商ID
-          status_list: [], // 状态
-          type_list: [], // 入库类型
+          supplier_name: '', // 供应商名称
+          supplier_id: '', // 供应商ID
+          status_list: [], // 单据状态列表
+          type_list: [], // 入库类型列表
           goods_name: '', // 物料编码或名称（高级查询）
           project_code: '', // 项目编码（高级查询）
-          plan_time: '', // 计划时间（高级查询）
-          goods_code: '', // 商品编码（高级查询）
-          sku_code: '', // SKU编码（高级查询）
-          po_contract_code: '', // 采购合同编号（高级查询）
-          po_order_code_advanced: '' // 采购订单编号（高级查询）
+          plan_times: [] // 计划时间起始、结束（高级查询）
         },
         listData: [], // 列表数据
         total: 0, // 总条数
@@ -927,6 +894,18 @@ export default {
             break
         }
       }
+    },
+    // 监听高级查询条件变化，更新高级查询条件数量
+    'dataJson.searchForm': {
+      handler (newVal) {
+        let count = 0
+        // 统计高级查询条件数量
+        if (newVal.goods_name && newVal.goods_name.trim() !== '') count++
+        if (newVal.project_code && newVal.project_code.trim() !== '') count++
+        if (newVal.plan_times && newVal.plan_times.length === 2) count++
+        this.screenNum = count
+      },
+      deep: true
     }
   },
   created () {
@@ -1528,23 +1507,19 @@ export default {
     doResetSearch () {
       const defaultSearchForm = {
         code: '', // 计划编号
-        po_order_code: '', // 合同编号
-        owner_name: '', // 货主
-        own_id: '', // 货主ID
-        consignor_name: '', // 委托方
-        warehouse_name: '', // 仓库
+        contract_code: '', // 合同编号
+        order_code: '', // 订单编号
+        owner_name: '', // 货主名称
+        owner_id: '', // 货主ID
+        warehouse_name: '', // 仓库名称
         warehouse_id: '', // 仓库ID
-        supplier_name: '', // 供应商
-        supplier: '', // 供应商ID
-        status_list: [], // 状态
-        type_list: [], // 入库类型
+        supplier_name: '', // 供应商名称
+        supplier_id: '', // 供应商ID
+        status_list: [], // 单据状态列表
+        type_list: [], // 入库类型列表
         goods_name: '', // 物料编码或名称（高级查询）
         project_code: '', // 项目编码（高级查询）
-        plan_time: '', // 计划时间（高级查询）
-        goods_code: '', // 商品编码（高级查询）
-        sku_code: '', // SKU编码（高级查询）
-        po_contract_code: '', // 采购合同编号（高级查询）
-        po_order_code_advanced: '' // 采购订单编号（高级查询）
+        plan_times: [] // 计划时间起始、结束（高级查询）
       }
       this.dataJson.searchForm = deepCopy(defaultSearchForm)
       this.screenNum = 0
@@ -1555,24 +1530,11 @@ export default {
      */
     handleOwnerReturnDataName (data) {
       if (data && data.length > 0) {
-        this.dataJson.searchForm.own_id = data[0].id
+        this.dataJson.searchForm.owner_id = data[0].id
         this.dataJson.searchForm.owner_name = data[0].name
       } else {
-        this.dataJson.searchForm.own_id = ''
+        this.dataJson.searchForm.owner_id = ''
         this.dataJson.searchForm.owner_name = ''
-      }
-    },
-
-    /**
-     * 委托方选择回调
-     */
-    handleConsignorReturnDataName (data) {
-      if (data && data.length > 0) {
-        this.dataJson.searchForm.consignor_id = data[0].id
-        this.dataJson.searchForm.consignor_name = data[0].name
-      } else {
-        this.dataJson.searchForm.consignor_id = ''
-        this.dataJson.searchForm.consignor_name = ''
       }
     },
 
@@ -1594,10 +1556,10 @@ export default {
      */
     handleSupplierReturnDataName (data) {
       if (data && data.length > 0) {
-        this.dataJson.searchForm.supplier = data[0].id
+        this.dataJson.searchForm.supplier_id = data[0].id
         this.dataJson.searchForm.supplier_name = data[0].name
       } else {
-        this.dataJson.searchForm.supplier = ''
+        this.dataJson.searchForm.supplier_id = ''
         this.dataJson.searchForm.supplier_name = ''
       }
     },
