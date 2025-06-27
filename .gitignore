@@ -29,3 +29,6 @@ yarn.lock
 .cursorignore
 .DS_Store
 package-lock.json
+
+claude.md
+CLAUDE.md

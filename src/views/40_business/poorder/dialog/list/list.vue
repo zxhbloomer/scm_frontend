@@ -871,9 +871,9 @@ export default {
           purchaser_name: '',
           purchaser_id: '',
           status_list: ['2'], // 只能是执行中的订单
-          type_list: '',
-          settle_list: '',
-          bill_type_list: '',
+          type_list: [],
+          settle_list: [],
+          bill_type_list: [],
           goods_name: '', // 高级查询-物料编码或名称
           // 启动日期
           batch: '',
@@ -923,7 +923,31 @@ export default {
         duration: 4000,
         isSupplierDisabled: false,
         isPurchaserDisabled: false
-      }
+      },
+      // vue-tour组件
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {
@@ -1137,6 +1161,10 @@ export default {
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', deepCopy(row))
     },
+    // 表格多选事件处理
+    handleSelectionChange (selection) {
+      this.dataJson.multipleSelection = selection
+    },
     // 审批按钮
     handleApprove () {
       const _data = deepCopy(this.dataJson.currentJson)
@@ -1172,6 +1200,10 @@ export default {
         return 'warning-cell'
       }
       return ''
+    },
+    // 处理打印窗口取消事件
+    handlePrintCancel () {
+      this.popPrint.dialogVisible = false
     }
   }
 }

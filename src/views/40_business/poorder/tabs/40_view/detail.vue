@@ -453,6 +453,7 @@
 </style>
 
 <script>
+import constants_dict from '@/common/constants/constants_dict'
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -471,6 +472,7 @@ export default {
   },
   data () {
     return {
+      constants_dict,
       constants_para,
       contentStyle: {
         width: '15%'
