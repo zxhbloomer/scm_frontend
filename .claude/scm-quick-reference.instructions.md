@@ -1,0 +1,145 @@
+---
+applyTo: '**'
+---
+# SCM前端组件快速参考表
+
+## 组件Import路径速查
+
+| 组件名 | Import路径 | 用途 |
+|-----|-----|---|
+| `el-input` | 无需import | 文本输入框 |
+| `el-date-picker` | 无需import | 日期选择器 |
+| `numeric` | `@/components/40_input/numeric` | 数字/金额输入 |
+| `InputSearch` | `@/components/40_input/inputSearch` | 搜索选择输入框 |
+| `SelectDict` | `@/components/00_dict/select/SelectDict.vue` | 字典单选下拉 |
+| `SelectDicts` | `@/components/00_dict/select/SelectDicts.vue` | 字典多选下拉 |
+| `RadioDict` | `@/components/00_dict/redio` | 字典单选按钮组 |
+| `SimpleUploadMutilFile` | `@/components/10_file/SimpleUploadMutilFile/index.vue` | 多文件上传 |
+| `SimpleUpload` | `@/components/10_file/SimpleUpload/index.vue` | 单文件上传 |
+| `PreviewCard` | `@/components/50_preview_card/preview_card.vue` | 文件预览卡片 |
+| `PreviewDescription` | `@/components/51_preview_description/index.vue` | 预览描述组件 |
+
+## 业务组件 (路径需确认)
+
+| 组件名 | 标签名 | 用途 |
+|-----|-----|---|
+| 供应商选择 | `<select-cp-supplier>` | 供应商选择控件 |
+| 客户选择 | `<select-se-customer>` | 客户/主体企业选择 |
+| 仓库选择 | `<select-warehouse>` | 仓库选择控件 |
+
+## 常用字典常量
+
+```javascript
+// 项目类型
+CONSTANTS.DICT_B_PROJECT_TYPE
+CONSTANTS.DICT_B_PROJECT_STATUS
+
+// 采购合同
+CONSTANTS.DICT_B_PO_CONTRACT_TYPE
+CONSTANTS.DICT_B_PO_CONTRACT_STATUS
+CONSTANTS.DICT_B_PO_CONTRACT_SETTLE_TYPE
+CONSTANTS.DICT_B_PO_CONTRACT_BILL_TYPE
+CONSTANTS.DICT_B_PO_CONTRACT_PAYMENT_TYPE
+CONSTANTS.DICT_B_PO_CONTRACT_DELIVERY_TYPE
+
+// 采购订单
+CONSTANTS.DICT_B_PO_ORDER_STATUS
+CONSTANTS.DICT_B_PO_ORDER_SETTLE_TYPE
+CONSTANTS.DICT_B_PO_ORDER_BILL_TYPE
+CONSTANTS.DICT_B_PO_ORDER_PAYMENT_TYPE
+CONSTANTS.DICT_B_PO_ORDER_DELIVERY_TYPE
+
+// AP应付账款
+CONSTANTS.DICT_B_AP_TYPE
+CONSTANTS.DICT_B_AP_STATUS
+CONSTANTS.DICT_B_AP_PAY_STATUS
+
+// 入库计划
+CONSTANTS.DICT_B_IN_PLAN_TYPE
+CONSTANTS.DICT_B_IN_PLAN_STATUS
+```
+
+## 表单绑定规范
+
+| 数据类型 | 绑定路径 | 说明 |
+|----|----|---|
+| 查询表单 | `dataJson.searchForm.*` | 列表页查询条件 |
+| 编辑表单 | `dataJson.tempJson.*` | 新增/编辑页面数据 |
+| 输入限制 | `dataJson.inputSettings.maxLength.*` | 字段最大长度限制 |
+
+## 事件处理规范
+
+| 事件类型 | 事件名 | 说明 |
+|----|-----|---|
+| 输入变更 | `@input` | 值改变时触发 |
+| 选择变更 | `@change` | 选择改变时触发 |
+| 搜索触发 | `@onInputSearch` | 点击搜索按钮触发 |
+| 数据返回 | `@onReturnData` | 选择完成后返回数据 |
+| 文件上传 | `@upload-success` | 文件上传成功 |
+| 文件上传 | `@upload-error` | 文件上传失败 |
+| 文件删除 | `@removeFile` | 删除文件 |
+| 回车搜索 | `@keyup.enter.native` | 回车键触发搜索 |
+
+## 校验规则模板
+
+```javascript
+settings: {
+  rules: {
+    // 必填文本
+    name: [
+      { required: true, message: '请输入名称', trigger: 'blur' }
+    ],
+    // 必填选择
+    type: [
+      { required: true, message: '请选择类型', trigger: 'change' }
+    ],
+    // 数字校验
+    amount: [
+      { required: true, message: '请输入金额', trigger: 'blur' },
+      { type: 'number', message: '金额必须为数字', trigger: 'blur' }
+    ]
+  }
+}
+```
+
+## 必需的Watch
+
+```javascript
+watch: {
+  // 每个页面都要添加 (弹出页面除外)
+  'settings.loading': {
+    handler (newVal, oldVal) {
+      switch (newVal) {
+        case true:
+          this.showLoading('正在处理，请稍后...')
+          break
+        case false:
+          this.closeLoading()
+          break
+      }
+    }
+  }
+}
+```
+
+## 格式化函数
+
+```javascript
+// 金额格式化
+this.formatCurrency(amount, true)
+
+// 数字格式化  
+this.formatNumber(number, true, 4)
+
+// Loading控制
+this.showLoading('正在处理，请稍后...')
+this.closeLoading()
+```
+
+## 重要注意事项
+
+1. **字典单选路径**: `@/components/00_dict/redio` (注意是redio不是radio)
+2. **常量使用**: 直接使用 `this.CONSTANTS.*` 无需import
+3. **格式化函数**: 直接使用 `this.formatCurrency()` 等，无需import
+4. **审批流组件**: 使用bpm不是bmp
+5. **作废页面**: 在 `cancelApi().finally()` 中调用 `this.$emit('closeMeOk', tempData)` 

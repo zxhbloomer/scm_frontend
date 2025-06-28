@@ -1,0 +1,581 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# SCM前端自定义组件详细文档
+
+## 1. 数字金额输入组件 (numeric)
+
+### Import
+```javascript
+import numeric from '@/components/40_input/numeric'
+```
+
+### 使用示例
+```vue
+<numeric
+  v-model="dataJson.tempJson.amount"
+  :positive-percentage="true"
+  :decimal-places="4"
+  :minimum-value="0"
+  :maximum-value="10000000000"
+  style="width: 100%"
+  @change.native="handleAmountChange"
+/>
+```
+
+### Props参数
+- `positive-percentage`: Boolean - 正百分比模式
+- `percentage`: Boolean - 百分比模式
+- `decimal-places`: Number - 小数位数 (默认:2)
+- `currency-symbol`: String - 货币符号 (默认:"¥")
+- `minimum-value`: Number - 最小值
+- `maximum-value`: Number - 最大值
+
+### 事件
+- `@change.native`: 数值改变事件
+
+---
+
+## 2. 搜索选择输入框 (InputSearch)
+
+### Import
+```javascript
+import InputSearch from '@/components/40_input/inputSearch'
+```
+
+### 使用示例
+```vue
+<input-search
+  v-model.trim="dataJson.tempJson.supplier_name"
+  :disabled="false"
+  @onInputSearch="handleSupplierDialog"
+/>
+```
+
+### Props参数
+- `disabled`: Boolean - 是否禁用 (默认:false)
+- `value`: String - 绑定值 (默认:'')
+
+### 事件
+- `@onInputSearch`: 点击选择按钮时触发
+
+---
+
+## 3. 字典下拉选择 (SelectDict)
+
+### Import
+```javascript
+import SelectDict from '@/components/00_dict/select/SelectDict.vue'
+```
+
+### 使用示例
+```vue
+<select-dict
+  v-model="dataJson.tempJson.type"
+  :para="CONSTANTS.DICT_B_PROJECT_TYPE"
+  init-placeholder="请选择"
+  style="width:100%"
+  @change="handleTypeChange"
+/>
+```
+
+### Props参数
+- `value`: [String, Number] - 选中值
+- `initPlaceholder`: String - 占位符文本
+- `para`: String - 字典参数 (必填)
+- `filterPara`: Array - 过滤参数 (默认:null)
+- `disabled`: Boolean - 是否禁用 (默认:false)
+
+### 事件
+- `@change`: 选择改变事件
+
+---
+
+## 4. 字典多选下拉 (SelectDicts)
+
+### Import
+```javascript
+import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
+```
+
+### 使用示例
+```vue
+<select-dicts
+  v-model="dataJson.searchForm.status_list"
+  :para="CONSTANTS.DICT_B_PROJECT_STATUS"
+  init-placeholder="请选择单据状态"
+  :disabled="false"
+/>
+```
+
+### Props参数
+- `value`: Array - 选中值数组 (默认:null)
+- `initPlaceholder`: String - 占位符文本
+- `para`: String - 字典参数 (必填)
+- `filterPara`: Array - 过滤参数 (默认:null)
+- `disabled`: Boolean - 是否禁用 (默认:false)
+
+### 事件
+- `@change`: 多选改变事件
+
+---
+
+## 5. 字典单选按钮组 (RadioDict)
+
+### Import
+```javascript
+import RadioDict from '@/components/00_dict/redio'
+```
+
+### 使用示例
+```vue
+<radio-dict
+  v-model="dataJson.tempJson.type"
+  :value="dataJson.tempJson.type"
+  :para="CONSTANTS.DICT_B_PROJECT_TYPE"
+  :disabled="false"
+  @change="handleTypeChange"
+/>
+```
+
+### Props参数
+- `value`: [String, Number] - 选中值
+- `para`: String - 字典参数 (必填)
+- `disabled`: Boolean - 是否禁用 (默认:false)
+
+### 事件
+- `@change`: 选择改变事件
+
+---
+
+## 6. 多文件上传组件 (SimpleUploadMutilFile)
+
+### Import
+```javascript
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+```
+
+### 使用示例
+```vue
+<Simple-upload-mutil-file
+  :accept="'*'"
+  @upload-success="handleOtherUploadFileSuccess"
+  @upload-error="handleFileError"
+/>
+```
+
+### Props参数
+- `accept`: String - 接受的文件类型 (默认:'.xls,.xlsx')
+- `show`: Boolean - 是否显示上传按钮 (默认:true)
+
+### 事件
+- `@upload-success`: 上传成功事件，返回 `{response, file, fileList}`
+- `@upload-error`: 上传失败事件，返回 `{err, file, fileList}`
+
+---
+
+## 7. 文件预览卡片 (PreviewCard)
+
+### Import
+```javascript
+import PreviewCard from '@/components/50_preview_card/preview_card.vue'
+```
+
+### 使用示例
+```vue
+<previewCard
+  :file-name="item.fileName"
+  :url="item.url"
+  :time="item.timestamp"
+  @removeFile="removeOtherFile"
+/>
+```
+
+### Props参数
+- `fileName`: String - 文件名
+- `time`: String - 时间戳 (默认:'-')
+- `url`: String - 文件URL
+- `width`: Number - 预览宽度 (默认:300)
+- `height`: Number - 预览高度 (默认:400)
+- `showDelete`: Boolean - 显示删除按钮 (默认:true)
+- `title`: String - 标题
+- `showTitle`: Boolean - 显示标题 (默认:false)
+
+### 事件
+- `@removeFile`: 删除文件事件，返回文件URL
+
+---
+
+## 8. 预览描述组件 (PreviewDescription)
+
+### Import
+```javascript
+import PreviewDescription from '@/components/51_preview_description/index.vue'
+```
+
+### 使用示例
+```vue
+<PreviewDescription
+  v-if="dataJson.doc_att_files && dataJson.doc_att_files.length > 0"
+  :attachment-files="dataJson.doc_att_files"
+/>
+```
+
+### Props参数
+- `attachment-files`: Array - 附件文件数组
+
+---
+
+## 9. 审批流程对话框 (BpmDialog)
+
+### Import
+```javascript
+import BpmDialog from '@/components/60_bpm/BpmDialog.vue'
+```
+
+### 使用示例
+```vue
+<bmp-dialog
+  v-if="popSettingsData.sponsorDialog.visible"
+  :visible="popSettingsData.sponsorDialog.visible"
+  :form-data="popSettingsData.sponsorDialog.form_data"
+  :serial-type="popSettingsData.sponsorDialog.serial_type"
+  @closeMeCancel="handleBmpDialogCancel"
+  @closeMeOk="handleBmpDialogOk"
+/>
+```
+
+### Props参数
+- `visible`: Boolean - 是否显示弹窗 (必填)
+- `form-data`: Object - 表单数据 (默认:{})
+- `serial-type`: String - 审批流程类型 (必填)
+
+### 数据设置
+```javascript
+popSettingsData: {
+  sponsorDialog: {
+    visible: false,
+    serial_type: 'module_operation', // 审批流程类型
+    form_data: {},                  // 表单参数
+    initial_process: null,          // 流程数据
+    process_users: []              // 自选用户
+  }
+}
+```
+
+### 主要方法
+```javascript
+/**
+ * 启动审批流程
+ */
+startProcess() {
+  this.showLoading('正在启动审批流程...')
+  this.popSettingsData.sponsorDialog.serial_type = 'your_module_type'
+  this.getFlow()
+},
+
+/**
+ * 获取审批流程
+ */
+getFlow() {
+  getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
+    .then((rsp) => {
+      if (rsp.data === null) {
+        this.showErrorMsg('未找到审批流程，请联系管理员')
+        this.closeLoading()
+      } else {
+        this.popSettingsData.sponsorDialog.form_data = {}
+        this.popSettingsData.sponsorDialog.visible = true
+      }
+    }).catch((err) => {
+      this.closeLoading()
+      this.showErrorMsg(err)
+    })
+},
+
+/**
+ * 审批流弹窗取消
+ */
+handleBmpDialogCancel() {
+  this.popSettingsData.sponsorDialog.visible = false
+  this.closeLoading()
+},
+
+/**
+ * 审批流确定
+ */
+handleBmpDialogOk(data) {
+  this.popSettingsData.sponsorDialog.initial_process = data.processData
+  this.popSettingsData.sponsorDialog.process_users = data.process_users
+  this.popSettingsData.sponsorDialog.visible = false
+  this.doInsert() // 执行实际的新增/提交操作
+}
+```
+
+### 审批流程类型常量
+```javascript
+// 常见的审批流程类型
+'project_new'    // 项目新增审批
+'contract_new'   // 合同新增审批
+'order_new'      // 订单新增审批
+'in_new'         // 入库单新增审批
+'cancel_xxx'     // 作废审批
+```
+
+### 事件
+- `@closeMeCancel`: 取消审批流程
+- `@closeMeOk`: 确定审批流程，返回 `{processData, process_users}`
+
+### 注意事项
+1. **路径正确性**: 组件路径是 `@/components/60_bpm/BpmDialog.vue` 不是 `60_bmp`
+2. **标签名称**: 在模板中使用 `<bmp-dialog>` 标签
+3. **serial_type**: 必须与后端配置的审批流程类型匹配
+4. **必须引入API**: 需要引入 `getFlowProcessApi` 方法
+5. **数据传递**: 审批确定后需要将流程数据添加到业务数据中提交
+
+---
+
+## 10. 仓库库区库位选择 (SelectWarehouseLocationBin)
+
+### Import
+```javascript
+import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+```
+
+### 使用示例
+```vue
+<select-warehouse-location-bin
+  ref="warehouseLocationBinRef"
+  :placeholder="'请选择仓库/库区/库位'"
+  :disabled="false"
+  :placement="'bottom'"
+  @onReturnData="handleWarehouseLocationBinReturnData"
+/>
+```
+
+### Props参数
+- `disabled`: Boolean - 是否禁用 (默认:false)
+- `placeholder`: String - 占位符文本 (默认:'请选择仓库/库区/库位')
+- `title`: String - 弹窗标题 (默认:'')
+- `reset`: Boolean - 重置状态 (默认:false)
+- `placement`: String - 弹窗位置 (默认:'bottom')
+- `warehouse`: Number - 指定仓库ID (默认:null)
+- `filterWarehouseType`: Array - 过滤仓库类型 (默认:null)
+
+### 返回数据结构
+```javascript
+// 选择完成后返回的数据结构
+{
+  id: 123,                    // 库位ID
+  warehouse_id: 456,          // 仓库ID
+  warehouse_code: 'WH001',    // 仓库编码
+  warehouse_name: '主仓库',    // 仓库名称
+  location_id: 789,           // 库区ID
+  location_code: 'L001',      // 库区编码
+  location_name: '库区A',      // 库区名称
+  bin_id: 123,               // 库位ID
+  bin_code: 'B001',          // 库位编码
+  bin_name: '库位001',        // 库位名称
+  name: '库位001'            // 库位名称(别名)
+}
+```
+
+### 主要方法
+```javascript
+/**
+ * 处理仓库库区库位选择返回数据
+ */
+handleWarehouseLocationBinReturnData(data) {
+  if (data) {
+    // 设置仓库信息
+    this.dataJson.tempJson.warehouse_id = data.warehouse_id
+    this.dataJson.tempJson.warehouse_code = data.warehouse_code
+    this.dataJson.tempJson.warehouse_name = data.warehouse_name
+    
+    // 设置库区信息
+    this.dataJson.tempJson.location_id = data.location_id
+    this.dataJson.tempJson.location_code = data.location_code
+    this.dataJson.tempJson.location_name = data.location_name
+    
+    // 设置库位信息
+    this.dataJson.tempJson.bin_id = data.bin_id
+    this.dataJson.tempJson.bin_code = data.bin_code
+    this.dataJson.tempJson.bin_name = data.bin_name
+    
+    // 构建显示文本
+    let displayText = ''
+    if (data.warehouse_name) displayText += data.warehouse_name
+    if (data.location_name) displayText += ' / ' + data.location_name
+    if (data.bin_name) displayText += ' / ' + data.bin_name
+    
+    this.dataJson.tempJson.warehouse_location_bin_display = displayText
+  } else {
+    // 清空选择
+    this.clearWarehouseLocationBinData()
+  }
+},
+
+/**
+ * 清空仓库库区库位数据
+ */
+clearWarehouseLocationBinData() {
+  this.dataJson.tempJson.warehouse_id = null
+  this.dataJson.tempJson.warehouse_code = ''
+  this.dataJson.tempJson.warehouse_name = ''
+  this.dataJson.tempJson.location_id = null
+  this.dataJson.tempJson.location_code = ''
+  this.dataJson.tempJson.location_name = ''
+  this.dataJson.tempJson.bin_id = null
+  this.dataJson.tempJson.bin_code = ''
+  this.dataJson.tempJson.bin_name = ''
+  this.dataJson.tempJson.warehouse_location_bin_display = ''
+}
+```
+
+### 组件内部功能
+- **弹窗式选择**: 点击输入框弹出仓库库区库位选择表格
+- **模糊搜索**: 支持输入关键字进行搜索
+- **分页显示**: 支持大量数据的分页展示
+- **双击选择**: 支持双击行快速选择
+- **数据校验**: 自动校验仓库是否启用
+
+### 事件
+- `@onReturnData`: 选择完成后返回数据，参数为选择的数据对象或null(清空时)
+
+### 使用场景
+1. **入库单**: 选择入库的仓库库区库位
+2. **出库单**: 选择出库的仓库库区库位
+3. **调拨单**: 选择源和目标仓库库区库位
+4. **盘点单**: 选择盘点的仓库库区库位
+
+### 注意事项
+1. **权限控制**: 组件会根据用户权限过滤可选择的仓库
+2. **数据联动**: 仓库、库区、库位之间存在层级关系
+3. **状态检查**: 只能选择启用状态的仓库库区库位
+4. **清空操作**: 支持清空按钮重置选择
+
+---
+
+## 11. 常用事件处理模式
+
+### 文件上传成功处理
+```javascript
+handleOtherUploadFileSuccess(data) {
+  // 将上传成功的文件添加到附件数组
+  this.dataJson.doc_att.push({
+    fileName: data.file.name,
+    url: data.response.data.url,
+    timestamp: new Date().getTime()
+  })
+  
+  // 同时更新显示用的文件数组
+  this.dataJson.doc_att_files.push({
+    fileName: data.file.name,
+    url: data.response.data.url,
+    timestamp: new Date().getTime()
+  })
+}
+```
+
+### 文件删除处理
+```javascript
+removeOtherFile(data) {
+  // 从附件数组中删除文件
+  const index = this.dataJson.doc_att.findIndex(item => item.url === data)
+  if (index !== -1) {
+    this.dataJson.doc_att.splice(index, 1)
+  }
+  
+  // 从显示数组中删除文件
+  const index2 = this.dataJson.doc_att_files.findIndex(item => item.url === data)
+  if (index2 !== -1) {
+    this.dataJson.doc_att_files.splice(index2, 1)
+  }
+}
+```
+
+### 字典选择处理
+```javascript
+handleTypeChange(val) {
+  this.dataJson.tempJson.type = val
+  // 根据类型变化可能需要的其他逻辑
+  if (val === 'specific_type') {
+    // 特定类型的处理逻辑
+  }
+}
+```
+
+### 搜索选择处理
+```javascript
+handleSupplierDialog() {
+  // 打开供应商选择对话框
+  this.settings.dialogSettings.supplier.show = true
+}
+
+// 供应商选择返回数据处理
+handleSupplierReturnData(data) {
+  this.dataJson.tempJson.supplier_id = data.id
+  this.dataJson.tempJson.supplier_code = data.code
+  this.dataJson.tempJson.supplier_name = data.name
+  this.settings.dialogSettings.supplier.show = false
+}
+```
+
+## 12. 组件注册模板
+
+### 完整导入示例
+```javascript
+// 输入组件
+import InputSearch from '@/components/40_input/inputSearch'
+import numeric from '@/components/40_input/numeric'
+
+// 字典组件
+import SelectDict from '@/components/00_dict/select/SelectDict.vue'
+import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
+import RadioDict from '@/components/00_dict/redio'
+
+// 文件组件
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+import PreviewCard from '@/components/50_preview_card/preview_card.vue'
+import PreviewDescription from '@/components/51_preview_description/index.vue'
+
+// 审批流程组件
+import BmpDialog from '@/components/60_bpm/BmpDialog.vue'
+
+// 仓库库区库位选择组件
+import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+
+// 业务组件 (根据实际情况调整路径)
+import SupplierDialog from '@/views/xx/supplier/dialog/index.vue'
+import CustomerDialog from '@/views/xx/customer/dialog/index.vue'
+
+export default {
+  components: {
+    InputSearch,
+    numeric,
+    SelectDict,
+    SelectDicts,
+    RadioDict,
+    SimpleUploadMutilFile,
+    PreviewCard,
+    PreviewDescription,
+    BmpDialog,
+    SelectWarehouseLocationBin,
+    SupplierDialog,
+    CustomerDialog
+  }
+}
+```
+
+## 13. 重要注意事项
+
+1. **字典组件路径**: RadioDict的路径是 `@/components/00_dict/redio` (注意是redio不是radio)
+2. **文件上传**: SimpleUploadMutilFile支持多文件上传，使用时要处理upload-success事件
+3. **预览组件**: PreviewCard会自动处理文件预览URL的Base64编码
+4. **数字组件**: numeric组件支持多种模式（金额、百分比、普通数字）
+5. **搜索组件**: InputSearch是只读输入框，点击后触发选择事件
+6. **字典组件**: 所有字典组件都需要传入CONSTANTS中定义的字典参数
+7. **审批流组件**: 使用bpm不是bmp，但标签名是bmp-dialog
+8. **仓库选择组件**: 返回完整的仓库库区库位信息，需要正确处理数据绑定

@@ -345,18 +345,22 @@
 
     <!-- 数据表格 -->
     <el-table
-      ref="dataTable"
+      ref="multipleTable"
       v-loading="settings.loading"
       :data="dataJson.listData"
       style="width: 100%"
       row-key="id"
       border
       stripe
-      size="mini"
-      height="650"
-      :default-sort="{ prop: 'id', order: 'descending' }"
+      fit
+      highlight-current-row
+      :height="settings.tableHeight"
+      :default-sort="{ prop: 'u_time', order: 'descending' }"
+      :cell-class-name="tableCellClassName"
+      @row-click="handleRowClick"
+      @row-dblclick="handleRowDbClick"
+      @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
-      @row-click="handleCurrentRowClick"
       @selection-change="handleSelectionChange"
     >
       <el-table-column
@@ -369,6 +373,7 @@
         type="index"
         width="50"
         label="序号"
+        align="center"
       />
 
       <!-- 入库单号 -->
@@ -379,6 +384,7 @@
         prop="code"
         label="入库单号"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 入库计划 -->
@@ -390,6 +396,7 @@
           prop="plan_code"
           label="计划单号"
           align="left"
+          :auto-fit="true"
         />
         <el-table-column
           sortable="custom"
@@ -405,7 +412,8 @@
           min-width="150"
           prop="plan_time"
           label="计划日期"
-          align="center"
+          align="left"
+          :auto-fit="true"
         >
           <template slot-scope="scope">
             {{ formatDate(scope.row.plan_time) }}
@@ -420,7 +428,8 @@
         min-width="120"
         prop="status_name"
         label="入库单状态"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 审批流程情况 -->
@@ -430,7 +439,8 @@
         min-width="150"
         prop="next_approve_name"
         label="审批流程情况"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 入库类型 -->
@@ -440,14 +450,16 @@
         min-width="120"
         prop="type_name"
         label="入库类型"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 入库仓库 -->
       <el-table-column
         min-width="200"
         label="入库仓库"
-        align="center"
+        align="left"
+        :auto-fit="true"
       >
         <template slot-scope="scope">
           <div style="line-height: 20px;">
@@ -466,6 +478,7 @@
         prop="owner_name"
         label="货主"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 供应商 -->
@@ -476,6 +489,7 @@
         prop="supplier_name"
         label="供应商"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 合同编号 -->
@@ -486,6 +500,7 @@
         prop="contract_code"
         label="合同编号"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 订单编号 -->
@@ -496,6 +511,7 @@
         prop="order_code"
         label="订单编号"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 商品名称 -->
@@ -506,6 +522,7 @@
         prop="goods_name"
         label="商品名称"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 规格 -->
@@ -516,6 +533,7 @@
         prop="sku_name"
         label="规格"
         align="left"
+        :auto-fit="true"
       />
 
       <!-- 原发数量 -->
@@ -581,7 +599,8 @@
         min-width="80"
         prop="unit_name"
         label="单位"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 入库单价 -->
@@ -619,7 +638,8 @@
         min-width="160"
         prop="inbound_time"
         label="入库时间"
-        align="center"
+        align="left"
+        :auto-fit="true"
       >
         <template slot-scope="scope">
           {{ formatDateTime(scope.row.inbound_time) }}
@@ -633,7 +653,8 @@
         min-width="100"
         prop="c_name"
         label="创建人"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 创建时间 -->
@@ -643,7 +664,8 @@
         min-width="160"
         prop="c_time"
         label="创建时间"
-        align="center"
+        align="left"
+        :auto-fit="true"
       >
         <template slot-scope="scope">
           {{ formatDateTime(scope.row.c_time) }}
@@ -657,7 +679,8 @@
         min-width="100"
         prop="u_name"
         label="更新人"
-        align="center"
+        align="left"
+        :auto-fit="true"
       />
 
       <!-- 更新时间 -->
@@ -667,7 +690,8 @@
         min-width="160"
         prop="u_time"
         label="更新时间"
-        align="center"
+        align="left"
+        :auto-fit="true"
       >
         <template slot-scope="scope">
           {{ formatDateTime(scope.row.u_time) }}
@@ -774,8 +798,9 @@ export default {
       // 页面设置
       settings: {
         loading: false,
-        exportModel: false,
+        exportModel: true,
         sortOrders: ['ascending', 'descending'],
+        tableHeight: this.setUIheight(),
         // 按钮状态
         btnStatus: {
           showUpdate: false, // 显示修改按钮
@@ -920,6 +945,28 @@ export default {
 
     /**
      * 行点击事件
+     */
+    handleRowClick (row) {
+      this.dataJson.rowIndex = this.getRowIndex(row)
+    },
+
+    /**
+     * 行双击事件
+     */
+    handleRowDbClick (row) {
+      this.dataJson.rowIndex = this.getRowIndex(row)
+      this.handleView()
+    },
+
+    /**
+     * 当前行变化事件
+     */
+    handleCurrentChange (row) {
+      this.handleCurrentRowClick(row)
+    },
+
+    /**
+     * 行点击事件处理（原方法保留）
      */
     handleCurrentRowClick (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
@@ -1258,6 +1305,14 @@ export default {
       }).catch(error => {
         console.warn('刷新统计数据失败：', error)
       })
+    },
+
+    /**
+     * 表格单元格class名称
+     */
+    tableCellClassName ({ row, column, rowIndex, columnIndex }) {
+      // 可以根据需要添加自定义样式
+      return ''
     }
   }
 }

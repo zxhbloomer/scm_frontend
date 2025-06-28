@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mysql": {
+      "username": "root",
+      "password": "123456",
+      "url": "jdbc:mysql://127.0.0.1:3306/scm_tenant_20250519_001"
+    }
+  }
+} 

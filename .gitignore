@@ -22,13 +22,8 @@ selenium-debug.log
 package-lock.json
 yarn.lock
 
-.cursor
-.github
 .idea
 00_doc
-.cursorignore
 .DS_Store
 package-lock.json
 
-claude.md
-CLAUDE.md
