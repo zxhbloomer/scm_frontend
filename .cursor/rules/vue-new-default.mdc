@@ -1,0 +1,72 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+### 重要：流程方面的代码是bpm，不是bmp
+- 关于流程方面的代码是bpm，不是bmp
+
+### 定义样例代码
+- 这部分参考了采购合同代码（这里称作样例代码）
+
+### 在import时，需要仔细看看是否imprt的文件是否存在，主要是在参考学习代码时，应该好好参考，不要自己瞎定义
+- import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
+- import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer'
+- import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+
+### 关于permission的导入
+- import permission from '@/directive/permission/index.js' // 权限判断指令
+
+### xxx/tabs/10_list/index.vue的关于css，参考样例代码，复制如下的css
+- .el-button-group {
+- .perfect_popper .el-form-item--mini.el-form-item {
+- .el-form-item--mini.el-form-item {
+- .el-tabs {
+- .el-link.el-link--default {
+- 这部分br的不需要
+br {
+  display: block;
+  margin: 10px;
+  content: ' ';
+}
+
+- 
+
+
+pocontract/
+├── index.vue                    # 主页面，包含标签页管理
+├── dialog/                      # 对话框组件
+│   ├── cancel/                  # 作废对话框
+│   │   └── index.vue
+│   ├── new/                     # 新增对话框
+│   │   ├── index.vue
+│   │   ├── edit.vue
+│   │   └── mixin.js
+│   └── push/                    # 下推对话框
+│       └── new/
+│           ├── index.vue
+│           ├── edit.vue
+│           └── mixin.js
+└── tabs/                        # 标签页组件
+    ├── 10_list/                 # 列表页
+    │   └── index.vue
+    ├── 20_new/                  # 新增页
+    │   └── index.vue
+    ├── 30_edit/                 # 编辑页
+    │   └── index.vue
+    ├── 40_view/                 # 查看页
+    │   ├── index.vue
+    │   └── detail.vue
+    ├── 50_approve/              # 审批页
+    │   ├── index.vue
+    │   └── detail.vue
+    └── 60_print/                # 打印页
+        └── index.vue
+
+### 列表页的注意点（10_list/index.vue）
+统计信息
+- 参考代码：统计信息区域存放到相同位置，样式也需要统一
+- el-table：el-table的属性:height也需要完全的参考样例代码
+
+
+
