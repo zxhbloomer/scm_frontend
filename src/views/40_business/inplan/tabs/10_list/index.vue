@@ -403,13 +403,16 @@
           align="left"
         />
         <el-table-column
-          sortable="custom"
           :auto-fit="true"
           min-width="150"
           prop="next_approve_name"
-          label="审批流程情况"
+          label="审批情况"
           align="left"
-        />
+        >
+          <template slot-scope="scope">
+            {{ getApprovalStatusText(scope.row) }}
+          </template>
+        </el-table-column>
         <el-table-column
           sortable="custom"
           :sort-orders="settings.sortOrders"
@@ -1578,6 +1581,23 @@ export default {
       } else {
         return 'merge_cells2 cell'
       }
+    },
+
+    /**
+     * 获取审批情况显示文本
+     */
+    getApprovalStatusText (row) {
+      if (!row.next_approve_name) {
+        return row.next_approve_name || ''
+      }
+
+      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
+      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+        return `待用户${row.next_approve_name}审批`
+      }
+
+      // 其他状态直接显示next_approve_name
+      return row.next_approve_name
     }
   }
 }

@@ -432,16 +432,18 @@
         :auto-fit="true"
       />
 
-      <!-- 审批流程情况 -->
+      <!-- 审批情况 -->
       <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
         min-width="150"
         prop="next_approve_name"
-        label="审批流程情况"
+        label="审批情况"
         align="left"
         :auto-fit="true"
-      />
+      >
+        <template slot-scope="scope">
+          {{ getApprovalStatusText(scope.row) }}
+        </template>
+      </el-table-column>
 
       <!-- 入库类型 -->
       <el-table-column
@@ -1313,6 +1315,23 @@ export default {
     tableCellClassName ({ row, column, rowIndex, columnIndex }) {
       // 可以根据需要添加自定义样式
       return ''
+    },
+
+    /**
+     * 获取审批情况显示文本
+     */
+    getApprovalStatusText (row) {
+      if (!row.next_approve_name) {
+        return row.next_approve_name || ''
+      }
+
+      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
+      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+        return `待用户${row.next_approve_name}审批`
+      }
+
+      // 其他状态直接显示next_approve_name
+      return row.next_approve_name
     }
   }
 }

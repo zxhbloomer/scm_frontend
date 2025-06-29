@@ -114,3 +114,5 @@ password:123456
 - @~/.claude/scm-custom-components.instructions.md
 - @~/.claude/scm-input-components.instructions.md
 - @~/.claude/scm-quick-reference.instructions.md
+- @~/.claude/vue-new-rule.instructions.md
+- @~/.claude/vue-rule.instructions.md
