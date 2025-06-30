@@ -201,7 +201,7 @@ export default {
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
-          serial_type: constants_dict.DICT_B_IN_CANCEL_V2,
+          serial_type: constants_dict.DICT_B_IN_CANCEL,
           // 弹出框显示参数
           visible: false,
           form_data: {},

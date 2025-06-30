@@ -356,7 +356,6 @@
       highlight-current-row
       :height="settings.tableHeight"
       :default-sort="{ prop: 'u_time', order: 'descending' }"
-      :cell-class-name="tableCellClassName"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
@@ -397,7 +396,11 @@
           label="计划单号"
           align="left"
           :auto-fit="true"
-        />
+        >
+          <template slot-scope="scope">
+            {{ scope.row.plan_code || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column
           sortable="custom"
           :sort-orders="settings.sortOrders"
@@ -405,7 +408,11 @@
           prop="plan_no"
           label="序号"
           align="center"
-        />
+        >
+          <template slot-scope="scope">
+            {{ scope.row.plan_no || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column
           sortable="custom"
           :sort-orders="settings.sortOrders"
@@ -416,7 +423,7 @@
           :auto-fit="true"
         >
           <template slot-scope="scope">
-            {{ formatDate(scope.row.plan_time) }}
+            {{ scope.row.plan_time ? formatDate(scope.row.plan_time) : '-' }}
           </template>
         </el-table-column>
       </el-table-column>
@@ -552,34 +559,6 @@
         </template>
       </el-table-column>
 
-      <!-- 毛重 -->
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="100"
-        prop="gross_weight"
-        label="毛重"
-        align="right"
-      >
-        <template slot-scope="scope">
-          {{ formatNumber(scope.row.gross_weight, true, 4) }}
-        </template>
-      </el-table-column>
-
-      <!-- 皮重 -->
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="100"
-        prop="tare_weight"
-        label="皮重"
-        align="right"
-      >
-        <template slot-scope="scope">
-          {{ formatNumber(scope.row.tare_weight, true, 4) }}
-        </template>
-      </el-table-column>
-
       <!-- 入库数量（净重） -->
       <el-table-column
         sortable="custom"
@@ -597,7 +576,6 @@
       <!-- 单位 -->
       <el-table-column
         sortable="custom"
-        :sort-orders="settings.sortOrders"
         min-width="80"
         prop="unit_name"
         label="单位"
@@ -712,8 +690,10 @@
 
     <!-- 作废对话框 -->
     <cancel-dialog
-      ref="cancelDialog"
-      @emitOkData="handleCancelOkData"
+      :visible.sync="showCancelDialog"
+      :data="cancelDialogData"
+      @closeMeOk="handleCancelOk"
+      @closeMeCancel="handleCancelCancel"
     />
   </div>
 </template>
@@ -726,9 +706,12 @@ import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/sys
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
 import CancelDialog from '../../dialog/cancel/index.vue'
-import { getInListApi, getListSumApi, deleteInApi, cancelApi } from '@/api/40_business/in/in.js'
+import { getListApi, getListSumApi, delApi, getApi } from '@/api/40_business/in/in.js'
 import mixin from './mixin'
 import deepCopy from 'deep-copy'
+import constants_dict from '@/common/constants/constants_dict'
+import { EventBus } from '@/common/eventbus/eventbus'
+import constants_emits from '@/common/constants/constants_emits'
 
 export default {
   name: 'InList',
@@ -814,7 +797,10 @@ export default {
           hidenExport: true, // 隐藏导出按钮（默认隐藏）
           showExport: false // 显示导出状态
         }
-      }
+      },
+      // 作废对话框控制
+      showCancelDialog: false,
+      cancelDialogData: null
     }
   },
   computed: {
@@ -849,12 +835,88 @@ export default {
         // 全部页签，清空状态筛选
         this.dataJson.searchForm.status_list = []
       } else {
-        // 其他页签，设置对应状态筛选
-        this.dataJson.searchForm.status_list = [newVal]
+        // 映射Tab名称到实际状态值
+        const tabToStatusMap = {
+          '1': '0', // 待审批 -> 状态0
+          '2': '1', // 审批中 -> 状态1
+          '3': '2', // 执行中 -> 状态2
+          '4': '6', // 已完成 -> 状态6
+          '5': '3', // 驳回 -> 状态3
+          '6': '4', // 作废审批中 -> 状态4
+          '7': '5' // 已作废 -> 状态5
+        }
+        const statusValue = tabToStatusMap[newVal]
+        if (statusValue) {
+          this.dataJson.searchForm.status_list = [statusValue]
+        }
       }
       // 重新加载数据
       this.handleSearch()
     }
+  },
+  created () {
+    // 新增提交数据时监听
+    EventBus.$on(constants_emits.EMIT_MST_B_IN_NEW_OK, _data => {
+      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_NEW_OK', _data)
+      // 设置到table中绑定的json数据源
+      console.log('新增数据：', _data)
+      this.dataJson.listData.unshift(_data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: _data.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(0, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
+
+    // 更新提交数据时监听
+    EventBus.$on(constants_emits.EMIT_MST_B_IN_UPDATE_OK, _data => {
+      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_UPDATE_OK', _data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
+
+    // 提交审批流时监听
+    EventBus.$on(constants_emits.EMIT_MST_B_IN_BPM_OK, _data => {
+      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_BPM_OK', _data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
+  },
+  beforeDestroy () {
+    // 清理EventBus监听器
+    EventBus.$off(constants_emits.EMIT_MST_B_IN_NEW_OK)
+    EventBus.$off(constants_emits.EMIT_MST_B_IN_UPDATE_OK)
+    EventBus.$off(constants_emits.EMIT_MST_B_IN_BPM_OK)
   },
   mounted () {
     // 页面加载时获取数据
@@ -872,8 +934,15 @@ export default {
      * 搜索
      */
     handleSearch () {
+      // 查询
+      this.dataJson.searchForm.pageCondition.current = 1
       this.dataJson.paging.current = 1
+      this.dataJson.listData = []
       this.getDataList()
+      // 清空选择
+      this.dataJson.multipleSelection = []
+      this.$refs.multipleTable.clearSelection()
+      this.initButtonStatus()
     },
 
     /**
@@ -903,7 +972,6 @@ export default {
         plan_times: [], // 计划时间开始-结束（高级查询）
         inbound_times: [] // 入库时间开始-结束（高级查询）
       }
-      this.handleSearch()
     },
 
     /**
@@ -917,10 +985,9 @@ export default {
       this.dataJson.searchForm.pageCondition.size = this.dataJson.paging.size
       // 查询逻辑
       this.settings.loading = true
-      getInListApi(this.dataJson.searchForm).then(response => {
-        this.dataJson.listData = response.data.records
-        this.dataJson.paging = response.data
-        this.dataJson.paging.records = {}
+
+      getListApi(this.dataJson.searchForm).then(response => {
+        this.dataJson.listData = deepCopy(response.data.records)
       }).finally(() => {
         this.settings.loading = false
       })
@@ -933,18 +1000,31 @@ export default {
           this.dataJson.sumData.amount_total = 0
         }
       }).finally(() => {
-        this.settings.loading = false
       })
     },
-
+    // 初始化按钮状态
+    initButtonStatus () {
+      this.settings.btnStatus.showUpdate = false
+      this.settings.btnStatus.showCancel = false
+      this.settings.btnStatus.showView = false
+      this.settings.btnStatus.showDel = false
+      this.settings.btnStatus.showApprove = false
+      this.settings.btnStatus.showPush = false
+      this.settings.btnStatus.showPrint = false
+      this.settings.btnStatus.showFinish = false
+    },
     /**
      * 排序变化
      */
-    handleSortChange ({ column, prop, order }) {
-      // 处理排序逻辑
+    handleSortChange (column) {
+      // 服务器端排序
+      if (column.order === 'ascending') {
+        this.dataJson.searchForm.pageCondition.sort = column.prop
+      } else if (column.order === 'descending') {
+        this.dataJson.searchForm.pageCondition.sort = '-' + column.prop
+      }
       this.getDataList()
     },
-
     /**
      * 行点击事件
      */
@@ -964,14 +1044,7 @@ export default {
      * 当前行变化事件
      */
     handleCurrentChange (row) {
-      this.handleCurrentRowClick(row)
-    },
-
-    /**
-     * 行点击事件处理（原方法保留）
-     */
-    handleCurrentRowClick (row) {
-      this.dataJson.currentJson = Object.assign({}, row) // copy obj
+      this.dataJson.currentJson = deepCopy(row) // copy obj
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
@@ -986,8 +1059,9 @@ export default {
           this.settings.btnStatus.showUpdate = false
         }
 
-        // 删除按钮：仅待审批(0)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ZERO) {
+        // 删除按钮：待审批(0)和驳回(3)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ZERO ||
+          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
@@ -1000,9 +1074,9 @@ export default {
           this.settings.btnStatus.showCancel = false
         }
 
-        // 审批按钮：审批中(1)或作废审批中(6)
+        // 审批按钮：审批中(1)或作废审批中(4)
         if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ONE ||
-          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_SIX) {
+          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
@@ -1083,68 +1157,74 @@ export default {
     /**
      * 删除
      */
-    async handleDel () {
-      if (!this.dataJson.currentJson) {
-        this.$message.warning('请选择要删除的数据')
+    handleDel () {
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (_data.id === undefined) {
+        this.$message.warning('请选择一条数据')
         return
       }
-
-      try {
-        await this.$confirm('确认删除该入库单吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        })
-
-        this.settings.loading = true
-        const response = await deleteInApi(this.dataJson.currentJson.id)
-        if (response.code === 200) {
-          this.$message.success('删除成功')
-          this.handleSearch()
-        } else {
-          this.$message.error(response.message || '删除失败')
-        }
-      } catch (error) {
-        if (error !== 'cancel') {
-          console.error('删除入库单失败:', error)
-          this.$message.error('删除失败')
-        }
-      } finally {
-        this.settings.loading = false
+      // 状态为待审批或驳回才可以删除
+      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_STATUS_ZERO && _data.status.toString() !== this.CONSTANTS.DICT_B_IN_STATUS_THREE) {
+        this.$message.error('入库单状态异常，只有待审批或驳回状态才可以删除')
+        return
       }
+      this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
+      }).then(() => {
+        this.handleDelOk()
+      }).catch(action => {
+        // 右上角X
+        if (action !== 'close') {
+          // 取消删除
+        }
+      })
+    },
+
+    /**
+     * 确认删除
+     */
+    handleDelOk () {
+      this.settings.loading = true
+      const delData = { id: this.dataJson.currentJson.id }
+      delApi(delData).then(response => {
+        this.$message.success('删除成功')
+        // 删除成功后从表格中移除该行
+        const deleteIndex = this.dataJson.listData.findIndex(item => item.id === this.dataJson.currentJson.id)
+        if (deleteIndex !== -1) {
+          this.dataJson.listData.splice(deleteIndex, 1)
+        }
+      }).finally(() => {
+        this.settings.loading = false
+      })
     },
 
     /**
      * 作废
      */
     handleCancel () {
-      if (!this.dataJson.currentJson) {
-        this.$message.warning('请选择要作废的数据')
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (_data.id === undefined) {
+        this.$message.warning('请选择一条数据')
         return
       }
-
-      this.$refs.cancelDialog.show(this.dataJson.currentJson)
+      this.showCancelDialog = true
+      this.cancelDialogData = this.dataJson.currentJson
     },
 
     /**
-     * 作废确认回调
+     * 作废对话框确定回调
      */
-    async handleCancelOkData (data) {
-      try {
-        this.settings.loading = true
-        const response = await cancelApi(data)
-        if (response.code === 200) {
-          this.$message.success('作废申请提交成功')
-          this.handleSearch()
-        } else {
-          this.$message.error(response.message || '作废申请提交失败')
-        }
-      } catch (error) {
-        console.error('作废入库单失败:', error)
-        this.$message.error('作废申请提交失败')
-      } finally {
-        this.settings.loading = false
-      }
+    handleCancelOk () {
+      this.showCancelDialog = false
+      this.cancelDialogData = null
+      this.handleSearch() // 刷新列表
+    },
+
+    /**
+     * 作废对话框取消回调
+     */
+    handleCancelCancel () {
+      this.showCancelDialog = false
+      this.cancelDialogData = null
     },
 
     /**
@@ -1292,29 +1372,8 @@ export default {
      * 获取行索引
      */
     getRowIndex (row) {
-      return this.dataJson.listData.findIndex(item => item.id === row.id)
-    },
-
-    /**
-     * 刷新统计数据
-     */
-    refreshSumData () {
-      // 重新查询统计数据
-      getListSumApi(this.dataJson.searchForm).then(response => {
-        if (response.data !== null) {
-          this.dataJson.sumData = response.data
-        }
-      }).catch(error => {
-        console.warn('刷新统计数据失败：', error)
-      })
-    },
-
-    /**
-     * 表格单元格class名称
-     */
-    tableCellClassName ({ row, column, rowIndex, columnIndex }) {
-      // 可以根据需要添加自定义样式
-      return ''
+      const _index = this.dataJson.listData.lastIndexOf(row)
+      return _index
     },
 
     /**
@@ -1325,8 +1384,8 @@ export default {
         return row.next_approve_name || ''
       }
 
-      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
-      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+      // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
+      if (row.status === constants_dict.DICT_B_IN_STATUS_ONE || row.status === constants_dict.DICT_B_IN_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

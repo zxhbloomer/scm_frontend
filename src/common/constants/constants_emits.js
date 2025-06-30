@@ -196,6 +196,14 @@ const EMIT_MST_INPLAN_UPDATE_OK = 'global:mst:inplan:update:ok'
 const EMIT_MST_INPLAN_BPM_OK = 'global:mst:inplan:bpm:ok'
 
 /**
+ * 入库单模块(in)，新增完成
+ * @type {string}
+ */
+const EMIT_MST_B_IN_NEW_OK = 'global:mst:b_in:new:ok'
+const EMIT_MST_B_IN_UPDATE_OK = 'global:mst:b_in:update:ok'
+const EMIT_MST_B_IN_BPM_OK = 'global:mst:b_in:bpm:ok'
+
+/**
  * 消息通知
  * @type {string}
  */
@@ -296,6 +304,10 @@ export default {
   EMIT_MST_INPLAN_NEW_OK,
   EMIT_MST_INPLAN_UPDATE_OK,
   EMIT_MST_INPLAN_BPM_OK,
+
+  EMIT_MST_B_IN_NEW_OK,
+  EMIT_MST_B_IN_UPDATE_OK,
+  EMIT_MST_B_IN_BPM_OK,
 
   EMIT_NOTISE_BPM
 }

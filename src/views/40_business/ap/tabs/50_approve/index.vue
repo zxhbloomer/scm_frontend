@@ -54,6 +54,7 @@ import constants_para from '@/common/constants/constants_para'
 import left_data_template from './detail.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import mixin from './index_mixin'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   components: { left_data_template, bpmprocess_body_template, bpmprocess_foot_template },
@@ -102,6 +103,9 @@ export default {
   },
   methods: {
     handleReturn () {
+      setTimeout(() => {
+        EventBus.$emit(this.EMITS.EMIT_MST_B_AP_BPM_OK, this.data)
+      }, 1000)
       this.$emit('emitReturn')
     },
     handleCloseMeOk () {

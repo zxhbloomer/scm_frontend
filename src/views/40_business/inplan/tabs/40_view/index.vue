@@ -97,20 +97,7 @@ export default {
       return constants_para
     }
   },
-  // 全屏loading
   watch: {
-    'settings.loading': {
-      handler (newVal, oldVal) {
-        switch (newVal) {
-          case true:
-            this.showLoading('正在处理，请稍后...')
-            break
-          case false:
-            this.closeLoading()
-            break
-        }
-      }
-    }
   },
   methods: {
     handleReturn () {

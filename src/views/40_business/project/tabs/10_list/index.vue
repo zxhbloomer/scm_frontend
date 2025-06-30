@@ -990,30 +990,44 @@ export default {
   created () {
     // 描绘完成
     this.init()
-
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_BUS_PROJECT_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_BUS_PROJECT_NEW_OK', _data)
       // 设置到table中绑定的json数据源
       console.log('新增数据：', _data)
       this.dataJson.listData.unshift(_data)
-      // 显示成功消息
-      this.$message({
-        type: 'success',
-        message: '项目新增成功！'
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: _data.id }).then(response => {
+        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(0, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+        })
+      }).finally(() => {
+        this.settings.loading = false
       })
     })
 
     // 更新提交数据时监听
     EventBus.$on(this.EMITS.EMIT_BUS_PROJECT_UPDATE_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_BUS_PROJECT_UPDATE_OK', _data)
-      // EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_UPDATE_OK)
-      // 设置到table中绑定的json数据源
-      console.log('更新数据：', _data)
-      // 设置到table中绑定的json数据源
-      this.dataJson.listData.splice(this.dataJson.rowIndex, 1, _data)
-      this.$nextTick(() => {
-        this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
       })
     })
     // 提交审批流时监听
@@ -1345,8 +1359,9 @@ export default {
           this.settings.btnStatus.showUpdate = false
         }
 
-        // 删除按钮 - 只有待审批状态可以删除
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PROJECT_STATUS_ZERO) {
+        // 删除按钮 - 待审批和驳回状态可以删除
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PROJECT_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_PROJECT_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
@@ -1535,9 +1550,10 @@ export default {
      */
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
-      // 状态为待审批才可以删除
-      if (_data.status.toString() !== constants_type.DICT_B_PROJECT_STATUS_ZERO) {
-        this.showErrorMsg('项目状态异常，只有待审批状态才可以删除')
+      // 状态为待审批或驳回才可以删除
+      if (_data.status.toString() !== constants_type.DICT_B_PROJECT_STATUS_ZERO &&
+          _data.status.toString() !== constants_type.DICT_B_PROJECT_STATUS_THREE) {
+        this.showErrorMsg('项目状态异常，只有待审批或驳回状态才可以删除')
         return
       }
       this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
@@ -1715,12 +1731,6 @@ export default {
         this.settings.loading = false
       })
     },
-    tableCellClassName ({ row, column, rowIndex, columnIndex }) {
-      if (column.property === 'validate_vehicle' && row.validate_vehicle !== '1') {
-        return 'warning-cell'
-      }
-      return ''
-    },
     // 作废确认
     handleCloseDialogOneOk (val) {
       this.popCancel.dialogVisible = false
@@ -1814,8 +1824,8 @@ export default {
         return row.next_approve_name || ''
       }
 
-      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
-      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+      // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
+      if (row.status === constants_dict.DICT_B_PROJECT_STATUS_ONE || row.status === constants_dict.DICT_B_PROJECT_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

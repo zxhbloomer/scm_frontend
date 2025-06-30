@@ -675,7 +675,7 @@ export default {
           bill_type: undefined,
           payment_type: '1', // 银行转账
           delivery_type: undefined,
-          auto_create_order: constants_dict.DICT_B_PO_CONTRACT_AUTO_CREATE_ORDER_ZERO // 默认自动生成订单
+          auto_create_order: constants_dict.DICT_B_PO_CONTRACT_AUTO_CREATE_ORDER_ONE // 默认自动生成订单
         },
         // 单条数据 json
         tempJson: {
@@ -692,7 +692,7 @@ export default {
           bill_type: undefined,
           payment_type: '1', // 银行转账
           delivery_type: undefined,
-          auto_create_order: constants_dict.DICT_B_PO_CONTRACT_AUTO_CREATE_ORDER_ZERO // 默认自动生成订单
+          auto_create_order: constants_dict.DICT_B_PO_CONTRACT_AUTO_CREATE_ORDER_ONE // 默认自动生成订单
         },
         searchForm: {
           reset: false,
@@ -747,7 +747,21 @@ export default {
   computed: {
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 全屏loading监听
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
+  },
   created () {
   },
   mounted () {
@@ -798,7 +812,9 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_POCONTRACT_NEW_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_POCONTRACT_NEW_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,

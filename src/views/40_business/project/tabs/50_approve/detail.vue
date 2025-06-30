@@ -331,6 +331,7 @@
 
 <script>
 import constants_para from '@/common/constants/constants_para'
+import constants_dict from '@/common/constants/constants_dict'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi } from '@/api/40_business/project/project'
@@ -349,6 +350,7 @@ export default {
   },
   data () {
     return {
+      constants_dict,
       constants_para,
       contentStyle: {
         width: '15%'
@@ -360,12 +362,6 @@ export default {
       fileLabelStyle: {
         width: '2.3%',
         'text-align': 'right'
-      },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null,
       },
       // 数据日志弹出框控制
       dataChangeLogDialogVisible: false,

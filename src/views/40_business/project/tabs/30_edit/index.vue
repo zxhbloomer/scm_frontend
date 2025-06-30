@@ -517,12 +517,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null
-      },
       contentStyle: {
         width: '15%'
       },
@@ -670,6 +664,19 @@ export default {
   computed: { },
   // 监听器
   watch: {
+    // 全屏loading监听
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
   },
   created () {
     this.init()
@@ -678,25 +685,15 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      // 初始化watch
-      this.setWatch()
       if (this.data !== null && this.data !== undefined) {
         this.getData()
       }
       this.settings.loading = false
     },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-    },
-    unWatch () {
-    },
-
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')
@@ -720,7 +717,9 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，更新数据更新
-                EventBus.$emit(this.EMITS.EMIT_BUS_PROJECT_EDIT_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_BUS_PROJECT_UPDATE_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '更新成功',
                   message: _data.data.message,

@@ -542,12 +542,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null
-      },
       contentStyle: {
         width: '15%'
       },
@@ -691,6 +685,19 @@ export default {
   computed: { },
   // 监听器
   watch: {
+    // 全屏loading监听
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
   },
   created () {
   },
@@ -699,21 +706,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
-    },
-
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')
@@ -742,7 +740,9 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新
-                EventBus.$emit(this.EMITS.EMIT_BUS_PROJECT_NEW_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_BUS_PROJECT_NEW_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,

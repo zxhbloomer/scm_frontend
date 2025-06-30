@@ -730,7 +730,7 @@
 </template>
 
 <script>
-import { getListApi, getListSumApi, delApi, finishApi, exportApi } from '@/api/40_business/inplan/inplan'
+import { getListApi, getListSumApi, getApi, delApi, finishApi, exportApi } from '@/api/40_business/inplan/inplan'
 import FloatMenu from '@/components/FloatMenu'
 import pagination_for_list from '@/components/Pagination/index'
 import mixin from './mixin'
@@ -743,6 +743,7 @@ import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import deepCopy from 'deep-copy'
 import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
+import constants_dict from '@/common/constants/constants_dict'
 
 export default {
   name: 'InPlanList',
@@ -912,54 +913,75 @@ export default {
     }
   },
   created () {
-    // 监听新增成功事件
-    EventBus.$on(this.EMITS.EMIT_MST_INPLAN_NEW_OK, this.handleNewDataSuccess)
+    // 新增提交数据时监听
+    EventBus.$on(this.EMITS.EMIT_MST_INPLAN_NEW_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_INPLAN_NEW_OK', _data)
+      // 设置到table中绑定的json数据源
+      console.log('新增数据：', _data)
+      this.dataJson.listData.unshift(_data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: _data.id }).then(response => {
+        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(0, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
+
+    // 更新提交数据时监听
+    EventBus.$on(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_INPLAN_UPDATE_OK', _data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
+    // 提交审批流时监听
+    EventBus.$on(this.EMITS.EMIT_MST_INPLAN_BPM_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_INPLAN_BPM_OK', _data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    })
   },
   mounted () {
     this.handleSearch()
   },
-  destroyed () {
-    // 移除事件监听，避免内存泄漏
-    EventBus.$off(this.EMITS.EMIT_MST_INPLAN_NEW_OK, this.handleNewDataSuccess)
+  beforeDestroy () {
+    // 清理EventBus监听器
+    EventBus.$off(this.EMITS.EMIT_MST_INPLAN_NEW_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_INPLAN_BPM_OK)
   },
   methods: {
-    /**
-     * 处理新增成功事件 - 将新数据插入到列表第一行
-     */
-    handleNewDataSuccess (newData) {
-      console.log('收到新增成功事件，数据：', newData)
-
-      // 将新数据插入到列表第一行
-      this.dataJson.listData.unshift(newData)
-
-      // 如果当前列表超出页面大小限制，移除最后一行以保持分页一致性
-      if (this.dataJson.listData.length > this.dataJson.paging.size) {
-        this.dataJson.listData.pop()
-      }
-
-      // 更新总数据数量
-      this.dataJson.paging.total++
-
-      // 设置新增行为当前选中行
-      this.$nextTick(() => {
-        this.dataJson.currentJson = Object.assign({}, newData)
-        // 设置表格当前行
-        if (this.$refs.multipleTable) {
-          this.$refs.multipleTable.setCurrentRow(newData)
-        }
-
-        // 重新计算统计数据
-        this.refreshSumData()
-      })
-
-      // 显示成功提示
-      this.$notify({
-        title: '数据更新成功',
-        message: '新增的入库计划已添加到列表首行',
-        type: 'success',
-        duration: this.settings.duration
-      })
-    },
 
     /**
      * 刷新统计数据
@@ -1096,8 +1118,9 @@ export default {
           this.settings.btnStatus.showUpdate = false
         }
 
-        // 删除按钮：仅待审批(0)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO) {
+        // 删除按钮：待审批(0)和驳回(3)
+        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO ||
+            this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_PLAN_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
@@ -1139,6 +1162,7 @@ export default {
         this.settings.btnStatus.showInbound = false
         this.settings.btnStatus.showPrint = false
         this.settings.btnStatus.showFinish = false
+        this.settings.btnStatus.showView = false
       }
     },
 
@@ -1264,9 +1288,9 @@ export default {
      */
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
-      // 状态为待审批才可以删除
-      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO) {
-        this.showErrorMsg('入库计划状态异常')
+      // 状态为待审批或驳回才可以删除
+      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_PLAN_STATUS_ZERO && _data.status.toString() !== this.CONSTANTS.DICT_B_IN_PLAN_STATUS_THREE) {
+        this.showErrorMsg('入库计划状态异常，只有待审批或驳回状态才可以删除')
         return
       }
       this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
@@ -1591,8 +1615,8 @@ export default {
         return row.next_approve_name || ''
       }
 
-      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
-      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+      // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
+      if (row.status === constants_dict.DICT_B_IN_PLAN_STATUS_ONE || row.status === constants_dict.DICT_B_IN_PLAN_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

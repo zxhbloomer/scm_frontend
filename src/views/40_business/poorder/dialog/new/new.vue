@@ -641,7 +641,9 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_POORDER_NEW_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_POORDER_NEW_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,

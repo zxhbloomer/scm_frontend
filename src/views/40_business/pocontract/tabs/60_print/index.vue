@@ -73,7 +73,21 @@ export default {
   },
   computed: { },
   // 监听器
-  watch: { },
+  watch: {
+    // 全屏loading监听
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
+  },
   created () { },
   mounted () { },
   methods: {

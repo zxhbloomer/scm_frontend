@@ -745,20 +745,18 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新 - 将完整数据传递给列表页面
-                EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_NEW_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_NEW_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,
                   type: 'success',
                   duration: this.settings.duration
                 })
-                // 触发事件通知页面刷新
-                EventBus.$emit('global:mst:inplan:new:ok')
                 this.dataSubmitLoading = false
                 this.closeLoading()
                 this.resetDataJson()
-                // 发送事件通知， 表示新增成功
-                EventBus.$emit('global:notice:bpm')
               },
               _error => {
                 this.closeLoading()

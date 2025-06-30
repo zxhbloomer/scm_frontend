@@ -6,7 +6,7 @@ import request from '@/utils/request'
  * 获取入库单列表
  * @param {Object} params 查询参数
  */
-export function getInListApi (params) {
+export function getListApi (params) {
   return request({
     url: '/api/v1/in/pagelist',
     method: 'post',
@@ -87,6 +87,18 @@ export function deleteInApi (id) {
 }
 
 /**
+ * 删除入库单（与入库计划API保持一致）
+ * @param {*} data
+ */
+export function delApi (data) {
+  return request({
+    url: '/api/v1/in/delete',
+    method: 'post',
+    data
+  })
+}
+
+/**
  * 作废入库单
  * @param {Object} data 作废数据
  */
@@ -147,13 +159,14 @@ export function insertApi (data) {
 }
 
 export default {
-  getInListApi,
+  getInListApi: getListApi,
   getListSumApi,
   getInDetailApi,
   createInApi,
   getApi,
   updateInApi,
   deleteInApi,
+  delApi,
   cancelApi,
   approveInApi,
   submitInApi,

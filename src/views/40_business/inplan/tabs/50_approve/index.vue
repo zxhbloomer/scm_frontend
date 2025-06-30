@@ -54,6 +54,7 @@ import constants_para from '@/common/constants/constants_para'
 import detail from './detail.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import indexMixin from './index_mixin'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   name: 'InplanApprove',
@@ -109,19 +110,6 @@ export default {
     }
   },
   watch: {
-    // 全屏loading
-    'settings.loading': {
-      handler (newVal, oldVal) {
-        switch (newVal) {
-          case true:
-            this.showLoading('正在处理，请稍后...')
-            break
-          case false:
-            this.closeLoading()
-            break
-        }
-      }
-    }
   },
   created () {
     this.initData()
@@ -148,6 +136,9 @@ export default {
 
     // 处理返回事件
     handleReturn () {
+      setTimeout(() => {
+        EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_BPM_OK, this.data)
+      }, 1000)
       this.$emit('emitReturn')
     },
 

@@ -96,13 +96,13 @@
         </el-descriptions>
 
         <el-alert
-          v-if="dataJson.contractOrderData.contract_info.po_contract_code"
+          v-if="dataJson.contractOrderData.contract_info.contract_code"
           title="合同、订单信息"
           type="info"
           :closable="false"
         />
         <el-descriptions
-          v-if="dataJson.contractOrderData.contract_info.po_contract_code"
+          v-if="dataJson.contractOrderData.contract_info.contract_code"
           title=""
           :column="3"
           :label-style="labelStyle"
@@ -112,7 +112,7 @@
           border
         >
           <el-descriptions-item label="合同编号">
-            {{ dataJson.contractOrderData.contract_info.po_contract_code || '-' }}
+            {{ dataJson.contractOrderData.contract_info.contract_code || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="类型">
             {{ dataJson.contractOrderData.contract_info.type_name || '-' }}
@@ -593,8 +593,8 @@ export default {
           },
           // 合同信息
           contract_info: {
-            po_contract_id: null,
-            po_contract_code: '',
+            contract_id: null,
+            contract_code: '',
             type_name: '',
             supplier_id: null,
             supplier_name: '',
@@ -651,9 +651,9 @@ export default {
           supplier_id: null,
           supplier_name: '',
           supplier_code: '',
-          po_order_id: null,
-          po_order_code: '',
-          po_contract_code: '',
+          order_id: null,
+          order_code: '',
+          contract_code: '',
           sku_id: null,
           sku_code: '',
           goods_name: '',
@@ -691,9 +691,9 @@ export default {
           supplier_id: null,
           supplier_name: '',
           supplier_code: '',
-          po_order_id: null,
-          po_order_code: '',
-          po_contract_code: '',
+          order_id: null,
+          order_code: '',
+          contract_code: '',
           sku_id: null,
           sku_code: '',
           goods_name: '',
@@ -809,24 +809,12 @@ export default {
     }
   },
   created () {
-    this.initComponent()
-    // 监听生成入库单事件
-    EventBus.$on('generateInStockFromOrder', this.handleGenerateInStockFromOrder)
   },
-  activated () {
-  },
-  beforeDestroy () {
-    // 移除事件监听
-    EventBus.$off('generateInStockFromOrder', this.handleGenerateInStockFromOrder)
+  mounted () {
+    // 描绘完成
+    this.initData()
   },
   methods: {
-    /**
-     * 初始化组件
-     */
-    initComponent () {
-      this.closeLoading()
-      this.initData()
-    },
     /**
      * 重置数据
      */
@@ -944,18 +932,16 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新 - 将完整数据传递给列表页面
-                EventBus.$emit(this.EMITS.EMIT_MST_IN_NEW_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_IN_NEW_OK, _data.data)
+                }, 1000)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,
                   type: 'success',
                   duration: this.settings.duration
                 })
-                // 触发事件通知页面刷新
-                EventBus.$emit('global:mst:in:new:ok')
                 this.resetDataJson()
-                // 发送事件通知， 表示新增成功
-                EventBus.$emit('global:notice:bpm')
               },
               _error => {
                 this.closeLoading()
@@ -985,9 +971,10 @@ export default {
         type_name: formData.type_name || '', // 类型名称
 
         // 合同订单信息
-        contract_code: contractData.contract_info?.po_contract_code || '', // 合同编号
+        contract_id: contractData.contract_info?.contract_id || '', // 合同编号
+        contract_code: contractData.contract_info?.contract_code, // 合同编号
+        order_id: contractData.order_info?.order_id, // 订单编号
         order_code: contractData.order_info?.order_code || '', // 订单编号
-
         // 货主信息
         owner_id: formData.owner_id, // 货主id
         owner_code: formData.owner_code || '', // 货主编码
@@ -1032,21 +1019,20 @@ export default {
         form_data: this.popSettingsData.sponsorDialog.form_data, // 表单参数
         process_users: this.popSettingsData.sponsorDialog.process_users, // 自选用户
 
-        // 附件信息 - 转换为后端需要的格式
-        attachments: {
-          one_file: formData.one_file || [], // 磅单文件
-          two_file: formData.two_file || [], // 入库附件明细
-          three_file: formData.three_file || [], // 检验单
-          four_file: formData.four_file || [] // 货物照片
-        }
+        // 附件信息
+        one_file: formData.one_file || [], // 磅单文件
+        two_file: formData.two_file || [], // 入库附件明细
+        three_file: formData.three_file || [], // 检验单
+        four_file: formData.four_file || [] // 货物照片
       }
 
       // 添加采购订单相关信息（如果是采购入库类型）
-      if (formData.type === constants_dict.DICT_B_IN_TYPE_CG) {
-        submissionData.po_order_id = formData.po_order_id
-        submissionData.po_order_code = formData.po_order_code
-        submissionData.po_contract_code = formData.po_contract_code
-      }
+      // if (formData.type === constants_dict.DICT_B_IN_TYPE_CG) {
+      //   submissionData.order_id = formData.order_id
+      //   submissionData.order_code = formData.order_code
+      //   submissionData.contract_id = formData.contract_id
+      //   submissionData.contract_code = formData.contract_code
+      // }
 
       console.log('=== 构建的提交数据 ===')
       console.log('提交数据结构:', submissionData)
@@ -1269,9 +1255,9 @@ export default {
       this.popSettingsData.poOrderDialog.visible = false
 
       // 设置采购订单相关信息
-      this.dataJson.tempJson.po_order_id = val.id
-      this.dataJson.tempJson.po_order_code = val.code
-      this.dataJson.tempJson.po_contract_code = val.po_contract_code
+      this.dataJson.tempJson.order_id = val.id
+      this.dataJson.tempJson.order_code = val.code
+      this.dataJson.tempJson.contract_code = val.contract_code
 
       // 设置货主信息（使用采购订单中的主体企业作为货主）
       this.dataJson.tempJson.owner_id = val.purchaser_id
@@ -1346,7 +1332,6 @@ export default {
       try {
         console.log('=== 接收到生成入库单数据 ===')
         console.log('接收的数据:', data)
-
         // 设置合同订单数据
         if (data.project_info) {
           this.dataJson.contractOrderData.project_info = { ...data.project_info }

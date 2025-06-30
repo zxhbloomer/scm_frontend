@@ -150,31 +150,24 @@ const DICT_M_UNIT_J = '3'
 const DICT_M_UNIT_Z = '4'
 const DICT_M_UNIT_G = '4'
 
-/** 入库状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成 6作废审核中*/
+/** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
+const DICT_B_IN_TYPE = 'b_in_type'
+const DICT_B_IN_TYPE_CG = '0'
+const DICT_B_IN_TYPE_DB = '1'
+const DICT_B_IN_TYPE_TH = '2'
+const DICT_B_IN_TYPE_SC = '5'
+const DICT_B_IN_TYPE_JG = '9'
+const DICT_B_IN_TYPE_PT = '10'
+
+/** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_STATUS = 'b_in_status'
-const DICT_B_IN_STATUS_ZD = '0'
-const DICT_B_IN_STATUS_YTJ = '1'
-const DICT_B_IN_STATUS_TG = '2'
-const DICT_B_IN_STATUS_BH = '3'
-const DICT_B_IN_STATUS_ZF = '4'
-const DICT_B_IN_STATUS_FINISH = '5'
-const DICT_B_IN_STATUS_CANCEL_BEING_AUDITED = '6'
-
-/** 入库单V2表 审批流 */
-const DICT_B_IN_V2 = 'b_in_v2'
-
-/** 入库单V2表 审批作废流*/
-const DICT_B_IN_CANCEL_V2 = 'b_in_v2_cancel'
-
-/**  入库单 审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
-const DICT_B_IN_V2_STATUS = 'b_in_v2_status'
-const DICT_B_IN_V2_STATUS_ZERO = '0'
-const DICT_B_IN_V2_STATUS_ONE = '1'
-const DICT_B_IN_V2_STATUS_TWO = '2'
-const DICT_B_IN_V2_STATUS_THREE = '3'
-const DICT_B_IN_V2_STATUS_FOUR = '4'
-const DICT_B_IN_V2_STATUS_FIVE = '5'
-const DICT_B_IN_V2_STATUS_SIX = '6'
+const DICT_B_IN_STATUS_ZERO = '0'
+const DICT_B_IN_STATUS_ONE = '1'
+const DICT_B_IN_STATUS_TWO = '2'
+const DICT_B_IN_STATUS_THREE = '3'
+const DICT_B_IN_STATUS_FOUR = '4'
+const DICT_B_IN_STATUS_FIVE = '5'
+const DICT_B_IN_STATUS_SIX = '6'
 
 /** 入库计划表 审批流 */
 const DICT_B_IN_PLAN = 'b_in_plan'
@@ -190,16 +183,6 @@ const DICT_B_IN_PLAN_STATUS_THREE = '3'
 const DICT_B_IN_PLAN_STATUS_FOUR = '4'
 const DICT_B_IN_PLAN_STATUS_FIVE = '5'
 const DICT_B_IN_PLAN_STATUS_SIX = '6'
-
-/**  入库计划审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
-const DICT_B_IN_PLAN_V2_STATUS = 'b_in_plan_v2_status'
-const DICT_B_IN_PLAN_V2_STATUS_ZERO = '0'
-const DICT_B_IN_PLAN_V2_STATUS_ONE = '1'
-const DICT_B_IN_PLAN_V2_STATUS_TWO = '2'
-const DICT_B_IN_PLAN_V2_STATUS_THREE = '3'
-const DICT_B_IN_PLAN_V2_STATUS_FOUR = '4'
-const DICT_B_IN_PLAN_V2_STATUS_FIVE = '5'
-const DICT_B_IN_PLAN_V2_STATUS_SIX = '6'
 
 /** 出库计划状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成 6过期 7中止*/
 const DICT_B_OUT_PLAN_STATUS = 'b_out_plan_status'
@@ -223,36 +206,6 @@ const DICT_B_OUT_STATUS_ZF = '4'
 const DICT_B_OUT_STATUS_FINISH = '5'
 const DICT_B_OUT_STATUS_EXPIRES = '6'
 const DICT_B_OUT_STATUS_CANCEL_BEING_AUDITED = '7'
-
-/** 入库计划类型：0=采购入库 1=调拨入库 2=退货入库 3=监管入库 4=普通入库 5=生产入库 6=提货入库 7=监管退货*/
-const DICT_B_IN_PLAN_TYPE = 'b_in_plan_type'
-const DICT_B_IN_PLAN_TYPE_CG = '0'
-const DICT_B_IN_PLAN_TYPE_DB = '1'
-const DICT_B_IN_PLAN_TYPE_TH = '2'
-const DICT_B_IN_PLAN_TYPE_SC = '5'
-const DICT_B_IN_PLAN_TYPE_TIH = '6'
-const DICT_B_IN_PLAN_TYPE_JG_TH = '7'
-const DICT_B_IN_PLAN_TYPE_JG = '9'
-const DICT_B_IN_PLAN_TYPE_PT = '10'
-
-/** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
-const DICT_B_IN_TYPE = 'b_in_type'
-const DICT_B_IN_TYPE_CG = '0'
-const DICT_B_IN_TYPE_DB = '1'
-const DICT_B_IN_TYPE_TH = '2'
-const DICT_B_IN_TYPE_SC = '5'
-const DICT_B_IN_TYPE_JG = '9'
-const DICT_B_IN_TYPE_PT = '10'
-
-/** 入库单状态：0-待审批 1-审批中 2-执行中 3-驳回 4-已完成 5-已作废 6-作废审批中 */
-const DICT_B_IN_STATUS_NEW = 'b_in_status_new'
-const DICT_B_IN_STATUS_ZERO = '0'
-const DICT_B_IN_STATUS_ONE = '1'
-const DICT_B_IN_STATUS_TWO = '2'
-const DICT_B_IN_STATUS_THREE = '3'
-const DICT_B_IN_STATUS_FOUR = '4'
-const DICT_B_IN_STATUS_FIVE = '5'
-const DICT_B_IN_STATUS_SIX = '6'
 
 /** 入库单业务流程标识 */
 const DICT_B_IN = 'b_in'
@@ -1142,30 +1095,24 @@ export default {
   DICT_M_UNIT_Z,
   DICT_M_UNIT_G,
 
-  /** 入库状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成*/
+  /** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
   DICT_B_IN_STATUS,
-  DICT_B_IN_STATUS_ZD,
-  DICT_B_IN_STATUS_YTJ,
-  DICT_B_IN_STATUS_TG,
-  DICT_B_IN_STATUS_BH,
-  DICT_B_IN_STATUS_ZF,
-  DICT_B_IN_STATUS_FINISH,
-  DICT_B_IN_STATUS_CANCEL_BEING_AUDITED,
+  DICT_B_IN_STATUS_ZERO,
+  DICT_B_IN_STATUS_ONE,
+  DICT_B_IN_STATUS_TWO,
+  DICT_B_IN_STATUS_THREE,
+  DICT_B_IN_STATUS_FOUR,
+  DICT_B_IN_STATUS_FIVE,
+  DICT_B_IN_STATUS_SIX,
 
-  /** 入库单V2表 审批流 */
-  DICT_B_IN_V2,
-  /** 入库单V2表 审批作废流*/
-  DICT_B_IN_CANCEL_V2,
-
-  /**  入库单 审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
-  DICT_B_IN_V2_STATUS,
-  DICT_B_IN_V2_STATUS_ZERO,
-  DICT_B_IN_V2_STATUS_ONE,
-  DICT_B_IN_V2_STATUS_TWO,
-  DICT_B_IN_V2_STATUS_THREE,
-  DICT_B_IN_V2_STATUS_FOUR,
-  DICT_B_IN_V2_STATUS_FIVE,
-  DICT_B_IN_V2_STATUS_SIX,
+  /** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
+  DICT_B_IN_TYPE,
+  DICT_B_IN_TYPE_CG,
+  DICT_B_IN_TYPE_DB,
+  DICT_B_IN_TYPE_TH,
+  DICT_B_IN_TYPE_SC,
+  DICT_B_IN_TYPE_JG,
+  DICT_B_IN_TYPE_PT,
 
   /** 入库计划表 审批流 */
   DICT_B_IN_PLAN,
@@ -1181,16 +1128,6 @@ export default {
   DICT_B_IN_PLAN_STATUS_FOUR,
   DICT_B_IN_PLAN_STATUS_FIVE,
   DICT_B_IN_PLAN_STATUS_SIX,
-
-  /** 入库计划审批状态v2  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
-  DICT_B_IN_PLAN_V2_STATUS,
-  DICT_B_IN_PLAN_V2_STATUS_ZERO,
-  DICT_B_IN_PLAN_V2_STATUS_ONE,
-  DICT_B_IN_PLAN_V2_STATUS_TWO,
-  DICT_B_IN_PLAN_V2_STATUS_THREE,
-  DICT_B_IN_PLAN_V2_STATUS_FOUR,
-  DICT_B_IN_PLAN_V2_STATUS_FIVE,
-  DICT_B_IN_PLAN_V2_STATUS_SIX,
 
   /** 出库计划状态：0制单，1已提交，2审核通过，3审核驳回，4作废 5完成 */
   DICT_B_OUT_PLAN_STATUS,
@@ -1214,26 +1151,6 @@ export default {
   DICT_B_OUT_STATUS_FINISH,
   DICT_B_OUT_STATUS_EXPIRES,
   DICT_B_OUT_STATUS_CANCEL_BEING_AUDITED,
-
-  /** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
-  DICT_B_IN_TYPE,
-  DICT_B_IN_TYPE_CG,
-  DICT_B_IN_TYPE_DB,
-  DICT_B_IN_TYPE_TH,
-  DICT_B_IN_TYPE_JG,
-  DICT_B_IN_TYPE_PT,
-  DICT_B_IN_TYPE_SC,
-
-  /** 入库计划类型：0=采购入库 1=调拨入库 2=退货入库 3=监管入库 4=普通入库 5=生产入库 6=提货入库 7=监管退货*/
-  DICT_B_IN_PLAN_TYPE,
-  DICT_B_IN_PLAN_TYPE_CG,
-  DICT_B_IN_PLAN_TYPE_DB,
-  DICT_B_IN_PLAN_TYPE_TH,
-  DICT_B_IN_PLAN_TYPE_JG,
-  DICT_B_IN_PLAN_TYPE_JG_TH,
-  DICT_B_IN_PLAN_TYPE_PT,
-  DICT_B_IN_PLAN_TYPE_SC,
-  DICT_B_IN_PLAN_TYPE_TIH,
 
   /**  单据类型:0供应链业务 1代理业务 2直销业务 3废钢业务 */
   DICT_B_IN_BUSINESS_TYPE,
@@ -1980,16 +1897,6 @@ export default {
   DICT_S_TAX_TYPE_TWO,
   DICT_S_TAX_TYPE_THREE,
   DICT_S_TAX_TYPE_FOUR,
-
-  /** 入库单状态：0-待审批 1-审批中 2-执行中 3-驳回 4-已完成 5-已作废 6-作废审批中 */
-  DICT_B_IN_STATUS_NEW,
-  DICT_B_IN_STATUS_ZERO,
-  DICT_B_IN_STATUS_ONE,
-  DICT_B_IN_STATUS_TWO,
-  DICT_B_IN_STATUS_THREE,
-  DICT_B_IN_STATUS_FOUR,
-  DICT_B_IN_STATUS_FIVE,
-  DICT_B_IN_STATUS_SIX,
 
   /** 入库单业务流程标识 */
   DICT_B_IN,

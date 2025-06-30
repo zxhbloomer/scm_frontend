@@ -1016,18 +1016,36 @@ export default {
       // 设置到table中绑定的json数据源
       console.log('新增数据：', _data)
       this.dataJson.listData.unshift(_data)
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: _data.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(0, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
     })
 
     // 更新提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_B_AP_UPDATE_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_AP_UPDATE_OK', _data)
-      // EventBus.$off(this.EMITS.EMIT_MST_B_AP_UPDATE_OK)
-      // 设置到table中绑定的json数据源
-      console.log('更新数据：', _data)
-      // 设置到table中绑定的json数据源
-      this.dataJson.listData.splice(this.dataJson.rowIndex, 1, _data)
-      this.$nextTick(() => {
-        this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+      this.settings.loading = true
+      // 查询选中行数据，并更新到选中行的数据
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
+        this.settings.loading = false
       })
     })
 
@@ -1593,8 +1611,8 @@ export default {
         return row.next_approve_name || ''
       }
 
-      // 状态为"待审批"或"作废审批中"时，显示"待用户"+next_approve_name+"审批"
-      if (row.status_name === '待审批' || row.status_name === '作废审批中') {
+      // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
+      if (row.status === constants_dict.DICT_B_AP_STATUS_ONE || row.status === constants_dict.DICT_B_AP_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

@@ -417,13 +417,15 @@ export default {
           },
           // 合同信息
           contract_info: {
-            po_contract_id: this.dataJson.tempJson.po_contract_id,
-            po_contract_code: this.dataJson.tempJson.po_contract_code,
+            contract_id: this.dataJson.tempJson.po_contract_id,
+            contract_code: this.dataJson.tempJson.po_contract_code,
             type_name: this.dataJson.tempJson.type_name,
             supplier_id: this.dataJson.tempJson.supplier_id,
             supplier_name: this.dataJson.tempJson.supplier_name,
+            supplier_code: this.dataJson.tempJson.supplier_code,
             purchaser_id: this.dataJson.tempJson.purchaser_id,
             purchaser_name: this.dataJson.tempJson.purchaser_name,
+            purchaser_code: this.dataJson.tempJson.purchaser_code,
             payment_type_name: this.dataJson.tempJson.payment_type_name,
             settle_type_name: this.dataJson.tempJson.settle_type_name,
             bill_type_name: this.dataJson.tempJson.bill_type_name,
