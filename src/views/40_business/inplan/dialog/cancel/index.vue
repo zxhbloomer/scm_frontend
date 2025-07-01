@@ -433,10 +433,6 @@ export default {
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false
       this.doInsert()
-    },
-    // 关闭加载状态
-    closeLoading () {
-      this.settings.loading = false
     }
   }
 }

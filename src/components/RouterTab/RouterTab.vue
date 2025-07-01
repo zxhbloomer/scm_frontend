@@ -3,7 +3,6 @@
     <!-- 页签头部 -->
     <header :class="[ 'router-tab-header', hasScroller && 'is-scroll' ]">
       <div class="router-tab-scroll">
-        11{{ items }}11
         <!-- 页签列表 -->
         <transition-group
           tag="ul"

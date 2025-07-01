@@ -209,6 +209,13 @@ export default {
       if (matchIdx > -1) {
         const matchTab = items[matchIdx]
         item.closable = matchTab.closable !== false
+
+        // 保留自定义的title设置
+        if (matchTab.originalTitle) {
+          item.originalTitle = matchTab.originalTitle
+          item.title = matchTab.title // 保持当前显示的title
+        }
+
         this.$set(items, matchIdx, item)
       } else {
         items.push(item)
@@ -280,6 +287,37 @@ export default {
         return defaultVal
       } else {
         return val
+      }
+    },
+
+    /**
+     * 更新指定tab的标题扩展 - 通用方法
+     * @param {string} extensionText - 扩展文字，如"-列表页"、"-新增"等。传空字符串则恢复原始标题
+     * @param {string} url - 可选，指定要更新的tab的URL，默认为当前路由
+     */
+    updateTabTitle (extensionText = '', url = null) {
+      if (!this.items) return
+
+      const targetUrl = url || (this.$router && this.$router.currentRoute ? this.$router.currentRoute.path : '')
+      if (!targetUrl) return
+
+      const tabIndex = this.items.findIndex(item => item.id === targetUrl)
+      if (tabIndex > -1) {
+        const tab = this.items[tabIndex]
+
+        // 保存原始标题
+        if (!tab.originalTitle) {
+          tab.originalTitle = tab.title
+        }
+
+        // 设置新标题
+        const newTitle = extensionText ? tab.originalTitle + extensionText : tab.originalTitle
+
+        // 使用Vue的响应式更新
+        this.$set(this.items, tabIndex, {
+          ...tab,
+          title: newTitle
+        })
       }
     }
   }

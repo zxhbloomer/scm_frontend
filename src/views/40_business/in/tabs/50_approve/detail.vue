@@ -411,21 +411,6 @@ export default {
     },
 
     /**
-     * 打开loading
-     */
-    showLoading (loadingText) {
-      this.settings.loading = true
-      this.settings.loadingText = loadingText
-    },
-
-    /**
-     * 关闭loading
-     */
-    closeLoading () {
-      this.settings.loading = false
-    },
-
-    /**
      * 获取状态标签类型
      */
     getStatusTagType (status) {

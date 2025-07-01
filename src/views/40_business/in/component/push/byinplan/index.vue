@@ -33,21 +33,13 @@
           <el-descriptions-item span="2">
             <div
               slot="label"
-              class="required-mark"
             >
               入库类型
             </div>
             <el-form-item
-              prop="type"
               label-width="0"
             >
-              <radio-dict
-                v-model="dataJson.tempJson.type"
-                :value="dataJson.tempJson.type"
-                :para="CONSTANTS.DICT_B_IN_TYPE"
-                :disabled="true"
-                @change="handleTypeChange"
-              />
+              {{ dataJson.tempJson.type_name || '-' }}
             </el-form-item>
           </el-descriptions-item>
 
@@ -112,10 +104,10 @@
             {{ dataJson.planData.plan_code || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="计划入库时间">
-            {{ dataJson.planData.plan_time || '-' }}
+            {{ formatDate(dataJson.planData.plan_time) }}
           </el-descriptions-item>
           <el-descriptions-item label="超收比例(%)">
-            {{ dataJson.planData.over_receipt_rate == null ? '-' : formatNumber(dataJson.planData.over_receipt_rate, true, 2) }}
+            {{ dataJson.planData.over_receipt_rate == null ? '-' : formatNumber(dataJson.planData.over_receipt_rate * 100, true, 2) }}
           </el-descriptions-item>
           <el-descriptions-item label="备注" span="3">
             {{ dataJson.planData.remark || '-' }}
@@ -127,49 +119,25 @@
             />
             <span v-else>-</span>
           </el-descriptions-item>
-        </el-descriptions>
-
-        <!-- 合同订单信息 -->
-        <el-alert
-          title="合同订单信息"
-          type="info"
-          :closable="false"
-        />
-        <el-descriptions
-          title=""
-          :column="3"
-          :label-style="labelStyle"
-          :content-style="contentStyle"
-          direction="horizontal"
-          style="padding-right: 10px;padding-left: 10px;"
-          border
-        >
           <el-descriptions-item label="合同编号">
             {{ dataJson.contractData.contract_code || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="订单编号">
             {{ dataJson.orderData.order_code || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="合同状态">
-            {{ dataJson.contractData.status_name || '-' }}
+          <el-descriptions-item label="商品规格">
+            {{ dataJson.orderData.sku || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="订单状态">
-            {{ dataJson.orderData.status_name || '-' }}
+          <el-descriptions-item label="计划入库数量（吨）">
+            {{ formatNumber(dataJson.planData.plan_qty, true, 4) || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="交货日期">
-            {{ dataJson.contractData.delivery_date || dataJson.orderData.delivery_date || '-' }}
+          <el-descriptions-item label="计划入库单价">
+            {{ formatCurrency(dataJson.planData.plan_price ,true)|| '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="交货地点">
-            {{ dataJson.contractData.delivery_location || dataJson.orderData.delivery_location || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="合同金额">
-            {{ dataJson.contractData.amount_total == null ? '-' : formatCurrency(dataJson.contractData.amount_total, true) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="订单金额">
-            {{ dataJson.orderData.amount_total == null ? '-' : formatCurrency(dataJson.orderData.amount_total, true) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="合同签订日期">
-            {{ dataJson.contractData.sign_date || '-' }}
+          <el-descriptions-item label="仓库/库区/库位">
+            {{ dataJson.planData.plan_warehouse_name + '/' +
+              dataJson.planData.plan_location_name +'/' +
+              dataJson.planData.plan_bin_name }}
           </el-descriptions-item>
         </el-descriptions>
 
@@ -197,25 +165,10 @@
             {{ dataJson.tempJson.sku_name || '-' }}
           </el-descriptions-item>
 
-          <el-descriptions-item>
-            <div
-              slot="label"
-              class="required-mark"
-            >
-              仓库/库区/库位
-            </div>
-            <el-form-item
-              prop="wlb_data"
-              label-width="0"
-            >
-              <select-warehouse-location-bin
-                ref="warehouseLocationBinRef"
-                :placeholder="'请选择仓库/库区/库位'"
-                :disabled="false"
-                :placement="'bottom'"
-                @onReturnData="handleWLBReturnData"
-              />
-            </el-form-item>
+          <el-descriptions-item label="仓库/库区/库位">
+            {{ dataJson.planData.plan_warehouse_name + '/' +
+              dataJson.planData.plan_location_name +'/' +
+              dataJson.planData.plan_bin_name }}
           </el-descriptions-item>
 
           <el-descriptions-item>
@@ -231,15 +184,15 @@
             >
               <numeric
                 v-model="dataJson.tempJson.original_qty"
-                :positive-percentage="true"
                 :decimal-places="4"
-                :minimum-value="0"
-                :maximum-value="10000000000"
+                :currency-symbol="''"
                 style="width: 100%"
+                placeholder="请输入原发数量"
                 @change.native="handleOriginalQtyChange"
               />
             </el-form-item>
           </el-descriptions-item>
+          <el-descriptions-item />
 
           <el-descriptions-item>
             <div
@@ -276,11 +229,10 @@
             >
               <numeric
                 v-model="dataJson.tempJson.qty"
-                :positive-percentage="true"
                 :decimal-places="4"
-                :minimum-value="0"
-                :maximum-value="10000000000"
+                :currency-symbol="''"
                 style="width: 100%"
+                placeholder="请输入入库数量"
                 @change.native="handleQtyChange"
               />
             </el-form-item>
@@ -299,11 +251,9 @@
             >
               <numeric
                 v-model="dataJson.tempJson.price"
-                :positive-percentage="true"
                 :decimal-places="4"
-                :minimum-value="0"
-                :maximum-value="10000000000"
                 style="width: 100%"
+                placeholder="请输入入库单价"
                 @change.native="handlePriceChange"
               />
             </el-form-item>
@@ -450,6 +400,7 @@
         size="medium"
         type="primary"
         :disabled="settings.loading"
+        :loading="settings.loading"
         @click="startProcess()"
       >提交审批并保存</el-button>
       <el-button
@@ -481,22 +432,18 @@ import { EventBus } from '@/common/eventbus/eventbus'
 
 // 导入组件
 import numeric from '@/components/40_input/numeric'
-import RadioDict from '@/components/00_dict/redio'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
-import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 export default {
   name: 'InPushByInPlan',
   components: {
     numeric,
-    RadioDict,
     SimpleUploadMutilFile,
     PreviewCard,
     PreviewDescription,
-    SelectWarehouseLocationBin,
     BpmDialog
   },
   props: {
@@ -621,9 +568,6 @@ export default {
         loading: false,
         duration: 4000,
         rules: {
-          type: [
-            { required: true, message: '请选择入库类型', trigger: 'change' }
-          ],
           wlb_data: [
             { required: true, validator: this.wlb_data_validator, trigger: 'blur' }
           ],
@@ -709,74 +653,14 @@ export default {
 
         const data = this.data
 
-        // 填充入库计划数据
-        this.dataJson.planData = {
-          plan_id: data.plan_id || null,
-          plan_code: data.plan_code || '',
-          plan_time: data.plan_time || '',
-          over_receipt_rate: data.over_receipt_rate || null,
-          remark: data.plan_remark || '',
-          doc_att_files: data.plan_doc_att_files || []
+        // 检查数据结构：如果是从弹窗返回的数据结构
+        if (data.selectedRow && data.planData) {
+          this.handleDialogReturnData(data)
+          return
         }
 
-        // 填充合同数据
-        this.dataJson.contractData = {
-          contract_id: data.contract_id || null,
-          contract_code: data.contract_code || '',
-          status_name: data.contract_status_name || '',
-          delivery_date: data.contract_delivery_date || '',
-          delivery_location: data.contract_delivery_location || '',
-          amount_total: data.contract_amount_total || null,
-          sign_date: data.contract_sign_date || ''
-        }
-
-        // 填充订单数据
-        this.dataJson.orderData = {
-          order_id: data.order_id || null,
-          order_code: data.order_code || '',
-          status_name: data.order_status_name || '',
-          delivery_date: data.order_delivery_date || '',
-          delivery_location: data.order_delivery_location || '',
-          amount_total: data.order_amount_total || null
-        }
-
-        // 填充入库单数据
-        this.dataJson.tempJson.plan_id = data.plan_id
-        this.dataJson.tempJson.plan_code = data.plan_code
-        this.dataJson.tempJson.contract_id = data.contract_id
-        this.dataJson.tempJson.contract_code = data.contract_code
-        this.dataJson.tempJson.order_id = data.order_id
-        this.dataJson.tempJson.order_code = data.order_code
-        this.dataJson.tempJson.owner_id = data.owner_id
-        this.dataJson.tempJson.owner_name = data.owner_name
-        this.dataJson.tempJson.owner_code = data.owner_code || ''
-        this.dataJson.tempJson.supplier_id = data.supplier_id
-        this.dataJson.tempJson.supplier_name = data.supplier_name
-        this.dataJson.tempJson.supplier_code = data.supplier_code || ''
-        this.dataJson.tempJson.sku_id = data.sku_id
-        this.dataJson.tempJson.sku_code = data.sku_code
-        this.dataJson.tempJson.goods_name = data.goods_name
-        this.dataJson.tempJson.sku_name = data.sku_name
-
-        // 设置数量和价格
-        this.dataJson.tempJson.original_qty = data.qty || null
-        this.dataJson.tempJson.qty = data.qty || null
-        this.dataJson.tempJson.price = data.price || null
-
-        // 计算金额
-        this.calculateAmount()
-
-        // 设置入库类型为采购入库
-        this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
-
-        // 设置默认入库时间为当前时间
-        this.dataJson.tempJson.inbound_time = new Date().toISOString().slice(0, 19).replace('T', ' ')
-
-        console.log('=== 入库单数据填充完成 ===')
-        console.log('当前入库单数据:', this.dataJson.tempJson)
-        console.log('入库计划数据:', this.dataJson.planData)
-        console.log('合同数据:', this.dataJson.contractData)
-        console.log('订单数据:', this.dataJson.orderData)
+        // 否则按原有逻辑处理（兼容其他场景）
+        this.handleDirectData(data)
       } catch (error) {
         console.error('=== 处理数据失败 ===')
         console.error('错误信息:', error)
@@ -785,10 +669,200 @@ export default {
     },
 
     /**
-     * 入库类型变更处理
+     * 处理从弹窗返回的数据
      */
-    handleTypeChange (val) {
-      this.dataJson.tempJson.type = val
+    handleDialogReturnData (data) {
+      const { selectedRow, planData } = data
+      console.log('=== 处理弹窗返回数据 ===')
+      console.log('选中的商品明细:', selectedRow)
+      console.log('入库计划数据:', planData)
+
+      // 填充入库计划数据
+      this.dataJson.planData = {
+        plan_id: planData.id || null,
+        plan_detail_id: planData.detailListData[0].id || null,
+        plan_code: planData.code || '',
+        plan_time: planData.plan_time || '',
+        over_receipt_rate: planData.over_receipt_rate || null,
+        remark: planData.remark || '',
+        doc_att_files: planData.doc_att_files || [],
+        plan_qty: selectedRow.qty || null,
+        plan_price: selectedRow.price || null,
+        plan_warehouse_name: selectedRow.warehouse_name || null,
+        plan_location_name: selectedRow.location_name || null,
+        plan_bin_name: selectedRow.bin_name || null
+      }
+
+      // 从选中的商品明细中提取合同数据
+      this.dataJson.contractData = {
+        contract_id: selectedRow.contract_id || null,
+        contract_code: selectedRow.contract_code || '',
+        status_name: selectedRow.contract_status_name || '',
+        delivery_date: selectedRow.contract_delivery_date || '',
+        delivery_location: selectedRow.contract_delivery_location || '',
+        amount_total: selectedRow.contract_amount_total || null,
+        sign_date: selectedRow.contract_sign_date || ''
+      }
+
+      // 从选中的商品明细中提取订单数据
+      this.dataJson.orderData = {
+        order_id: selectedRow.order_id || null,
+        order_code: selectedRow.order_code || '',
+        status_name: selectedRow.order_status_name || '',
+        delivery_date: selectedRow.order_delivery_date || '',
+        delivery_location: selectedRow.order_delivery_location || '',
+        amount_total: selectedRow.order_amount_total || null,
+        sku: planData.detailListData[0].goods_name + '|' + planData.detailListData[0].sku_name || '' // 商品规格
+      }
+
+      // 填充入库单数据
+      this.dataJson.tempJson.type_name = planData.type_name
+      this.dataJson.tempJson.plan_id = planData.id
+      this.dataJson.tempJson.plan_code = planData.code
+      this.dataJson.tempJson.contract_id = selectedRow.contract_id
+      this.dataJson.tempJson.contract_code = selectedRow.contract_code
+      this.dataJson.tempJson.order_id = selectedRow.order_id
+      this.dataJson.tempJson.order_code = selectedRow.order_code
+      this.dataJson.tempJson.owner_id = planData.owner_id
+      this.dataJson.tempJson.owner_name = planData.owner_name
+      this.dataJson.tempJson.owner_code = planData.owner_code || ''
+      this.dataJson.tempJson.supplier_id = selectedRow.supplier_id
+      this.dataJson.tempJson.supplier_name = selectedRow.supplier_name
+      this.dataJson.tempJson.supplier_code = selectedRow.supplier_code || ''
+      this.dataJson.tempJson.sku_id = selectedRow.sku_id
+      this.dataJson.tempJson.sku_code = selectedRow.sku_code
+      this.dataJson.tempJson.goods_name = selectedRow.goods_name
+      this.dataJson.tempJson.sku_name = selectedRow.sku_name
+
+      // 设置数量和价格（从选中的商品明细）
+      // this.dataJson.tempJson.original_qty = selectedRow.qty || null
+      this.dataJson.tempJson.qty = selectedRow.qty || null
+      this.dataJson.tempJson.price = selectedRow.price || null
+      // 设置仓库信息（如果有的话）
+      if (selectedRow.warehouse_id) {
+        this.dataJson.tempJson.warehouse_id = selectedRow.warehouse_id
+        this.dataJson.tempJson.warehouse_code = selectedRow.warehouse_code || ''
+        this.dataJson.tempJson.warehouse_name = selectedRow.warehouse_name || ''
+        this.dataJson.tempJson.location_id = selectedRow.location_id
+        this.dataJson.tempJson.location_code = selectedRow.location_code || ''
+        this.dataJson.tempJson.location_name = selectedRow.location_name || ''
+        this.dataJson.tempJson.bin_id = selectedRow.bin_id
+        this.dataJson.tempJson.bin_code = selectedRow.bin_code || ''
+        this.dataJson.tempJson.bin_name = selectedRow.bin_name || ''
+
+        // 构建仓库显示文本
+        let displayText = ''
+        if (selectedRow.warehouse_name) displayText += selectedRow.warehouse_name
+        if (selectedRow.location_name) displayText += ' / ' + selectedRow.location_name
+        if (selectedRow.bin_name) displayText += ' / ' + selectedRow.bin_name
+        this.dataJson.tempJson.warehouse_location_bin_display = displayText
+        // 设置仓库选择组件的数据
+        this.dataJson.tempJson.wlb_data = {
+          id: selectedRow.bin_id,
+          code: selectedRow.bin_code,
+          name: selectedRow.bin_name,
+          warehouse_id: selectedRow.warehouse_id,
+          warehouse_code: selectedRow.warehouse_code,
+          warehouse_name: selectedRow.warehouse_name,
+          location_id: selectedRow.location_id,
+          location_code: selectedRow.location_code,
+          location_name: selectedRow.location_name
+        }
+      }
+
+      // 计算金额
+      this.calculateAmount()
+
+      // 设置入库类型（从入库计划数据中获取）
+      this.dataJson.tempJson.type = planData.type || constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type_name = planData.type_name || '采购入库'
+
+      // 设置默认入库时间为当前时间
+      // this.dataJson.tempJson.inbound_time = new Date().toISOString().slice(0, 19).replace('T', ' ')
+
+      console.log('=== 弹窗数据填充完成 ===')
+      console.log('当前入库单数据:', this.dataJson.tempJson)
+      console.log('入库计划数据:', this.dataJson.planData)
+      console.log('合同数据:', this.dataJson.contractData)
+      console.log('订单数据:', this.dataJson.orderData)
+    },
+
+    /**
+     * 处理直接传入的数据（兼容其他场景）
+     */
+    handleDirectData (data) {
+      console.log('=== 处理直接传入数据 ===')
+
+      // 填充入库计划数据
+      this.dataJson.planData = {
+        plan_id: data.plan_id || null,
+        plan_detail_id: data.plan_detail_id || null,
+        plan_code: data.plan_code || '',
+        plan_time: data.plan_time || '',
+        over_receipt_rate: data.over_receipt_rate || null,
+        remark: data.plan_remark || '',
+        doc_att_files: data.plan_doc_att_files || []
+      }
+
+      // 填充合同数据
+      this.dataJson.contractData = {
+        contract_id: data.contract_id || null,
+        contract_code: data.contract_code || '',
+        status_name: data.contract_status_name || '',
+        delivery_date: data.contract_delivery_date || '',
+        delivery_location: data.contract_delivery_location || '',
+        amount_total: data.contract_amount_total || null,
+        sign_date: data.contract_sign_date || ''
+      }
+
+      // 填充订单数据
+      this.dataJson.orderData = {
+        order_id: data.order_id || null,
+        order_code: data.order_code || '',
+        status_name: data.order_status_name || '',
+        delivery_date: data.order_delivery_date || '',
+        delivery_location: data.order_delivery_location || '',
+        amount_total: data.order_amount_total || null
+      }
+
+      // 填充入库单数据
+      this.dataJson.tempJson.plan_id = data.plan_id
+      this.dataJson.tempJson.plan_code = data.plan_code
+      this.dataJson.tempJson.contract_id = data.contract_id
+      this.dataJson.tempJson.contract_code = data.contract_code
+      this.dataJson.tempJson.order_id = data.order_id
+      this.dataJson.tempJson.order_code = data.order_code
+      this.dataJson.tempJson.owner_id = data.owner_id
+      this.dataJson.tempJson.owner_name = data.owner_name
+      this.dataJson.tempJson.owner_code = data.owner_code || ''
+      this.dataJson.tempJson.supplier_id = data.supplier_id
+      this.dataJson.tempJson.supplier_name = data.supplier_name
+      this.dataJson.tempJson.supplier_code = data.supplier_code || ''
+      this.dataJson.tempJson.sku_id = data.sku_id
+      this.dataJson.tempJson.sku_code = data.sku_code
+      this.dataJson.tempJson.goods_name = data.goods_name
+      this.dataJson.tempJson.sku_name = data.sku_name
+
+      // 设置数量和价格
+      this.dataJson.tempJson.original_qty = data.qty || null
+      this.dataJson.tempJson.qty = data.qty || null
+      this.dataJson.tempJson.price = data.price || null
+
+      // 计算金额
+      this.calculateAmount()
+
+      // 设置入库类型为采购入库
+      this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type_name = '采购入库'
+
+      // 设置默认入库时间为当前时间
+      this.dataJson.tempJson.inbound_time = new Date().toISOString().slice(0, 19).replace('T', ' ')
+
+      console.log('=== 直接数据填充完成 ===')
+      console.log('当前入库单数据:', this.dataJson.tempJson)
+      console.log('入库计划数据:', this.dataJson.planData)
+      console.log('合同数据:', this.dataJson.contractData)
+      console.log('订单数据:', this.dataJson.orderData)
     },
 
     /**
@@ -895,9 +969,15 @@ export default {
 
       // 重新设置入库类型为采购入库
       this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type_name = '采购入库'
 
       // 重新设置默认入库时间为当前时间
       this.dataJson.tempJson.inbound_time = new Date().toISOString().slice(0, 19).replace('T', ' ')
+
+      // 清除仓库选择组件的值
+      if (this.$refs.warehouseLocationBinRef) {
+        this.$refs.warehouseLocationBinRef.$refs.warehouseLocationBinSelect.clear()
+      }
 
       // 清除表单验证状态
       this.$nextTick(() => {
@@ -920,11 +1000,6 @@ export default {
       this.$refs['dataSubmitForm'].validate(valid => {
         if (valid) {
           // 基本业务逻辑校验
-          if (!tempData.type) {
-            this.closeLoading()
-            this.showErrorMsg('请选择入库类型')
-            return
-          }
           if (!tempData.warehouse_id) {
             this.closeLoading()
             this.showErrorMsg('请选择仓库/库区/库位')
@@ -947,15 +1022,14 @@ export default {
               this.getFlow()
             } else {
               this.closeLoading()
-              this.showErrorMsg(_data.errorMessage)
+              this.showErrorMsg(_data.data.message)
             }
-          }).catch(err => {
+          }).catch(error => {
+            console.log('校验出错', error)
             this.closeLoading()
-            this.showErrorMsg(err)
           })
         } else {
           this.closeLoading()
-          this.showErrorMsg('请检查输入信息')
         }
       })
     },
@@ -1001,166 +1075,218 @@ export default {
      * 执行提交
      */
     doInsert () {
-      const tempData = deepCopy(this.dataJson.tempJson)
+      this.showLoading('正在保存，请稍后...')
 
-      // 设置审批流程数据
-      if (this.popSettingsData.sponsorDialog.initial_process) {
-        tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process
-      }
-      if (this.popSettingsData.sponsorDialog.process_users && this.popSettingsData.sponsorDialog.process_users.length > 0) {
-        tempData.process_users = this.popSettingsData.sponsorDialog.process_users
-      }
+      // 构建符合后端结构的提交数据
+      const tempData = this.buildSubmissionData()
 
-      // 设置附件文件
-      tempData.one_file = this.dataJson.one_file
-      tempData.two_file = this.dataJson.two_file
-      tempData.three_file = this.dataJson.three_file
-      tempData.four_file = this.dataJson.four_file
-
-      console.log('=== 提交入库单数据 ===')
-      console.log('提交数据:', tempData)
-
-      insertApi(tempData).then(_data => {
-        if (_data.success) {
-          this.closeLoading()
-          this.$emit('closeMeOk', _data.data)
-          // 通知兄弟组件，新增数据更新
-          setTimeout(() => {
-            EventBus.$emit('EMIT_MST_B_IN_NEW_OK', _data.data)
-          }, 1000)
-          this.$notify({
-            title: '入库单提交成功',
-            message: _data.data.message || '入库单已提交审批并保存',
-            type: 'success',
-            duration: this.settings.duration
-          })
+      this.$refs['dataSubmitForm'].validate(valid => {
+        if (valid) {
+          // 调用新增接口
+          insertApi(tempData)
+            .then(
+              _data => {
+                this.closeLoading()
+                this.$emit('closeMeOk', _data.data)
+                // 通知兄弟组件，新增数据更新
+                setTimeout(() => {
+                  EventBus.$emit('EMIT_MST_B_IN_NEW_OK', _data.data)
+                }, 1000)
+                this.$notify({
+                  title: '入库单提交成功',
+                  message: _data.data.message || '入库单已提交审批并保存',
+                  type: 'success',
+                  duration: this.settings.duration
+                })
+              },
+              _error => {
+                this.closeLoading()
+                this.showErrorMsg(_error.error.message)
+              }
+            )
+            .finally(() => {
+              this.closeLoading()
+            })
         } else {
           this.closeLoading()
-          this.showErrorMsg(_data.errorMessage || _data.data?.message || '提交失败')
         }
-      }).catch(err => {
-        this.closeLoading()
-        this.showErrorMsg(err.error?.message || err.message || '提交失败，请重试')
       })
+    },
+
+    /**
+     * 构建提交数据 - 按照后端结构组织数据
+     */
+    buildSubmissionData () {
+      const formData = this.dataJson.tempJson
+
+      // 构建符合后端结构的数据
+      const submissionData = {
+        // 基本信息
+        code: formData.code || null, // 入库单号 - 后端自动生成
+        type: formData.type, // 入库类型
+        type_name: formData.type_name || '', // 类型名称
+
+        // 入库计划信息
+        plan_id: this.dataJson.planData.plan_id, // 入库计划ID
+        plan_detail_id: this.dataJson.planData.plan_detail_id, // 入库计划明细ID
+        plan_code: this.dataJson.planData.plan_code || '', // 入库计划编号
+
+        // 合同订单信息
+        contract_id: formData.contract_id || null, // 合同ID
+        contract_code: formData.contract_code || '', // 合同编号
+        order_id: formData.order_id || null, // 订单ID
+        order_code: formData.order_code || '', // 订单编号
+
+        // 货主信息
+        owner_id: formData.owner_id, // 货主id
+        owner_code: formData.owner_code || '', // 货主编码
+        owner_name: formData.owner_name || '', // 货主名称
+
+        // 供应商信息
+        supplier_id: formData.supplier_id, // 供应商id
+        supplier_code: formData.supplier_code || '', // 供应商编码
+        supplier_name: formData.supplier_name || '', // 供应商名称
+
+        // 商品信息
+        sku_id: formData.sku_id, // 商品规格ID
+        sku_code: formData.sku_code || '', // 物料编码
+        goods_name: formData.goods_name || '', // 商品名称
+        sku_name: formData.sku_name || '', // 规格
+
+        // 仓库信息
+        warehouse_id: formData.warehouse_id, // 入库仓库id
+        warehouse_name: formData.warehouse_name || '', // 仓库名称
+        location_id: formData.location_id, // 入库库区id
+        location_name: formData.location_name || '', // 库区名称
+        bin_id: formData.bin_id, // 入库库位id
+        bin_name: formData.bin_name || '', // 库位名称
+
+        // 数量和金额信息
+        original_qty: formData.original_qty, // 原发数量
+        qty: formData.qty, // 入库数量
+        price: formData.price, // 单价
+        amount: formData.amount, // 入库金额
+
+        // 时间信息
+        inbound_time: formData.inbound_time, // 入库时间
+
+        // 备注
+        remark: formData.remark || '', // 备注
+
+        // 校验类型
+        check_type: constants_para.INSERT_CHECK_TYPE,
+
+        // 审批流程数据
+        initial_process: this.popSettingsData.sponsorDialog.initial_process, // 流程
+        form_data: this.popSettingsData.sponsorDialog.form_data, // 表单参数
+        process_users: this.popSettingsData.sponsorDialog.process_users, // 自选用户
+
+        // 附件信息
+        one_file: this.dataJson.one_file || [], // 磅单文件
+        two_file: this.dataJson.two_file || [], // 入库附件明细
+        three_file: this.dataJson.three_file || [], // 检验单
+        four_file: this.dataJson.four_file || [] // 货物照片
+      }
+
+      console.log('=== 构建的提交数据 ===')
+      console.log('提交数据结构:', submissionData)
+
+      return submissionData
     },
 
     /**
      * 磅单文件上传成功处理
      */
-    handleOneFileUploadSuccess (data) {
-      this.dataJson.one_file.push({
-        fileName: data.file.name,
-        url: data.response.data.url,
-        timestamp: new Date().getTime()
-      })
-      this.dataJson.one_file_url.push(data.response.data.url)
+    handleOneFileUploadSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.one_file.push(res.response.data)
+      this.dataJson.one_file_url.push(res.response.data.url)
+      this.dataJson.tempJson.one_file = this.dataJson.one_file
     },
 
     /**
      * 入库附件明细上传成功处理
      */
-    handleTwoFileUploadSuccess (data) {
-      this.dataJson.two_file.push({
-        fileName: data.file.name,
-        url: data.response.data.url,
-        timestamp: new Date().getTime()
-      })
-      this.dataJson.two_file_url.push(data.response.data.url)
+    handleTwoFileUploadSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.two_file.push(res.response.data)
+      this.dataJson.two_file_url.push(res.response.data.url)
+      this.dataJson.tempJson.two_file = this.dataJson.two_file
     },
 
     /**
      * 检验单上传成功处理
      */
-    handleThreeFileUploadSuccess (data) {
-      this.dataJson.three_file.push({
-        fileName: data.file.name,
-        url: data.response.data.url,
-        timestamp: new Date().getTime()
-      })
-      this.dataJson.three_file_url.push(data.response.data.url)
+    handleThreeFileUploadSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.three_file.push(res.response.data)
+      this.dataJson.three_file_url.push(res.response.data.url)
+      this.dataJson.tempJson.three_file = this.dataJson.three_file
     },
 
     /**
      * 货物照片上传成功处理
      */
-    handleFourFileUploadSuccess (data) {
-      this.dataJson.four_file.push({
-        fileName: data.file.name,
-        url: data.response.data.url,
-        timestamp: new Date().getTime()
-      })
-      this.dataJson.four_file_url.push(data.response.data.url)
+    handleFourFileUploadSuccess (res) {
+      res.response.data.timestamp = res.response.timestamp
+      this.dataJson.four_file.push(res.response.data)
+      this.dataJson.four_file_url.push(res.response.data.url)
+      this.dataJson.tempJson.four_file = this.dataJson.four_file
     },
 
     /**
      * 文件上传失败处理
      */
-    handleFileError (err, file, fileList) {
-      console.error('文件上传失败:', err)
-      this.$message.error('文件上传失败，请重试')
+    handleFileError (error) {
+      this.showErrorMsg('文件上传失败：' + error.message)
     },
 
     /**
      * 删除磅单文件
      */
-    removeOneFile (data) {
-      const index = this.dataJson.one_file.findIndex(item => item.url === data)
-      if (index !== -1) {
-        this.dataJson.one_file.splice(index, 1)
-      }
-      const index2 = this.dataJson.one_file_url.findIndex(item => item === data)
-      if (index2 !== -1) {
-        this.dataJson.one_file_url.splice(index2, 1)
-      }
+    removeOneFile (url) {
+      // 获取下标
+      const _index = this.dataJson.one_file_url.lastIndexOf(url)
+      // 从数组中移除
+      this.dataJson.one_file.splice(_index, 1)
+      this.dataJson.one_file_url.splice(_index, 1)
+      this.dataJson.tempJson.one_file = this.dataJson.one_file
     },
 
     /**
      * 删除入库附件明细
      */
-    removeTwoFile (data) {
-      const index = this.dataJson.two_file.findIndex(item => item.url === data)
-      if (index !== -1) {
-        this.dataJson.two_file.splice(index, 1)
-      }
-      const index2 = this.dataJson.two_file_url.findIndex(item => item === data)
-      if (index2 !== -1) {
-        this.dataJson.two_file_url.splice(index2, 1)
-      }
+    removeTwoFile (url) {
+      // 获取下标
+      const _index = this.dataJson.two_file_url.lastIndexOf(url)
+      // 从数组中移除
+      this.dataJson.two_file.splice(_index, 1)
+      this.dataJson.two_file_url.splice(_index, 1)
+      this.dataJson.tempJson.two_file = this.dataJson.two_file
     },
 
     /**
      * 删除检验单
      */
-    removeThreeFile (data) {
-      const index = this.dataJson.three_file.findIndex(item => item.url === data)
-      if (index !== -1) {
-        this.dataJson.three_file.splice(index, 1)
-      }
-      const index2 = this.dataJson.three_file_url.findIndex(item => item === data)
-      if (index2 !== -1) {
-        this.dataJson.three_file_url.splice(index2, 1)
-      }
+    removeThreeFile (url) {
+      // 获取下标
+      const _index = this.dataJson.three_file_url.lastIndexOf(url)
+      // 从数组中移除
+      this.dataJson.three_file.splice(_index, 1)
+      this.dataJson.three_file_url.splice(_index, 1)
+      this.dataJson.tempJson.three_file = this.dataJson.three_file
     },
 
     /**
      * 删除货物照片
      */
-    removeFourFile (data) {
-      const index = this.dataJson.four_file.findIndex(item => item.url === data)
-      if (index !== -1) {
-        this.dataJson.four_file.splice(index, 1)
-      }
-      const index2 = this.dataJson.four_file_url.findIndex(item => item === data)
-      if (index2 !== -1) {
-        this.dataJson.four_file_url.splice(index2, 1)
-      }
-    },
-
-    /**
-     * 格式化货币
-     */
-    formatCurrency (value, showSymbol = false) {
-      return this.formatNumber(value, true, 2, showSymbol ? '¥' : '')
+    removeFourFile (url) {
+      // 获取下标
+      const _index = this.dataJson.four_file_url.lastIndexOf(url)
+      // 从数组中移除
+      this.dataJson.four_file.splice(_index, 1)
+      this.dataJson.four_file_url.splice(_index, 1)
+      this.dataJson.tempJson.four_file = this.dataJson.four_file
     },
 
     /**
@@ -1216,27 +1342,6 @@ export default {
         callback()
       } else {
         callback(new Error('请选择仓库/库区/库位'))
-      }
-    },
-
-    /**
-     * 格式化数字
-     */
-    formatNumber (value, useComma = false, decimalPlaces = 2, prefix = '') {
-      if (value === null || value === undefined || value === '') {
-        return prefix + '0' + (decimalPlaces > 0 ? '.' + '0'.repeat(decimalPlaces) : '')
-      }
-      const num = parseFloat(value)
-      if (isNaN(num)) {
-        return prefix + '0' + (decimalPlaces > 0 ? '.' + '0'.repeat(decimalPlaces) : '')
-      }
-      if (useComma) {
-        return prefix + num.toLocaleString('zh-CN', {
-          minimumFractionDigits: decimalPlaces,
-          maximumFractionDigits: decimalPlaces
-        })
-      } else {
-        return prefix + num.toFixed(decimalPlaces)
       }
     }
   }

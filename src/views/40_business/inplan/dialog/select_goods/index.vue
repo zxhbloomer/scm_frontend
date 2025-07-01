@@ -47,7 +47,7 @@
               </el-descriptions-item>
 
               <el-descriptions-item label="计划入库时间">
-                {{ dataJson.tempJson.plan_time || '-' }}
+                {{ formatDate(dataJson.tempJson.plan_time) }}
               </el-descriptions-item>
 
               <el-descriptions-item label="超收比例(%)">
@@ -270,10 +270,12 @@
         plain
         type="primary"
         :disabled="!hasSelectedRows"
+        :loading="settings.loading"
         @click="handleNext"
       >下一步</el-button>
       <el-button
         plain
+        :loading="settings.loading"
         @click="handleClose"
       >关闭</el-button>
     </div>
@@ -396,13 +398,76 @@ export default {
           if (this.$refs.multipleTable) {
             this.$refs.multipleTable.setCurrentRow()
           }
+
+          // 检查数据条数并处理相应逻辑
+          this.handleDataAfterLoad()
         })
       }).catch(error => {
         console.error('获取入库计划详情失败:', error)
         this.showErrorMsg('获取入库计划详情失败，请重试')
-      }).finally(() => {
+        // 出错时关闭loading
         this.settings.loading = false
       })
+      // 注意：成功时不在这里关闭loading，由handleDataAfterLoad处理
+    },
+
+    /**
+     * 数据加载完成后的处理逻辑
+     */
+    handleDataAfterLoad () {
+      const detailList = this.dataJson.tempJson.detailListData || []
+
+      console.log('=== 入库货物明细数据加载完成 ===')
+      console.log('数据条数:', detailList.length)
+      console.log('详细数据:', detailList)
+
+      if (detailList.length > 1) {
+        // 多条数据，关闭loading，让用户手动选择
+        console.log('多条数据，关闭loading，等待用户选择')
+        this.settings.loading = false
+      } else if (detailList.length === 1) {
+        // 只有一条数据，自动选中并进入下一步
+        console.log('只有一条数据，自动选中并进入下一步')
+        this.autoSelectAndNext(detailList[0])
+      } else {
+        // 没有数据，关闭loading并提示
+        console.log('没有可入库的货物明细')
+        this.settings.loading = false
+        this.showErrorMsg('没有可入库的货物明细')
+      }
+    },
+
+    /**
+     * 自动选中第一条数据并进入下一步
+     */
+    autoSelectAndNext (firstRow) {
+      console.log('=== 开始自动选择流程 ===')
+      console.log('自动选中的数据:', firstRow)
+
+      // 模拟用户点击选中第一条数据
+      setTimeout(() => {
+        console.log('模拟点击选中第一条数据...')
+
+        // 设置选中行
+        if (this.$refs.multipleTable) {
+          this.$refs.multipleTable.setCurrentRow(firstRow)
+        }
+
+        // 更新选中状态
+        this.selectedRow = firstRow
+        console.log('已选中数据:', this.selectedRow)
+
+        // 延时1000毫秒后自动触发下一步
+        setTimeout(() => {
+          console.log('延时完成，自动触发下一步...')
+
+          // 关闭loading
+          this.settings.loading = false
+
+          // 触发下一步
+          this.handleNext()
+        }, 1000)
+      }, 100) // 短暂延时确保DOM更新完成
     },
 
     /**
@@ -506,21 +571,6 @@ export default {
      */
     showSuccessMsg (message) {
       this.$message.success(message)
-    },
-
-    /**
-     * 打开loading
-     */
-    showLoading (loadingText) {
-      this.settings.loading = true
-      this.settings.loadingText = loadingText
-    },
-
-    /**
-     * 关闭loading
-     */
-    closeLoading () {
-      this.settings.loading = false
     }
   }
 }

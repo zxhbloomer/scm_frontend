@@ -357,7 +357,6 @@
       :height="settings.tableHeight"
       :default-sort="{ prop: 'u_time', order: 'descending' }"
       @row-click="handleRowClick"
-      @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
@@ -1067,14 +1066,6 @@ export default {
      */
     handleRowClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
-    },
-
-    /**
-     * 行双击事件
-     */
-    handleRowDbClick (row) {
-      this.dataJson.rowIndex = this.getRowIndex(row)
-      this.handleView()
     },
 
     /**

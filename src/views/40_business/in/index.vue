@@ -133,6 +133,15 @@ export default {
   },
   // 监听器
   watch: {
+    // 监听页面状态变化，自动更新RouterTab标题
+    'settings.tabs.activeName': {
+      handler (newVal) {
+        this.$nextTick(() => {
+          this.updateTabTitleByState(newVal)
+        })
+      },
+      immediate: true
+    }
   },
   mounted () {
     // 描绘完成
@@ -144,6 +153,26 @@ export default {
   created () {
   },
   methods: {
+    // 状态到标题扩展的映射
+    getTabTitleExtension (tabState) {
+      const titleMap = {
+        'main': '-查询',
+        'view': '-查看',
+        'edit': this.dataJson.tab.showNew ? '-新增' : '-修改',
+        'approve': '-审批'
+      }
+      return titleMap[tabState] || ''
+    },
+
+    // 根据页面状态更新RouterTab标题
+    updateTabTitleByState (tabState) {
+      const extensionText = this.getTabTitleExtension(tabState)
+      // 使用RouterTab组件的通用方法
+      if (this.$routerTab && this.$routerTab.updateTabTitle) {
+        this.$routerTab.updateTabTitle(extensionText)
+      }
+    },
+
     handleTabsClick (tab, event) {
       // console.log(tab, event)
     },

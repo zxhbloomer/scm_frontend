@@ -353,7 +353,6 @@
       style="width: 100%"
       :cell-class-name="tableCellClassName"
       @row-click="handleRowClick"
-      @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
@@ -1369,31 +1368,9 @@ export default {
       this.showSelectGoodsDialog = false
       this.selectedInPlanId = null
 
-      // 构造入库操作页面数据
-      const inboundData = {
-        plan_id: data.planData.id,
-        plan_code: data.planData.code,
-        plan_time: data.planData.plan_time,
-        status_name: data.planData.status_name,
-        type_name: data.planData.type_name,
-        owner_id: data.planData.owner_id,
-        owner_name: data.planData.owner_name,
-        owner_code: data.planData.owner_code,
-        supplier_id: data.planData.supplier_id,
-        supplier_name: data.planData.supplier_name,
-        supplier_code: data.planData.supplier_code,
-        goods_id: data.selectedRow.goods_id,
-        goods_name: data.selectedRow.goods_name,
-        sku_id: data.selectedRow.sku_id,
-        sku_code: data.selectedRow.sku_code,
-        sku_name: data.selectedRow.sku_name,
-        qty: data.selectedRow.qty,
-        price: data.selectedRow.price
-      }
-
       // 打开入库操作页签
       const operate_tab_data = {
-        data: inboundData,
+        data: data,
         operate_tab_info: {
           show: true,
           name: '入库操作-' + data.planData.code
@@ -1542,13 +1519,6 @@ export default {
     handleRowClick (row) {
       this.$refs.multipleTable.setCurrentRow(row)
       this.handleCurrentChange(row)
-    },
-
-    /**
-     * 行双击
-     */
-    handleRowDbClick (row) {
-      this.handleView()
     },
 
     /**

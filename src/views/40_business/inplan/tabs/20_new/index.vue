@@ -714,15 +714,6 @@ export default {
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []
     },
-    // 打开loading
-    showLoading (loadingText) {
-      this.settings.loading = true
-      this.settings.loadingText = loadingText
-    },
-    // 关闭loading
-    closeLoading () {
-      this.settings.loading = false
-    },
     // 取消
     handleCancel () {
       this.$emit('closeMeCancel')
