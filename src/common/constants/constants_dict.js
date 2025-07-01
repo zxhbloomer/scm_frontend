@@ -159,7 +159,7 @@ const DICT_B_IN_TYPE_SC = '5'
 const DICT_B_IN_TYPE_JG = '9'
 const DICT_B_IN_TYPE_PT = '10'
 
-/** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+/** 入库单状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_STATUS = 'b_in_status'
 const DICT_B_IN_STATUS_ZERO = '0'
 const DICT_B_IN_STATUS_ONE = '1'
@@ -173,6 +173,14 @@ const DICT_B_IN_STATUS_SIX = '6'
 const DICT_B_IN_PLAN = 'b_in_plan'
 /** 入库计划表 审批作废流 */
 const DICT_B_IN_PLAN_CANCEL = 'b_in_plan_cancel'
+/** 入库计划类型 入库类型：0=采购入库 1=调拨入库 2=退货入库 3=监管入库 4=普通入库 5=生产入库 6=提货入库 */
+const DICT_B_IN_PLAN_TYPE = 'b_in_plan_type'
+const DICT_B_IN_PLAN_TYPE_CG = '0'
+const DICT_B_IN_PLAN_TYPE_DB = '1'
+const DICT_B_IN_PLAN_TYPE_TH = '2'
+const DICT_B_IN_PLAN_TYPE_SC = '5'
+const DICT_B_IN_PLAN_TYPE_JG = '9'
+const DICT_B_IN_PLAN_TYPE_PT = '10'
 
 /** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_PLAN_STATUS = 'b_in_plan_status'
@@ -1902,6 +1910,13 @@ export default {
   DICT_B_IN,
 
   /** 入库单作废流程标识 */
-  DICT_B_IN_CANCEL
+  DICT_B_IN_CANCEL,
+  DICT_B_IN_PLAN_TYPE,
+  DICT_B_IN_PLAN_TYPE_CG,
+  DICT_B_IN_PLAN_TYPE_DB,
+  DICT_B_IN_PLAN_TYPE_TH,
+  DICT_B_IN_PLAN_TYPE_SC,
+  DICT_B_IN_PLAN_TYPE_JG,
+  DICT_B_IN_PLAN_TYPE_PT
 
 }

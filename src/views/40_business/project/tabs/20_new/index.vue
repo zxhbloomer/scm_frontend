@@ -446,8 +446,8 @@
       :visible="popSettingsData.sponsorDialog.visible"
       :form-data="popSettingsData.sponsorDialog.form_data"
       :serial-type="popSettingsData.sponsorDialog.serial_type"
-      @closeMeCancel="handleBmpDialogCancel"
-      @closeMeOk="handleBmpDialogOk"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
     />
 
   </div>
@@ -934,12 +934,12 @@ export default {
       })
     },
     // 取消
-    handleBmpDialogCancel () {
+    handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
       this.closeLoading()
     },
     // 审批流确定
-    handleBmpDialogOk (data) {
+    handleBpmDialogOk (data) {
       this.popSettingsData.sponsorDialog.initial_process = data.processData
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false

@@ -158,6 +158,19 @@ export function insertApi (data) {
   })
 }
 
+/**
+ * 导出入库单数据
+ * @param {*} data
+ */
+export function exportApi (data) {
+  return request({
+    url: '/api/v1/in/export',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
 export default {
   getInListApi: getListApi,
   getListSumApi,
@@ -171,5 +184,6 @@ export default {
   approveInApi,
   submitInApi,
   validateApi,
-  insertApi
+  insertApi,
+  exportApi
 }

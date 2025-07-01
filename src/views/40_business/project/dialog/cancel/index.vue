@@ -218,7 +218,7 @@ export default {
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
-          remark: '',
+          cancel_reason: '',
           cancel_files: []
         },
         // 单条数据 json
@@ -232,7 +232,7 @@ export default {
         selection: [],
         // pop的check内容
         rules: {
-          remark: [
+          cancel_reason: [
             { required: true, message: '请输入作废理由', trigger: 'change' }
           ]
         }

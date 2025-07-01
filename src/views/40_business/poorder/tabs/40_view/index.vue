@@ -39,6 +39,7 @@
             :edit-status="editStatus"
             :enable-cancel="enableCancel"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -100,6 +101,10 @@ export default {
     }
   },
   methods: {
+    // 处理返回事件 - 通过返回按钮返回
+    handleBack () {
+      this.$emit('emitReturn')
+    },
     handleReturn () {
       this.$emit('emitReturn')
     }

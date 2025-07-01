@@ -26,7 +26,6 @@
           :data="dataJson.processData"
           :edit-status="editStatus"
           :enable-cancel="enableCancel"
-          @emitReturn="handleReturn"
         />
       </el-col>
     </el-row>
@@ -40,6 +39,7 @@
             :enable-cancel="enableCancel"
             @closeMeOk="handleCloseMeOk"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -132,6 +132,11 @@ export default {
     // 刷新页面
     refreshPage () {
       this.initData()
+    },
+
+    // 处理返回事件 - 通过返回按钮返回
+    handleBack () {
+      this.$emit('emitReturn')
     },
 
     // 处理返回事件

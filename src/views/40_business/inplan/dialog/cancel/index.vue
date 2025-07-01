@@ -371,7 +371,10 @@ export default {
             .then(
               _data => {
                 // 通知兄弟组件，数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_INPLAN_UPDATE_OK, _data.data)
+                }, 1000)
+
                 this.$notify({
                   title: '作废申请成功',
                   message: _data.data.message,

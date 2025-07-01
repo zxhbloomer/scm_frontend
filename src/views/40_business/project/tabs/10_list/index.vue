@@ -1043,6 +1043,7 @@ export default {
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
         this.$nextTick(() => {
           this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+          this.handleCurrentChange(this.dataJson.listData[this.dataJson.rowIndex])
         })
       }).finally(() => {
         this.settings.loading = false
@@ -1674,7 +1675,10 @@ export default {
     handleModelOpen () {
       this.settings.exportModel = true
       this.settings.btnStatus.hidenExport = false
-      this.$tours['myTour'].start()
+      // 等待DOM更新完成后再启动vue-tour
+      this.$nextTick(() => {
+        this.$tours['myTour'].start()
+      })
     },
     // 导出按钮
     handleExport () {

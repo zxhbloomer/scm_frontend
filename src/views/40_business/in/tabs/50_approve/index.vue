@@ -26,7 +26,6 @@
           :data="dataJson.processData"
           :edit-status="editStatus"
           :enable-cancel="enableCancel"
-          @emitReturn="handleReturn"
         />
       </el-col>
     </el-row>
@@ -40,6 +39,7 @@
             :enable-cancel="enableCancel"
             @closeMeOk="handleCloseMeOk"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -134,9 +134,15 @@ export default {
       this.initData()
     },
 
+    // 处理返回事件 - 通过返回按钮返回
+    handleBack () {
+      this.$emit('emitReturn')
+    },
+
     // 处理返回事件
     handleReturn () {
       setTimeout(() => {
+        console.log('发送兄弟组件的消息：this.EMITS.EMIT_MST_B_IN_BPM_OK')
         EventBus.$emit(this.EMITS.EMIT_MST_B_IN_BPM_OK, this.data)
       }, 1000)
       this.$emit('emitReturn')

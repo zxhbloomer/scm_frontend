@@ -133,3 +133,34 @@ pocontract/
 2. 关注数据接口的调用，确保使用正确的API函数。
 3. 保持代码风格一致，包括缩进、命名和注释等。
 4. 要把getListSumApi（汇总统计查询），也要实现
+
+
+### 在复制10_list/index.vue:列表页时，需要复制一些针对合计方面的css
+
+
+.div-sum {
+  width: 100%;
+  height: 35px;
+  padding: 5px 5px;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+  background-color: #f5f7fa;
+  color: #666;
+  font-size: 16px;
+  border-top: 1px solid #dfe6ec;
+  border-left: 1px solid #dfe6ec;
+  border-right: 1px solid #dfe6ec;
+}
+
+.count-data {
+  color: #1890ff;
+  font-size: 20px;
+}
+
+.count-title {
+  margin-left: 10px;
+}
+
+

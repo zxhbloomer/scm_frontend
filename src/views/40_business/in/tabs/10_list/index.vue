@@ -289,7 +289,7 @@
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_IN:EXPORT'"
+        v-permission="'B_IN:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -297,7 +297,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_IN:EXPORT'"
+        v-permission="'B_IN:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -305,7 +305,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'P_IN:EXPORT'"
+        v-permission="'B_IN:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -688,12 +688,16 @@
       @pagination="getDataList"
     />
 
+    <!-- vue-tour组件 -->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
+
     <!-- 作废对话框 -->
     <cancel-dialog
-      :visible.sync="showCancelDialog"
-      :data="cancelDialogData"
-      @closeMeOk="handleCancelOk"
-      @closeMeCancel="handleCancelCancel"
+      v-if="popCancel.dialogVisible"
+      :data="popCancel.data"
+      :visible="popCancel.dialogVisible"
+      @closeMeOk="handleCloseDialogOneOk"
+      @closeMeCancel="handleCloseDialogOneCancel"
     />
   </div>
 </template>
@@ -706,12 +710,12 @@ import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/sys
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
 import CancelDialog from '../../dialog/cancel/index.vue'
-import { getListApi, getListSumApi, delApi, getApi } from '@/api/40_business/in/in.js'
+import { getListApi, getListSumApi, delApi, getApi, exportApi } from '@/api/40_business/in/in.js'
 import mixin from './mixin'
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_para from '@/common/constants/constants_para'
 import { EventBus } from '@/common/eventbus/eventbus'
-import constants_emits from '@/common/constants/constants_emits'
 
 export default {
   name: 'InList',
@@ -783,9 +787,12 @@ export default {
       // 页面设置
       settings: {
         loading: false,
-        exportModel: true,
-        sortOrders: ['ascending', 'descending'],
+        // 表格排序规则
+        sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式
+        exportModel: false,
         tableHeight: this.setUIheight(),
+        duration: 4000,
         // 按钮状态
         btnStatus: {
           showUpdate: false, // 显示修改按钮
@@ -794,13 +801,39 @@ export default {
           showApprove: false, // 显示审批按钮
           showPrint: false, // 显示打印按钮
           showView: false, // 显示查看按钮
-          hidenExport: true, // 隐藏导出按钮（默认隐藏）
-          showExport: false // 显示导出状态
+          showExport: false, // 显示导出状态
+          hidenExport: true // 隐藏导出按钮（默认隐藏）
         }
       },
       // 作废对话框控制
-      showCancelDialog: false,
-      cancelDialogData: null
+      popCancel: {
+        dialogVisible: false,
+        data: null
+      },
+      // vue-tour组件
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {
@@ -856,8 +889,8 @@ export default {
   },
   created () {
     // 新增提交数据时监听
-    EventBus.$on(constants_emits.EMIT_MST_B_IN_NEW_OK, _data => {
-      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_NEW_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_B_IN_NEW_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_IN_NEW_OK', _data)
       // 设置到table中绑定的json数据源
       console.log('新增数据：', _data)
       this.dataJson.listData.unshift(_data)
@@ -870,6 +903,7 @@ export default {
         this.dataJson.listData.splice(0, 1, response.data)
         this.$nextTick(() => {
           this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+          this.handleCurrentChange(this.dataJson.listData[0])
         })
       }).finally(() => {
         this.settings.loading = false
@@ -877,8 +911,8 @@ export default {
     })
 
     // 更新提交数据时监听
-    EventBus.$on(constants_emits.EMIT_MST_B_IN_UPDATE_OK, _data => {
-      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_UPDATE_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_B_IN_UPDATE_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_IN_UPDATE_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
       getApi({ id: this.dataJson.currentJson.id }).then(response => {
@@ -888,6 +922,7 @@ export default {
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
         this.$nextTick(() => {
           this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+          this.handleCurrentChange(this.dataJson.listData[this.dataJson.rowIndex])
         })
       }).finally(() => {
         this.settings.loading = false
@@ -895,8 +930,8 @@ export default {
     })
 
     // 提交审批流时监听
-    EventBus.$on(constants_emits.EMIT_MST_B_IN_BPM_OK, _data => {
-      console.log('来自兄弟组件的消息：constants_emits.EMIT_MST_B_IN_BPM_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_B_IN_BPM_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_IN_BPM_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
       getApi({ id: this.dataJson.currentJson.id }).then(response => {
@@ -906,6 +941,7 @@ export default {
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
         this.$nextTick(() => {
           this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+          this.handleCurrentChange(this.dataJson.listData[this.dataJson.rowIndex])
         })
       }).finally(() => {
         this.settings.loading = false
@@ -914,9 +950,9 @@ export default {
   },
   beforeDestroy () {
     // 清理EventBus监听器
-    EventBus.$off(constants_emits.EMIT_MST_B_IN_NEW_OK)
-    EventBus.$off(constants_emits.EMIT_MST_B_IN_UPDATE_OK)
-    EventBus.$off(constants_emits.EMIT_MST_B_IN_BPM_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_B_IN_NEW_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_B_IN_UPDATE_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_B_IN_BPM_OK)
   },
   mounted () {
     // 页面加载时获取数据
@@ -1012,6 +1048,7 @@ export default {
       this.settings.btnStatus.showPush = false
       this.settings.btnStatus.showPrint = false
       this.settings.btnStatus.showFinish = false
+      this.settings.btnStatus.showExport = false
     },
     /**
      * 排序变化
@@ -1044,51 +1081,56 @@ export default {
      * 当前行变化事件
      */
     handleCurrentChange (row) {
-      this.dataJson.currentJson = deepCopy(row) // copy obj
+      this.dataJson.currentJson = Object.assign({}, row) // copy obj
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
+        // 默认可用的按钮
         this.settings.btnStatus.showView = true
         this.settings.btnStatus.showPrint = true
 
-        // 修改按钮：待审批(0)或驳回(3)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ZERO ||
-          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_THREE) {
+        // 修改按钮 - 待审批和驳回状态可以修改
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
-        // 删除按钮：待审批(0)和驳回(3)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ZERO ||
-          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_THREE) {
+        // 删除按钮 - 待审批和驳回状态可以删除
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
-        // 作废按钮：仅执行中(2)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_TWO) {
+        // 作废按钮 - 执行中状态可以作废
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
-        // 审批按钮：审批中(1)或作废审批中(4)
-        if (this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_ONE ||
-          this.dataJson.currentJson.status === this.CONSTANTS.DICT_B_IN_STATUS_FOUR) {
+        // 审批按钮 - 审批中和作废审批中状态可以审批
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_ONE ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_IN_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
       } else {
+        // 没有选中任何行时，所有按钮都不可用
         this.settings.btnStatus.showUpdate = false
-        this.settings.btnStatus.showDel = false
         this.settings.btnStatus.showCancel = false
+        this.settings.btnStatus.showView = false
+        this.settings.btnStatus.showDel = false
         this.settings.btnStatus.showApprove = false
         this.settings.btnStatus.showPrint = false
-        this.settings.btnStatus.showView = false
       }
+
+      // 设置dialog的返回
+      this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
     },
 
     /**
@@ -1096,62 +1138,74 @@ export default {
      */
     handleSelectionChange (selection) {
       this.dataJson.multipleSelection = selection
-      // 不做按钮联动，保持单选行为
+      // 更新导出按钮状态
+      if (selection.length > 0) {
+        this.settings.btnStatus.showExport = true
+      } else {
+        this.settings.btnStatus.showExport = false
+      }
+      // 不做其他按钮联动，保持单选行为
     },
 
     /**
      * 新增
      */
     handleNew () {
-      const data = {
-        data: null,
-        editStatus: 'new',
-        operate_tab_info: {
-          name: '新增入库单',
-          showNew: true
-        }
+      const operate_tab_data = {
+        operate_tab_info: { show: true, name: '新增入库单' },
+        canEdit: true,
+        editStatus: constants_para.STATUS_INSERT
       }
-      this.$emit('emitNew', data)
+      this.$emit('emitNew', operate_tab_data)
     },
 
     /**
      * 修改
      */
     handleUpdate () {
-      if (!this.dataJson.currentJson) {
-        this.$message.warning('请选择要修改的数据')
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (!_data) {
+        this.showErrorMsg('请选择一条数据')
         return
       }
-
-      const data = {
-        data: this.dataJson.currentJson,
-        editStatus: 'update',
-        operate_tab_info: {
-          name: '修改入库单',
-          showUpdate: true
-        }
+      // 更新
+      const operate_tab_data = {
+        operate_tab_info: { show: true, name: '修改入库单' },
+        canEdit: true,
+        editStatus: constants_para.STATUS_UPDATE,
+        data: _data
       }
-      this.$emit('emitUpdate', data)
+
+      this.$emit('emitUpdate', operate_tab_data)
     },
 
     /**
      * 查看
      */
     handleView () {
-      if (!this.dataJson.currentJson) {
-        this.$message.warning('请选择要查看的数据')
+      const _data = Object.assign({}, this.dataJson.currentJson)
+      if (_data === undefined) {
+        this.showErrorMsg('请选择一条数据')
         return
       }
 
-      const data = {
-        data: this.dataJson.currentJson,
-        editStatus: 'view',
-        operate_tab_info: {
-          name: '查看入库单',
-          showView: true
-        }
+      // 状态 0-3显示新增审批流 4-5显示作废审批流
+      if (_data.status === constants_dict.DICT_B_IN_STATUS_FOUR || _data.status === constants_dict.DICT_B_IN_STATUS_FIVE) {
+        _data.bpm_instance_code = _data.bpm_cancel_instance_code
       }
-      this.$emit('emitView', data)
+
+      const operate_tab_data = {
+        operate_tab_info: { show: true, name: '查看入库单详情' },
+        canEdit: false,
+        editStatus: constants_para.STATUS_VIEW,
+        data: _data
+      }
+
+      this.$router.push({
+        query: {}
+      })
+
+      this.$emit('emitView', operate_tab_data)
     },
 
     /**
@@ -1164,7 +1218,7 @@ export default {
         return
       }
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== this.CONSTANTS.DICT_B_IN_STATUS_ZERO && _data.status.toString() !== this.CONSTANTS.DICT_B_IN_STATUS_THREE) {
+      if (_data.status.toString() !== constants_dict.DICT_B_IN_STATUS_ZERO && _data.status.toString() !== constants_dict.DICT_B_IN_STATUS_THREE) {
         this.$message.error('入库单状态异常，只有待审批或驳回状态才可以删除')
         return
       }
@@ -1206,46 +1260,59 @@ export default {
         this.$message.warning('请选择一条数据')
         return
       }
-      this.showCancelDialog = true
-      this.cancelDialogData = this.dataJson.currentJson
+      this.popCancel.dialogVisible = true
+      this.popCancel.data = this.dataJson.currentJson
     },
 
     /**
      * 作废对话框确定回调
      */
-    handleCancelOk () {
-      this.showCancelDialog = false
-      this.cancelDialogData = null
+    handleCloseDialogOneOk () {
+      this.popCancel.dialogVisible = false
+      this.popCancel.data = null
       this.handleSearch() // 刷新列表
+      this.$notify({
+        title: '作废成功',
+        message: null,
+        type: 'success',
+        duration: this.settings.duration
+      })
     },
 
     /**
      * 作废对话框取消回调
      */
-    handleCancelCancel () {
-      this.showCancelDialog = false
-      this.cancelDialogData = null
+    handleCloseDialogOneCancel () {
+      this.popCancel.dialogVisible = false
+      this.popCancel.data = null
     },
 
     /**
      * 审批
      */
     handleApprove () {
-      if (!this.dataJson.currentJson) {
-        this.$message.warning('请选择要审批的数据')
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (_data.id === undefined) {
+        this.showErrorMsg('请选择一条数据')
         return
       }
 
-      const data = {
-        data: this.dataJson.currentJson,
-        editStatus: 'approve',
-        enableCancel: true,
-        operate_tab_info: {
-          name: '审批入库单',
-          showApprove: true
-        }
+      _data.serial_id = _data.id
+      _data.serial_type = constants_dict.DICT_B_IN
+
+      // 状态 0-3显示新增审批流 4-5显示作废审批流
+      if (_data.status === constants_dict.DICT_B_IN_STATUS_FOUR || _data.status === constants_dict.DICT_B_IN_STATUS_FIVE) {
+        _data.bpm_instance_code = _data.bpm_cancel_instance_code
       }
-      this.$emit('emitApprove', data)
+
+      const operate_tab_data = {
+        operate_tab_info: { show: true, name: '入库单审批' },
+        canEdit: true,
+        editStatus: constants_para.STATUS_AUDIT,
+        data: _data,
+        enableCancel: true // 撤销按钮显示
+      }
+      this.$emit('emitApprove', operate_tab_data)
     },
 
     /**
@@ -1270,53 +1337,88 @@ export default {
     },
 
     /**
-     * 开始导出
-     */
-    handleExport () {
-      this.settings.btnStatus.hidenExport = false
-      this.settings.btnStatus.showExport = true
-      // 根据选中数据决定导出全部还是部分
-      if (this.dataJson.multipleSelection.length > 0) {
-        this.handleExportSelectionData()
-      } else {
-        this.handleExportAllData()
-      }
-    },
-
-    /**
      * 完成导出
      */
     handleExportOk () {
       this.settings.btnStatus.hidenExport = true
       this.settings.btnStatus.showExport = false
+      this.settings.exportModel = false
     },
 
     /**
-     * 显示导出弹窗
+     * 切换到导出模式
      */
     handleModelOpen () {
-      // 这里可以打开导出设置弹窗
-      this.$message.info('导出功能开发中...')
+      this.settings.exportModel = true
+      this.settings.btnStatus.hidenExport = false
+      // 等待DOM更新完成后再启动vue-tour
+      this.$nextTick(() => {
+        this.$tours['myTour'].start()
+      })
+    },
+
+    /**
+     * 开始导出
+     */
+    handleExport () {
+      // 没有选择任何数据的情况
+      if (this.dataJson.multipleSelection.length <= 0) {
+        this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        }).then(() => {
+          this.settings.btnStatus.showExport = false
+        })
+      } else if (this.dataJson.multipleSelection.length === this.dataJson.listData.length) {
+        // 选择全部的时候
+        this.$confirm('请选择：当前页数据导出，全数据导出？', '确认信息', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '全部导出',
+          cancelButtonText: '当前页数据导出'
+        }).then(() => {
+          this.handleExportAllData()
+        }).catch(action => {
+          // 右上角X
+          if (action !== 'close') {
+            // 当前页所选择的数据导出
+            this.handleExportSelectionData()
+          }
+        })
+      } else {
+        // 部分数据导出
+        this.handleExportSelectionData()
+      }
     },
 
     /**
      * 导出选中数据
      */
     handleExportSelectionData () {
-      if (this.dataJson.multipleSelection.length === 0) {
-        this.$message.warning('请先选择要导出的数据')
-        return
-      }
-      // 导出选中数据的逻辑
-      this.$message.info('导出选中数据功能开发中...')
+      // loading
+      this.settings.loading = true
+      const selectionJson = []
+      this.dataJson.multipleSelection.forEach(function (value, index, array) {
+        selectionJson.push(value.id)
+      })
+      const searchData = { ids: selectionJson }
+      // 开始导出
+      exportApi(searchData).then(response => {
+        this.settings.loading = false
+      })
     },
 
     /**
      * 导出全部数据
      */
     handleExportAllData () {
-      // 导出全部数据的逻辑
-      this.$message.info('导出全部数据功能开发中...')
+      // loading
+      this.settings.loading = true
+      // 开始导出
+      exportApi(this.dataJson.searchForm).then(response => {
+        this.settings.loading = false
+      }).finally(() => {
+        this.settings.loading = false
+      })
     },
 
     /**
@@ -1446,4 +1548,20 @@ export default {
 .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
+.div-sum {
+  width: 100%;
+  height: 35px;
+  padding: 5px 5px;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+  background-color: #f5f7fa;
+  color: #666;
+  font-size: 16px;
+  border-top: 1px solid #dfe6ec;
+  border-left: 1px solid #dfe6ec;
+  border-right: 1px solid #dfe6ec;
+}
+
 </style>

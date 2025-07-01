@@ -17,6 +17,7 @@
         <el-descriptions
           title=""
           :column="3"
+          e
           :label-style="labelStyle"
           :content-style="contentStyle"
           direction="horizontal"
@@ -42,7 +43,7 @@
               <radio-dict
                 v-model="dataJson.tempJson.type"
                 :value="dataJson.tempJson.type"
-                :para="CONSTANTS.DICT_B_IN_PLAN_TYPE"
+                :para="constants_dict.DICT_B_IN_PLAN_TYPE"
                 :disabled="settings.inputDisabledStatus.disabledTypeSelect"
                 @change="handleTypeChange"
               />
@@ -535,14 +536,9 @@ export default {
     WarehouseSetDialog
   },
   mixins: [],
-  props: {
-    data: {
-      type: Object,
-      default: null
-    }
-  },
   data () {
     return {
+      constants_dict,
       contentStyle: {
         width: '15%'
       },
@@ -685,15 +681,23 @@ export default {
      */
     currentUser () {
       return this.$store.getters.userInfo
-    },
-    /**
-     * 字典常量
-     */
-    CONSTANTS () {
-      return constants_dict
     }
   },
-  watch: {},
+  watch: {
+    // 全屏loading监听
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
+  },
   created () {
     this.initComponent()
   },
@@ -706,7 +710,7 @@ export default {
     },
     // 重置
     initData () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = this.$options.data.call(this).dataJson.tempJsonOriginal
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []
     },
@@ -1037,7 +1041,7 @@ export default {
     handleTypeChange (val) {
       this.dataJson.tempJson.type = val
       // 如果选择采购入库，打开关联单号弹窗
-      if (val === this.CONSTANTS.DICT_B_IN_PLAN_TYPE_CG) {
+      if (val === this.constants_dict.DICT_B_IN_PLAN_TYPE_CG) {
         this.popSettingsData.poContractDialog.visible = true
         this.popSettingsData.poContractDialog.data = {}
       }

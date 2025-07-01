@@ -18,6 +18,7 @@
           @emitNew="handleNew"
           @emitUpdate="handleUpdate"
           @emitApprove="handleApprove"
+          @emitInbound="handleInbound"
         />
       </el-tab-pane>
       <!-- 新增 -->
@@ -81,6 +82,19 @@
           @emitReturn="handleReturn"
         />
       </el-tab-pane>
+      <!-- 入库操作 -->
+      <el-tab-pane
+        v-if="dataJson.tab.showInbound"
+        name="inbound"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.name }}</template>
+        <inbound_template
+          :data="dataJson.data"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
+        />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -92,11 +106,12 @@ import new_template from './tabs/20_new/index.vue'
 import update_template from './tabs/30_edit/index.vue'
 import detail_template from './tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
+import inbound_template from '@/views/40_business/in/component/push/byinplan/index.vue'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   name: 'InPlan',
-  components: { list_template, new_template, update_template, detail_template, approve_template },
+  components: { list_template, new_template, update_template, detail_template, approve_template, inbound_template },
   directives: { elDragDialog },
   mixins: [resizeMixin],
   props: {
@@ -113,7 +128,8 @@ export default {
           showNew: false, // 显示新增
           showUpdate: false, // 显示修改页面
           showView: false, // 显示查看页面
-          showApprove: false // 显示审批页面
+          showApprove: false, // 显示审批页面
+          showInbound: false // 显示入库操作页面
         },
         operation_head_info: '',
         permissionId: null,
@@ -154,6 +170,8 @@ export default {
       this.dataJson.tab.showNew = false
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInbound = false
       this.dataJson.tab.showMain = true
       this.settings.tabs.activeName = 'main'
     },
@@ -170,6 +188,8 @@ export default {
       this.dataJson.tab.showMain = false
       this.dataJson.tab.showNew = false
       this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInbound = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
     },
@@ -185,6 +205,8 @@ export default {
       this.dataJson.tab.showNew = true
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInbound = false
       this.dataJson.tab.showMain = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
@@ -201,6 +223,8 @@ export default {
       this.dataJson.tab.showUpdate = true
       this.dataJson.tab.showNew = false
       this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInbound = false
       this.dataJson.tab.showMain = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
@@ -219,10 +243,29 @@ export default {
       this.dataJson.tab.showView = false
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showNew = false
+      this.dataJson.tab.showInbound = false
       this.dataJson.tab.showMain = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
       this.dataJson.enableCancel = _data.enableCancel
+    },
+    /**
+     * 入库操作
+     * @param _data
+     */
+    handleInbound (_data) {
+      // 入库操作
+      this.dataJson.data = _data.data
+      this.dataJson.tab = _data.operate_tab_info
+      this.settings.tabs.activeName = 'inbound'
+      this.dataJson.tab.showInbound = true
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showMain = false
+      this.dataJson.canEdit = false
+      this.dataJson.editStatus = _data.editStatus
     },
     /**
      * 返回列表

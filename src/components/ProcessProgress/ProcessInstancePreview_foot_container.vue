@@ -400,7 +400,7 @@ export default {
       this.actionVisible = true
     },
     handleReturn () {
-      this.$emit('emitReturn')
+      this.$emit('emitBack')
     },
     // doAction () {
     //   if (this.actionType !== 'recall') {

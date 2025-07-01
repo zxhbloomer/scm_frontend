@@ -370,13 +370,13 @@
     </div>
 
     <!-- 审批流程设置：选择人 -->
-    <bmp-dialog
+    <bpm-dialog
       v-if="popSettingsData.sponsorDialog.visible"
       :visible="popSettingsData.sponsorDialog.visible"
       :form-data="popSettingsData.sponsorDialog.form_data"
       :serial-type="popSettingsData.sponsorDialog.serial_type"
-      @closeMeCancel="handleBmpDialogCancel"
-      @closeMeOk="handleBmpDialogOk"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
     />
 
     <!--采购订单-弹窗-->
@@ -437,7 +437,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import BmpDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getTypeApi, insertApi, validateApi } from '@/api/40_business/ap/ap'
 import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
@@ -455,7 +455,7 @@ export default {
     numeric,
     poorder_list_template,
     bank_list_template,
-    BmpDialog,
+    BpmDialog,
     SimpleUploadMutilFile,
     previewCard
   },
@@ -1138,12 +1138,12 @@ export default {
         })
     },
     // 取消
-    handleBmpDialogCancel () {
+    handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
       this.closeLoading()
     },
     // 审批流确定
-    handleBmpDialogOk (data) {
+    handleBpmDialogOk (data) {
       this.popSettingsData.sponsorDialog.initial_process = data.processData
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false

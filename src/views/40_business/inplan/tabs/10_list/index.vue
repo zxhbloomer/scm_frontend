@@ -1369,8 +1369,39 @@ export default {
       this.showSelectGoodsDialog = false
       this.selectedInPlanId = null
 
-      // 这里可以跳转到下一个页面或打开下一个弹窗
-      this.showSuccessMsg(`已选择货物明细：${data.selectedRow.goods_name}，准备进入下一步操作`)
+      // 构造入库操作页面数据
+      const inboundData = {
+        plan_id: data.planData.id,
+        plan_code: data.planData.code,
+        plan_time: data.planData.plan_time,
+        status_name: data.planData.status_name,
+        type_name: data.planData.type_name,
+        owner_id: data.planData.owner_id,
+        owner_name: data.planData.owner_name,
+        owner_code: data.planData.owner_code,
+        supplier_id: data.planData.supplier_id,
+        supplier_name: data.planData.supplier_name,
+        supplier_code: data.planData.supplier_code,
+        goods_id: data.selectedRow.goods_id,
+        goods_name: data.selectedRow.goods_name,
+        sku_id: data.selectedRow.sku_id,
+        sku_code: data.selectedRow.sku_code,
+        sku_name: data.selectedRow.sku_name,
+        qty: data.selectedRow.qty,
+        price: data.selectedRow.price
+      }
+
+      // 打开入库操作页签
+      const operate_tab_data = {
+        data: inboundData,
+        operate_tab_info: {
+          show: true,
+          name: '入库操作-' + data.planData.code
+        },
+        editStatus: 'new'
+      }
+
+      this.$emit('emitInbound', operate_tab_data)
     },
 
     /**

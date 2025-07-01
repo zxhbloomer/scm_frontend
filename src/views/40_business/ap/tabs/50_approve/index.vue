@@ -6,7 +6,6 @@
       <el-col
         :span="18"
         style="padding-right:8px;"
-        class="1111111"
         :style="{ height: divLeftHeight + 'px',overflowY:'auto' } "
       >
         <!--左边业务数据区域-->
@@ -18,7 +17,6 @@
       </el-col>
       <el-col
         :span="6"
-        class="22222222"
         :style="{ height: divRightHeight + 'px',overflowY:'auto' } "
       >
         <!--右边审批流程数据-->
@@ -26,7 +24,6 @@
           :data="dataJson.processData"
           :edit-status="editStatus"
           :enable-cancel="enableCancel"
-          @emitReturn="handleReturn"
         />
       </el-col>
     </el-row>
@@ -40,6 +37,7 @@
             :enable-cancel="enableCancel"
             @closeMeOk="handleCloseMeOk"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -102,6 +100,9 @@ export default {
     }
   },
   methods: {
+    handleBack () {
+      this.$emit('emitReturn')
+    },
     handleReturn () {
       setTimeout(() => {
         EventBus.$emit(this.EMITS.EMIT_MST_B_AP_BPM_OK, this.data)

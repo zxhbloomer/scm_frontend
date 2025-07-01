@@ -47,12 +47,12 @@
               作废理由
             </div>
             <el-form-item
-              prop="remark"
+              prop="cancel_reason"
               label-width="0"
             >
               <el-input
                 ref="refFocusOne"
-                v-model.trim="dataJson.tempJson.remark"
+                v-model.trim="dataJson.tempJson.cancel_reason"
                 type="textarea"
                 clearable
                 show-word-limit
@@ -224,7 +224,7 @@ export default {
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
-          remark: '',
+          cancel_reason: '',
           cancel_files: []
         },
         // 单条数据 json
@@ -239,7 +239,7 @@ export default {
         duration: 4000,
         // pop的check内容
         rules: {
-          remark: [
+          cancel_reason: [
             { required: true, message: '请输入作废理由', trigger: 'change' }
           ]
         }
@@ -253,15 +253,18 @@ export default {
   },
   // 监听器
   watch: {
-    // 监听弹窗显示状态，每次打开时重新初始化数据
-    visible: {
-      handler (newVal) {
-        if (newVal === true) {
-          // 弹窗打开时，重新初始化所有数据
-          this.resetData()
+    // 全屏loading
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
         }
-      },
-      immediate: false
+      }
     }
   },
   created () {
@@ -274,12 +277,6 @@ export default {
     this.unWatch()
   },
   methods: {
-    // 显示对话框
-    show (data) {
-      this.data = data
-      this.visible = true
-    },
-
     // 初始化处理
     init () {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
@@ -288,41 +285,9 @@ export default {
       this.settings.loading = false
     },
 
-    // 重置数据 - 每次弹窗打开时调用
-    resetData () {
-      // 重置表单数据
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-
-      // 清空附件数据
-      this.dataJson.cancel_data = []
-      this.dataJson.cancel_file = []
-      this.dataJson.cancel_files = []
-
-      // 重置审批流程数据
-      this.popSettingsData.sponsorDialog.visible = false
-      this.popSettingsData.sponsorDialog.form_data = {}
-      this.popSettingsData.sponsorDialog.initial_process = null
-      this.popSettingsData.sponsorDialog.process_users = {}
-
-      // 设置当前数据ID
-      if (this.data && this.data.id) {
-        this.dataJson.tempJson.id = this.data.id
-      }
-
-      // 清除表单验证状态
-      this.$nextTick(() => {
-        if (this.$refs['dataSubmitForm']) {
-          this.$refs['dataSubmitForm'].clearValidate()
-        }
-      })
-
-      this.settings.loading = false
-    },
     // 设置监听器
     setWatch () {
       this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson
     },
     unWatch () {
       if (this.watch.unwatch_tempJson) {
@@ -332,7 +297,6 @@ export default {
 
     // 取消按钮
     handleCancel () {
-      this.visible = false
       this.$emit('closeMeCancel')
     },
     // 其他附件上传成功
@@ -377,8 +341,12 @@ export default {
           cancelApi(tempData)
             .then(
               _data => {
+                this.closeLoading()
                 // 通知兄弟组件，数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_IN_UPDATE_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_B_IN_UPDATE_OK, _data.data)
+                }, 1000)
+
                 this.$notify({
                   title: '作废申请成功',
                   message: _data.data.message,
@@ -387,6 +355,7 @@ export default {
                 })
               },
               _error => {
+                this.closeLoading()
                 this.$notify({
                   title: '作废申请失败',
                   message: _error.error.message,
@@ -396,9 +365,8 @@ export default {
               }
             )
             .finally(() => {
-              // 在finally中调用closeMeOk事件，确保无论成功失败都会关闭弹窗
-              this.visible = false
-              this.$emit('emitOkData', tempData)
+              // 按照规范，在finally中调用closeMeOk事件，由父组件控制弹窗关闭
+              this.$emit('closeMeOk', tempData)
               this.closeLoading()
             })
         } else {
@@ -408,29 +376,28 @@ export default {
     },
     // 获取审批流程
     startProcess () {
-      this.settings.loading = true
       // 校验是否存在审批流程
       getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
         .then((rsp) => {
           if (rsp.data === null) {
             this.$message.error('未找到作废审批流程，请联系管理员')
-            this.settings.loading = false
           } else {
             // 流程参数
             this.popSettingsData.sponsorDialog.form_data = {}
             // 启动审批流弹窗
             this.popSettingsData.sponsorDialog.visible = true
-            this.settings.loading = false
           }
         }).catch((err) => {
-          this.settings.loading = false
-          this.$message.error('获取审批流程失败：' + err.message)
+          this.closeLoading()
+          this.$message.error(err)
+        }).finally(() => {
+          this.closeLoading()
         })
     },
     // 取消审批流程选择
     handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
-      this.settings.loading = false
+      this.closeLoading()
     },
     // 审批流确定
     handleBpmDialogOk (data) {
@@ -438,10 +405,6 @@ export default {
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false
       this.doInsert()
-    },
-    // 关闭加载状态
-    closeLoading () {
-      this.settings.loading = false
     }
   }
 }

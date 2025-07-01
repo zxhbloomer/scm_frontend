@@ -950,7 +950,7 @@ export default {
     },
     removeOtherFile (index) {
       this.dataJson.doc_att.splice(index, 1)
-    }, // bmp流程处理
+    }, // bpm流程处理
     handleBpmDialogOk (data) {
       this.popSettingsData.sponsorDialog.initial_process = data.processData
       this.popSettingsData.sponsorDialog.process_users = data.process_users

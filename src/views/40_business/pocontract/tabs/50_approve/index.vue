@@ -24,7 +24,6 @@
           :data="dataJson.processData"
           :edit-status="editStatus"
           :enable-cancel="enableCancel"
-          @emitReturn="handleReturn"
         />
       </el-col>
     </el-row>
@@ -38,6 +37,7 @@
             :enable-cancel="enableCancel"
             @closeMeOk="handleCloseMeOk"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -100,6 +100,9 @@ export default {
     }
   },
   methods: {
+    handleBack () {
+      this.$emit('emitReturn')
+    },
     handleReturn () {
       setTimeout(() => {
         EventBus.$emit(this.EMITS.EMIT_MST_POCONTRACT_BPM_OK, this.data)

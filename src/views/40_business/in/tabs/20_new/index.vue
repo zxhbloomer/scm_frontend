@@ -558,9 +558,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      EMITS: {
-        EMIT_MST_IN_NEW_OK: 'emit_mst_in_new_ok'
-      },
       // 弹出窗口设置
       popSettingsData: {
         // 审批流程设置
@@ -842,7 +839,7 @@ export default {
       // 获取组件的初始数据状态
       const initialData = this.$options.data.call(this)
       // 重置tempJson
-      this.dataJson.tempJson = deepCopy(initialData.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = this.$options.data.call(this).dataJson.tempJsonOriginal
       // 重置合同订单数据
       this.dataJson.contractOrderData = deepCopy(initialData.dataJson.contractOrderData)
       // 重置文件相关数组
@@ -933,7 +930,7 @@ export default {
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新 - 将完整数据传递给列表页面
                 setTimeout(() => {
-                  EventBus.$emit(this.EMITS.EMIT_MST_IN_NEW_OK, _data.data)
+                  EventBus.$emit(this.EMITS.EMIT_MST_B_IN_NEW_OK, _data.data)
                 }, 1000)
                 this.$notify({
                   title: '新增成功',
@@ -1214,6 +1211,11 @@ export default {
       this.dataJson.four_file_url.splice(_index, 1)
       this.dataJson.tempJson.four_file = this.dataJson.four_file
     },
+    initComponent () {
+      this.closeLoading()
+      this.initData()
+    },
+
     /**
      * 重置表单
      */

@@ -3,6 +3,7 @@
     <!-- 页签头部 -->
     <header :class="[ 'router-tab-header', hasScroller && 'is-scroll' ]">
       <div class="router-tab-scroll">
+        11{{ items }}11
         <!-- 页签列表 -->
         <transition-group
           tag="ul"
@@ -12,16 +13,17 @@
           @after-leave="onTabTransitionEnd"
         >
           <router-link
-            v-for="({ id, to, title, icon, tips, closable }, index) in items"
+            v-for="({ id, to, title, icon, tips, closable,topNavCode }, index) in items"
             :key="id || to"
             class="router-tab-item"
             tag="li"
-            :class="{ actived: activeTabId === id, contextmenu: contextmenu.id === id }"
+            :class="{ actived: activeTabId === id, contextmenu: contextmenu.id === id,[topNavCode]: topNavCode }"
             :title="i18nText(tips || title) || lang.tab.untitled"
             :to="to"
             @contextmenu.native.prevent="e => showContextmenu(id, index, e)"
             @click.native="clickRouter(items[index])"
-          >{{ i18nText(tips || title) || lang.tab.untitled }}
+          >
+            {{ i18nText(tips || title) || lang.tab.untitled }}
             <slot v-bind="{ tab: items[index], tabs: items, index }">
               <i
                 v-if="icon"
