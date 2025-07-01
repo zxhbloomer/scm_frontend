@@ -819,6 +819,7 @@
       destroy-on-close
       @closeMeOk="handlePushDialogOk"
       @closeMeCancel="handlePushCloseDialogCancel"
+      @openInplanNew="handleOpenInplanNew"
     />
   </div>
 </template>
@@ -1655,7 +1656,7 @@ export default {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      this.popPush.data = this.dataJson.currentJson
+      this.popPush.data = _data
       this.popPush.dialogVisible = true
     },
     /**
@@ -1813,6 +1814,11 @@ export default {
 
       // 其他状态直接显示next_approve_name
       return row.next_approve_name
+    },
+    // 处理打开入库计划新增页面
+    handleOpenInplanNew (data) {
+      // 向父组件发送事件，打开入库计划新增页面
+      this.$emit('emitInplanNew', data)
     }
   }
 }

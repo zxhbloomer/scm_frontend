@@ -18,6 +18,7 @@
           @emitNew="handleNew"
           @emitUpdate="handleUpdate"
           @emitApprove="handleApprove"
+          @emitInplanNew="handleInplanNew"
         />
       </el-tab-pane>
       <!--新增-->
@@ -81,6 +82,19 @@
           @emitReturn="handleReturn"
         />
       </el-tab-pane>
+      <!--入库计划新增-->
+      <el-tab-pane
+        v-if="dataJson.tab.showInplanNew"
+        name="inplan_new"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.inplanName }}</template>
+        <inplan_new_template
+          :po-id="dataJson.po_id"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
+        />
+      </el-tab-pane>
     </el-tabs>
 
   </div>
@@ -93,10 +107,11 @@ import new_template from './tabs/20_new/index.vue'
 import update_template from './tabs/30_edit/index.vue'
 import detail_template from './tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
+import inplan_new_template from '@/views/40_business/inplan/component/push/bypoorder/index.vue'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
-  components: { list_template, new_template, update_template, detail_template, approve_template },
+  components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template },
   directives: { elDragDialog },
   mixins: [resizeMixin],
   props: {
@@ -108,13 +123,16 @@ export default {
   data () {
     return {
       dataJson: {
+        po_id: null, // 采购订单ID
         tab: {
           showMain: true, // 显示主页面-列表
           // showEdit: false, // 显示新增/修改页面
           showNew: false, // 显示新增
           showUpdate: false, // 显示修改页面
           showView: false, // 显示查看页面
-          showApprove: false // 显示审批页面
+          showApprove: false, // 显示审批页面
+          showInplanNew: false, // 显示入库计划新增页面
+          inplanName: '入库计划新增' // 入库计划页签名称
         },
         operation_head_info: '',
         permissionId: null,
@@ -155,6 +173,7 @@ export default {
       this.dataJson.tab.showNew = false
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
+      this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showMain = true
       this.settings.tabs.activeName = 'main'
     },
@@ -217,6 +236,7 @@ export default {
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
       this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInplanNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -228,6 +248,7 @@ export default {
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
       this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInplanNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -245,7 +266,22 @@ export default {
       this.dataJson.tab.showView = false
       this.dataJson.tab.showMain = false
       this.dataJson.tab.showApprove = true
+      this.dataJson.tab.showInplanNew = false
       this.dataJson.canEdit = false
+    },
+    /**
+     * 入库计划新增
+     * @param _data
+     */
+    handleInplanNew (_data) {
+      this.dataJson.po_id = _data.id
+      this.settings.tabs.activeName = 'inplan_new'
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showMain = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInplanNew = true
     }
   }
 }

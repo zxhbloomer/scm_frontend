@@ -24,7 +24,7 @@
       </div>
 
       <div class="button-container">
-        <el-button type="primary" class="button-btn" @click="handleInPlanV2DialogOpen">下推入库通知</el-button>
+        <el-button type="primary" class="button-btn" @click="handleInPlanNewDialogOpen">下推入库计划</el-button>
         <el-button type="primary" class="button-btn">下推结算单</el-button>
       </div>
     </el-dialog>
@@ -320,6 +320,13 @@ export default {
     handleAdvanceRefundDialogClose (val) {
       this.popAdvanceRefundOrder.dialogVisible = false
       this.$emit('closeMeCancel')
+    },
+    // 入库计划新增-打开
+    handleInPlanNewDialogOpen (val) {
+      // 关闭当前弹窗并打开入库计划新增页面
+      this.$emit('closeMeCancel')
+      // 通过事件总线通知父组件打开入库计划新增页面
+      this.$emit('openInplanNew', this.data)
     }
   }
 }

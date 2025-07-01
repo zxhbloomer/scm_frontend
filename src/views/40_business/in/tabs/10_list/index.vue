@@ -374,17 +374,6 @@
         align="center"
       />
 
-      <!-- 入库单号 -->
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="code"
-        label="入库单号"
-        align="left"
-        :auto-fit="true"
-      />
-
       <!-- 入库计划 -->
       <el-table-column label="入库计划" align="center">
         <el-table-column
@@ -426,7 +415,16 @@
           </template>
         </el-table-column>
       </el-table-column>
-
+      <!-- 入库单号 -->
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="150"
+        prop="code"
+        label="入库单号"
+        align="left"
+        :auto-fit="true"
+      />
       <!-- 入库单状态 -->
       <el-table-column
         sortable="custom"
