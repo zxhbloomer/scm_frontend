@@ -886,6 +886,37 @@ const DICT_B_SO_ORDER_BILL_TYPE_TWO = '2'
 const DICT_B_SO_ORDER_PAYMENT_TYPE = 'b_so_order_payment_type'
 const DICT_B_SO_ORDER_PAYMENT_TYPE_ONE = '1'
 
+/**  采购结算表 */
+const DICT_B_PO_SETTLEMENT = 'b_po_settlement'
+
+/**  采购结算作废审批流 */
+const DICT_B_PO_SETTLEMENT_CANCEL = 'b_po_settlement_cancel'
+
+/**  采购结算类型：0-采购结算 */
+const DICT_B_PO_SETTLEMENT_TYPE = 'b_po_settlement_type'
+const DICT_B_PO_SETTLEMENT_TYPE_ZERO = '0'
+
+/**  采购结算状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+const DICT_B_PO_SETTLEMENT_STATUS = 'b_po_settlement_status'
+const DICT_B_PO_SETTLEMENT_STATUS_ZERO = '0'
+const DICT_B_PO_SETTLEMENT_STATUS_ONE = '1'
+const DICT_B_PO_SETTLEMENT_STATUS_TWO = '2'
+const DICT_B_PO_SETTLEMENT_STATUS_THREE = '3'
+const DICT_B_PO_SETTLEMENT_STATUS_FOUR = '4'
+const DICT_B_PO_SETTLEMENT_STATUS_FIVE = '5'
+const DICT_B_PO_SETTLEMENT_STATUS_SIX = '6'
+
+/**  采购结算方式：1-先款后货；2-先货后款；3-货到付款 */
+const DICT_B_PO_SETTLEMENT_SETTLE_TYPE = 'b_po_settlement_settle_type'
+const DICT_B_PO_SETTLEMENT_SETTLE_TYPE_ONE = '1'
+const DICT_B_PO_SETTLEMENT_SETTLE_TYPE_TWO = '2'
+const DICT_B_PO_SETTLEMENT_SETTLE_TYPE_THREE = '3'
+
+/**  采购结算单据类型：1-实际到货结算；2-货转凭证结算 */
+const DICT_B_PO_SETTLEMENT_BILL_TYPE = 'b_po_settlement_bill_type'
+const DICT_B_PO_SETTLEMENT_BILL_TYPE_ONE = '1'
+const DICT_B_PO_SETTLEMENT_BILL_TYPE_TWO = '2'
+
 /**
  *  企业银行类型（YUFUKUAN-预付款、YUSHOUKUAN-预收款、YINFUKUAN-应付款、YINSHOUKUAN-应收款
  */
@@ -1816,6 +1847,37 @@ export default {
   /**  销售订单付款方式：1-银行转账*/
   DICT_B_SO_ORDER_PAYMENT_TYPE,
   DICT_B_SO_ORDER_PAYMENT_TYPE_ONE,
+
+  /**  采购结算表 */
+  DICT_B_PO_SETTLEMENT,
+
+  /**  采购结算作废审批流 */
+  DICT_B_PO_SETTLEMENT_CANCEL,
+
+  /**  采购结算类型：0-采购结算 */
+  DICT_B_PO_SETTLEMENT_TYPE,
+  DICT_B_PO_SETTLEMENT_TYPE_ZERO,
+
+  /**  采购结算状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+  DICT_B_PO_SETTLEMENT_STATUS,
+  DICT_B_PO_SETTLEMENT_STATUS_ZERO,
+  DICT_B_PO_SETTLEMENT_STATUS_ONE,
+  DICT_B_PO_SETTLEMENT_STATUS_TWO,
+  DICT_B_PO_SETTLEMENT_STATUS_THREE,
+  DICT_B_PO_SETTLEMENT_STATUS_FOUR,
+  DICT_B_PO_SETTLEMENT_STATUS_FIVE,
+  DICT_B_PO_SETTLEMENT_STATUS_SIX,
+
+  /**  采购结算方式：1-先款后货；2-先货后款；3-货到付款 */
+  DICT_B_PO_SETTLEMENT_SETTLE_TYPE,
+  DICT_B_PO_SETTLEMENT_SETTLE_TYPE_ONE,
+  DICT_B_PO_SETTLEMENT_SETTLE_TYPE_TWO,
+  DICT_B_PO_SETTLEMENT_SETTLE_TYPE_THREE,
+
+  /**  采购结算单据类型：1-实际到货结算；2-货转凭证结算 */
+  DICT_B_PO_SETTLEMENT_BILL_TYPE,
+  DICT_B_PO_SETTLEMENT_BILL_TYPE_ONE,
+  DICT_B_PO_SETTLEMENT_BILL_TYPE_TWO,
 
   /**
    *  企业银行类型（1-预付款、2-预收款、3-应付款、4-应收款、5-保证金、6-其他付款、7-其他收款）
