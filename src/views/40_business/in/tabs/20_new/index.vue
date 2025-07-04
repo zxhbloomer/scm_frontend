@@ -242,7 +242,7 @@
               slot="label"
               class="required-mark"
             >
-              原发数量
+              原发数量（吨）
             </div>
             <el-form-item
               prop="original_qty"
@@ -289,7 +289,7 @@
               slot="label"
               class="required-mark"
             >
-              入库数量
+              入库数量（吨）
             </div>
             <el-form-item
               prop="qty"
@@ -473,16 +473,19 @@
         size="medium"
         type="primary"
         :disabled="settings.loading"
+        :loading="settings.loading"
         @click="startProcess()"
       >提交审批并保存</el-button>
       <el-button
         size="medium"
         :disabled="settings.loading"
+        :loading="settings.loading"
         @click="handleReset()"
       >重置</el-button>
       <el-button
         size="medium"
         :disabled="settings.loading"
+        :loading="settings.loading"
         @click="handleCancel()"
       >返回</el-button>
     </div>
@@ -533,7 +536,7 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
-import PoOrderListDialog from '@/views/40_business/poorder/dialog/list/index.vue'
+import PoOrderListDialog from '@/views/40_business/poorder/dialog/listfor/inplan/index.vue'
 import PoOrderDetailDialog from '@/views/40_business/in/dialog/poorder/detail/index.vue'
 
 export default {
@@ -758,7 +761,7 @@ export default {
             { required: true, message: '请选择入库类型', trigger: 'change' }
           ],
           wlb_data: [
-            { required: true, validator: this.wlb_data_validator, trigger: 'blur' }
+            { required: true, validator: this.wlb_data_validator, trigger: 'change' }
           ],
           original_qty: [
             { required: true, message: '请输入原发数量', trigger: 'blur' }

@@ -144,3 +144,25 @@ export function cancelApi (query) {
   })
 }
 
+/**
+ * 查询逻辑
+ * @param {*} data
+ */
+export function getListForSettlementApi (query) {
+  return request({
+    url: '/api/v1/poorder/settle/pagelist',
+    method: 'post',
+    data: query
+  })
+}
+/**
+ * 查询逻辑
+ * @param {*} data
+ */
+export function getListForSettlementSumApi (query) {
+  return request({
+    url: '/api/v1/poorder/settle/sum',
+    method: 'post',
+    data: query
+  })
+}

@@ -66,9 +66,9 @@ export function getApi (query) {
  * 更新入库单
  * @param {Object} data 入库单数据
  */
-export function updateInApi (data) {
+export function updateApi (data) {
   return request({
-    url: '/api/v1/in/update',
+    url: '/api/v1/in/save',
     method: 'post',
     data
   })
@@ -177,7 +177,7 @@ export default {
   getInDetailApi,
   createInApi,
   getApi,
-  updateInApi,
+  updateInApi: updateApi,
   deleteInApi,
   delApi,
   cancelApi,

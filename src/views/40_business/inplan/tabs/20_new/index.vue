@@ -17,7 +17,6 @@
         <el-descriptions
           title=""
           :column="3"
-          e
           :label-style="labelStyle"
           :content-style="contentStyle"
           direction="horizontal"
@@ -409,7 +408,7 @@
       v-if="popSettingsData.poContractAddDialog.visible"
       :visible="popSettingsData.poContractAddDialog.visible"
       :data="popSettingsData.poContractAddDialog.data"
-      title="新增入库明细-采购订单"
+      title="新增入库明细-请选择要入库的采购订单"
       @closeMeOk="handlePoContractAddCloseOk"
       @closeMeCancel="handlePoContractAddCloseCancel"
     />
@@ -461,7 +460,6 @@
   margin-bottom: 10px;
 }
 .el-button-group {
-  margin-top: 10px;
   margin-left: 10px;
 }
 .el-table {
@@ -519,7 +517,7 @@ import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import PoOrderListDialog from '@/views/40_business/poorder/dialog/list/index.vue'
+import PoOrderListDialog from '@/views/40_business/poorder/dialog/listfor/inplan/index.vue'
 import WarehouseSetDialog from '@/views/40_business/inplan/dialog/warehouse/plan/index.vue'
 
 export default {

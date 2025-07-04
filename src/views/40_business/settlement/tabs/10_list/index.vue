@@ -295,14 +295,6 @@
         @click="handleFinish"
       >完成
       </el-button>
-      <el-button
-        v-permission="'P_PO_SETTLEMENT:IMPORT'"
-        type="primary"
-        icon="el-icon-upload"
-        :loading="settings.loading"
-        @click="handleOpenImportDialog"
-      >导入
-      </el-button>
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"

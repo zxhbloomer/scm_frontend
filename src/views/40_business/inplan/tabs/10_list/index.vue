@@ -266,6 +266,7 @@
       >审批
       </el-button>
       <el-button
+        v-permission="'P_IN_PLAN:IN_OPERATE'"
         :disabled="!settings.btnStatus.showInbound"
         type="primary"
         icon="el-icon-box"

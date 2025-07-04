@@ -163,6 +163,10 @@ export default {
   name: 'SelectWarehouseBinGrid', // 页面id，和router中的name需要一致，作为缓存
   components: { Pagination },
   mixins: [],
+  model: {
+    prop: 'modelValue',
+    event: 'change'
+  },
   props: {
     disabled: {
       type: Boolean,
@@ -208,6 +212,16 @@ export default {
     // 下标
     subscript: {
       type: Number,
+      default: null
+    },
+    // 显示值
+    value: {
+      type: String,
+      default: ''
+    },
+    // v-model 绑定的值
+    modelValue: {
+      type: Object,
       default: null
     }
   },
@@ -308,6 +322,45 @@ export default {
       handler () {
         this.getWare_loc_binInfo1()
       }
+    },
+    // 监听外部传入的 value
+    'value': {
+      handler (newVal) {
+        if (newVal !== this.dataJson.filterText) {
+          this.dataJson.filterText = newVal
+          this.dataJson.filterTextCopy = newVal
+        }
+      },
+      immediate: true
+    },
+    // 监听 v-model 绑定的值
+    'modelValue': {
+      handler (newVal) {
+        if (newVal && typeof newVal === 'object') {
+          // 从对象构建显示文本
+          let displayText = ''
+          if (newVal.warehouse_name) {
+            displayText += newVal.warehouse_name
+          }
+          if (newVal.location_name) {
+            displayText += ' / ' + newVal.location_name
+          }
+          if (newVal.name || newVal.bin_name) {
+            displayText += ' / ' + (newVal.name || newVal.bin_name)
+          }
+
+          if (displayText !== this.dataJson.filterText) {
+            this.dataJson.filterText = displayText
+            this.dataJson.filterTextCopy = displayText
+          }
+        } else if (!newVal) {
+          // 清空值
+          this.dataJson.filterText = ''
+          this.dataJson.filterTextCopy = ''
+        }
+      },
+      immediate: true,
+      deep: true
     }
   },
   created () {
@@ -386,7 +439,12 @@ export default {
       this.dataJson.filterText = this.dataJson.currentJson.warehouse_name + ' / ' + this.dataJson.currentJson.location_name + ' / ' + this.dataJson.currentJson.name
       this.dataJson.filterTextCopy = this.dataJson.currentJson.warehouse_name + ' / ' + this.dataJson.currentJson.location_name + ' / ' + this.dataJson.currentJson.name
       this.dataJson.currentJson.subscript = this.subscript
+
+      // 触发 v-model 更新
+      this.$emit('change', this.dataJson.currentJson)
+      // 触发原有事件
       this.$emit('onReturnData', this.dataJson.currentJson)
+
       this.settings.visible = false
       this.settings.edit_model = false
       // bin id
@@ -447,6 +505,10 @@ export default {
       this.dataJson.filterText = ''
       this.dataJson.filterTextCopy = ''
       this.settings.clear_model = true
+
+      // 触发 v-model 更新
+      this.$emit('change', null)
+      // 触发原有事件
       this.$emit('onReturnData', null)
     },
     // 点击箭头
@@ -467,6 +529,10 @@ export default {
           // 找到了数据，设置数据
           this.dataJson.filterText = _data.data.warehouse_short_name + ' / ' + _data.data.location_short_name + ' / ' + _data.data.bin_name
           this.dataJson.filterTextCopy = _data.data.warehouse_short_name + ' / ' + _data.data.location_short_name + ' / ' + _data.data.bin_name
+
+          // 触发 v-model 更新
+          this.$emit('change', _data.data)
+          // 触发原有事件
           this.$emit('onReturnData', _data.data)
         }
       }, (_error) => {
@@ -487,6 +553,10 @@ export default {
         // 找到了数据，设置数据
         this.dataJson.filterText = _data.data.warehouse_name + ' / ' + _data.data.location_name + ' / ' + _data.data.bin_name
         this.dataJson.filterTextCopy = _data.data.warehouse_name + ' / ' + _data.data.location_name + ' / ' + _data.data.bin_name
+
+        // 触发 v-model 更新
+        this.$emit('change', _data.data)
+        // 触发原有事件
         this.$emit('onReturnData', _data.data)
       }, (_error) => {
       })
