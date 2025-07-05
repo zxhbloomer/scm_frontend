@@ -36,8 +36,7 @@
             <div
               slot="label"
               class="required-mark"
-            >
-              添加关联单号
+            >添加关联单号
             </div>
             <el-button-group>
               <el-button
@@ -46,12 +45,7 @@
                 :disabled="isAddRelatedOrderDisabled"
                 :loading="settings.loading"
                 @click="handlePoOrderRelationInsert"
-              >添加关联单号</el-button>
-              <el-button
-                :disabled="isResetPageDisabled"
-                :loading="settings.loading"
-                @click="handlePoOrderRelationReset"
-              >重置清空页面</el-button>
+              >点击我-添加关联单号</el-button>
             </el-button-group>
           </el-descriptions-item>
 
@@ -62,7 +56,24 @@
           <el-descriptions-item label="供应商">
             {{ dataJson.tempJson.supplier_name || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item />
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >结算日期
+            </div>
+            <el-form-item prop="settlement_date">
+              <el-date-picker
+                v-model="dataJson.tempJson.settlement_date"
+                type="date"
+                placeholder="请选择结算日期"
+                format="yyyy-MM-dd"
+                value-format="yyyy-MM-dd"
+                style="width: 100%"
+                :clearable="false"
+              />
+            </el-form-item>
+          </el-descriptions-item>
           <el-descriptions-item label="结算方式">
             {{ dataJson.tempJson.settle_type_name || '-' }}
           </el-descriptions-item>
@@ -140,6 +151,7 @@
               :currency-symbol="'¥'"
               style="width: 100%"
               placeholder="请输入优惠金额"
+              :disabled="dataJson.tempJson.detailListData.length === 0"
             />
           </el-descriptions-item>
           <el-descriptions-item label="其他金额（加金额）">
@@ -148,8 +160,9 @@
               :decimal-places="2"
               :currency-symbol="'¥'"
               style="width: 100%"
-              minimum-value="-999999999"
+              :minimum-value="-999999999"
               placeholder="请输入其他金额"
+              :disabled="dataJson.tempJson.detailListData.length === 0"
             />
           </el-descriptions-item>
           <el-descriptions-item label="杂项金额（加金额）">
@@ -157,9 +170,10 @@
               v-model="dataJson.tempJson.misc_amount"
               :decimal-places="2"
               :currency-symbol="'¥'"
-              minimum-value="-999999999"
+              :minimum-value="-999999999"
               style="width: 100%"
               placeholder="请输入杂项金额"
+              :disabled="dataJson.tempJson.detailListData.length === 0"
             />
           </el-descriptions-item>
           <el-descriptions-item label="罚款金额（减金额）">
@@ -169,6 +183,7 @@
               :currency-symbol="'¥'"
               style="width: 100%"
               placeholder="请输入罚款金额"
+              :disabled="dataJson.tempJson.detailListData.length === 0"
             />
           </el-descriptions-item>
 
@@ -178,12 +193,12 @@
           <el-button
             type="primary"
             icon="el-icon-circle-plus-outline"
-            :disabled="settings.btnTableDisabledStatus.disabledInsert"
+            :disabled="!dataJson.hasAddedRelatedOrder"
             :loading="settings.loading"
             @click="handleOrderInsert"
           >添加</el-button>
           <el-button
-            :disabled="settings.btnTableDisabledStatus.disabledDelete"
+            :disabled="dataJson.tempJson.detailListData.length === 0 || dataJson.rowIndex === null"
             type="primary"
             icon="el-icon-circle-close"
             :loading="settings.loading"
@@ -191,9 +206,7 @@
           >删除</el-button>
         </el-button-group>
 
-        <div
-          class="div-sum"
-        >
+        <div class="div-sum">
           <div class="right">
             <span class="count-title">本次计划结算总金额：</span>
             <span class="count-data">{{ summaryData.totalAmount == null ? '-' : formatCurrency(summaryData.totalAmount, true) }}</span>
@@ -418,6 +431,9 @@ import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import PoOrderRelationDialog from '@/views/40_business/poorder/dialog/listfor/settlement/index.vue'
 import SettlementDetailDialog from '@/views/40_business/settlement/dialog/new/detail/index.vue'
 import numeric from '@/components/40_input/numeric'
+import { getApi as getDictDataApi } from '@/api/10_system/dictdata/dictdata'
+import CONSTANTS from '@/common/constants/constants_dict'
+import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 
 export default {
   name: 'SettlementNew',
@@ -449,6 +465,9 @@ export default {
         loading: false,
         duration: 1000,
         rules: {
+          settlement_date: [
+            { required: true, message: '请选择结算日期', trigger: 'change' }
+          ],
           remark: [
             { max: 500, message: '备注不能超过500个字符', trigger: 'blur' }
           ]
@@ -463,6 +482,7 @@ export default {
       dataJson: {
         rowIndex: null,
         currentJson: {},
+        hasAddedRelatedOrder: false, // 是否已添加过关联单号
         tempJson: {
           // 基本信息
           id: null,
@@ -476,9 +496,11 @@ export default {
           supplier_code: '',
           supplier_name: '',
           settle_type: '',
+          payment_type: '',
           settle_type_name: '',
           bill_type: '',
           bill_type_name: '',
+          settlement_date: '',
           remark: '',
 
           // 业务单据信息统计
@@ -486,10 +508,10 @@ export default {
           settled_amount: null,
           planned_qty: null,
           settled_qty: null,
-          discount_amount: null,
-          other_amount: null,
-          misc_amount: null,
-          penalty_amount: null,
+          discount_amount: 0,
+          other_amount: 0,
+          misc_amount: 0,
+          penalty_amount: 0,
 
           // 明细数据
           detailListData: [],
@@ -497,7 +519,6 @@ export default {
           // 附件
           doc_att_files: []
         },
-        tempJsonOriginal: {},
         doc_att: [],
         doc_att_file: [],
         inputSettings: {
@@ -517,7 +538,7 @@ export default {
         // 审批流程设置
         sponsorDialog: {
           visible: false,
-          serial_type: 'settlement_new', // 结算新增审批流程
+          serial_type: 'b_po_settlement', // 结算新增审批流程
           form_data: {},
           initial_process: null,
           process_users: []
@@ -538,7 +559,7 @@ export default {
   computed: {
     // 添加关联单号按钮禁用状态
     isAddRelatedOrderDisabled () {
-      return this.settings.loading
+      return this.settings.loading || this.dataJson.tempJson.detailListData.length > 0
     },
     // 重置页面按钮禁用状态
     isResetPageDisabled () {
@@ -606,14 +627,14 @@ export default {
     this.initNewData()
     // 初始化汇总数据
     this.calculateSummary()
+    // 获取业务类型
+    this.fetchBusinessType()
   },
   methods: {
     /**
      * 初始化新增数据
      */
     initNewData () {
-      // 备份原始数据
-      this.dataJson.tempJsonOriginal = deepCopy(this.dataJson.tempJson)
       // 重置数据
       this.resetDataJson()
     },
@@ -622,7 +643,7 @@ export default {
      * 重置数据
      */
     resetDataJson () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []
       // 重置按钮状态
@@ -631,6 +652,8 @@ export default {
       // 重置当前选择状态
       this.dataJson.currentJson = {}
       this.dataJson.rowIndex = null
+      // 重置关联单号添加状态
+      this.dataJson.hasAddedRelatedOrder = false
       // 重置汇总数据
       this.summaryData.totalAmount = null
       this.summaryData.totalQty = null
@@ -669,27 +692,6 @@ export default {
     },
 
     /**
-     * 重置清空页面
-     */
-    handlePoOrderRelationReset () {
-      this.$confirm('确认要重置清空页面吗？所有数据将被清空。', '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        this.resetDataJson()
-        this.$notify({
-          title: '重置成功',
-          message: '页面数据已清空',
-          type: 'success',
-          duration: this.settings.duration
-        })
-      }).catch(() => {
-        // 用户取消
-      })
-    },
-
-    /**
      * 采购订单关联：确定
      */
     handlePoOrderRelationCloseOk (val) {
@@ -712,6 +714,7 @@ export default {
       this.dataJson.tempJson.supplier_name = val.supplier_name
       this.dataJson.tempJson.settle_type = val.settle_type
       this.dataJson.tempJson.settle_type_name = val.settle_type_name
+      this.dataJson.tempJson.payment_type = val.payment_type
       this.dataJson.tempJson.bill_type = val.bill_type
       this.dataJson.tempJson.bill_type_name = val.bill_type_name
 
@@ -721,6 +724,8 @@ export default {
         this.updateDetailDataFromOrder(val)
         // 启用表格操作按钮
         this.settings.btnTableDisabledStatus.disabledInsert = false
+        // 设置已添加关联单号状态
+        this.dataJson.hasAddedRelatedOrder = true
         // 重新计算汇总数据
         this.calculateTotal()
       }
@@ -820,7 +825,10 @@ export default {
           ...this.dataJson.tempJson.detailListData[rowIndex],
           planned_qty: data.qty,
           planned_price: data.price,
-          planned_amount: data.amount
+          planned_amount: data.amount,
+          settled_qty: data.qty,
+          settled_price: data.price,
+          settled_amount: data.amount
         }
         this.$set(this.dataJson.tempJson.detailListData, rowIndex, updatedRow)
 
@@ -963,6 +971,14 @@ export default {
     startProcess () {
       this.showLoading('正在启动审批流程...')
 
+      // 校验结算明细的结算金额
+      const validationResult = this.validateSettlementDetails()
+      if (!validationResult.isValid) {
+        this.closeLoading()
+        this.showErrorMsg('校验出错：请对红色行的数据进行结算，请点击结算按钮')
+        return
+      }
+
       // 校验业务数据
       const tempData = deepCopy(this.dataJson.tempJson)
       tempData.check_type = constants_para.INSERT_CHECK_TYPE
@@ -990,6 +1006,33 @@ export default {
           this.closeLoading()
         }
       })
+    },
+
+    /**
+     * 校验结算明细的结算金额
+     * 检查每一行是否都设置了结算金额
+     */
+    validateSettlementDetails () {
+      // 重置所有行的错误状态
+      this.dataJson.tempJson.detailListData.forEach(item => {
+        this.$set(item, 'hasValidationError', false)
+      })
+
+      let hasError = false
+
+      // 检查每一行的结算金额
+      this.dataJson.tempJson.detailListData.forEach((item, index) => {
+        // 检查结算金额是否为空或等于0
+        if (item.planned_amount == null || item.planned_amount === '' || item.planned_amount === undefined || item.planned_amount === 0) {
+          // 标记该行有校验错误
+          this.$set(item, 'hasValidationError', true)
+          hasError = true
+        }
+      })
+
+      return {
+        isValid: !hasError
+      }
     },
 
     /**
@@ -1033,29 +1076,54 @@ export default {
      * 执行新增操作
      */
     doInsert () {
-      const tempData = deepCopy(this.dataJson.tempJson)
-      // 添加审批流程数据
-      tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process
-      tempData.process_users = this.popSettingsData.sponsorDialog.process_users
+      // 开始综合验证
+      this.$refs['dataSubmitForm'].validate(valid => {
+        if (valid) {
+          const tempData = deepCopy(this.dataJson.tempJson)
+          // 添加审批流程数据
+          tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process
+          tempData.form_data = this.popSettingsData.sponsorDialog.form_data
+          tempData.process_users = this.popSettingsData.sponsorDialog.process_users
 
-      insertApi(tempData).then(_data => {
-        this.closeLoading()
-        if (_data.success) {
-          this.$notify({
-            title: '新增成功',
-            message: '采购结算单已成功创建并提交审批',
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 返回列表页
-          this.handleCancel()
+          if (this.dataJson.tempJson.detailListData == null || this.dataJson.tempJson.detailListData.length === 0) {
+            this.showErrorMsg('请至少添加一条结算明细')
+            this.closeLoading()
+            return
+          }
+
+          this.settings.loading = true
+          insertApi(tempData)
+            .then(
+              _data => {
+                this.closeLoading()
+                this.$emit('closeMeOk', _data.data)
+                this.$notify({
+                  title: '新增成功',
+                  message: _data.data.message,
+                  type: 'success',
+                  duration: this.settings.duration
+                })
+                // 通知兄弟组件，新增数据更新 - 将完整数据传递给列表页面
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_SETTLEMENT_NEW_OK, _data.data)
+                }, 1000)
+              },
+              _error => {
+                this.closeLoading()
+                this.$notify({
+                  title: '新增失败',
+                  message: _error.error.message,
+                  type: 'error',
+                  duration: this.settings.duration
+                })
+              }
+            )
+            .finally(() => {
+              this.closeLoading()
+            })
         } else {
-          this.showErrorMsg(_data.data.message)
+          this.closeLoading()
         }
-      }).catch(error => {
-        this.closeLoading()
-        console.log('新增出错', error)
-        this.showErrorMsg('新增操作执行失败')
       })
     },
 
@@ -1103,6 +1171,18 @@ export default {
      */
     handleCancel () {
       this.$emit('closeMeCancel')
+    },
+
+    /**
+     * 获取业务类型
+     */
+    fetchBusinessType () {
+      getDictDataApi({
+        code: CONSTANTS.DICT_B_PO_SETTLEMENT_TYPE,
+        dict_value: CONSTANTS.DICT_B_PO_SETTLEMENT_TYPE_ZERO
+      }).then(res => {
+        this.dataJson.tempJson.type_name = res.data.label
+      })
     }
   }
 }
@@ -1200,9 +1280,7 @@ export default {
 }
 
 .right {
-  position: absolute;
-  right: 25px;
-  margin-right: 10px;
+  float: right;
 }
 .count-title {
   margin-left: 10px;

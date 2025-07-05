@@ -60,12 +60,7 @@
             {{ dataJson.tempJson.settlement_date }}
           </el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag
-              :type="getStatusTagType(dataJson.tempJson.status)"
-              size="mini"
-            >
-              {{ dataJson.tempJson.status_name }}
-            </el-tag>
+            {{ dataJson.tempJson.status_name }}
           </el-descriptions-item>
 
           <el-descriptions-item label="结算方式">
@@ -345,21 +340,6 @@ export default {
         this.settings.loading = false
       })
     },
-
-    // 获取状态标签类型
-    getStatusTagType (status) {
-      const statusTagMap = {
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_ZERO]: 'warning', // 待审批
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_ONE]: 'primary', // 审批中
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_TWO]: 'success', // 执行中
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_THREE]: 'danger', // 驳回
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_FOUR]: 'info', // 作废审批中
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_FIVE]: 'info', // 已作废
-        [constants_dict.DICT_B_PO_SETTLEMENT_STATUS_SIX]: 'success' // 已完成
-      }
-      return statusTagMap[status] || 'info'
-    },
-
     // 移除附件文件
     removeOtherFile (data) {
       // 审批模式下不允许删除

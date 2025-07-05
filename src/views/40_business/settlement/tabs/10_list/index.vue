@@ -414,20 +414,10 @@
           sortable="custom"
           :sort-orders="settings.sortOrders"
           :auto-fit="true"
-          min-width="80"
+          min-width="120"
           prop="status_name"
           label="状态"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-tag
-              :type="getStatusTagType(scope.row.status)"
-              size="mini"
-            >
-              {{ scope.row.status_name }}
-            </el-tag>
-          </template>
-        </el-table-column>
+        />
         <el-table-column
           :auto-fit="true"
           min-width="120"
@@ -858,7 +848,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import { EventBus } from '@/common/eventbus/eventbus'
+import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import print_template from '@/views/40_business/settlement/tabs/60_print/index.vue'
 import cancelConfirmDialog from '../../dialog/cancel/index.vue'
@@ -1065,6 +1055,7 @@ export default {
     }
   },
   beforeDestroy () {
+    // 清理EventBus监听器
     EventBus.$off(this.EMITS.EMIT_MST_SETTLEMENT_NEW_OK)
     EventBus.$off(this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK)
     EventBus.$off(this.EMITS.EMIT_MST_SETTLEMENT_BPM_OK)
@@ -1077,35 +1068,53 @@ export default {
       console.log('新增数据：', _data)
       this.dataJson.listData.unshift(_data)
       this.settings.loading = true
-      setTimeout(() => {
+      // 查询选中行数据，并更新到选中行的数据
+      getListApi({ id: _data.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(0, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[0])
+        })
+      }).finally(() => {
         this.settings.loading = false
-      }, 1000)
-      // 刷新统计数据
-      this.getDataSum()
+      })
     })
-    // 修改提交数据时监听
+
+    // 更新提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK', _data)
-      // 设置到table中绑定的json数据源
-      this.dataJson.listData[this.dataJson.rowIndex] = _data
       this.settings.loading = true
-      setTimeout(() => {
+      // 查询选中行数据，并更新到选中行的数据
+      getListApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
         this.settings.loading = false
-      }, 1000)
-      // 刷新统计数据
-      this.getDataSum()
+      })
     })
-    // 审批提交数据时监听
+    // 提交审批流时监听
     EventBus.$on(this.EMITS.EMIT_MST_SETTLEMENT_BPM_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_SETTLEMENT_BPM_OK', _data)
-      // 设置到table中绑定的json数据源
-      this.dataJson.listData[this.dataJson.rowIndex] = _data
       this.settings.loading = true
-      setTimeout(() => {
+      // 查询选中行数据，并更新到选中行的数据
+      getListApi({ id: this.dataJson.currentJson.id }).then(response => {
+        // 设置到table中绑定的json数据源
+        console.log('更新数据：', response.data)
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
+        this.$nextTick(() => {
+          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
+        })
+      }).finally(() => {
         this.settings.loading = false
-      }, 1000)
-      // 刷新统计数据
-      this.getDataSum()
+      })
     })
   },
   beforeUpdate () {
@@ -1312,11 +1321,11 @@ export default {
       this.popPrint.dialogVisible = true
       this.popPrint.data = _data
     },
-
     // 当前行变化处理
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
       this.dataJson.currentJson.index = this.getRowIndex(row)
+      this.dataJson.rowIndex = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnStatus.showView = true
@@ -1374,6 +1383,7 @@ export default {
         this.settings.btnStatus.showPush = false
         this.settings.btnStatus.showPrint = false
         this.settings.btnStatus.showFinish = false
+        this.settings.btnStatus.showView = false
       }
     },
 

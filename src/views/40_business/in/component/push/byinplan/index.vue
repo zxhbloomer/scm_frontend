@@ -680,7 +680,7 @@ export default {
       // 填充入库计划数据
       this.dataJson.planData = {
         plan_id: planData.id || null,
-        plan_detail_id: planData.detailListData[0].id || null,
+        plan_detail_id: selectedRow.id || null,
         plan_code: planData.code || '',
         plan_time: planData.plan_time || '',
         over_receipt_rate: planData.over_receipt_rate || null,
@@ -712,7 +712,7 @@ export default {
         delivery_date: selectedRow.order_delivery_date || '',
         delivery_location: selectedRow.order_delivery_location || '',
         amount_total: selectedRow.order_amount_total || null,
-        sku: planData.detailListData[0].goods_name + '|' + planData.detailListData[0].sku_name || '' // 商品规格
+        sku: selectedRow.goods_name + '|' + selectedRow.sku_name || '' // 商品规格
       }
 
       // 填充入库单数据

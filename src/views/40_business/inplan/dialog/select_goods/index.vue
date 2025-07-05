@@ -454,7 +454,7 @@ export default {
         }
 
         // 更新选中状态
-        this.selectedRow = firstRow
+        this.selectedRow = deepCopy(firstRow)
         console.log('已选中数据:', this.selectedRow)
 
         // 延时1000毫秒后自动触发下一步
@@ -483,7 +483,7 @@ export default {
      */
     handleCurrentChange (currentRow, oldCurrentRow) {
       // 更新选中的行数据
-      this.selectedRow = currentRow
+      this.selectedRow = deepCopy(currentRow)
       console.log('选中的货物明细:', this.selectedRow)
     },
 
