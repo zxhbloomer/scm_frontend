@@ -9,9 +9,9 @@
       element-loading-background="rgba(255, 255, 255, 0.7)"
       title="采购结算作废审批提交"
       :visible="visible"
-      :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
-      :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
-      :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
       :append-to-body="true"
       :modal-append-to-body="true"
       width="950px"
@@ -52,12 +52,13 @@
             >
               <el-input
                 ref="refFocusOne"
-                v-model.trim="dataJson.tempJson.cancel_reason"
+                v-model.trim="dataJson.tempJson.remark"
                 type="textarea"
                 clearable
                 show-word-limit
+                :rows="4"
+                maxlength="500"
                 :placeholder="'请输入作废理由'"
-                :maxlength="500"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -113,8 +114,8 @@
       :visible="popSettingsData.sponsorDialog.visible"
       :form-data="popSettingsData.sponsorDialog.form_data"
       :serial-type="popSettingsData.sponsorDialog.serial_type"
-      @closeMeCancel="handleBmpDialogCancel"
-      @closeMeOk="handleBmpDialogOk"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
     />
   </div>
 </template>
@@ -168,6 +169,7 @@ import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
+  name: 'SettlementCancelDialog',
   components: { BpmDialog, SimpleUploadMutilFile, PreviewCard },
   directives: { elDragDialog },
   mixins: [],
@@ -239,8 +241,8 @@ export default {
         duration: 4000,
         // pop的check内容
         rules: {
-          cancel_reason: [
-            { required: true, message: '请输入作废理由', trigger: 'blur' }
+          remark: [
+            { required: true, message: '请输入作废理由', trigger: 'change' }
           ]
         }
       }
@@ -253,6 +255,16 @@ export default {
   },
   // 监听器
   watch: {
+    // 监听弹窗显示状态，每次打开时重新初始化数据
+    visible: {
+      handler (newVal) {
+        if (newVal === true) {
+          // 弹窗打开时，重新初始化所有数据
+          this.resetData()
+        }
+      },
+      immediate: false
+    },
     // 全屏loading
     'settings.loading': {
       handler (newVal, oldVal) {
@@ -284,6 +296,39 @@ export default {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
       // 初始化watch
       this.setWatch()
+      this.settings.loading = false
+    },
+
+    /**
+     * 重置数据 - 每次弹窗打开时调用
+     */
+    resetData () {
+      // 重置表单数据
+      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+
+      // 清空附件数据
+      this.dataJson.cancel_data = []
+      this.dataJson.cancel_file = []
+      this.dataJson.cancel_files = []
+
+      // 重置审批流程数据
+      this.popSettingsData.sponsorDialog.visible = false
+      this.popSettingsData.sponsorDialog.form_data = {}
+      this.popSettingsData.sponsorDialog.initial_process = null
+      this.popSettingsData.sponsorDialog.process_users = {}
+
+      // 设置当前数据ID
+      if (this.data && this.data.id) {
+        this.dataJson.tempJson.id = this.data.id
+      }
+
+      // 清除表单验证状态
+      this.$nextTick(() => {
+        if (this.$refs['dataSubmitForm']) {
+          this.$refs['dataSubmitForm'].clearValidate()
+        }
+      })
+
       this.settings.loading = false
     },
 
@@ -343,7 +388,7 @@ export default {
         title: '上传错误',
         message: '文件上传发生错误！',
         type: 'error',
-        duration: 0
+        duration: this.settings.duration
       })
     },
 
@@ -365,20 +410,21 @@ export default {
           cancelApi(tempData)
             .then(
               _data => {
-                this.settings.loading = false
                 // 通知兄弟组件，数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK, _data.data)
+                setTimeout(() => {
+                  EventBus.$emit(this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK, _data.data)
+                }, 1000)
+
                 this.$notify({
-                  title: '作废成功',
+                  title: '作废申请成功',
                   message: _data.data.message,
                   type: 'success',
                   duration: this.settings.duration
                 })
               },
               _error => {
-                this.settings.loading = false
                 this.$notify({
-                  title: '作废失败',
+                  title: '作废申请失败',
                   message: _error.error.message,
                   type: 'error',
                   duration: this.settings.duration
@@ -386,7 +432,9 @@ export default {
               }
             )
             .finally(() => {
+              // 在finally中调用closeMeOk事件，确保无论成功失败都会关闭弹窗
               this.$emit('closeMeOk', tempData)
+              this.settings.loading = false
             })
         } else {
           this.settings.loading = false
@@ -403,24 +451,25 @@ export default {
       getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
         .then((rsp) => {
           if (rsp.data === null) {
-            this.showErrorMsg('未找到审批流程，请联系管理员')
+            this.$message.error('未找到作废审批流程，请联系管理员')
             this.settings.loading = false
           } else {
             // 流程参数
             this.popSettingsData.sponsorDialog.form_data = {}
             // 启动审批流弹窗
             this.popSettingsData.sponsorDialog.visible = true
+            this.settings.loading = false
           }
         }).catch((err) => {
           this.settings.loading = false
-          this.showErrorMsg(err)
+          this.$message.error('获取审批流程失败：' + err.message)
         })
     },
 
     /**
      * 审批流弹窗取消
      */
-    handleBmpDialogCancel () {
+    handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
       this.settings.loading = false
     },
@@ -428,7 +477,7 @@ export default {
     /**
      * 审批流确定
      */
-    handleBmpDialogOk (data) {
+    handleBpmDialogOk (data) {
       this.popSettingsData.sponsorDialog.initial_process = data.processData
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false

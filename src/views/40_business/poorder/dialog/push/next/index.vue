@@ -25,7 +25,7 @@
 
       <div class="button-container">
         <el-button type="primary" class="button-btn" @click="handleInPlanNewDialogOpen">下推入库计划</el-button>
-        <el-button type="primary" class="button-btn">下推结算单</el-button>
+        <el-button type="primary" class="button-btn" @click="handleSettlementNewDialogOpen">下推结算单</el-button>
       </div>
     </el-dialog>
 
@@ -38,17 +38,6 @@
       destroy-on-close
       @closeMeOk="handleAdvanceDialogOk"
       @closeMeCancel="handleAdvanceDialogClose"
-    />
-
-    <!-- 下推-入库通知-弹窗-->
-    <push-in-plan-v2-dialog
-      v-if="popInPlanV2.dialogVisible"
-      :data="popInPlanV2.data"
-      :visible="popInPlanV2.dialogVisible"
-      :title="'下推-入库通知'"
-      destroy-on-close
-      @closeMeOk="handleInPlanV2DialogOk"
-      @closeMeCancel="handleInPlanV2DialogCancel"
     />
 
     <!-- 下推-预付退款-弹窗-->
@@ -100,12 +89,11 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import pushAdvanceDialog from '@/views/40_business/ap/dialog/push/new/advance_pay/index.vue'
-import pushInPlanV2Dialog from '@/views/40_business/inplanv2/dialog/push/index.vue'
 import pushAdvanceRefundDialog from '@/views/40_business/aprefund/dialog/push/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {
-  components: { pushAdvanceDialog, pushInPlanV2Dialog, pushAdvanceRefundDialog },
+  components: { pushAdvanceDialog, pushAdvanceRefundDialog },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -327,6 +315,13 @@ export default {
       this.$emit('closeMeCancel')
       // 通过事件总线通知父组件打开入库计划新增页面
       this.$emit('openInplanNew', this.data)
+    },
+    // 结算单新增-打开
+    handleSettlementNewDialogOpen (val) {
+      // 关闭当前弹窗并打开结算单新增页面
+      this.$emit('closeMeCancel')
+      // 通过事件总线通知父组件打开结算单新增页面
+      this.$emit('openSettlementNew', this.data)
     }
   }
 }

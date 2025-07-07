@@ -55,6 +55,7 @@ import mixin from './index_mixin'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
+  name: 'SettlementApprove',
   components: { left_data_template, bpmprocess_body_template, bpmprocess_foot_template },
   mixins: [mixin],
   props: {
@@ -85,9 +86,12 @@ export default {
     return {
       dataJson: {
         // 业务数据查询组装
-        serialData: { id: this.data.serial_id },
+        serialData: { id: this.data ? this.data.serial_id : null },
         // 审批流程数据查询
-        processData: { process_code: this.data.bpm_instance_code, task_id: this.data.task_id }
+        processData: {
+          process_code: this.data ? this.data.bpm_instance_code : null,
+          task_id: this.data ? this.data.task_id : null
+        }
       }
     }
   },
@@ -99,7 +103,30 @@ export default {
       return constants_para
     }
   },
+  watch: {
+  },
+  created () {
+    this.initData()
+  },
   methods: {
+    // 初始化数据
+    initData () {
+      // 如果有data属性，更新processData
+      if (this.data) {
+        this.dataJson.processData = {
+          process_code: this.data.bpm_instance_code,
+          task_id: this.data.task_id
+        }
+        this.dataJson.serialData = {
+          id: this.data.serial_id
+        }
+      }
+    },
+
+    // 刷新页面
+    refreshPage () {
+      this.initData()
+    },
     handleBack () {
       this.$emit('emitReturn')
     },
@@ -118,4 +145,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.foot_container {
+  padding: 10px;
+  text-align: center;
+}
 </style>

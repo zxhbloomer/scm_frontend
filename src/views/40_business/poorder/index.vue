@@ -19,6 +19,7 @@
           @emitUpdate="handleUpdate"
           @emitApprove="handleApprove"
           @emitInplanNew="handleInplanNew"
+          @emitSettlementNew="handleSettlementNew"
         />
       </el-tab-pane>
       <!--新增-->
@@ -95,6 +96,19 @@
           @closeMeOk="handleCloseMeOk"
         />
       </el-tab-pane>
+      <!--结算单新增-->
+      <el-tab-pane
+        v-if="dataJson.tab.showSettlementNew"
+        name="settlement_new"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.settlementName }}</template>
+        <settlement_new_template
+          :po-id="dataJson.po_id"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
+        />
+      </el-tab-pane>
     </el-tabs>
 
   </div>
@@ -108,10 +122,11 @@ import update_template from './tabs/30_edit/index.vue'
 import detail_template from './tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
 import inplan_new_template from '@/views/40_business/inplan/component/push/bypoorder/index.vue'
+import settlement_new_template from '@/views/40_business/settlement/component/push/bypoorder/index.vue'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
-  components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template },
+  components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template, settlement_new_template },
   directives: { elDragDialog },
   mixins: [resizeMixin],
   props: {
@@ -132,7 +147,9 @@ export default {
           showView: false, // 显示查看页面
           showApprove: false, // 显示审批页面
           showInplanNew: false, // 显示入库计划新增页面
-          inplanName: '入库计划新增' // 入库计划页签名称
+          showSettlementNew: false, // 显示结算单新增页面
+          inplanName: '入库计划新增', // 入库计划页签名称
+          settlementName: '结算单新增' // 结算单页签名称
         },
         operation_head_info: '',
         permissionId: null,
@@ -152,6 +169,14 @@ export default {
   },
   // 监听器
   watch: {
+    'settings.tabs.activeName': {
+      handler (newVal) {
+        this.$nextTick(() => {
+          this.updateTabTitleByState(newVal)
+        })
+      },
+      immediate: true
+    }
   },
   mounted () {
     // 描绘完成
@@ -174,6 +199,7 @@ export default {
       this.dataJson.tab.showUpdate = false
       this.dataJson.tab.showView = false
       this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = false
       this.dataJson.tab.showMain = true
       this.settings.tabs.activeName = 'main'
     },
@@ -237,6 +263,7 @@ export default {
       this.dataJson.tab.showView = false
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -249,6 +276,7 @@ export default {
       this.dataJson.tab.showView = false
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -267,6 +295,7 @@ export default {
       this.dataJson.tab.showMain = false
       this.dataJson.tab.showApprove = true
       this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = false
       this.dataJson.canEdit = false
     },
     /**
@@ -282,6 +311,49 @@ export default {
       this.dataJson.tab.showMain = false
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = true
+      this.dataJson.tab.showSettlementNew = false
+    },
+    /**
+     * 结算单新增
+     * @param _data
+     */
+    handleSettlementNew (_data) {
+      this.dataJson.po_id = _data.id
+      this.settings.tabs.activeName = 'settlement_new'
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showMain = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = true
+    },
+    /**
+     * 获取标签页标题扩展文本
+     * @param {string} tabState - 标签页状态
+     * @returns {string} 标题扩展文本
+     */
+    getTabTitleExtension (tabState) {
+      const titleMap = {
+        'main': '-查询',
+        'view': '-查看',
+        'edit': this.dataJson.tab.showNew ? '-新增' : '-修改',
+        'approve': '-审批',
+        'inplan_new': '-入库计划新增',
+        'settlement_new': '-结算单新增'
+      }
+      return titleMap[tabState] || ''
+    },
+    /**
+     * 根据页面状态更新RouterTab标题
+     * @param {string} tabState - 标签页状态
+     */
+    updateTabTitleByState (tabState) {
+      const extensionText = this.getTabTitleExtension(tabState)
+      // 使用RouterTab组件的通用方法
+      if (this.$routerTab && this.$routerTab.updateTabTitle) {
+        this.$routerTab.updateTabTitle(extensionText)
+      }
     }
   }
 }

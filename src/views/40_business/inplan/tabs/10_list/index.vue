@@ -197,8 +197,8 @@
             range-separator="至"
             start-placeholder="计划时间开始"
             end-placeholder="计划时间结束"
-            format="yyyy-MM-dd HH:mm:ss"
-            value-format="yyyy-MM-dd HH:mm:ss"
+            format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>

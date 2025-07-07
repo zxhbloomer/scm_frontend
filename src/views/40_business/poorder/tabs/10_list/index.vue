@@ -820,6 +820,7 @@
       @closeMeOk="handlePushDialogOk"
       @closeMeCancel="handlePushCloseDialogCancel"
       @openInplanNew="handleOpenInplanNew"
+      @openSettlementNew="handleOpenSettlementNew"
     />
   </div>
 </template>
@@ -1819,6 +1820,11 @@ export default {
     handleOpenInplanNew (data) {
       // 向父组件发送事件，打开入库计划新增页面
       this.$emit('emitInplanNew', data)
+    },
+    // 处理打开结算单新增页面
+    handleOpenSettlementNew (data) {
+      // 向父组件发送事件，打开结算单新增页面
+      this.$emit('emitSettlementNew', data)
     }
   }
 }

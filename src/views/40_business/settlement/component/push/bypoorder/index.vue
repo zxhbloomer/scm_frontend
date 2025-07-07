@@ -375,12 +375,6 @@
         size="medium"
         :disabled="settings.loading"
         :loading="settings.loading"
-        @click="handleReset()"
-      >重置</el-button>
-      <el-button
-        size="medium"
-        :disabled="settings.loading"
-        :loading="settings.loading"
         @click="handleCancel()"
       >返回</el-button>
     </div>
@@ -421,6 +415,7 @@
 import deepCopy from 'deep-copy'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import { validateApi, insertApi } from '@/api/40_business/settlement/settlement'
+import { getApi } from '@/api/40_business/poorder/poorder'
 import constants_para from '@/common/constants/constants_para'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -431,7 +426,7 @@ import numeric from '@/components/40_input/numeric'
 import { getApi as getDictDataApi } from '@/api/10_system/dictdata/dictdata'
 import CONSTANTS from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
-import constants_dict from '@/common/constants/constants_dict' // EventBus事件总线
+import constants_dict from '@/common/constants/constants_dict'
 
 export default {
   name: 'SettlementNew',
@@ -444,9 +439,9 @@ export default {
     numeric
   },
   props: {
-    currentTabName: {
-      type: String,
-      default: ''
+    poId: {
+      type: [String, Number],
+      default: null
     }
   },
   data () {
@@ -622,42 +617,33 @@ export default {
     }
   },
   mounted () {
-    this.initNewData()
+    this.init()
     // 初始化汇总数据
     this.calculateSummary()
     // 获取业务类型
     this.fetchBusinessType()
   },
   methods: {
-    /**
-     * 初始化新增数据
-     */
-    initNewData () {
-      // 重置数据
-      this.resetDataJson()
+    init () {
+      this.settings.loading = true
+      this.getData()
+      this.settings.loading = false
     },
-
-    /**
-     * 重置数据
-     */
-    resetDataJson () {
-      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
-      this.dataJson.doc_att = []
-      this.dataJson.doc_att_file = []
-      // 重置按钮状态
-      this.settings.btnTableDisabledStatus.disabledInsert = true
-      this.settings.btnTableDisabledStatus.disabledDelete = true
-      // 重置当前选择状态
-      this.dataJson.currentJson = {}
-      this.dataJson.rowIndex = null
-      // 重置关联单号添加状态
-      this.dataJson.hasAddedRelatedOrder = false
-      // 重置汇总数据
-      this.summaryData.totalAmount = null
-      this.summaryData.totalQty = null
-      this.summaryData.finalTotalAmount = null
+    getData () {
+      getApi({ id: this.poId }).then(response => {
+        this.dataJson.tempJson = deepCopy(response.data)
+        this.dataJson.tempJson.owner_name = this.dataJson.tempJson.purchaser_name
+        this.dataJson.tempJson.owner_id = this.dataJson.tempJson.purchaser_id
+        this.dataJson.tempJson.owner_code = this.dataJson.tempJson.purchaser_code
+        this.handlePoOrderRelationCloseOk(this.dataJson.tempJson)
+      }).catch(error => {
+        console.error('获取采购订单数据失败:', error)
+        this.showErrorMsg('获取采购订单数据失败，请重试')
+        this.settings.loading = false
+      }).finally(
+        this.settings.loading = false
+      )
     },
-
     /**
      * 根据供应商和主体企业状态更新添加按钮状态
      */
@@ -1123,27 +1109,6 @@ export default {
         } else {
           this.closeLoading()
         }
-      })
-    },
-
-    /**
-     * 重置
-     */
-    handleReset () {
-      this.$confirm('确认要重置表单吗？', '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        this.resetDataJson()
-        this.$notify({
-          title: '重置成功',
-          message: '表单已重置',
-          type: 'success',
-          duration: this.settings.duration
-        })
-      }).catch(() => {
-        // 用户取消
       })
     },
 

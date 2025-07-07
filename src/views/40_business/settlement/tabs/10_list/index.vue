@@ -405,11 +405,15 @@
           sortable="custom"
           :sort-orders="settings.sortOrders"
           :auto-fit="true"
-          min-width="120"
+          min-width="130"
           prop="settlement_date"
           label="结算日期"
           align="center"
-        />
+        >
+          <template v-slot="scope">
+            {{ scope.row.settlement_date == null?'':formatDate(scope.row.settlement_date) }}
+          </template>
+        </el-table-column>
         <el-table-column
           sortable="custom"
           :sort-orders="settings.sortOrders"
@@ -423,7 +427,7 @@
           min-width="120"
           prop="next_approve_name"
           label="审批情况"
-          align="center"
+          align="left"
         >
           <template slot-scope="scope">
             {{ getApprovalStatusText(scope.row) }}
@@ -436,7 +440,7 @@
           min-width="100"
           prop="settle_type_name"
           label="结算方式"
-          align="center"
+          align="left"
         />
         <el-table-column
           sortable="custom"
@@ -445,7 +449,7 @@
           min-width="120"
           prop="bill_type_name"
           label="结算单据类型"
-          align="center"
+          align="left"
         />
         <el-table-column
           sortable="custom"
@@ -471,7 +475,7 @@
           :auto-fit="true"
           min-width="100"
           prop="settled_qty"
-          label="实结算数量"
+          label="结算数量"
           align="right"
         >
           <template slot-scope="scope">
@@ -484,7 +488,7 @@
           :auto-fit="true"
           min-width="120"
           prop="settled_amount"
-          label="实结算金额"
+          label="结算金额"
           align="right"
         >
           <template slot-scope="scope">
@@ -497,43 +501,102 @@
       <el-table-column
         label="结算明细"
         align="center"
+        :merge-group="true"
       >
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="140"
-          prop="po_contract_code"
           label="合同编号"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.po_contract_code }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="140"
-          prop="po_order_code"
           label="订单编号"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.po_order_code }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="140"
-          prop="goods_name"
           label="商品名称"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.goods_name }}
+            </div>
+          </template>
+        </el-table-column>
+
         <el-table-column
-          sortable="custom"
-          :sort-orders="settings.sortOrders"
-          :auto-fit="true"
+          :merge-cells="true"
           min-width="120"
-          prop="sku_name"
-          label="规格名称"
+          label="规格"
           align="left"
-        />
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.sku_name }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="120"
+          label="结算数量"
+          align="right"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ formatNumber(item.settled_qty,true,4) }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column
+          :merge-cells="true"
+          min-width="120"
+          label="结算金额"
+          align="right"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ formatCurrency(item.settled_amount,true) }}
+            </div>
+          </template>
+        </el-table-column>
       </el-table-column>
 
       <!-- 基础信息（无分组表头） -->
@@ -661,11 +724,11 @@
     </el-dialog>
 
     <!-- 作废对话框 -->
-    <cancelConfirmDialog
-      :data="popCancel.data"
-      :edit-status="popCancel.editStatus"
-      @closeMeCancel="handleCloseDialogOneCancel"
-      @closeMeOk="handleCloseDialogOneOk"
+    <cancel-dialog
+      :visible.sync="showCancelDialog"
+      :data="cancelDialogData"
+      @closeMeOk="handleCancelOk"
+      @closeMeCancel="handleCancelCancel"
     />
   </div>
 </template>
@@ -835,6 +898,7 @@ import constants_para from '@/common/constants/constants_para'
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer'
 import {
+  getApi,
   getListSumApi,
   exportApi,
   importDataApi,
@@ -851,7 +915,7 @@ import permission from '@/directive/permission/index.js' // 权限判断指令
 import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import print_template from '@/views/40_business/settlement/tabs/60_print/index.vue'
-import cancelConfirmDialog from '../../dialog/cancel/index.vue'
+import CancelDialog from '../../dialog/cancel/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
 
@@ -861,7 +925,7 @@ export default {
     SelectDict,
     SelectCpSupplier,
     SelectSeCustomer,
-    cancelConfirmDialog,
+    CancelDialog,
     print_template,
     SimpleUpload,
     Pagination
@@ -950,12 +1014,7 @@ export default {
         editStatus: null,
         data: null
       },
-      // 作废窗口的状态
-      popCancel: {
-        dialogVisible: false,
-        editStatus: null,
-        data: null
-      },
+
       // 页面设置json
       settings: {
         // 表格排序规则
@@ -1005,7 +1064,9 @@ export default {
           })
         }
       ],
-      screenNum: 0
+      screenNum: 0,
+      showCancelDialog: false, // 显示作废对话框
+      cancelDialogData: null // 作废对话框数据
     }
   },
   computed: {
@@ -1069,7 +1130,7 @@ export default {
       this.dataJson.listData.unshift(_data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
-      getListApi({ id: _data.id }).then(response => {
+      getApi({ id: _data.id }).then(response => {
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1087,7 +1148,7 @@ export default {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_SETTLEMENT_UPDATE_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
-      getListApi({ id: this.dataJson.currentJson.id }).then(response => {
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1104,7 +1165,7 @@ export default {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_SETTLEMENT_BPM_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
-      getListApi({ id: this.dataJson.currentJson.id }).then(response => {
+      getApi({ id: this.dataJson.currentJson.id }).then(response => {
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1413,15 +1474,17 @@ export default {
       this.$emit('emitApprove', operate_tab_data)
     },
 
-    // 作废按钮
+    /**
+     * 作废按钮
+     */
     handleCancel () {
       const _data = deepCopy(this.dataJson.currentJson)
       if (_data.id === undefined) {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      this.popCancel.dialogVisible = true
-      this.popCancel.data = this.dataJson.currentJson
+      this.showCancelDialog = true
+      this.cancelDialogData = this.dataJson.currentJson
     },
 
     // 删除按钮
@@ -1603,16 +1666,16 @@ export default {
       return ''
     },
 
-    // 作废确认
-    handleCloseDialogOneOk (val) {
-      this.popCancel.dialogVisible = false
+    /**
+     * 作废对话框确认
+     */
+    handleCancelOk (val) {
+      // 关闭作废对话框
+      this.showCancelDialog = false
+      // 刷新数据列表
       this.getDataList()
-      this.$notify({
-        title: '作废成功',
-        message: null,
-        type: 'success',
-        duration: this.settings.duration
-      })
+      // 注意：成功消息已经在作废对话框中显示，这里不再重复显示
+      // 参考采购合同的实现，但避免重复消息提示
     },
 
     // 下推确认
@@ -1627,9 +1690,11 @@ export default {
       })
     },
 
-    // 作废弹窗取消
-    handleCloseDialogOneCancel () {
-      this.popCancel.dialogVisible = false
+    /**
+     * 作废对话框取消
+     */
+    handleCancelCancel () {
+      this.showCancelDialog = false
     },
 
     // 供应商选择返回
@@ -1775,6 +1840,22 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+
+    /**
+     * 获取明细数据行的CSS类
+     * 根据明细数据的索引和总数返回不同的CSS类来控制边框显示
+     */
+    getClass (index, length) {
+      if (length === 1) {
+        return 'merge_cells0 cell'
+      } else if (index === 0) {
+        return 'merge_cells1 cell'
+      } else if (index === length - 1) {
+        return 'merge_cells3 cell'
+      } else {
+        return 'merge_cells2 cell'
+      }
     }
   }
 }
