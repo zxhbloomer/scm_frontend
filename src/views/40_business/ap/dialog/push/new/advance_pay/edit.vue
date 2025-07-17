@@ -136,7 +136,6 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px )"
-          height="200px"
           @row-click="handlePoOrderRowClick"
           @current-change="handlePoOrderCurrentChange"
         >
@@ -146,17 +145,18 @@
             label="No"
           />
           <el-table-column
-            min-width="130"
-            prop="po_contract_code"
-            :auto-fit="true"
-            label="合同编号"
-          />
-          <el-table-column
-            min-width="130"
-            prop="po_order_code"
-            :auto-fit="true"
-            label="订单编号"
-          />
+            show-overflow-tooltip
+            min-width="150"
+            label="合同编号｜订单编号"
+            align="left"
+          >
+            <template v-slot="scope">
+              <div style="line-height: 1.2;">
+                <div>{{ scope.row.po_contract_code || '-' }}</div>
+                <div>{{ scope.row.po_order_code || '-' }}</div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column
             min-width="130"
             prop="po_goods"
@@ -221,7 +221,7 @@
                   type="primary"
                   @click="handleFullAmountApply(scope.row)"
                 >
-                  全额申请
+                  全额
                 </el-button>
               </div>
             </template>
@@ -290,7 +290,6 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px )"
-          height="200px"
           @row-click="handleBankRowClick"
           @current-change="handleBankCurrentChange"
         >
@@ -440,12 +439,12 @@ import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getTypeApi, insertApi, validateApi } from '@/api/40_business/ap/ap'
-import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import { getApi } from '@/api/40_business/poorder/poorder'
 import poorder_list_template from '@/views/40_business/poorder/dialog/listfor/inplan/index.vue'
 import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
-import { getPurchaser } from '@/api/20_master/bankaccounts/bankaccounts'
+import { getPurchaserApi } from '@/api/20_master/bankaccounts/bankaccounts'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import previewCard from '@/components/50_preview_card/preview_card.vue'
 
@@ -482,13 +481,6 @@ export default {
       threeLabelStyle: {
         width: '2.3%',
         'text-align': 'right'
-      },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_poOrderListData: null,
-        unwatch_bankListData: null,
-        unwatch_purchaser: null
       },
       popSettingsData: {
         // 审批流程
@@ -629,6 +621,18 @@ export default {
   },
   // 监听器
   watch: {
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在查询，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    },
     'dataJson.tempJson.poOrderListData': {
       handler: 'calculatePayableAmounts',
       deep: true,
@@ -646,9 +650,6 @@ export default {
     // 描绘完成
     this.init()
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化处理
     async init () {
@@ -659,71 +660,7 @@ export default {
       this.initBankTypeList()
       // 初始化页面数据
       this.initData()
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-          // 可以在这里添加需要的逻辑
-        },
-        { deep: true }
-      )
-
-      // 监听采购订单列表数据变化，触发金额计算
-      this.watch.unwatch_poOrderListData = this.$watch(
-        'dataJson.tempJson.poOrderListData',
-        (newVal, oldVal) => {
-          // 当采购订单列表数据发生变化时，重新计算申请付款金额
-          this.calculatePayableAmounts()
-          console.log('采购订单列表数据发生变化，重新计算金额')
-
-          // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnPoOrderDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-
-      // 监听银行账户列表数据变化
-      this.watch.unwatch_bankListData = this.$watch(
-        'dataJson.tempJson.bankListData',
-        (newVal, oldVal) => {
-          // 当银行账户列表数据发生变化时的处理逻辑
-          console.log('银行账户列表数据发生变化', newVal)
-          // 可以在这里添加银行账户数据变化时的业务逻辑
-          if (newVal && newVal.length > 0) {
-            console.log('可用银行账户数量:', newVal.length)
-          }
-
-          // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnBankDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-    },
-    unWatch () {
-      // 取消监听器
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_poOrderListData) {
-        this.watch.unwatch_poOrderListData()
-      }
-      if (this.watch.unwatch_bankListData) {
-        this.watch.unwatch_bankListData()
-      }
-      if (this.watch.unwatch_purchaser) {
-        this.watch.unwatch_purchaser()
-      }
     },
     // 计算申请付款相关金额
     calculatePayableAmounts () {
@@ -769,6 +706,10 @@ export default {
     // 银行账户列表数据变化处理
     handleBankListDataChange (newVal, oldVal) {
       this.calculateDetailPayableAmount()
+      // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
+      if (!newVal || newVal.length === 0) {
+        this.settings.btnBankDisabledStatus.disabledDelete = true
+      }
     },
     // 取消按钮
     handleCancel () {
@@ -923,7 +864,7 @@ export default {
     },
     // 查询主体企业是否有默认账户
     queryPurchaserBankAccount (id) {
-      getPurchaser({ enterprise_id: id })
+      getPurchaserApi({ enterprise_id: id })
         .then(_data => {
           if (_data.data != null) {
             // 检查是否已经存在相同的银行账户（根据bank_accounts_id判断）
@@ -1165,13 +1106,23 @@ export default {
     },
     // 初始化款项类型
     initBankTypeList () {
-      const _this = this
-      getBankTypeApi().then(response => {
+      const params = {
+        dictTypeCode: constants_dict.DICT_M_BANK_TYPE,
+        is_del: 0
+      }
+      selectListDataApi(params).then(response => {
         if (response.data.length !== 0) {
-          _this.dataJson.bankTypeListDate = _this.dataJson.bankTypeListDate.concat(response.data)
+          this.dataJson.bankTypeListDate = response.data.map(item => ({
+            id: item.id,
+            code: item.dict_value,
+            name: item.label
+          }))
         } else {
           this.showErrorMsg('款项类型数据为空,请联系管理员')
         }
+      }).catch(error => {
+        console.error('获取款项类型失败:', error)
+        this.showErrorMsg('获取款项类型失败')
       })
     },
     // 初始化页面数据

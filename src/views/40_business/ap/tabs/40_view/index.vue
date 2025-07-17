@@ -6,7 +6,6 @@
       <el-col
         :span="18"
         style="padding-right:8px;"
-        class="1111111"
         :style="{ height: divLeftHeight + 'px',overflowY:'auto' } "
       >
         <!--左边业务数据区域-->
@@ -18,7 +17,6 @@
       </el-col>
       <el-col
         :span="6"
-        class="22222222"
         :style="{ height: divRightHeight + 'px',overflowY:'auto' } "
       >
         <!--右边审批流程数据-->

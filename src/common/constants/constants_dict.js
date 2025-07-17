@@ -918,12 +918,13 @@ const DICT_B_PO_SETTLEMENT_BILL_TYPE_ONE = '1'
 const DICT_B_PO_SETTLEMENT_BILL_TYPE_TWO = '2'
 
 /**
- *  企业银行类型（YUFUKUAN-预付款、YUSHOUKUAN-预收款、YINFUKUAN-应付款、YINSHOUKUAN-应收款
+ *  企业银行类型（1-预付款、2-预收款、3-应付款、4-应收款）
  */
-const DICT_M_BANK_TYPE_ONE = 'YUFUKUAN'
-const DICT_M_BANK_TYPE_TWO = 'YUSHOUKUAN'
-const DICT_M_BANK_TYPE_THREE = 'YINFUKUAN'
-const DICT_M_BANK_TYPE_FOUR = 'YINFUKUAN'
+const DICT_M_BANK_TYPE = 'm_bank_type'
+const DICT_M_BANK_TYPE_ONE = '1'
+const DICT_M_BANK_TYPE_TWO = '2'
+const DICT_M_BANK_TYPE_THREE = '3'
+const DICT_M_BANK_TYPE_FOUR = '4'
 
 /**
  *  企业银行账户表 0-禁用 1-可用 -1-删除
@@ -1880,8 +1881,9 @@ export default {
   DICT_B_PO_SETTLEMENT_BILL_TYPE_TWO,
 
   /**
-   *  企业银行类型（1-预付款、2-预收款、3-应付款、4-应收款、5-保证金、6-其他付款、7-其他收款）
+   *  企业银行类型（1-预付款、2-预收款、3-应付款、4-应收款）
    */
+  DICT_M_BANK_TYPE,
   DICT_M_BANK_TYPE_ONE,
   DICT_M_BANK_TYPE_TWO,
   DICT_M_BANK_TYPE_THREE,

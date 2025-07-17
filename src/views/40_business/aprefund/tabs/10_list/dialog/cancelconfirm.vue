@@ -387,7 +387,7 @@ export default {
               _data => {
                 this.closeLoading()
                 // 通知兄弟组件，新增数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_UPDATE_OK, _data.data)
+                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_REFUND_UPDATE_OK, _data.data)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,

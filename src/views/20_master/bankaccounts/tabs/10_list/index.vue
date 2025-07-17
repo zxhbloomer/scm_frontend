@@ -27,6 +27,14 @@
           />
         </el-form-item>
 
+        <el-form-item>
+          <select-dicts
+            v-model="dataJson.searchForm.bank_type"
+            :para="CONSTANTS.DICT_M_BANK_TYPE"
+            init-placeholder="请选择账户类型"
+          />
+        </el-form-item>
+
         <el-form-item style="float:right">
           <el-button
             v-popover:popover
@@ -231,6 +239,15 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
+        prop="bank_type_name"
+        label="账户类型"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
         prop="remarks"
         label="备注"
         align="left"
@@ -402,6 +419,7 @@ import {
   delApi, updateStatusApi
 } from '@/api/20_master/bankaccounts/bankaccounts'
 import constants_para from '@/common/constants/constants_para'
+import constants_dict from '@/common/constants/constants_dict'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -410,9 +428,10 @@ import permission from '@/directive/permission/index.js' // 权限判断指令
 import { EventBus } from '@/common/eventbus/eventbus'
 import new_template from '@/views/20_master/bankaccounts/dialog/new'
 import edit_template from '@/views/20_master/bankaccounts/dialog/edit'
+import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 
 export default {
-  components: { edit_template, new_template, Pagination },
+  components: { SelectDicts, edit_template, new_template, Pagination },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -458,6 +477,9 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
+          name: '', // 账户名称
+          bank_name: '', // 开户行
+          bank_type: [], // 账户类型列表
           // 启动日期
           batch: '',
           active_tabs_index: '' // 当前被激活的页签
@@ -686,6 +708,8 @@ export default {
     // 重置查询区域
     doResetSearch () {
       this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+      // 确保数组字段被正确重置为空数组
+      this.dataJson.searchForm.bank_type = []
     },
     // 获取row-key
     getRowKeys (row) {

@@ -256,11 +256,8 @@ export default {
           this.dataJson.listData = []
         }
         const data = response.data.records
-        // debugger
         if (data && data.length) {
-          // debugger
           this.dataJson.listData.push(...data)
-          // this.$store.commit('headNotice/UPDATE_ALARM_COUNT', response.data.total)
         }
         // 如果查询到的条数不够查询条数, 则显示没有更多了
         if (!data || data.length < this.dataJson.paging.size) {

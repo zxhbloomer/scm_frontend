@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <div class="edit-container">
+    <div>
       <el-form
         ref="dataSubmitForm"
         :rules="settings.rules"
@@ -9,12 +9,45 @@
         label-width="150px"
         status-icon
       >
+
+        <!-- 作废区域 -->
+        <el-alert
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_CANCEL"
+          title="作废理由"
+          type="error"
+          :closable="false"
+        />
+        <el-descriptions
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_CANCEL"
+          title=""
+          :column="3"
+          :label-style="labelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          style="padding-right: 10px;padding-left: 10px;"
+          border
+        >
+          <el-descriptions-item label="作废理由" :span="3">
+            {{ dataJson.tempJson.cancel_reason || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="作废附件" :span="3">
+            <preview-description :attachment-files="dataJson.tempJson.cancel_files" />
+          </el-descriptions-item>
+          <el-descriptions-item label="作废提交时间">
+            {{ formatDateTime(dataJson.tempJson.cancel_time) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="作废提交人">
+            {{ dataJson.tempJson.cancel_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="" />
+        </el-descriptions>
+
+
         <el-alert
           title="基本信息"
           type="info"
           :closable="false"
         />
-        <br>
         <el-descriptions
           title=""
           :column="3"
@@ -25,51 +58,43 @@
           border
         >
 
-          <el-descriptions-item label="编号">
-            {{ dataJson.tempJson.code == null || dataJson.tempJson.code === ''?'系统自动生成':dataJson.tempJson.code }}
+          <el-descriptions-item label="退款编号">
+            {{ dataJson.tempJson.code || '系统自动生成' }}
           </el-descriptions-item>
 
           <el-descriptions-item label="业务类型">
-            {{ dataJson.tempJson.type_name == null ? '-': dataJson.tempJson.type_name }}
-          </el-descriptions-item>
-          <el-descriptions-item label="关联单号">
-            {{ dataJson.tempJson.po_code == null ? '-': dataJson.tempJson.po_code }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="主体企业（付款方）">
-            <el-form-item
-              prop="purchaser_name"
-              label-width="0"
-            >
-              {{ dataJson.tempJson.buyer_enterprise_name }}
-            </el-form-item>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="供应商（收款方）">
-            <el-form-item
-              prop="supplier_name"
-              label-width="0"
-            >
-              {{ dataJson.tempJson.supplier_enterprise_name }}
-            </el-form-item>
+            {{ dataJson.tempJson.type_name || '-' }}
           </el-descriptions-item>
 
           <el-descriptions-item label="退款状态">
-            {{ dataJson.tempJson.pay_status_name == null ? '-': dataJson.tempJson.pay_status_name }}
+            {{ dataJson.tempJson.refund_status_name || '-' }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
-            {{ dataJson.tempJson.remark == null ? '-': dataJson.tempJson.remark }}
+          <el-descriptions-item label="主体企业（付款方）">
+            {{ dataJson.tempJson.purchaser_name || '-' }}
+          </el-descriptions-item>
+
+          <el-descriptions-item label="供应商（收款方）">
+            {{ dataJson.tempJson.supplier_name || '-' }}
+          </el-descriptions-item>
+
+          <el-descriptions-item label="" />
+
+          <el-descriptions-item label="备注" span="3">
+            {{ dataJson.tempJson.remark || '-' }}
+          </el-descriptions-item>
+
+          <el-descriptions-item label="退款附件材料" span="3">
+            <preview-description :attachment-files="dataJson.tempJson.doc_att_files" />
           </el-descriptions-item>
 
         </el-descriptions>
-        <br>
+
         <el-alert
           title="业务单据信息"
           type="info"
           :closable="false"
         />
-        <br>
 
         <el-descriptions
           title=""
@@ -81,134 +106,53 @@
           style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="申请退款总金额">
-            {{ dataJson.tempJson.refund_amount == null ? '-': formatNumber(dataJson.tempJson.refund_amount, true,4) }}
+            {{ dataJson.tempJson.refundable_amount == null ? '-': formatCurrency(dataJson.tempJson.refundable_amount, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="已退款总金额">
-            {{ dataJson.tempJson.refunded_amount == null? '-': formatNumber(dataJson.tempJson.refunded_amount, true,4) }}
+            {{ dataJson.tempJson.refunded_amount == null? '-': formatCurrency(dataJson.tempJson.refunded_amount, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="未退款总金额">
-            {{ dataJson.tempJson.not_pay_amount == null? '-': formatNumber(dataJson.tempJson.not_pay_amount, true,4) }}
+            {{ dataJson.tempJson.unrefund_amount == null? '-': formatCurrency(dataJson.tempJson.unrefund_amount, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="退款中金额">
-            {{ dataJson.tempJson.refunding_amount == null? '-': formatNumber(dataJson.tempJson.refunding_amount, true,4) }}
+            {{ dataJson.tempJson.refunding_amount == null? '-': formatCurrency(dataJson.tempJson.refunding_amount, true) }}
           </el-descriptions-item>
         </el-descriptions>
 
-        <br>
-        <el-table
-          ref="multipleTable"
-          v-loading="settings.loading"
-          :data="dataJson.tempJson.poOrderListData"
-          :element-loading-text="'正在拼命加载中...'"
-          element-loading-background="rgba(255, 255, 255, 0.5)"
-          stripe
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="labelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          style="padding-right: 10px;padding-left: 10px;"
           border
-          fit
-          highlight-current-row
-          :default-sort="{prop: 'u_time', order: 'descending'}"
-          style="width: 100%"
         >
-          <el-table-column
-            type="index"
-            width="45"
-            label="No"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_contract_code"
-            label="合同编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_code"
-            label="订单编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_goods"
-            label="商品"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="advance_pay_amount"
-            label="预付款金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.advance_pay_amount == null? '': formatNumber(scope.row.advance_pay_amount, true,4) }}
-            </template>
-          </el-table-column>
+          <el-descriptions-item label="合同编号">
+            {{ dataJson.tempJson.po_contract_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="订单编号">
+            {{ dataJson.tempJson.po_order_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="商品名称">
+            {{ dataJson.tempJson.po_goods || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="预付款已付金额">
+            {{ (dataJson.tempJson.advance_paid_total || 0) - (dataJson.tempJson.advance_cancelpay_total || 0) == 0 ? '-': formatCurrency((dataJson.tempJson.advance_paid_total || 0) - (dataJson.tempJson.advance_cancelpay_total || 0), true) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="可退金额">
+            {{ dataJson.tempJson.advance_refund_amount_total == null ? '-': formatCurrency(dataJson.tempJson.advance_refund_amount_total, true) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="本次申请退款金额">
+            {{ dataJson.tempJson.order_amount == null ? '-': formatCurrency(dataJson.tempJson.order_amount, true) }}
+          </el-descriptions-item>
+        </el-descriptions>
 
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refunded_amount"
-            label="已退金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refunded_amount == null? '': formatNumber(scope.row.refunded_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refunding_amount"
-            label="退款中金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refunding_amount == null? '': formatNumber(scope.row.refunding_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="can_refunded_amount"
-            label="可退金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.can_refunded_amount == null? '': formatNumber(scope.row.can_refunded_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refund_amount"
-            label="本次申请金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refund_amount == null? '': formatNumber(scope.row.refund_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="remark"
-            label="备注"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.remark == null? '': formatNumber(scope.row.remark, true,4) }}
-            </template>
-          </el-table-column>
-
-        </el-table>
-
-        <br>
         <el-alert
           title="退款信息"
           type="info"
           :closable="false"
         />
-        <br>
-
         <el-descriptions
           title=""
           :column="1"
@@ -219,106 +163,55 @@
           style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="退款总金额">
-            {{ dataJson.tempJson.detail_payable_amount == null ? '-': formatNumber(dataJson.tempJson.detail_payable_amount, true,4) }}
+            {{ dataJson.tempJson.detail_refund_amount == null ? '-': formatCurrency(dataJson.tempJson.detail_refund_amount, true) }}
           </el-descriptions-item>
         </el-descriptions>
-        <br>
 
-        <br>
-        <el-table
-          ref="multipleTable"
-          v-loading="settings.loading"
-          :data="dataJson.tempJson.bankListData"
-          :element-loading-text="'正在拼命加载中...'"
-          element-loading-background="rgba(255, 255, 255, 0.5)"
-          stripe
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="labelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          style="padding-right: 10px;padding-left: 10px;"
           border
-          fit
-          highlight-current-row
-          :default-sort="{prop: 'u_time', order: 'descending'}"
-          style="width: 100%"
         >
-          <el-table-column
-            type="index"
-            width="45"
-            label="No"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="name"
-            label="付款账户名"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="bank_name"
-            label="开户行"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="account_number"
-            label="银行账号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="accounts_purpose_type_name"
-            label="类型"
-            align="right"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refund_amount"
-            label="付款金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refund_amount == null? '': formatNumber(scope.row.refund_amount, true,4) }}
-            </template>
-          </el-table-column>
-
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="remark"
-            label="备注"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.remark == null? '': formatNumber(scope.row.remark, true,4) }}
-            </template>
-          </el-table-column>
-        </el-table>
+          <el-descriptions-item label="退款账户">
+            {{ dataJson.tempJson.bankData.name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="开户行">
+            {{ dataJson.tempJson.bankData.bank_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="银行账户">
+            {{ dataJson.tempJson.bankData.account_number || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ dataJson.tempJson.bankData.bank_type_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="退款金额">
+            {{ dataJson.tempJson.bankData.order_amount == null ? '-': formatCurrency(dataJson.tempJson.bankData.order_amount, true) }}
+          </el-descriptions-item>
+          <el-descriptions-item />
+        </el-descriptions>
 
       </el-form>
     </div>
+
   </div>
 </template>
 
 <style scoped>
-.edit-container {
+.app-container {
   height: calc(100vh - 160px);
   overflow-x: auto;
-}
-.dialog-footer {
-  text-align: center;
 }
 .el-form-item .el-select {
   width: 100%;
 }
 
-.required-mark::before {
-  content: '*';
-  color: #ff4949;
-  margin-right: 4px;
-}
-br {
-  display: block;
-  margin: 10px;
-  content: ' ';
+.el-descriptions {
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 .el-form-item--mini.el-form-item {
   margin-bottom: 0px;
@@ -330,20 +223,13 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
-import { getDetailApi } from '@/api/40_business/aprefund/aprefund'
+import { getApi } from '@/api/40_business/aprefund/aprefund'
+import PreviewDescription from '@/components/51_preview_description/index.vue'
 export default {
   directives: { elDragDialog },
-  components: { },
+  components: { PreviewDescription },
   mixins: [],
   props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    id: {
-      type: Number,
-      default: null
-    },
     data: {
       type: Object,
       default: null
@@ -355,6 +241,7 @@ export default {
   },
   data () {
     return {
+      constants_dict,
       contentStyle: {
         width: '15%'
       },
@@ -372,122 +259,21 @@ export default {
       },
       // 监听器
       watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null,
-        'dataJson.tempJson.unit_id': {
-          handler (newVal, oldVal) {
-            console.log(newVal)
-          }
-        }
-      },
-      popSettingsData: {
-        // 供应商
-        supplierDialogData: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        },
-        // 主体企业
-        purchaserDialogData: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        },
-        // 审批流程
-        sponsorDialog: {
-          // 弹出框显示参数
-          visible: false,
-          form_data: { },
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          },
-          // 审批流程
-          initial_process: null,
-          // 自选用户
-          process_users: {}
-        },
-        // 采购订单弹窗
-        poOrderDialog: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        },
-        // 采购订单弹窗(添加关联单号)
-        poOrderFountDialog: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        },
-        // 企业银行账户弹窗
-        bankDialog: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        }
       },
       dataJson: {
-        typeListDate: [],
-        bankTypeListDate: [],
-        // 用于监听
-        actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          buyer_enterprise_code: null,
-          buyer_enterprise_name: null,
-          po_code: null,
-          po_contract_code: null,
-          project_code: null,
-          supplier_enterprise_code: null,
-          supplier_enterprise_name: null,
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: constants_dict.DICT_B_AP_TYPE_TWO,
-          detailListData: [],
-          // 申请退款总金额
-          refund_amount: 0,
-          // 未退款总金额
-          not_pay_amount: 0,
-          // 已退款总金额
-          refunded_amount: 0,
-          // 退款中金额
-          refunding_amount: 0,
-          // 付款信息付款总额
-          detail_payable_amount: 0
-        },
         // 单条数据 json
         tempJson: {
-        },
-        searchForm: {
-          reset: false
-        },
-        inputSettings: {
-          maxLength: {
-            remark: 100
+          // 状态字段，避免undefined导致闪烁
+          status: null,
+          refund_status: null,
+          // 银行账户信息（单个对象）
+          bankData: {
+            name: null,
+            bank_name: null,
+            account_number: null,
+            bank_type_name: null,
+            order_amount: null,
+            remark: null
           }
         }
       },
@@ -495,24 +281,6 @@ export default {
       settings: {
         // loading 状态
         loading: true,
-        // 按钮是否显示，默认不显示，false：不显示，true：显示
-        btnShowStatus: {
-          showInsert: false,
-          showUpdate: false
-        },
-        // 采购订单状态：是否可用，false:可用，true不可用
-        btnPoOrderDisabledStatus: {
-          disabledInsert: true,
-          disabledDelete: true
-        },
-        // 企业银行账户按钮状态：是否可用，false:可用，true不可用
-        btnBankDisabledStatus: {
-          disabledInsert: true,
-          disabledDelete: true
-        },
-        // 以下为pop的内容：数据弹出框
-        selection: [],
-        dialogStatus: this.editStatus,
         // pop的check内容
         rules: {
         }
@@ -520,9 +288,6 @@ export default {
     }
   },
   computed: {
-    listenVisible () {
-      return this.visible
-    }
   },
   // 监听器
   watch: {},
@@ -538,29 +303,44 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      // 初始化按钮
-      this.initButtonShowStatus()
       this.getData()
       // 初始化watch
       this.setWatch()
       this.settings.loading = false
     },
-    initButtonShowStatus () {
-      // 初始化按钮状态：默认都隐藏
-      this.settings.btnShowStatus = this.$options.data.call(this).settings.btnShowStatus
-      this.settings.btnPoOrderDisabledStatus = this.$options.data.call(this).settings.btnPoOrderDisabledStatus
-      this.settings.btnBankDisabledStatus = this.$options.data.call(this).settings.btnBankDisabledStatus
-    },
     getData () {
       // 查询逻辑
       this.settings.loading = true
-      getDetailApi(this.data).then(response => {
+      getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
-        this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
-        this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 
-        this.dataJson.tempJson.detail_payable_amount = this.dataJson.tempJson.bankListData[0].refund_amount
+        // 确保 bankData 结构存在
+        if (!this.dataJson.tempJson.bankData) {
+          this.dataJson.tempJson.bankData = {
+            name: null,
+            bank_name: null,
+            account_number: null,
+            bank_type_name: null,
+            order_amount: null,
+            remark: null
+          }
+        }
+
+        // 如果有银行账户数据，映射到 bankData
+        if (response.data.bankListData && response.data.bankListData.length > 0) {
+          const bankInfo = response.data.bankListData[0]
+          this.dataJson.tempJson.bankData = {
+            name: bankInfo.name,
+            bank_name: bankInfo.bank_name,
+            account_number: bankInfo.account_number,
+            bank_type_name: bankInfo.bank_type_name,
+            order_amount: bankInfo.order_amount,
+            remark: bankInfo.remark
+          }
+        }
+
+        // 计算退款总金额
+        this.dataJson.tempJson.detail_refund_amount = this.dataJson.tempJson.bankData.order_amount
       }).finally(() => {
         this.settings.loading = false
       })
@@ -578,10 +358,14 @@ export default {
       )
     },
     unWatch () {
+      if (this.watch.unwatch_tempJson) {
+        this.watch.unwatch_tempJson()
+      }
     },
-    // 取消按钮
-    handleCancel () {
-      this.$emit('closeMeCancel')
+    // 格式化日期时间
+    formatDateTime (dateTime) {
+      if (!dateTime) return '-'
+      return dateTime
     }
   }
 

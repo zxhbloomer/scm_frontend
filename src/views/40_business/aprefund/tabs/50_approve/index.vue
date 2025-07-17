@@ -6,7 +6,6 @@
       <el-col
         :span="18"
         style="padding-right:8px;"
-        class="1111111"
         :style="{ height: divLeftHeight + 'px',overflowY:'auto' } "
       >
         <!--左边业务数据区域-->
@@ -18,7 +17,6 @@
       </el-col>
       <el-col
         :span="6"
-        class="22222222"
         :style="{ height: divRightHeight + 'px',overflowY:'auto' } "
       >
         <!--右边审批流程数据-->
@@ -27,6 +25,7 @@
           :edit-status="editStatus"
           :enable-cancel="enableCancel"
           @emitReturn="handleReturn"
+          @emitBack="handleBack"
         />
       </el-col>
     </el-row>
@@ -40,6 +39,7 @@
             :enable-cancel="enableCancel"
             @closeMeOk="handleCloseMeOk"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -53,7 +53,9 @@ import bpmprocess_foot_template from '@/components/ProcessProgress/ProcessInstan
 import constants_para from '@/common/constants/constants_para'
 import left_data_template from './detail.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_emits from '@/common/constants/constants_emits'
 import mixin from './index_mixin'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   components: { left_data_template, bpmprocess_body_template, bpmprocess_foot_template },
@@ -98,10 +100,19 @@ export default {
     },
     constants_para () {
       return constants_para
+    },
+    EMITS () {
+      return constants_emits
     }
   },
   methods: {
+    handleBack () {
+      this.$emit('emitReturn')
+    },
     handleReturn () {
+      setTimeout(() => {
+        EventBus.$emit(this.EMITS.EMIT_MST_B_AP_REFUND_BPM_OK, this.data)
+      }, 1000)
       this.$emit('emitReturn')
     },
     handleCloseMeOk () {

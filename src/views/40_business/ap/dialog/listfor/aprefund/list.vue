@@ -35,18 +35,36 @@
         </el-form-item>
 
         <el-form-item>
+          <select-se-customer
+            v-if="!isPurchaserDisabled"
+            v-model.trim="dataJson.searchForm.purchaser_name"
+            :placeholder="'请选择主体企业'"
+            placement="left"
+            @keyup.enter.native="handleSearch"
+            @onReturnData="handleCustomerReturnDataName"
+          />
           <el-input
-            v-model.trim="dataJson.searchForm.buyer_enterprise_name"
-            clearable
+            v-if="isPurchaserDisabled"
+            v-model.trim="dataJson.searchForm.purchaser_name"
+            disabled
             placeholder="主体企业"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
 
         <el-form-item>
+          <select-cp-supplier
+            v-if="!isSupplierDisabled"
+            v-model.trim="dataJson.searchForm.supplier_name"
+            :placeholder="'请选择供应商'"
+            placement="left"
+            @keyup.enter.native="handleSearch"
+            @onReturnData="handleSupplierReturnDataName"
+          />
           <el-input
-            v-model.trim="dataJson.searchForm.supplier_enterprise_name"
-            clearable
+            v-if="isSupplierDisabled"
+            v-model.trim="dataJson.searchForm.supplier_name"
+            disabled
             placeholder="供应商"
             @keyup.enter.native="handleSearch"
           />
@@ -75,6 +93,17 @@
 
       </el-form>
     </div>
+    <!-- 合计行 -->
+    <div class="div-sum">
+      <div class="right">
+        <span class="count-title">申请付款总金额：</span><span class="count-data">{{ dataJson.sumData.payable_amount_total == null ? 0 : formatCurrency(dataJson.sumData.payable_amount_total,true) }}</span>
+        <span class="count-title">已付款总金额：</span><span class="count-data">{{ dataJson.sumData.paid_amount_total == null ? 0 : formatCurrency(dataJson.sumData.paid_amount_total,true) }}</span>
+        <span class="count-title">付款中总金额：</span><span class="count-data">{{ dataJson.sumData.paying_amount_total == null ? 0 : formatCurrency(dataJson.sumData.paying_amount_total,true) }}</span>
+        <span class="count-title">未付款总金额：</span><span class="count-data">{{ dataJson.sumData.unpay_amount_total == null ? 0 : formatCurrency(dataJson.sumData.unpay_amount_total,true) }}</span>
+        <span class="count-title">退款总金额：</span><span class="count-data">{{ dataJson.sumData.refunded_amount_total == null ? 0 : formatCurrency(dataJson.sumData.refunded_amount_total,true) }}</span>
+        <span class="count-title">中止总金额：</span><span class="count-data">{{ dataJson.sumData.stoppay_amount_total == null ? 0 : formatCurrency(dataJson.sumData.stoppay_amount_total,true) }}</span>
+      </div>
+    </div>
 
     <el-table
       ref="multipleTable"
@@ -93,9 +122,9 @@
       :cell-class-name="tableCellClassName"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
-      @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
+      @current-change="handleCurrentChange"
     >
       <el-table-column
         v-if="settings.exportModel"
@@ -109,14 +138,13 @@
         prop="No"
         label="No"
       />
-
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="po_contract_code"
-        label="合同编号"
+        prop="code"
+        label="应付账款编号"
         align="left"
       />
       <el-table-column
@@ -124,8 +152,8 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="code"
-        label="订单编号"
+        prop="type_name"
+        label="业务类型"
         align="left"
       />
       <el-table-column
@@ -133,7 +161,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="buyer_enterprise_name"
+        prop="purchaser_name"
         label="主体企业（付款方）"
         align="left"
       />
@@ -142,22 +170,132 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="supplier_enterprise_name"
+        prop="supplier_name"
         label="供应商（收款方）"
         align="left"
       />
       <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        label="商品"
-        align="left"
-        prop="po_goods"
+        label="关联合同"
+        align="center"
+        :merge-group="true"
       >
-        <template v-slot="scope">
-          {{ scope.row.poOrderListData!=null?scope.row.poOrderListData[0].po_goods:'-' }}
-        </template>
+        <el-table-column
+          :merge-cells="true"
+          min-width="120"
+          label="合同号"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.poOrderListData"
+              :key="index"
+              :class="getClass(index, scope.row.poOrderListData.length)"
+            > {{ item.po_contract_code ==null?'-':item.po_contract_code }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="订单号"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.poOrderListData"
+              :key="index"
+              :class="getClass(index, scope.row.poOrderListData.length)"
+            > {{ item.po_order_code }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="130"
+          label="商品"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.poOrderListData"
+              :key="index"
+              :class="getClass(index, scope.row.poOrderListData.length)"
+            > {{ item.po_goods == null ? '-' : item.po_goods }}
+            </div>
+          </template>
+        </el-table-column>
+
+      </el-table-column>
+
+      <el-table-column
+        label="付款信息"
+        align="center"
+        :merge-group="true"
+      >
+        <el-table-column
+          :merge-cells="true"
+          min-width="120"
+          label="付款账户"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.bankListData"
+              :key="index"
+              :class="getClass(index, scope.row.bankListData.length)"
+            > {{ item.account_number }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="付款类型"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.bankListData"
+              :key="index"
+              :class="getClass(index, scope.row.bankListData.length)"
+            > {{ item.accounts_purpose_type_name }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="付款金额"
+          align="right"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.bankListData"
+              :key="index"
+              :class="getClass(index, scope.row.bankListData.length)"
+            > {{ item.payable_amount == null ? '' : formatCurrency(item.payable_amount, true) }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="备注"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.bankListData"
+              :key="index"
+              :class="getClass(index, scope.row.bankListData.length)"
+            > {{ item.remark }}
+            </div>
+          </template>
+        </el-table-column>
+
       </el-table-column>
 
       <el-table-column
@@ -165,12 +303,22 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
+        prop="pay_status_name"
+        label="付款状态"
+        align="left"
+      />
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
         prop="payable_amount"
-        label="预付款金额"
+        label="申请付款总金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.payable_amount == null ? '-' : formatNumber(scope.row.payable_amount, true, 4) }}
+          {{ scope.row.payable_amount == null ? '-' : formatCurrency(scope.row.payable_amount, true) }}
         </template>
       </el-table-column>
 
@@ -180,11 +328,39 @@
         :auto-fit="true"
         min-width="160"
         prop="paid_amount"
-        label="实付金额"
+        label="已付款总金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.paid_amount == null ? '-' : formatNumber(scope.row.paid_amount, true, 4) }}
+          {{ scope.row.paid_amount == null ? '-' : formatCurrency(scope.row.paid_amount, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="paying_amount"
+        label="付款中总金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.paying_amount == null ? '-' : formatCurrency(scope.row.paying_amount, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="unpay_amount"
+        label="未付款总金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.unpay_amount == null ? '-' : formatCurrency(scope.row.unpay_amount, true) }}
         </template>
       </el-table-column>
 
@@ -194,11 +370,11 @@
         :auto-fit="true"
         min-width="160"
         prop="refunded_amount"
-        label="已退金额"
+        label="退款总金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.refunded_amount == null ? '-' : formatNumber(scope.row.refunded_amount, true, 4) }}
+          {{ scope.row.refunded_amount == null ? '-' : formatCurrency(scope.row.refunded_amount, true) }}
         </template>
       </el-table-column>
 
@@ -207,29 +383,57 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="refunding_amount"
-        label="退款中金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.refunding_amount == null ? '-' : formatNumber(scope.row.refunding_amount, true, 4) }}
-        </template>
-      </el-table-column>
+        prop="remark"
+        label="备注"
+        align="left"
+      />
 
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        min-width="160"
-        prop="can_refunded_amount"
-        label="可退金额"
-        align="right"
+        min-width="120"
+        prop="c_name"
+        label="创建人"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
+        prop="c_time"
+        label="创建时间"
+        align="left"
       >
         <template v-slot="scope">
-          {{ scope.row.can_refunded_amount == null ? '-' : formatNumber(scope.row.can_refunded_amount, true, 4) }}
+          {{ scope.row.c_time == null?'':formatDateTime(scope.row.c_time) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
+        prop="c_name"
+        label="更新人"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="u_time"
+        label="更新时间"
+        align="left"
+      >
+        <template v-slot="scope">
+          {{ scope.row.u_time == null?'':formatDateTime(scope.row.u_time) }}
         </template>
       </el-table-column>
     </el-table>
+
     <pagination
       ref="minusPaging"
       :total="dataJson.paging.total"
@@ -362,14 +566,12 @@ a {
 }
 
 .right {
-  position: absolute;
-  right: 10px;
+  float: right;
   margin-right: 10px;
 }
 
 .left {
-  position: absolute;
-  left: 10px;
+  float: left;
   margin-left: 10px;
 }
 
@@ -409,21 +611,21 @@ br {
 
 <script>
 import {
-  deleteApi,
-  exportApi,
-  getListApi
+  getListByAprefundApi,
+  getListSumApi
 } from '@/api/40_business/ap/ap'
-import constants_para from '@/common/constants/constants_para'
-import Pagination from '@/components/Pagination'
+import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin'
-import permission from '@/directive/permission/index.js' // 权限判断指令
+import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
-import SelectDict from '@/components/00_dict/select/SelectDict'
+import SelectDict from '@/components/00_dict/select/SelectDict.vue'
+import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
+import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 
 export default {
-  components: { Pagination, SelectDict },
+  components: { Pagination, SelectDict, SelectCpSupplier, SelectSeCustomer },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -449,6 +651,10 @@ export default {
         searchForm: {
           code: '',
           plan_code: '',
+          supplier_name: '',
+          supplier_id: '',
+          purchaser_name: '',
+          purchaser_id: '',
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
@@ -465,7 +671,14 @@ export default {
         sumData: {
           actual_count: 0,
           actual_weight: 0,
-          sync_error_count: 0
+          sync_error_count: 0,
+          // 合计数据 - 使用学习代码的数据结构
+          payable_amount_total: 0,
+          paid_amount_total: 0,
+          paying_amount_total: 0,
+          unpay_amount_total: 0,
+          refunded_amount_total: 0,
+          stoppay_amount_total: 0
         },
         customerComboList: [],
         // 单条数据 json的，初始化原始数据
@@ -533,7 +746,9 @@ export default {
         // loading 状态
         loading: true,
         tableHeight: this.setUIheight(),
-        duration: 4000
+        duration: 4000,
+        isSupplierDisabled: false,
+        isPurchaserDisabled: false
       },
       // vue-tour组件
       tourOption: {
@@ -563,6 +778,14 @@ export default {
     }
   },
   computed: {
+    // 控制供应商是否禁用
+    isSupplierDisabled () {
+      return this.settings.isSupplierDisabled
+    },
+    // 控制主体企业是否禁用
+    isPurchaserDisabled () {
+      return this.settings.isPurchaserDisabled
+    }
   },
   // 监听器
   watch: {
@@ -600,11 +823,36 @@ export default {
   methods: {
     // 初始化页面
     init (parm) {
+      // 处理传入的data参数
+      this.handleInitData()
+
       this.setWatch()
+      // 将props.data参数合并到searchForm中，保留原有的pageCondition等结构
+      if (this.data) {
+        Object.assign(this.dataJson.searchForm, deepCopy(this.data))
+      }
       // 初始化查询
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+    },
+    // 处理传入的data参数
+    handleInitData () {
+      if (this.data) {
+        // 如果存在supplier_id，供应商控件不可用，并且设置
+        if (this.data.supplier_id) {
+          this.settings.isSupplierDisabled = true
+          this.dataJson.searchForm.supplier_name = this.data.supplier_name
+          this.dataJson.searchForm.supplier_id = this.data.supplier_id
+        }
+
+        // 如果存在purchaser_id，主体企业控件不可用，并且设置
+        if (this.data.purchaser_id) {
+          this.settings.isPurchaserDisabled = true
+          this.dataJson.searchForm.purchaser_name = this.data.purchaser_name
+          this.dataJson.searchForm.purchaser_id = this.data.purchaser_id
+        }
+      }
     },
     setWatch () {},
     unWatch () {
@@ -653,17 +901,50 @@ export default {
       this.dataJson.searchForm.pageCondition.size = this.dataJson.paging.size
       // 查询逻辑
       this.settings.loading = true
-      getListApi(this.dataJson.searchForm).then(response => {
+      getListByAprefundApi(this.dataJson.searchForm).then(response => {
         this.dataJson.listData = response.data.records
         this.dataJson.paging = response.data
         this.dataJson.paging.records = {}
       }).finally(() => {
         this.settings.loading = false
       })
+      // 查询合计信息
+      getListSumApi(this.dataJson.searchForm).then(response => {
+        if (response.data !== null) {
+          this.dataJson.sumData = response.data
+        } else {
+          this.dataJson.sumData.payable_amount_total = 0
+          this.dataJson.sumData.paid_amount_total = 0
+          this.dataJson.sumData.paying_amount_total = 0
+          this.dataJson.sumData.unpay_amount_total = 0
+          this.dataJson.sumData.refunded_amount_total = 0
+          this.dataJson.sumData.stoppay_amount_total = 0
+        }
+      }).finally(() => {
+        this.settings.loading = false
+      })
     },
     // 重置查询区域
     doResetSearch () {
+      // 保存从data中传递的供应商和主体企业信息
+      const preservedSupplierName = this.data && this.data.supplier_id ? this.data.supplier_name : ''
+      const preservedSupplierId = this.data && this.data.supplier_id ? this.data.supplier_id : ''
+      const preservedPurchaserName = this.data && this.data.purchaser_id ? this.data.purchaser_name : ''
+      const preservedPurchaserId = this.data && this.data.purchaser_id ? this.data.purchaser_id : ''
+
       this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+
+      // 如果存在supplier_id，重置后不复原supplier相关信息
+      if (this.data && this.data.supplier_id) {
+        this.dataJson.searchForm.supplier_name = preservedSupplierName
+        this.dataJson.searchForm.supplier_id = preservedSupplierId
+      }
+
+      // 如果存在purchaser_id，重置后不复原purchaser相关信息
+      if (this.data && this.data.purchaser_id) {
+        this.dataJson.searchForm.purchaser_name = preservedPurchaserName
+        this.dataJson.searchForm.purchaser_id = preservedPurchaserId
+      }
     },
     // 获取row-key
     getRowKeys (row) {
@@ -673,221 +954,8 @@ export default {
     handleSelectionChange (val) {
       this.dataJson.multipleSelection = val
     },
-    // 点击按钮 更新
-    handleUpdate () {
-      const _data = deepCopy(this.dataJson.currentJson)
-      if (_data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      const operate_tab_data = {
-        operate_tab_info: { show: true, name: '修改采购合同' },
-        canEdit: true,
-        editStatus: constants_para.STATUS_UPDATE,
-        data: _data
-      }
-
-      this.$emit('emitUpdate', operate_tab_data)
-    },
-    // 点击按钮 新增
-    handleNew () {
-      const operate_tab_data = {
-        operate_tab_info: { show: true, name: '新增采购合同' },
-        canEdit: true,
-        editStatus: constants_para.STATUS_INSERT
-      }
-      this.$emit('emitNew', operate_tab_data)
-    },
-    // 点击按钮 查看
-    handleView () {
-      const _data = deepCopy(this.dataJson.currentJson)
-      if (_data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-
-      // 状态 0-3显示新增审批流 4-5显示作废审批流
-      if (_data.status === '4' || _data.status === '5') {
-        _data.bpm_instance_code = _data.bpm_cancel_instance_code
-      }
-
-      const operate_tab_data = {
-        operate_tab_info: { show: true, name: '查看采购合同' },
-        canEdit: true,
-        editStatus: constants_para.STATUS_VIEW,
-        data: _data
-      }
-      this.$emit('emitView', operate_tab_data)
-    },
-    // 点击按钮 查看
-    handlePrint () {
-      const _data = deepCopy(this.dataJson.currentJson)
-      if (_data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popPrint.dialogVisible = true
-      this.popPrint.data = _data
-    },
-    handleCurrentChange (row) {
-      this.dataJson.currentJson = deepCopy(row) // copy obj
-      this.dataJson.currentJson.index = this.getRowIndex(row)
-
-      if (this.dataJson.currentJson.id !== undefined) {
-        this.settings.btnStatus.showView = true
-        this.settings.btnStatus.showPrint = true
-
-        // 待审批和驳回状态，修改，删除按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_ZERO ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_THREE) {
-          this.settings.btnStatus.showUpdate = true
-          this.settings.btnStatus.showDel = true
-        } else {
-          this.settings.btnStatus.showUpdate = false
-          this.settings.btnStatus.showDel = false
-        }
-
-        // 审批
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_ONE ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_FOUR
-        ) {
-          this.settings.btnStatus.showApprove = true
-        } else {
-          this.settings.btnStatus.showApprove = false
-        }
-
-        // 作废
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_TWO) {
-          this.settings.btnStatus.showCancel = true
-        } else {
-          this.settings.btnStatus.showCancel = false
-        }
-
-        // 中止付款
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_AP_STATUS_TWO) {
-          if (this.dataJson.currentJson.pay_status === constants_dict.DICT_B_AP_PAY_STATUS_ZERO ||
-            this.dataJson.currentJson.pay_status === constants_dict.DICT_B_AP_PAY_STATUS_ONE
-          ) {
-            this.settings.btnStatus.showStopPush = true
-            this.settings.btnStatus.showPush = true
-          } else {
-            this.settings.btnStatus.showStopPush = false
-            this.settings.btnStatus.showPush = false
-          }
-        } else {
-          this.settings.btnStatus.showStopPush = false
-          this.settings.btnStatus.showPush = false
-        }
-      } else {
-        this.settings.btnStatus.showCancel = false
-        this.settings.btnStatus.showUpdate = false
-        this.settings.btnStatus.showDel = false
-        this.settings.btnStatus.showApprove = false
-        this.settings.btnStatus.showPush = false
-        this.settings.btnStatus.showPrint = false
-        this.settings.btnStatus.showStopPush = false
-      }
-
-      // 设置dialog的返回
-      this.$store.dispatch('popUpSearchDialog/selectedDataJson', deepCopy(row))
-    },
-    // 审批按钮
-    handleApprove () {
-      const _data = deepCopy(this.dataJson.currentJson)
-      if (_data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-
-      _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_AP
-
-      // 状态 0-3显示新增审批流 4-5显示作废审批流
-      if (_data.status === '4' || _data.status === '5') {
-        _data.bpm_instance_code = _data.bpm_cancel_instance_code
-      }
-
-      const operate_tab_data = {
-        operate_tab_info: { show: true, name: '采购合同审批' },
-        canEdit: true,
-        editStatus: constants_para.STATUS_AUDIT,
-        data: _data,
-        enableCancel: true // 撤销按钮显示
-      }
-      this.$emit('emitApprove', operate_tab_data)
-    },
-    // 删除按钮
-    handleDel () {
-      this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
-      }).then(() => {
-        this.handleDelOk()
-      }).catch(action => {
-        // 右上角X
-        if (action !== 'close') {
-          // 当前页所选择的数据导出
-          // this.handleExportSelectionData()
-        }
-      })
-    },
-    // 作废弹窗
-    handleCancel () {
-      this.popCancel.dialogVisible = true
-      this.popCancel.data = this.dataJson.currentJson
-    },
-    // 中止弹窗
-    handleStopCancel () {
-      this.popStop.dialogVisible = true
-      this.popStop.data = this.dataJson.currentJson
-    },
-    handleDelOk () {
-      // 设置到table中绑定的json数据源
-      this.settings.loading = true
-      // 开始删除
-      deleteApi({ id: this.dataJson.currentJson.id }).then((_data) => {
-        this.$notify({
-          title: '删除成功',
-          message: _data.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.popCancel.dialogVisible = false
-        this.getDataList()
-      }, (_error) => {
-        this.$notify({
-          title: '删除失败',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-        this.closeLoading()
-      })
-    },
-    handleTabsClick (tab, event) {
-      if (this.dataJson.searchForm.active_tabs_index === tab.index) {
-        return
-      }
-      switch (tab.index) {
-        case '1':
-          this.dataJson.searchForm.type = '1'
-          break
-        case '2':
-          this.dataJson.searchForm.type = '2'
-          break
-        case '3':
-          this.dataJson.searchForm.type = '3'
-          break
-        default:
-          this.dataJson.searchForm.type = ''
-          break
-      }
-
-      this.dataJson.searchForm.active_tabs_index = tab.index
-      this.getDataList()
-    },
     getClass (index, length) {
-      if (index === 1) {
+      if (length === 1) {
         return 'merge_cells0 cell'
       } else if (index === 0) {
         return 'merge_cells1 cell'
@@ -896,22 +964,6 @@ export default {
       } else {
         return 'merge_cells2 cell'
       }
-    },
-    // 下推
-    handlePush () {
-      this.popPush.data = deepCopy(this.dataJson.currentJson)
-      if (this.popPush.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popPush.editStatus = constants_para.STATUS_UPDATE
-      this.popPush.dialogVisible = true
-    },
-    /**
-     * 打印弹窗关闭
-     */
-    handlePrintCancel () {
-      this.popPrint.dialogVisible = false
     },
     /**
      * 打印弹窗关闭
@@ -965,31 +1017,7 @@ export default {
         this.handleExportSelectionData()
       }
     },
-    // 部分数据导出
-    handleExportSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
-      })
-      const searchData = { ids: selectionJson }
-      // 开始导出
-      exportApi(searchData).then(response => {
-        this.settings.loading = false
-      })
-    },
     // 全部数据导出
-    handleExportAllData () {
-      // loading
-      this.settings.loading = true
-      // 开始导出
-      exportApi(this.dataJson.searchForm).then(response => {
-        this.settings.loading = false
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
     tableCellClassName ({ row, column, rowIndex, columnIndex }) {
       if (column.property === 'validate_vehicle' && row.validate_vehicle !== '1') {
         return 'warning-cell'
@@ -1003,6 +1031,48 @@ export default {
     // 中止付款弹窗关闭
     handleCloseDialogStopOk (val) {
       this.popStop.dialogVisible = false
+    },
+    // 获取审批状态文本
+    getApprovalStatusText (row) {
+      if (!row.next_approve_name) {
+        return row.next_approve_name || ''
+      }
+
+      // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
+      if (row.status === constants_dict.DICT_B_AP_STATUS_ONE || row.status === constants_dict.DICT_B_AP_STATUS_FOUR) {
+        return `待用户${row.next_approve_name}审批`
+      }
+
+      // 其他状态直接显示next_approve_name
+      return row.next_approve_name
+    },
+    handleCurrentChange (row) {
+      // 设置dialog的返回
+      this.$store.dispatch('popUpSearchDialog/selectedDataJson', deepCopy(row))
+    },
+    // 供应商选择回调
+    handleSupplierReturnDataName (val) {
+      if (val) {
+        // 正常选择供应商的情况
+        this.dataJson.searchForm.supplier_name = val.name
+        this.dataJson.searchForm.supplier_id = val.id
+      } else {
+        // 取消或清空的情况
+        this.dataJson.searchForm.supplier_name = ''
+        this.dataJson.searchForm.supplier_id = ''
+      }
+    },
+    // 客户选择回调
+    handleCustomerReturnDataName (val) {
+      if (val) {
+        // 正常选择客户的情况
+        this.dataJson.searchForm.purchaser_name = val.name
+        this.dataJson.searchForm.purchaser_id = val.id
+      } else {
+        // 取消或清空的情况
+        this.dataJson.searchForm.purchaser_name = ''
+        this.dataJson.searchForm.purchaser_id = ''
+      }
     }
   }
 }

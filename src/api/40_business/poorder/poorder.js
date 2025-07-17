@@ -166,3 +166,25 @@ export function getListForSettlementSumApi (query) {
     data: query
   })
 }
+
+/**
+ * 查询逻辑 - 为应付退款提供数据
+ */
+export function getListByAprefundApi (query) {
+  return request({
+    url: '/api/v1/poorder/pagelist/byaprefund',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 查询逻辑 - 为应付退款提供汇总数据
+ */
+export function querySumByAprefund (query) {
+  return request({
+    url: '/api/v1/poorder/sum/aprefund',
+    method: 'post',
+    data: query
+  })
+}

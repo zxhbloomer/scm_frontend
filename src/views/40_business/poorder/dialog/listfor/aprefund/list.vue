@@ -108,23 +108,22 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="false"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="settings.tableHeight"
+      columns_index_key="false"
       stripe
       border
       fit
       highlight-current-row
       :default-sort="{prop: 'u_time', order: 'descending'}"
       style="width: 100%"
-      :cell-class-name="tableCellClassName"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
+      @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
-      @current-change="handleCurrentChange"
     >
       <el-table-column
         v-if="settings.exportModel"
@@ -143,8 +142,8 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="code"
-        label="应付账款编号"
+        prop="project_code"
+        label="项目编号"
         align="left"
       />
       <el-table-column
@@ -152,8 +151,55 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
+        prop="po_contract_code"
+        label="合同编号"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
         prop="type_name"
-        label="业务类型"
+        label="合同类型"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
+        prop="code"
+        label="订单编号"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="status_name"
+        label="状态"
+        align="left"
+      />
+      <el-table-column
+        :auto-fit="true"
+        min-width="150"
+        prop="next_approve_name"
+        label="审批情况"
+        align="left"
+      >
+        <template v-slot="scope">
+          {{ getApprovalStatusText(scope.row) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="supplier_name"
+        label="供应商"
         align="left"
       />
       <el-table-column
@@ -162,7 +208,16 @@
         :auto-fit="true"
         min-width="120"
         prop="purchaser_name"
-        label="主体企业（付款方）"
+        label="主体企业"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="execution_progress"
+        label="执行进度"
         align="left"
       />
       <el-table-column
@@ -170,80 +225,220 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="supplier_name"
-        label="供应商（收款方）"
+        prop="delivery_date"
+        label="交货日期"
         align="left"
       />
       <el-table-column
-        label="关联合同"
-        align="center"
-        :merge-group="true"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="delivery_type_name"
+        label="运输方式"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="settle_type_name"
+        label="结算方式"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        min-width="130"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        prop="bill_type_name"
+        label="结算单据类型"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="120"
+        prop="payment_type_name"
+        label="付款方式"
+        align="left"
+      />
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="order_amount_sum"
+        label="订单总金额"
+        align="right"
       >
-        <el-table-column
-          :merge-cells="true"
-          min-width="120"
-          label="合同号"
-        >
-          <template v-slot="scope">
-            <div
-              v-for="(item, index) in scope.row.poOrderListData"
-              :key="index"
-              :class="getClass(index, scope.row.poOrderListData.length)"
-            > {{ item.po_contract_code ==null?'-':item.po_contract_code }}
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          :merge-cells="true"
-          min-width="100"
-          label="订单号"
-          align="left"
-        >
-          <template v-slot="scope">
-            <div
-              v-for="(item, index) in scope.row.poOrderListData"
-              :key="index"
-              :class="getClass(index, scope.row.poOrderListData.length)"
-            > {{ item.po_order_code }}
-            </div>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          :merge-cells="true"
-          min-width="130"
-          label="商品"
-          align="left"
-        >
-          <template v-slot="scope">
-            <div
-              v-for="(item, index) in scope.row.poOrderListData"
-              :key="index"
-              :class="getClass(index, scope.row.poOrderListData.length)"
-            > {{ item.po_goods == null ? '-' : item.po_goods }}
-            </div>
-          </template>
-        </el-table-column>
-
+        <template v-slot="scope">
+          {{ scope.row.order_amount_sum == null ? '' : formatCurrency(scope.row.order_amount_sum, true) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="qty_total"
+        label="采购数量（吨）"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.qty_total == null ? '' : formatNumber(scope.row.qty_total, true, 4) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="in_qty"
+        label="入库数量（吨）"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.in_qty == null ? '' : formatNumber(scope.row.in_qty, true, 4) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="settled_qty"
+        label="已结算数量（吨）"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.settled_qty == null ? '' : formatNumber(scope.row.settled_qty, true, 4) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="canceled_in_qty"
+        label="已作废入库数量（吨）"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.canceled_in_qty == null ? '' : formatNumber(scope.row.canceled_in_qty, true, 4) }}
+        </template>
       </el-table-column>
 
       <el-table-column
-        label="付款信息"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="tax_amount_sum"
+        label="税额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.tax_amount_sum == null ? '' : formatCurrency(scope.row.tax_amount_sum, true) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="settled_price"
+        label="结算金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.settled_price == null ? '' : formatCurrency(scope.row.settled_price, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="advance_pay_total"
+        label="预付款金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.advance_pay_total == null ? '' : formatCurrency(scope.row.advance_pay_total, true) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="150"
+        prop="paid_total"
+        label="累计实付"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.paid_total == null ? '' : formatCurrency(scope.row.paid_total, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="150"
+        prop="advance_amount_total"
+        label="可下推预付款金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.advance_amount_total == null ? '' : formatCurrency(scope.row.advance_amount_total, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="150"
+        prop="advance_refund_amount_total"
+        label="预付款可退金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.advance_refund_amount_total == null ? '' : formatCurrency(scope.row.advance_refund_amount_total, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        min-width="150"
+        prop="already_invoice_price"
+        label="已开票金额"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.already_invoice_price == null ? '' : formatCurrency(scope.row.already_invoice_price, true) }}
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        label="商品"
         align="center"
         :merge-group="true"
       >
         <el-table-column
           :merge-cells="true"
           min-width="120"
-          label="付款账户"
+          label="商品编码"
         >
           <template v-slot="scope">
             <div
-              v-for="(item, index) in scope.row.bankListData"
+              v-for="(item, index) in scope.row.detailListData"
               :key="index"
-              :class="getClass(index, scope.row.bankListData.length)"
-            > {{ item.account_number }}
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.sku_code }}
             </div>
           </template>
         </el-table-column>
@@ -251,15 +446,15 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="付款类型"
+          label="商品名称"
           align="left"
         >
           <template v-slot="scope">
             <div
-              v-for="(item, index) in scope.row.bankListData"
+              v-for="(item, index) in scope.row.detailListData"
               :key="index"
-              :class="getClass(index, scope.row.bankListData.length)"
-            > {{ item.accounts_purpose_type_name }}
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.goods_name }}
             </div>
           </template>
         </el-table-column>
@@ -267,15 +462,47 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="付款金额"
+          label="规格"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.sku_name }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="产地"
+          align="left"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.origin }}
+            </div>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="数量"
           align="right"
         >
           <template v-slot="scope">
             <div
-              v-for="(item, index) in scope.row.bankListData"
+              v-for="(item, index) in scope.row.detailListData"
               :key="index"
-              :class="getClass(index, scope.row.bankListData.length)"
-            > {{ item.payable_amount == null ? '' : formatCurrency(item.payable_amount, true) }}
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.qty == null ? '' : formatNumber(item.qty, true, 4) }}
             </div>
           </template>
         </el-table-column>
@@ -283,110 +510,35 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="备注"
-          align="left"
+          label="单价"
+          align="right"
         >
           <template v-slot="scope">
             <div
-              v-for="(item, index) in scope.row.bankListData"
+              v-for="(item, index) in scope.row.detailListData"
               :key="index"
-              :class="getClass(index, scope.row.bankListData.length)"
-            > {{ item.remark }}
+              :class="getClass(index, scope.row.detailListData.length)"
+            >{{ item.price == null ? '' : formatCurrency(item.price, true) }}
             </div>
           </template>
         </el-table-column>
 
+        <el-table-column
+          :merge-cells="true"
+          min-width="100"
+          label="税率"
+          align="right"
+        >
+          <template v-slot="scope">
+            <div
+              v-for="(item, index) in scope.row.detailListData"
+              :key="index"
+              :class="getClass(index, scope.row.detailListData.length)"
+            > {{ item.tax_rate }} %
+            </div>
+          </template>
+        </el-table-column>
       </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="pay_status_name"
-        label="付款状态"
-        align="left"
-      />
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="payable_amount"
-        label="申请付款总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.payable_amount == null ? '-' : formatCurrency(scope.row.payable_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="paid_amount"
-        label="已付款总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.paid_amount == null ? '-' : formatCurrency(scope.row.paid_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="paying_amount"
-        label="付款中总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.paying_amount == null ? '-' : formatCurrency(scope.row.paying_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="unpay_amount"
-        label="未付款总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.unpay_amount == null ? '-' : formatCurrency(scope.row.unpay_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="refunded_amount"
-        label="退款总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.refunded_amount == null ? '-' : formatCurrency(scope.row.refunded_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="remark"
-        label="备注"
-        align="left"
-      />
 
       <el-table-column
         sortable="custom"
@@ -415,7 +567,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -612,8 +764,8 @@ br {
 <script>
 import {
   getListByAprefundApi,
-  getListSumApi
-} from '@/api/40_business/ap/ap'
+  querySumByAprefund
+} from '@/api/40_business/poorder/poorder'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -909,7 +1061,7 @@ export default {
         this.settings.loading = false
       })
       // 查询合计信息
-      getListSumApi(this.dataJson.searchForm).then(response => {
+      querySumByAprefund(this.dataJson.searchForm).then(response => {
         if (response.data !== null) {
           this.dataJson.sumData = response.data
         } else {

@@ -144,3 +144,25 @@ export function getApRefundApi (query) {
     data: query
   })
 }
+
+/**
+ * 查询逻辑
+ */
+export function getListByAprefundApi (query) {
+  return request({
+    url: '/api/v1/ap/pagelist/byaprefund',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 查询逻辑
+ */
+export function querySumByAprefund (query) {
+  return request({
+    url: '/api/v1/ap/sum/aprefund',
+    method: 'post',
+    data: query
+  })
+}

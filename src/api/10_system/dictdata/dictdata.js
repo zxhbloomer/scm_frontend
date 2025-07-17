@@ -147,3 +147,16 @@ export function sortDownApi (data) {
     data
   })
 }
+
+/**
+ * 获取字典数据表信息
+ * @param data
+ * @returns {AxiosPromise}
+ */
+export function selectListDataApi (data) {
+  return request({
+    url: '/api/v1/dictdata/list/data',
+    method: 'post',
+    data
+  })
+}

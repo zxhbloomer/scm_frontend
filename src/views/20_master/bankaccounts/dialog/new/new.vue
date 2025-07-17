@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <div class="edit-container">
+    <div>
       <el-form
         ref="dataSubmitForm"
         :rules="settings.rules"
@@ -154,6 +154,27 @@
             </el-form-item>
           </el-descriptions-item>
 
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >
+              账户类型
+            </div>
+            <el-form-item
+              prop="bank_type"
+              label-width="0"
+            >
+              <el-checkbox-group v-model="dataJson.tempJson.bank_type">
+                <el-checkbox-button
+                  v-for="item in dataJson.bankTypeOptions"
+                  :key="item.code"
+                  :label="item.code"
+                >{{ item.name }}</el-checkbox-button>
+              </el-checkbox-group>
+            </el-form-item>
+          </el-descriptions-item>
+
         </el-descriptions>
 
       </el-form>
@@ -248,6 +269,7 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { insertApi, validateApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import EnterpriseDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -317,6 +339,8 @@ export default {
       },
       dataJson: {
         unitConvertList: [],
+        // 账户类型选项
+        bankTypeOptions: [],
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
@@ -324,7 +348,8 @@ export default {
           is_default: 0,
           link_status: 0,
           currency: 'RMB',
-          enterprise_name: ''
+          enterprise_name: '',
+          bank_type: []
         },
         // 单条数据 json
         tempJson: {},
@@ -377,6 +402,15 @@ export default {
           ],
           name: [
             { required: true, message: '请填写账户名称', trigger: 'change' }
+          ],
+          bank_type: [
+            {
+              required: true,
+              type: 'array',
+              min: 1,
+              message: '请至少选择一个账户类型',
+              trigger: 'change'
+            }
           ]
         }
       }
@@ -404,6 +438,7 @@ export default {
       this.initButtonShowStatus()
       this.initButtonDisabledStatus()
       this.initInsertModel()
+      this.loadBankTypes()
 
       // 初始化watch
       this.setWatch()
@@ -432,6 +467,21 @@ export default {
       // 控件focus
       this.$nextTick(() => {
         // this.$refs['refFocusOne'].focus()
+      })
+    },
+    // 加载银行账户类型选项
+    loadBankTypes () {
+      const params = {
+        dictTypeCode: constants_dict.DICT_M_BANK_TYPE,
+        is_del: 0
+      }
+      selectListDataApi(params).then(response => {
+        this.dataJson.bankTypeOptions = response.data.map(item => ({
+          code: item.dict_value,
+          name: item.label
+        }))
+      }).catch(error => {
+        console.error('获取银行账户类型失败:', error)
       })
     },
     // 设置监听器

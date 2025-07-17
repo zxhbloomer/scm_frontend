@@ -110,16 +110,16 @@
           style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="申请付款总金额">
-            {{ dataJson.tempJson.payable_amount == null ? '-': formatCurrency(dataJson.tempJson.payable_amount, true) }}
+            {{ dataJson.tempJson.payable_amount_total == null ? '-': formatCurrency(dataJson.tempJson.payable_amount_total, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="已付款总金额">
-            {{ dataJson.tempJson.paid_amount == null? '-': formatCurrency(dataJson.tempJson.paid_amount, true) }}
+            {{ dataJson.tempJson.paid_amount_total == null? '-': formatCurrency(dataJson.tempJson.paid_amount_total, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="未付款总金额">
-            {{ dataJson.tempJson.unpay_amount == null? '-': formatCurrency(dataJson.tempJson.unpay_amount, true) }}
+            {{ dataJson.tempJson.unpay_amount_total == null? '-': formatCurrency(dataJson.tempJson.unpay_amount_total, true) }}
           </el-descriptions-item>
           <el-descriptions-item label="付款中金额">
-            {{ dataJson.tempJson.paying_amount == null? '-': formatCurrency(dataJson.tempJson.paying_amount, true) }}
+            {{ dataJson.tempJson.paying_amount_total == null? '-': formatCurrency(dataJson.tempJson.paying_amount_total, true) }}
           </el-descriptions-item>
         </el-descriptions>
 
@@ -135,7 +135,6 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px)"
-          height="200px"
         >
           <el-table-column
             type="index"
@@ -144,16 +143,17 @@
           />
           <el-table-column
             show-overflow-tooltip
-            min-width="130"
-            prop="po_contract_code"
-            label="合同编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_order_code"
-            label="订单编号"
-          />
+            min-width="140"
+            label="合同编号｜订单编号"
+            align="left"
+          >
+            <template v-slot="scope">
+              <div style="line-height: 1.2;">
+                <div>{{ scope.row.po_contract_code || '-' }}</div>
+                <div>{{ scope.row.po_order_code || '-' }}</div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column
             show-overflow-tooltip
             min-width="130"
@@ -253,7 +253,6 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px)"
-          height="200px"
         >
           <el-table-column
             type="index"
@@ -302,7 +301,7 @@
             min-width="150"
             prop="remark"
             label="备注"
-            align="right"
+            align="left"
           />
         </el-table>
 

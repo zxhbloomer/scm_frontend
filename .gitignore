@@ -27,3 +27,15 @@ yarn.lock
 .DS_Store
 package-lock.json
 
+# Local development configurations
+.claude/settings.local.json
+.cursor/mcp.json
+
+# Python virtual environments
+.venv/
+myvenv/
+
+# Local commands and scripts
+.claude/commands/
+.claude/fix_claude_session.py
+

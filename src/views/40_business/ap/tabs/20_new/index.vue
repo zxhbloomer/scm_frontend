@@ -115,17 +115,17 @@
 
           <el-descriptions-item label="付款附件材料" span="3">
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handlePaymentUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handlePaymentUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <el-col
                 v-for="(item, i) in dataJson.payment_doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="3"
               >
                 <previewCard
@@ -567,12 +567,12 @@ import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getTypeApi, insertApi, validateApi } from '@/api/40_business/ap/ap'
-import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import { getApi } from '@/api/40_business/poorder/poorder'
 import poorder_list_template from '@/views/40_business/poorder/dialog/listfor/inplan/index.vue'
 import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
-import { getPurchaser } from '@/api/20_master/bankaccounts/bankaccounts'
+import { getPurchaserApi } from '@/api/20_master/bankaccounts/bankaccounts'
 import RadioDict from '@/components/00_dict/redio/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import previewCard from '@/components/50_preview_card/preview_card.vue'
@@ -861,8 +861,26 @@ export default {
   },
   // 监听器
   watch: {
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在查询，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    },
     'dataJson.tempJson.poOrderListData': {
-      handler: 'calculatePayableAmounts',
+      handler (newVal, oldVal) {
+        this.calculatePayableAmounts()
+        // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
+        if (!newVal || newVal.length === 0) {
+          this.settings.btnPoOrderDisabledStatus.disabledDelete = true
+        }
+      },
       deep: true,
       immediate: true
     },
@@ -883,9 +901,6 @@ export default {
     // 描绘完成
     this.init()
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化处理
     async init () {
@@ -900,8 +915,6 @@ export default {
       this.initTypeList()
       // 初始化款项类型
       this.initBankTypeList()
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     // 初始化跳过指引状态
@@ -948,81 +961,6 @@ export default {
       // 如果取消勾选跳过指引，立即启动tour
       if (!value) {
         this.$tours['myTour'].start()
-      }
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-
-      // 监听采购订单列表数据变化，触发金额计算
-      this.watch.unwatch_poOrderListData = this.$watch(
-        'dataJson.tempJson.poOrderListData',
-        (newVal, oldVal) => {
-          // 当采购订单列表数据发生变化时，重新计算申请付款金额
-          this.calculatePayableAmounts()
-          console.log('采购订单列表数据发生变化，重新计算金额')
-
-          // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnPoOrderDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-
-      // 监听银行账户列表数据变化
-      this.watch.unwatch_bankListData = this.$watch(
-        'dataJson.tempJson.bankListData',
-        (newVal, oldVal) => {
-          // 当银行账户列表数据发生变化时的处理逻辑
-          console.log('银行账户列表数据发生变化', newVal)
-          // 可以在这里添加银行账户数据变化时的业务逻辑
-          if (newVal && newVal.length > 0) {
-            console.log('可用银行账户数量:', newVal.length)
-          }
-
-          // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnBankDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-
-      // 监听主体企业变化，控制按钮状态
-      this.watch.unwatch_purchaser = this.$watch(
-        () => ({
-          purchaser_id: this.dataJson.tempJson.purchaser_id,
-          purchaser_name: this.dataJson.tempJson.purchaser_name
-        }),
-        (newVal, oldVal) => {
-          // 当主体企业有数据时，更新按钮状态
-          this.updateButtonStatusByPurchaser()
-        },
-        { deep: true, immediate: true }
-      )
-    },
-    unWatch () {
-      // 取消监听器
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_poOrderListData) {
-        this.watch.unwatch_poOrderListData()
-      }
-      if (this.watch.unwatch_bankListData) {
-        this.watch.unwatch_bankListData()
-      }
-      if (this.watch.unwatch_purchaser) {
-        this.watch.unwatch_purchaser()
       }
     },
     // 计算申请付款相关金额
@@ -1368,7 +1306,20 @@ export default {
     },
     // 查询主体企业是否有默认账户
     queryPurchaserBankAccount (id) {
-      getPurchaser({ enterprise_id: id })
+      // 根据业务类型设置bank_type参数
+      let bankType = []
+      if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE) {
+        // 应付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_ONE]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO) {
+        // 预付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_TWO]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_THREE) {
+        // 其他支出
+        bankType = [constants_dict.DICT_M_BANK_TYPE_THREE]
+      }
+
+      getPurchaserApi({ enterprise_id: id, bank_type: bankType })
         .then(_data => {
           if (_data.data != null) {
             // 检查是否已经存在相同的银行账户（根据bank_accounts_id判断）
@@ -1429,10 +1380,24 @@ export default {
     },
     // 企业银行账户弹窗
     handleBankInsert () {
+      // 根据业务类型设置bank_type数组
+      let bankType = []
+      if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE) {
+        // 应付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_ONE]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO) {
+        // 预付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_TWO]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_THREE) {
+        // 其他支出
+        bankType = [constants_dict.DICT_M_BANK_TYPE_THREE]
+      }
+
       this.popSettingsData.bankDialog.data = {
         accounts_purpose_type: constants_dict.DICT_M_BANK_TYPE_ONE,
         enterprise_code: this.dataJson.tempJson.purchaser_code,
-        enterprise_name: this.dataJson.tempJson.purchaser_name
+        enterprise_name: this.dataJson.tempJson.purchaser_name,
+        bank_type: bankType
       }
 
       this.popSettingsData.bankDialog.visible = true
@@ -1653,7 +1618,11 @@ export default {
     // 初始化款项类型
     initBankTypeList () {
       const _this = this
-      getBankTypeApi().then(response => {
+      const params = {
+        dictTypeCode: constants_dict.DICT_M_BANK_TYPE,
+        is_del: 0
+      }
+      selectListDataApi(params).then(response => {
         if (response.data.length !== 0) {
           _this.dataJson.bankTypeListDate = _this.dataJson.bankTypeListDate.concat(response.data)
         } else {
@@ -1709,15 +1678,7 @@ export default {
     },
     handleBankListDataChange (newVal, oldVal) {
       // 当银行账户列表数据发生变化时的处理逻辑
-      console.log('银行账户列表数据发生变化', newVal)
-
-      // 重新计算付款总金额
       this.calculateDetailPayableAmount()
-
-      // 可以在这里添加银行账户数据变化时的业务逻辑
-      if (newVal && newVal.length > 0) {
-        console.log('可用银行账户数量:', newVal.length)
-      }
 
       // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
       if (!newVal || newVal.length === 0) {

@@ -270,7 +270,6 @@
         <span class="count-title">已付款总金额：</span><span class="count-data">{{ dataJson.sumData.paid_amount_total == null ? 0 : formatCurrency(dataJson.sumData.paid_amount_total,true) }}</span>
         <span class="count-title">付款中总金额：</span><span class="count-data">{{ dataJson.sumData.paying_amount_total == null ? 0 : formatCurrency(dataJson.sumData.paying_amount_total,true) }}</span>
         <span class="count-title">未付款总金额：</span><span class="count-data">{{ dataJson.sumData.unpay_amount_total == null ? 0 : formatCurrency(dataJson.sumData.unpay_amount_total,true) }}</span>
-        <span class="count-title">退款总金额：</span><span class="count-data">{{ dataJson.sumData.refunded_amount_total == null ? 0 : formatCurrency(dataJson.sumData.refunded_amount_total,true) }}</span>
         <span class="count-title">中止总金额：</span><span class="count-data">{{ dataJson.sumData.stoppay_amount_total == null ? 0 : formatCurrency(dataJson.sumData.stoppay_amount_total,true) }}</span>
       </div>
     </div>
@@ -544,12 +543,12 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="refunded_amount"
-        label="退款总金额"
+        prop="stoppay_amount"
+        label="付款中止总金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.refunded_amount == null ? '-' : formatCurrency(scope.row.refunded_amount, true) }}
+          {{ scope.row.stoppay_amount == null ? '-' : formatCurrency(scope.row.stoppay_amount, true) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -1171,7 +1170,6 @@ export default {
           this.dataJson.sumData.paid_amount_total = 0
           this.dataJson.sumData.paying_amount_total = 0
           this.dataJson.sumData.unpay_amount_total = 0
-          this.dataJson.sumData.refunded_amount_total = 0
           this.dataJson.sumData.stoppay_amount_total = 0
         }
       }).finally(() => {

@@ -192,7 +192,6 @@ export default {
       this.dataJson.tab.show3 = false
     },
     handleInsert (_data) {
-      // debugger
       // 查看放货指令单
 
       this.dataJson.tab = _data.operate_tab_info

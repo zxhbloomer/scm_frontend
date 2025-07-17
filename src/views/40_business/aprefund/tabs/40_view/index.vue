@@ -6,11 +6,10 @@
       <el-col
         :span="18"
         style="padding-right:8px;"
-        class="1111111"
         :style="{ height: divLeftHeight + 'px',overflowY:'auto' } "
       >
         <!--左边业务数据区域-->
-        <!--采购合同-->
+        <!--应付退款详情-->
         <left_data_template
           :data="data"
           :edit-status="editStatus"
@@ -18,7 +17,6 @@
       </el-col>
       <el-col
         :span="6"
-        class="22222222"
         :style="{ height: divRightHeight + 'px',overflowY:'auto' } "
       >
         <!--右边审批流程数据-->
@@ -39,6 +37,7 @@
             :edit-status="editStatus"
             :enable-cancel="enableCancel"
             @emitReturn="handleReturn"
+            @emitBack="handleBack"
           />
         </div>
       </el-col>
@@ -100,6 +99,10 @@ export default {
     }
   },
   methods: {
+    // 处理返回事件 - 通过返回按钮返回
+    handleBack () {
+      this.$emit('emitReturn')
+    },
     handleReturn () {
       this.$emit('emitReturn')
     }

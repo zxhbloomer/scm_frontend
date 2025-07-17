@@ -7,7 +7,7 @@
       v-loading="settings.loading"
       element-loading-text="拼命加载中，请稍后..."
       element-loading-background="rgba(255, 255, 255, 0.7)"
-      title="中止弹出框"
+      title="作废理由"
       :visible="visible"
       :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
       :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
@@ -27,7 +27,7 @@
       >
         <br>
         <el-alert
-          title="中止理由"
+          title="作废理由"
           type="info"
           :closable="false"
         />
@@ -46,19 +46,19 @@
               slot="label"
               class="required-mark"
             >
-              中止理由
+              作废理由
             </div>
             <el-form-item
-              prop="stop_reason"
+              prop="cancel_reason"
               label-width="0"
             >
               <el-input
                 ref="refFocusOne"
-                v-model.trim="dataJson.tempJson.stop_reason"
+                v-model.trim="dataJson.tempJson.cancel_reason"
                 type="textarea"
                 clearable
                 show-word-limit
-                :placeholder="isPlaceholderShow('请输入')"
+                placeholder="请输入"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -72,7 +72,7 @@
                 />
               </el-col>
               <el-col
-                v-for="(item, i) in dataJson.stop_data"
+                v-for="(item, i) in dataJson.cancel_data"
                 :key="i"
                 :offset="3"
                 :span="5"
@@ -96,17 +96,27 @@
         <el-divider />
         <el-button
           plain
+          type="primary"
+          :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert "
+          @click="startProcess()"
+        >确定</el-button>
+        <el-button
+          plain
           :disabled="settings.loading"
           @click="handleCancel()"
         >取消</el-button>
-        <el-button
-          plain
-          type="primary"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert "
-          @click="doInsert()"
-        >确定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 审批流程设置：选择人 -->
+    <bpm-dialog
+      v-if="popSettingsData.sponsorDialog.visible"
+      :visible="popSettingsData.sponsorDialog.visible"
+      :form-data="popSettingsData.sponsorDialog.form_data"
+      :serial-type="popSettingsData.sponsorDialog.serial_type"
+      @closeMeCancel="handleBpmDialogCancel"
+      @closeMeOk="handleBpmDialogOk"
+    />
   </div>
 </template>
 
@@ -145,14 +155,17 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import deepCopy from 'deep-copy'
-import { suspendPayment } from '@/api/40_business/ap/ap'
-import { EventBus } from '@/common/eventbus/eventbus'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+import deepCopy from 'deep-copy'
+import { cancelApi } from '@/api/40_business/aprefund/aprefund'
+import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
+import constants_dict from '@/common/constants/constants_dict'
+import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
-  components: { PreviewCard, SimpleUploadMutilFile },
+  components: { BpmDialog, SimpleUploadMutilFile, PreviewCard },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -186,18 +199,34 @@ export default {
       watch: {
         unwatch_tempJson: null
       },
-      popSettingsData: {},
+      popSettingsData: {
+        // 审批流程
+        sponsorDialog: {
+          // 弹出框显示参数
+          visible: false,
+          form_data: { },
+          serial_type: constants_dict.DICT_B_AP_REFUND_CANCEL,
+          // 点击确定以后返回的值
+          selectedDataJson: {
+            id: null
+          },
+          // 审批流程
+          initial_process: null,
+          // 自选用户
+          process_users: {}
+        }
+      },
       dataJson: {
         // 附件
-        stop_data: [],
-        stop_file: [],
-        stop_files: [],
+        cancel_data: [],
+        cancel_file: [],
+        cancel_files: [],
 
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
           remark: '',
-          stop_files: []
+          cancel_files: []
         },
         // 单条数据 json
         tempJson: null,
@@ -220,10 +249,9 @@ export default {
         },
         // 以下为pop的内容：数据弹出框
         selection: [],
-        dialogStatus: this.dialogStatus,
         // pop的check内容
         rules: {
-          stop_reason: [
+          cancel_reason: [
             { required: true, message: '请输入作废理由', trigger: 'change' }
           ]
         }
@@ -233,13 +261,6 @@ export default {
   computed: {
     listenVisible () {
       return this.visible
-    },
-    isViewModel () {
-      if (this.settings.dialogStatus === this.PARAMETERS.STATUS_VIEW) {
-        return true
-      } else {
-        return false
-      }
     }
   },
   // 监听器
@@ -283,14 +304,6 @@ export default {
         this
       ).settings.btnDisabledStatus
     },
-    // Placeholder设置
-    isPlaceholderShow (val) {
-      if (this.isViewModel) {
-        return ''
-      } else {
-        return val
-      }
-    },
     // 设置监听器
     setWatch () {
       this.unWatch()
@@ -317,18 +330,18 @@ export default {
     // 其他附件上传成功
     handleOtherUploadFileSuccess (res) {
       res.response.data.timestamp = res.response.timestamp
-      this.dataJson.stop_data.push(res.response.data)
-      this.dataJson.stop_file.push(res.response.data.url)
-      this.dataJson.tempJson.stop_files = this.dataJson.stop_data
+      this.dataJson.cancel_data.push(res.response.data)
+      this.dataJson.cancel_file.push(res.response.data.url)
+      this.dataJson.tempJson.cancel_files = this.dataJson.cancel_data
     },
     // 其他附件附件文件
     removeOtherFile (val) {
       // 获取下标
       const _index = this.dataJson.cancel_file.lastIndexOf(val)
       // 从数组中移除
-      this.dataJson.stop_data.splice(_index, 1)
-      this.dataJson.stop_file.splice(_index, 1)
-      this.dataJson.tempJson.stop_files = this.dataJson.stop_data
+      this.dataJson.cancel_data.splice(_index, 1)
+      this.dataJson.cancel_file.splice(_index, 1)
+      this.dataJson.tempJson.cancel_files = this.dataJson.cancel_data
     },
     // 上传失败
     handleFileError () {
@@ -347,36 +360,75 @@ export default {
         if (valid) {
           const tempData = deepCopy(this.dataJson.tempJson)
           tempData.id = this.data.id
+          // 审批流程启动数据
+          tempData.initial_process = this.popSettingsData.sponsorDialog.initial_process // 流程
+          tempData.form_data = this.popSettingsData.sponsorDialog.form_data // 表单参数
+          tempData.process_users = this.popSettingsData.sponsorDialog.process_users // 自选用户
 
           this.settings.loading = true
-          suspendPayment(tempData).then(
-            _data => {
+          cancelApi(tempData)
+            .then(
+              _data => {
+                this.closeLoading()
+                // 通知兄弟组件，新增数据更新
+                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_REFUND_UPDATE_OK, _data.data)
+                this.$notify({
+                  title: '作废成功',
+                  message: _data.data.message,
+                  type: 'success',
+                  duration: this.settings.duration
+                })
+              },
+              _error => {
+                this.closeLoading()
+                this.$notify({
+                  title: '作废失败',
+                  message: _error.error.message,
+                  type: 'error',
+                  duration: this.settings.duration
+                })
+              }
+            )
+            .finally(() => {
+              this.$emit('closeMeOk', tempData)
               this.closeLoading()
-              // 通知兄弟组件，新增数据更新
-              EventBus.$emit(this.EMITS.EMIT_MST_B_AP_UPDATE_OK, _data.data)
-              this.$notify({
-                title: '新增成功',
-                message: _data.data.message,
-                type: 'success',
-                duration: this.settings.duration
-              })
-            }, _error => {
-              this.closeLoading()
-              this.$notify({
-                title: '新增失败',
-                message: _error.error.message,
-                type: 'error',
-                duration: this.settings.duration
-              })
-            }
-          ).finally(() => {
-            this.$emit('closeMeOk', tempData)
-            this.closeLoading()
-          })
+            })
         } else {
           this.closeLoading()
         }
       })
+    },
+    // 获取审批流程
+    startProcess () {
+      // 校验是否存在审批流程
+      getFlowProcessApi({ 'serial_type': this.popSettingsData.sponsorDialog.serial_type })
+        .then((rsp) => {
+          if (rsp.data === null) {
+            this.$message.error('未找到审批流程，请联系管理员')
+          } else {
+            // 流程参数
+            this.popSettingsData.sponsorDialog.form_data = { }
+            // 启动审批流弹窗
+            this.popSettingsData.sponsorDialog.visible = true
+          }
+        }).catch((err) => {
+          this.closeLoading()
+          this.$message.error(err)
+        }).finally(() => {
+          this.closeLoading()
+        })
+    },
+    // 取消
+    handleBpmDialogCancel () {
+      this.popSettingsData.sponsorDialog.visible = false
+      this.closeLoading()
+    },
+    // 审批流确定
+    handleBpmDialogOk (data) {
+      this.popSettingsData.sponsorDialog.initial_process = data.processData
+      this.popSettingsData.sponsorDialog.process_users = data.process_users
+      this.popSettingsData.sponsorDialog.visible = false
+      this.doInsert()
     }
   }
 }

@@ -41,24 +41,6 @@
             {{ dataJson.tempJson.po_code }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="主体企业（付款方）">
-            <el-form-item
-              prop="purchaser_name"
-              label-width="0"
-            >
-              {{ dataJson.tempJson.buyer_enterprise_name }}
-            </el-form-item>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="供应商（收款方）">
-            <el-form-item
-              prop="supplier_name"
-              label-width="0"
-            >
-              {{ dataJson.tempJson.supplier_enterprise_name }}
-            </el-form-item>
-          </el-descriptions-item>
-
           <el-descriptions-item label="退款状态">
             未退款
           </el-descriptions-item>
@@ -104,123 +86,113 @@
         </el-descriptions>
         <br>
 
-        <br>
-        <el-table
-          ref="multipleTable"
-          v-loading="settings.loading"
-          :data="dataJson.tempJson.poOrderListData"
-          :element-loading-text="'正在拼命加载中...'"
-          element-loading-background="rgba(255, 255, 255, 0.5)"
-          stripe
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="twoLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
           border
-          fit
-          highlight-current-row
-          :default-sort="{prop: 'u_time', order: 'descending'}"
-          style="width: 100%"
-          @row-click="handlePoOrderRowClick"
-          @current-change="handlePoOrderCurrentChange"
+          style="padding-right: 10px;padding-left: 10px;"
         >
-          <el-table-column
-            type="index"
-            width="45"
-            label="No"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_contract_code"
-            label="合同编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_code"
-            label="订单编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_goods"
-            label="商品"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="advance_pay_amount"
-            label="预付款金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.advance_pay_amount == null? '': formatNumber(scope.row.advance_pay_amount, true,4) }}
-            </template>
-          </el-table-column>
-
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refunded_amount"
-            label="已退金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refunded_amount == null? '': formatNumber(scope.row.refunded_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refunding_amount"
-            label="退款中金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.refunding_amount == null? '': formatNumber(scope.row.refunding_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="can_refunded_amount"
-            label="可退金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              {{ scope.row.can_refunded_amount == null? '': formatNumber(scope.row.can_refunded_amount, true,4) }}
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refund_amount"
-            label="本次申请金额"
-            align="right"
-          >
-            <template v-slot="scope">
+          <el-descriptions-item label="合同编号">
+            {{ dataJson.tempJson.po_contract_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="订单编号">
+            {{ dataJson.tempJson.po_order_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ dataJson.tempJson.type_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="主体企业（付款方）">
+            {{ dataJson.tempJson.purchaser_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="供应商（收款方）">
+            {{ dataJson.tempJson.supplier_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="商品名称">
+            {{ dataJson.tempJson.goods_name_concact || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="预付款已付金额">
+            {{ (dataJson.tempJson.advance_paid_total && dataJson.tempJson.advance_cancelpay_total) ? formatNumber(dataJson.tempJson.advance_paid_total - dataJson.tempJson.advance_cancelpay_total, true, 4) : '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="可退金额">
+            {{ dataJson.tempJson.advance_refund_amount_total == null ? '-' : formatNumber(dataJson.tempJson.advance_refund_amount_total, true, 4) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="本次申请退款金额">
+            <div style="display: flex; align-items: center;">
               <numeric
-                v-model="scope.row.refund_amount"
+                v-model="dataJson.tempJson.order_amount"
                 :decimal-places="2"
-                :currency-symbol="''"
-                @change.native="handlePoOrderCheck(scope.row)"
+                :currency-symbol="'¥'"
+                style="flex: 1; margin-right: 8px;"
+                @change.native="handlePoOrderCheck(dataJson.tempJson)"
               />
-            </template>
-          </el-table-column>
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="remark"
-            label="备注"
-            align="right"
-          >
-            <template v-slot="scope">
-              <el-input
-                v-model="scope.row.remark"
-                clearable
-                :maxlength="dataJson.inputSettings.maxLength.remark"
-              />
-            </template>
-          </el-table-column>
+              <el-button
+                size="mini"
+                type="primary"
+                @click="handleFullAmountApply(dataJson.tempJson)"
+              >
+                全额申请
+              </el-button>
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+        <br>
 
-        </el-table>
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="twoLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
+        >
+          <el-descriptions-item label="合同编号">
+            {{ dataJson.tempJson.po_contract_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="订单编号">
+            {{ dataJson.tempJson.po_order_code || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ dataJson.tempJson.type_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="主体企业（付款方）">
+            {{ dataJson.tempJson.purchaser_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="供应商（收款方）">
+            {{ dataJson.tempJson.supplier_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="商品名称">
+            {{ dataJson.tempJson.goods_name_concact || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="预付款已付金额">
+            {{ (dataJson.tempJson.advance_paid_total || 0) - (dataJson.tempJson.advance_cancelpay_total || 0) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="可退金额">
+            {{ dataJson.tempJson.advance_refund_amount_total || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="本次申请退款金额">
+            <div style="display: flex; align-items: center;">
+              <numeric
+                v-model="dataJson.tempJson.order_amount"
+                :decimal-places="2"
+                :currency-symbol="'¥'"
+                style="flex: 1; margin-right: 8px;"
+                @change.native="handlePoOrderCheck()"
+              />
+              <el-button
+                size="mini"
+                type="primary"
+                @click="handleFullAmountApply()"
+              >
+                全额申请
+              </el-button>
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+        <br>
 
         <br>
         <el-alert
@@ -246,84 +218,48 @@
         <br>
 
         <br>
-        <el-table
-          ref="multipleTable"
-          v-loading="settings.loading"
-          :data="dataJson.tempJson.bankListData"
-          :element-loading-text="'正在拼命加载中...'"
-          element-loading-background="rgba(255, 255, 255, 0.5)"
-          stripe
-          border
-          fit
-          highlight-current-row
-          :default-sort="{prop: 'u_time', order: 'descending'}"
-          style="width: 100%"
-          @row-click="handleBankRowClick"
-          @current-change="handleBankCurrentChange"
-        >
-          <el-table-column
-            type="index"
-            width="45"
-            label="No"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="name"
-            label="付款账户名"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="bank_name"
-            label="开户行"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="account_number"
-            label="银行账号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="accounts_purpose_type_name"
-            label="类型"
-            align="right"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="refund_amount"
-            label="付款金额"
-            align="right"
-          >
-            <template v-slot="scope">
-              <numeric
-                v-model="scope.row.refund_amount"
-                :decimal-places="2"
-                :currency-symbol="''"
-                @change.native="handleBankCheck(scope.row)"
-              />
-            </template>
-          </el-table-column>
 
-          <el-table-column
-            show-overflow-tooltip
-            min-width="150"
-            prop="remark"
-            label="备注"
-            align="right"
-          >
-            <template v-slot="scope">
-              <el-input
-                v-model="scope.row.remark"
-                clearable
-                :maxlength="dataJson.inputSettings.maxLength.remark"
+        <el-descriptions
+          title=""
+          :column="3"
+          :label-style="twoLabelStyle"
+          :content-style="contentStyle"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
+        >
+          <el-descriptions-item label="付款账户名">
+            {{ dataJson.tempJson.name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="开户行">
+            {{ dataJson.tempJson.bank_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="银行账户">
+            {{ dataJson.tempJson.account_number || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            {{ dataJson.tempJson.bank_type_name || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="付款金额" span="2">
+            <div style="display: flex; align-items: center;">
+              <numeric
+                v-model="dataJson.tempJson.order_amount"
+                :decimal-places="2"
+                :currency-symbol="'¥'"
+                style="flex: 1; margin-right: 8px;"
+                @change.native="handleBankRefundAmountChange(dataJson.tempJson)"
               />
-            </template>
-          </el-table-column>
-        </el-table>
+              <el-button
+                size="mini"
+                type="primary"
+                @click="handleBankFullAmountApply(dataJson.tempJson)"
+              >
+                全额退款
+              </el-button>
+            </div>
+          </el-descriptions-item>
+        </el-descriptions>
+        <br>
 
       </el-form>
     </div>
@@ -405,10 +341,10 @@ import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getTypeApi, insertApi, validateApi, getApRefundApi } from '@/api/40_business/ap/ap'
-import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
-import { getPurchaser } from '@/api/20_master/bankaccounts/bankaccounts'
+import { getPurchaserApi } from '@/api/20_master/bankaccounts/bankaccounts'
 export default {
   directives: { elDragDialog },
   components: { numeric, bank_list_template, BpmDialog },
@@ -497,9 +433,29 @@ export default {
           buyer_enterprise_name: null,
           po_code: null,
           po_contract_code: null,
+          po_order_code: null,
           project_code: null,
           supplier_enterprise_code: null,
           supplier_enterprise_name: null,
+          // 新增字段
+          po_contract_id: null,
+          po_order_id: null,
+          type_name: null,
+          purchaser_name: null,
+          purchaser_id: null,
+          supplier_name: null,
+          supplier_id: null,
+          goods_name_concact: null,
+          advance_paid_total: null,
+          advance_cancelpay_total: null,
+          advance_refund_amount_total: null,
+          order_amount: 0,
+          // 银行账户信息
+          name: null,
+          bank_name: null,
+          account_number: null,
+          bank_type_name: null,
+          refund_amount: null,
           // 采购订单
           poOrderListData: [],
           // 银行账户
@@ -663,7 +619,7 @@ export default {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
                 // 通知兄弟组件，新增数据更新
-                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_NEW_OK, _data.data)
+                EventBus.$emit(this.EMITS.EMIT_MST_B_AP_REFUND_NEW_OK, _data.data)
                 this.$notify({
                   title: '新增成功',
                   message: _data.data.message,
@@ -705,54 +661,58 @@ export default {
       this.dataJson.currentJson.index = this.getPoOrderRowIndex(row)
       this.settings.btnPoOrderDisabledStatus.disabledDelete = false
     },
-    // 查询主体企业是否有默认账户
-    queryPurchaserBankAccount (buyer_enterprise_code) {
-      getPurchaser({ enterprise_code: buyer_enterprise_code })
-        .then(_data => {
-          if (_data.data != null) {
-            const tempData = {}
-            tempData.name = _data.data.name
-            tempData.bank_name = _data.data.bank_name
-            tempData.account_number = _data.data.account_number
-            tempData.bank_accounts_id = _data.data.id
-            tempData.bank_accounts_code = _data.data.code
-
-            // todo 款项类型
-            for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
-              const element = this.dataJson.bankTypeListDate[i]
-              if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE &&
-                element.code === constants_dict.DICT_M_BANK_TYPE_THREE) {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
-                element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              } else {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              }
-            }
-
-            tempData.refunded_amount = 0
-            tempData.refund_amount = 0
-            tempData.remark = null
-            this.dataJson.tempJson.bankListData = []
-            this.dataJson.tempJson.bankListData.push(tempData)
-          } else {
-            // 控制按钮
-            this.settings.btnBankDisabledStatus.disabledInsert = false
-          }
-        }).catch(_error => {
-          this.showErrorMsg(_error.error.message)
-        })
+    // 全额申请按钮处理
+    handleFullAmountApply () {
+      this.dataJson.tempJson.order_amount = this.dataJson.tempJson.advance_refund_amount_total || 0
+      // 同步更新银行退款金额
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.order_amount
     },
+
+    // 处理订单金额变化
+    handlePoOrderCheck (val) {
+      // 申请金额不能大于可退金额
+      if (this.dataJson.tempJson.advance_refund_amount_total && this.dataJson.tempJson.order_amount > this.dataJson.tempJson.advance_refund_amount_total) {
+        this.dataJson.tempJson.order_amount = 0
+        this.showErrorMsg('申请金额不能大于可退金额')
+        return
+      }
+
+      // 同步更新银行退款金额
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.order_amount
+
+      // 计算相关金额
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.order_amount
+      this.dataJson.tempJson.detail_payable_amount = this.dataJson.tempJson.order_amount
+      this.dataJson.tempJson.not_pay_amount = this.dataJson.tempJson.order_amount
+    },
+
+    // 处理银行退款金额变化
+    handleBankRefundAmountChange () {
+      // 退款金额不能大于可退金额
+      if (this.dataJson.tempJson.advance_refund_amount_total && this.dataJson.tempJson.refund_amount > this.dataJson.tempJson.advance_refund_amount_total) {
+        this.dataJson.tempJson.refund_amount = 0
+        this.showErrorMsg('退款金额不能大于可退金额')
+        return
+      }
+
+      // 同步更新订单申请金额
+      this.dataJson.tempJson.order_amount = this.dataJson.tempJson.refund_amount
+
+      // 计算相关金额
+      this.dataJson.tempJson.detail_payable_amount = this.dataJson.tempJson.refund_amount
+      this.dataJson.tempJson.not_pay_amount = this.dataJson.tempJson.refund_amount
+    },
+
+    // 全额退款按钮处理
+    handleBankFullAmountApply () {
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.advance_refund_amount_total || 0
+      // 同步更新订单申请金额
+      this.dataJson.tempJson.order_amount = this.dataJson.tempJson.refund_amount
+      // 计算相关金额
+      this.dataJson.tempJson.detail_payable_amount = this.dataJson.tempJson.refund_amount
+      this.dataJson.tempJson.not_pay_amount = this.dataJson.tempJson.refund_amount
+    },
+
     // 企业银行账户弹窗
     handleBankInsert () {
       this.popSettingsData.bankDialog.data = {
@@ -930,75 +890,186 @@ export default {
     },
     // 初始化款项类型
     initBankTypeList () {
-      const _this = this
-      getBankTypeApi().then(response => {
+      const params = {
+        dictTypeCode: constants_dict.DICT_M_BANK_TYPE,
+        is_del: 0
+      }
+      selectListDataApi(params).then(response => {
         if (response.data.length !== 0) {
-          _this.dataJson.bankTypeListDate = _this.dataJson.bankTypeListDate.concat(response.data)
+          this.dataJson.bankTypeListDate = response.data.map(item => ({
+            id: item.id,
+            code: item.dict_value,
+            name: item.label
+          }))
         } else {
           this.showErrorMsg('款项类型数据为空,请联系管理员')
         }
+      }).catch(error => {
+        console.error('获取款项类型失败:', error)
+        this.showErrorMsg('获取款项类型失败')
       })
     },
+    // 数据整合方法
+    integrateDialogData (dialogData) {
+      // 根据需求进行数据整合
+      this.dataJson.tempJson.po_contract_id = dialogData.po_contract_id
+      this.dataJson.tempJson.po_contract_code = dialogData.po_contract_code
+      this.dataJson.tempJson.po_order_id = dialogData.po_order_id
+      this.dataJson.tempJson.po_order_code = dialogData.po_order_code
+      this.dataJson.tempJson.type_name = dialogData.type_name
+      this.dataJson.tempJson.purchaser_name = dialogData.purchaser_name
+      this.dataJson.tempJson.purchaser_id = dialogData.purchaser_id
+      this.dataJson.tempJson.supplier_name = dialogData.supplier_name
+      this.dataJson.tempJson.supplier_id = dialogData.supplier_id
+      this.dataJson.tempJson.advance_paid_total = dialogData.advance_paid_total
+      this.dataJson.tempJson.advance_cancelpay_total = dialogData.advance_cancelpay_total
+      this.dataJson.tempJson.advance_refund_amount_total = dialogData.advance_refund_amount_total
+      this.dataJson.tempJson.order_amount = 0
+
+      // 处理商品名称（转换成按逗号分割的一条数据）
+      if (dialogData.list && dialogData.list.length > 0) {
+        const goodsNames = dialogData.list.map(item => item.goods_name).filter(name => name)
+        this.dataJson.tempJson.goods_name_concact = goodsNames.join(',')
+      }
+
+      // 调用 getPurchaserApi
+      if (dialogData.purchaser_id) {
+        this.queryPurchaserBankAccount(dialogData.purchaser_id)
+      }
+    },
+
+    // 查询主体企业是否有默认账户
+    queryPurchaserBankAccount (id) {
+      // 根据业务类型设置bank_type参数
+      let bankType = []
+      if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE) {
+        // 应付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_ONE]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO) {
+        // 预付款
+        bankType = [constants_dict.DICT_M_BANK_TYPE_TWO]
+      } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_THREE) {
+        // 其他支出
+        bankType = [constants_dict.DICT_M_BANK_TYPE_THREE]
+      }
+
+      getPurchaserApi({ enterprise_id: id, bank_type: bankType })
+        .then(_data => {
+          if (_data.data != null) {
+            // 设置银行账户信息
+            this.dataJson.tempJson.name = _data.data.name
+            this.dataJson.tempJson.bank_name = _data.data.bank_name
+            this.dataJson.tempJson.account_number = _data.data.account_number
+            this.dataJson.tempJson.refund_amount = 0
+
+            // 设置银行类型名称
+            for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
+              const element = this.dataJson.bankTypeListDate[i]
+              if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
+                element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
+                this.dataJson.tempJson.bank_type_name = element.name
+                break
+              } else {
+                this.dataJson.tempJson.bank_type_name = element.name
+                break
+              }
+            }
+          }
+        }).catch(_error => {
+          this.showErrorMsg(_error.error.message || '获取默认银行账户失败')
+        })
+    },
+
     // 初始化页面数据
     initData () {
-      getApRefundApi({ po_code: this.data.code }).then(response => {
-        if (response.data != null) {
-          // 基本信息（添加关联单号）
-          this.dataJson.tempJson.po_code = response.data.code
-          this.dataJson.tempJson.project_code = response.data.project_code
-          this.dataJson.tempJson.po_contract_code = response.data.po_contract_code
-          this.dataJson.tempJson.supplier_enterprise_code = response.data.supplier_enterprise_code
-          this.dataJson.tempJson.supplier_enterprise_name = response.data.supplier_enterprise_name
-          this.dataJson.tempJson.supplier_enterprise_version = response.data.supplier_enterprise_version
-          this.dataJson.tempJson.buyer_enterprise_code = response.data.buyer_enterprise_code
-          this.dataJson.tempJson.buyer_enterprise_name = response.data.buyer_enterprise_name
-          this.dataJson.tempJson.buyer_enterprise_version = response.data.buyer_enterprise_version
-          this.dataJson.tempJson.type = constants_dict.DICT_B_AP_TYPE_TWO
-          this.dataJson.tempJson.refunded_amount = response.data.refunded_amount
-          this.dataJson.tempJson.refunding_amount = response.data.refunding_amount
+      // 使用传入的数据进行数据整合
+      if (this.data) {
+        const popupData = this.data
 
-          // 设置到table中绑定的业务单据信息
-          const tempData = {}
-          tempData.ap_id = response.data.id
-          tempData.ap_code = response.data.code
-          tempData.po_code = response.data.po_code
-          tempData.project_code = response.data.project_code
-          tempData.po_contract_code = response.data.po_contract_code
-          tempData.po_goods = response.data.poOrderListData[0].po_goods
-          tempData.advance_pay_amount = response.data.payable_amount
-          tempData.can_refunded_amount = response.data.can_refunded_amount
-          tempData.refunded_amount = response.data.refunded_amount
-          tempData.refunding_amount = response.data.refunding_amount
-          tempData.refund_amount = 0
-          tempData.remark = null
+        // 数据整合逻辑
+        this.dataJson.tempJson.po_contract_id = popupData.po_contract_id
+        this.dataJson.tempJson.po_contract_code = popupData.po_contract_code
+        this.dataJson.tempJson.po_order_id = popupData.po_order_id
+        this.dataJson.tempJson.po_order_code = popupData.po_order_code
+        this.dataJson.tempJson.type_name = popupData.type_name
+        this.dataJson.tempJson.purchaser_name = popupData.purchaser_name
+        this.dataJson.tempJson.purchaser_id = popupData.purchaser_id
+        this.dataJson.tempJson.supplier_name = popupData.supplier_name
+        this.dataJson.tempJson.supplier_id = popupData.supplier_id
+        this.dataJson.tempJson.advance_paid_total = popupData.advance_paid_total
+        this.dataJson.tempJson.advance_cancelpay_total = popupData.advance_cancelpay_total
+        this.dataJson.tempJson.advance_refund_amount_total = popupData.advance_refund_amount_total
+        this.dataJson.tempJson.order_amount = 0
 
-          this.dataJson.tempJson.poOrderListData.push(tempData)
-
-          // 查询主体企业是否有默认账户
-          this.queryPurchaserBankAccount(response.data.buyer_enterprise_code)
-        } else {
-          this.$emit('closeMeCancel')
-          this.showErrorMsg('不存在付款信息，无法下推预付退款')
+        // 商品名称转换：从 list.goods_name 转换成按逗号分割的一条数据
+        if (popupData.list && popupData.list.length > 0) {
+          const goodsNames = popupData.list.map(item => item.goods_name).filter(name => name)
+          this.dataJson.tempJson.goods_name_concact = goodsNames.join(',')
         }
-      })
+
+        // 调用 getPurchaserApi
+        if (popupData.purchaser_id) {
+          this.queryPurchaserBankAccount(popupData.purchaser_id)
+        }
+      } else {
+        // 原有逻辑保留作为备用
+        getApRefundApi({ po_code: this.data.code }).then(response => {
+          if (response.data != null) {
+            // 基本信息（添加关联单号）
+            this.dataJson.tempJson.po_code = response.data.code
+            this.dataJson.tempJson.project_code = response.data.project_code
+            this.dataJson.tempJson.po_contract_code = response.data.po_contract_code
+            this.dataJson.tempJson.supplier_enterprise_code = response.data.supplier_enterprise_code
+            this.dataJson.tempJson.supplier_enterprise_name = response.data.supplier_enterprise_name
+            this.dataJson.tempJson.supplier_enterprise_version = response.data.supplier_enterprise_version
+            this.dataJson.tempJson.buyer_enterprise_code = response.data.buyer_enterprise_code
+            this.dataJson.tempJson.buyer_enterprise_name = response.data.buyer_enterprise_name
+            this.dataJson.tempJson.buyer_enterprise_version = response.data.buyer_enterprise_version
+            this.dataJson.tempJson.type = constants_dict.DICT_B_AP_TYPE_TWO
+            this.dataJson.tempJson.refunded_amount = response.data.refunded_amount
+            this.dataJson.tempJson.refunding_amount = response.data.refunding_amount
+
+            // 设置到table中绑定的业务单据信息
+            const tempData = {}
+            tempData.ap_id = response.data.id
+            tempData.ap_code = response.data.code
+            tempData.po_code = response.data.po_code
+            tempData.project_code = response.data.project_code
+            tempData.po_contract_code = response.data.po_contract_code
+            tempData.po_goods = response.data.poOrderListData[0].po_goods
+            tempData.advance_pay_amount = response.data.payable_amount
+            tempData.can_refunded_amount = response.data.can_refunded_amount
+            tempData.refunded_amount = response.data.refunded_amount
+            tempData.refunding_amount = response.data.refunding_amount
+            tempData.refund_amount = 0
+            tempData.remark = null
+
+            this.dataJson.tempJson.poOrderListData.push(tempData)
+
+            // 查询主体企业是否有默认账户
+            this.queryPurchaserBankAccount(response.data.buyer_enterprise_code)
+          } else {
+            this.$emit('closeMeCancel')
+            this.showErrorMsg('不存在付款信息，无法下推预付退款')
+          }
+        })
+      }
     },
     // 申请金额填写
-    handlePoOrderCheck (val) {
-      // 申请金额不能大于可申请预付款金额
-      if (val.can_refunded_amount < val.refund_amount) {
-        val.refund_amount = null
-        this.showErrorMsg('申请金额不能大于可申请预付款金额')
+    handlePoOrderCheck () {
+      const orderAmount = parseFloat(this.dataJson.tempJson.order_amount) || 0
+      const maxRefundAmount = parseFloat(this.dataJson.tempJson.advance_refund_amount_total) || 0
+
+      // 申请金额不能大于可退金额
+      if (orderAmount > maxRefundAmount) {
+        this.dataJson.tempJson.order_amount = 0
+        this.showErrorMsg('申请金额不能大于可退金额')
+        return
       }
 
-      // 计算申请金额总金额
-      this.dataJson.tempJson.refund_amount = val.refund_amount
-      this.dataJson.tempJson.can_refund_amount = val.refund_amount
-
-      if (this.dataJson.tempJson.bankListData != null) {
-        this.dataJson.tempJson.bankListData[0].refund_amount = val.refund_amount
-        this.dataJson.tempJson.detail_payable_amount = val.refund_amount
-        this.dataJson.tempJson.not_pay_amount = val.refund_amount
-      }
+      // 同步更新银行退款金额
+      this.dataJson.tempJson.refund_amount = orderAmount
+      this.calculateRefundAmounts()
     },
     // 付款金额填写
     handleBankCheck (val) {
@@ -1058,6 +1129,34 @@ export default {
       } else {
         callback()
       }
+    },
+    // 全额申请方法
+    handleFullAmountApply () {
+      this.dataJson.tempJson.order_amount = this.dataJson.tempJson.advance_refund_amount_total || 0
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.order_amount
+      this.calculateRefundAmounts()
+    },
+    // 银行退款金额变化处理
+    handleBankRefundAmountChange () {
+      this.calculateRefundAmounts()
+    },
+    // 银行全额退款
+    handleBankFullAmountApply () {
+      this.dataJson.tempJson.refund_amount = this.dataJson.tempJson.order_amount || 0
+      this.calculateRefundAmounts()
+    },
+    // 计算退款相关金额
+    calculateRefundAmounts () {
+      const orderAmount = parseFloat(this.dataJson.tempJson.order_amount) || 0
+      const refundAmount = parseFloat(this.dataJson.tempJson.refund_amount) || 0
+
+      // 更新各种金额显示
+      this.dataJson.tempJson.refund_amount = orderAmount
+      this.dataJson.tempJson.not_pay_amount = orderAmount
+      this.dataJson.tempJson.detail_payable_amount = refundAmount
+
+      console.log('计算退款金额 - 本次申请金额:', orderAmount)
+      console.log('计算退款金额 - 退款总金额:', refundAmount)
     }
   }
 }

@@ -252,9 +252,7 @@ export default {
           this.dataJson.listData = []
         }
         const data = response.data.records
-        // debugger
         if (data && data.length) {
-          // debugger
           this.dataJson.listData.push(...data)
           // this.$store.commit('headNotice/UPDATE_ALARM_COUNT', response.data.total)
         }

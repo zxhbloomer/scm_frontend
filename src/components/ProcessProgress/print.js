@@ -1,73 +1,73 @@
-//将变量绑定打印模板，执行动态渲染
-export function bindVar(printTemplate, variable, domId) {
-  const varExp = /\${\w+}/gi;
-  //替换基础变量
-  const printDom = document.getElementById(domId);
-  console.log("printDom",printDom);
+// 将变量绑定打印模板，执行动态渲染
+export function bindVar (printTemplate, variable, domId) {
+  const varExp = /\${\w+}/gi
+  // 替换基础变量
+  const printDom = document.getElementById(domId)
+  console.log('printDom', printDom)
   printDom.innerHTML = printTemplate.replace(varExp, (mc) => {
-    return variable[mc.substring(2, mc.length - 1).trim()] || mc;
-  });
-  const tableDoms = printDom.getElementsByTagName('table');
-  //根据字段搜索所有表格，动态渲染表格
-  for (let td of tableDoms) {
-    //判断该表格存在于数据内
+    return variable[mc.substring(2, mc.length - 1).trim()] || mc
+  })
+  const tableDoms = printDom.getElementsByTagName('table')
+  // 根据字段搜索所有表格，动态渲染表格
+  for (const td of tableDoms) {
+    // 判断该表格存在于数据内
     if (Array.isArray(variable[td.className])) {
-      const tbody = td.children[0];
-      let tr = '';
+      const tbody = td.children[0]
+      let tr = ''
       if (tbody.children.length === 1) {
-        //可能是没有表头，就直接扫首行
-        tr = tbody.children[0].outerHTML;
+        // 可能是没有表头，就直接扫首行
+        tr = tbody.children[0].outerHTML
       } else {
-        //按最后一行来处理
-        tr = tbody.children[tbody.children.length - 1].outerHTML;
+        // 按最后一行来处理
+        tr = tbody.children[tbody.children.length - 1].outerHTML
       }
-      //判断有没有变量存在，没有就不处理
+      // 判断有没有变量存在，没有就不处理
       if (varExp.test(tr)) {
-        //行循环
-        let tbHtml = '',
-          thHtml = '';
+        // 行循环
+        let tbHtml = ''
+        let thHtml = '';
         (variable[td.className] || []).forEach((row) => {
           tbHtml += tr.replace(varExp, (mc) => {
-            return row[mc.substring(2, mc.length - 1).trim()] || mc;
-          });
-        });
-        //取表头部分
+            return row[mc.substring(2, mc.length - 1).trim()] || mc
+          })
+        })
+        // 取表头部分
         for (let i = 0; i < tbody.children.length - 1; i++) {
-          thHtml += tbody.children[i].outerHTML;
+          thHtml += tbody.children[i].outerHTML
         }
-        tbody.outerHTML = thHtml + tbHtml;
+        tbody.outerHTML = thHtml + tbHtml
       }
     }
   }
   printDom.innerHTML = printDom.innerHTML.replace(varExp, (mc) => {
-    //没有值的字段用空代替，这里可以自己选择
-    return '';
-  });
+    // 没有值的字段用空代替，这里可以自己选择
+    return ''
+  })
 }
 
-export function getVal(formData, forms, val) {
+export function getVal (formData, forms, val) {
   forms.forEach((item) => {
-    //表单值，表单配置，要解析成的值
-    decodeFieldVal(formData, item, val);
-  });
+    // 表单值，表单配置，要解析成的值
+    decodeFieldVal(formData, item, val)
+  })
 }
 
-function decodeFieldVal(formData, item, val) {
-  let value = '';
+function decodeFieldVal (formData, item, val) {
+  let value = ''
   switch (item.name) {
     case 'ModuleBlock':
     case 'SpanLayout':
-      getVal(formData, item.props.items, val);
-      break;
+      getVal(formData, item.props.items, val)
+      break
     case 'TableList':
       value = [];
       (formData[item.id] || []).forEach((row, i) => {
-        value.push({});
+        value.push({})
         item.props.columns.forEach((col) => {
-          decodeFieldVal(row, col, value[i]);
-        });
-      });
-      break;
+          decodeFieldVal(row, col, value[i])
+        })
+      })
+      break
     case 'SafetyMeasure':
       value = [];
       (formData[item.id].tableData || []).forEach((row, i) => {
@@ -75,46 +75,46 @@ function decodeFieldVal(formData, item, val) {
           number: row.number,
           securityMeasure: row.securityMeasure,
           isRelated: row.isRelated,
-          confirmPerson: row.confirmPerson,
-        });
-      });
-      break;
+          confirmPerson: row.confirmPerson
+        })
+      })
+      break
     case 'TimeRangePicker':
     case 'DateTimeRange':
-      const v = formData[item.id];
+      const v = formData[item.id]
       if (Array.isArray(v) && v.length > 1) {
-        value = v[0] + ' ~ ' + v[1];
+        value = v[0] + ' ~ ' + v[1]
       }
-      break;
+      break
     case 'DeptPicker':
     case 'UserPicker':
-      value = String((formData[item.id] || []).map((v) => v.name));
-      break;
+      value = String((formData[item.id] || []).map((v) => v.name))
+      break
     case 'MultipleSelect':
-      value = String(formData[item.id]);
-      break;
+      value = String(formData[item.id])
+      break
     case 'SignPanel':
       if (formData[item.id]) {
         value = `<img style="width: 150px; height: 100px; padding: 2px;" src="${
           formData[item.id]
-        }"/>`;
+        }"/>`
       }
-      break;
+      break
     case 'ImageUpload':
       formData[item.id].forEach((it) => {
         value += `<img style="width: 150px; height: 100px; padding: 2px;" src="${window.$vueApp.config.globalProperties.$getRes(
           it.url
-        )}"/>`;
-      });
-      break;
+        )}"/>`
+      })
+      break
     case 'FileUpload':
-      value = String((formData[item.id] || []).map((v) => v.name));
-      break;
+      value = String((formData[item.id] || []).map((v) => v.name))
+      break
     default:
-      value = formData[item.id];
-      break;
+      value = formData[item.id]
+      break
   }
-  val[item.id] = value;
+  val[item.id] = value
 }
 
 /* eslint-disable */

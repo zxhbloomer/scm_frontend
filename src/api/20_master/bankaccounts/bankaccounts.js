@@ -124,21 +124,21 @@ export function validateApi (data) {
 /**
  * 获取主体企业的默认银行账户
  */
-export function getPurchaser (query) {
+export function getPurchaserApi (query) {
   return request({
     url: '/api/v1/bank/accounts/get_purchaser',
     method: 'post',
     data: query
   })
 }
-
-/**
- * 获取款项类型
- */
-export function getBankTypeApi (query) {
-  return request({
-    url: '/api/v1/bank/accounts/get_bankType',
-    method: 'post',
-    data: query
-  })
-}
+//
+// /**
+//  * 获取款项类型
+//  */
+// export function getBankTypeApi (query) {
+//   return request({
+//     url: '/api/v1/bank/accounts/get_bankType',
+//     method: 'post',
+//     data: query
+//   })
+// }

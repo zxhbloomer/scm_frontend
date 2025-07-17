@@ -188,6 +188,14 @@ const EMIT_MST_B_AP_PAY_UPDATE_OK = 'global:mst:b_ap_pay:update:ok'
 const EMIT_MST_B_AP_PAY_BPM_OK = 'global:mst:b_ap_pay:bpm:ok'
 
 /**
+ * 退款管理，新增完成
+ * @type {string}
+ */
+const EMIT_MST_B_AP_REFUND_NEW_OK = 'global:mst:b_ap_refund:new:ok'
+const EMIT_MST_B_AP_REFUND_UPDATE_OK = 'global:mst:b_ap_refund:update:ok'
+const EMIT_MST_B_AP_REFUND_BPM_OK = 'global:mst:b_ap_refund:bpm:ok'
+
+/**
  * 入库计划管理，新增完成
  * @type {string}
  */
@@ -308,6 +316,10 @@ export default {
   EMIT_MST_B_AP_PAY_NEW_OK,
   EMIT_MST_B_AP_PAY_UPDATE_OK,
   EMIT_MST_B_AP_PAY_BPM_OK,
+
+  EMIT_MST_B_AP_REFUND_NEW_OK,
+  EMIT_MST_B_AP_REFUND_UPDATE_OK,
+  EMIT_MST_B_AP_REFUND_BPM_OK,
 
   EMIT_MST_B_IN_PLAN_NEW_OK,
   EMIT_MST_B_IN_PLAN_UPDATE_OK,

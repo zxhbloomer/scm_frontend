@@ -9,23 +9,37 @@
     :show-close="false"
     :append-to-body="true"
     :modal-append-to-body="true"
-    width="800px"
+    width="1300px"
     destroy-on-close
     top="5vh"
   >
-    <div>
-      <my-page
-        ref="dialogRef"
-        :data="data"
-        @closeMeCancel="handleDoCancel"
-      />
+    <my-page
+      ref="dialogRef"
+      :data="data"
+      @closeMeOk="handleDoOk"
+      @closeMeCancel="handleDoCancel"
+      @rowDbClick="handleRowDbClick"
+    />
+    <div
+      slot="footer"
+      class="dialog-footer"
+    >
+      <el-divider />
+      <el-button
+        plain
+        @click="handleDoCancel()"
+      >取消</el-button>
+      <el-button
+        :disabled="dataJson.settings.btnDisabledStatus.disabledOk"
+        @click="handleDoOk()"
+      >确定</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import myPage from './edit.vue'
+import myPage from './list.vue'
 import mixin from './mixin'
 
 export default {
@@ -90,9 +104,16 @@ export default {
     this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
   },
   methods: {
+    // 确定
+    handleDoOk () {
+      this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
+      this.$emit('closeMeOk')
+    },
+    handleRowDbClick (val) {
+      this.$emit('closeMeOk', this.$store.getters.selectedDataJson)
+    },
     // 取消
     handleDoCancel () {
-      // this.$emit('update:visible', false)
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
       this.$emit('closeMeCancel')
     }

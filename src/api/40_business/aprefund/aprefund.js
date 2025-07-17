@@ -12,6 +12,17 @@ export function getListApi (query) {
 }
 
 /**
+ * 查询统计合计
+ */
+export function getListSumApi (query) {
+  return request({
+    url: '/api/v1/ap/refund/sum',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
  * 获取企业类型
  */
 export function getTypeApi (query) {
@@ -58,9 +69,9 @@ export function validateApi (query) {
 /**
  * 获取详情
  */
-export function getDetailApi (query) {
+export function getApi (query) {
   return request({
-    url: '/api/v1/ap/refund/getdetail',
+    url: '/api/v1/ap/refund/get',
     method: 'post',
     data: query
   })
@@ -112,13 +123,3 @@ export function cancelApi (query) {
   })
 }
 
-/**
- * 中止付款
- */
-export function suspendPayment (query) {
-  return request({
-    url: '/api/v1/ap/suspend_payment',
-    method: 'post',
-    data: query
-  })
-}

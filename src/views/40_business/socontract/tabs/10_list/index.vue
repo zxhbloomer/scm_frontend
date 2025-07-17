@@ -526,7 +526,7 @@
         sortable="custom"
         :sort-orders="settings.sortOrders"
         min-width="150"
-        prop="advance_pay_rt_price"
+        prop="advance_refund_amount_total"
         label="预付款可退金额"
         align="right"
       >

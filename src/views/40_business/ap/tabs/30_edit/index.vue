@@ -147,16 +147,17 @@
           />
           <el-table-column
             show-overflow-tooltip
-            min-width="130"
-            prop="po_contract_code"
-            label="合同编号"
-          />
-          <el-table-column
-            show-overflow-tooltip
-            min-width="130"
-            prop="po_order_code"
-            label="订单编号"
-          />
+            min-width="140"
+            label="合同编号｜订单编号"
+            align="left"
+          >
+            <template v-slot="scope">
+              <div style="line-height: 1.2;">
+                <div>{{ scope.row.po_contract_code || '-' }}</div>
+                <div>{{ scope.row.po_order_code || '-' }}</div>
+              </div>
+            </template>
+          </el-table-column>
           <el-table-column
             show-overflow-tooltip
             min-width="130"
@@ -511,12 +512,12 @@ import constants_dict from '@/common/constants/constants_dict'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getBankTypeApi } from '@/api/20_master/bankaccounts/bankaccounts'
+import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import { getTypeApi, getApi, validateApi, updateApi } from '@/api/40_business/ap/ap'
 import poorder_list_template from '@/views/40_business/poorder/dialog/listfor/inplan/index.vue'
 import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
-import { getPurchaser } from '@/api/20_master/bankaccounts/bankaccounts'
+import { getPurchaserApi } from '@/api/20_master/bankaccounts/bankaccounts'
 
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -1232,7 +1233,7 @@ export default {
     },
     // 查询主体企业是否有默认账户
     queryPurchaserBankAccount (id) {
-      getPurchaser({ enterprise_id: id })
+      getPurchaserApi({ enterprise_id: id })
         .then(_data => {
           if (_data.data != null) {
             // 检查是否已经存在相同的银行账户
@@ -1512,7 +1513,11 @@ export default {
     // 初始化款项类型
     initBankTypeList () {
       const _this = this
-      getBankTypeApi().then(response => {
+      const params = {
+        dictTypeCode: constants_dict.DICT_M_BANK_TYPE,
+        is_del: 0
+      }
+      selectListDataApi(params).then(response => {
         if (response.data.length !== 0) {
           _this.dataJson.bankTypeListDate = _this.dataJson.bankTypeListDate.concat(response.data)
         } else {

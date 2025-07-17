@@ -1,8 +1,8 @@
 <template>
   <div>
-    <img v-if="config.name === 'SignPanel' && data" style="width: 100px; height: 50px" :src="data"/>
+    <img v-if="config.name === 'SignPanel' && data" style="width: 100px; height: 50px" :src="data">
     <template v-else-if="config.name === 'ImageUpload'">
-      <img style="width: 200px; height: 150px; padding: 2px" v-for="(img, i) in data || []" :key="i" :src="$getRes(img.url)"/>
+      <img v-for="(img, i) in data || []" :key="i" style="width: 200px; height: 150px; padding: 2px" :src="$getRes(img.url)">
     </template>
     <template v-else-if="config.name === 'FileUpload'">
       <div v-for="(file, i) in data" :key="i">- {{ file.name }}</div>
@@ -23,11 +23,11 @@
     <template v-else-if="config.name === 'TableList'">
       <table border="0">
         <tr>
-          <th v-for="col in config.props.columns" :key="col.id">{{col.title}}</th>
+          <th v-for="col in config.props.columns" :key="col.id">{{ col.title }}</th>
         </tr>
         <tr v-for="row in data">
           <td v-for="column in config.props.columns">
-            <default-print-item class="inner-item" :data="row[column.id]" :config="column"/>
+            <default-print-item class="inner-item" :data="row[column.id]" :config="column" />
           </td>
         </tr>
       </table>
@@ -42,16 +42,16 @@ export default {
   components: {},
   props: {
     config: {
-      required: true,
+      required: true
     },
     data: {
-      required: true,
-    },
+      required: true
+    }
   },
-  data() {
+  data () {
     return {}
   },
-  methods: {},
+  methods: {}
 }
 </script>
 

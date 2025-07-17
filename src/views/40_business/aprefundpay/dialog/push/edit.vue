@@ -9,66 +9,280 @@
         label-width="150px"
         status-icon
       >
+        <!-- 新增的基本信息区域 - 使用el-collapse样式 -->
+        <el-collapse v-model="dataJson.activeNames">
+          <el-collapse-item
+            title="退款基本信息"
+            class="collapse-info"
+            name="basicInfo"
+          >
+            <el-descriptions
+              title=""
+              :column="3"
+              :label-style="labelStyle"
+              :content-style="contentStyle"
+              direction="horizontal"
+              style="padding-right: 10px;padding-left: 10px;"
+              border
+            >
+              <el-descriptions-item label="应付退款编号">
+                {{ dataJson.tempJson.code }}
+              </el-descriptions-item>
+              <el-descriptions-item label="业务类型">
+                {{ dataJson.tempJson.type_name }}
+              </el-descriptions-item>
+              <el-descriptions-item />
+              <el-descriptions-item label="主体企业（付款方）">
+                {{ dataJson.tempJson.buyer_enterprise_name }}
+              </el-descriptions-item>
+              <el-descriptions-item label="供应商（收款方）">
+                {{ dataJson.tempJson.supplier_enterprise_name }}
+              </el-descriptions-item>
+              <el-descriptions-item label="退款状态">
+                {{ dataJson.tempJson.pay_status_name == null ? '-': dataJson.tempJson.pay_status_name }}
+              </el-descriptions-item>
+              <el-descriptions-item label="备注" span="3">
+                {{ dataJson.tempJson.remark == null ? '-': dataJson.tempJson.remark }}
+              </el-descriptions-item>
+              <el-descriptions-item label="退款附件材料" span="3">
+                <PreviewDescription :attachment-files="dataJson.refund_doc_att" />
+              </el-descriptions-item>
+            </el-descriptions>
+          </el-collapse-item>
+        </el-collapse>
+        <!-- 新增的业务单据信息区域 - 使用el-collapse样式 -->
+        <el-collapse v-model="dataJson.activeNames">
+          <el-collapse-item
+            title="业务单据信息"
+            name="businessInfo"
+          >
+            <el-descriptions
+              title=""
+              :column="2"
+              :label-style="twoLabelStyle"
+              :content-style="contentStyle"
+              direction="horizontal"
+              border
+              style="padding-right: 10px;padding-left: 10px;"
+            >
+              <el-descriptions-item label="申请退款总金额">
+                {{ dataJson.tempJson.refund_amount == null ? '-': formatCurrency(dataJson.tempJson.refund_amount, true) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="已退款总金额">
+                {{ dataJson.tempJson.refunded_amount == null? '-': formatCurrency(dataJson.tempJson.refunded_amount, true) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="未退款总金额">
+                {{ dataJson.tempJson.not_refund_amount == null? '-': formatCurrency(dataJson.tempJson.not_refund_amount, true) }}
+              </el-descriptions-item>
+              <el-descriptions-item label="退款中金额">
+                {{ dataJson.tempJson.refunding_amount == null? '-': formatCurrency(dataJson.tempJson.refunding_amount, true) }}
+              </el-descriptions-item>
+            </el-descriptions>
+
+            <el-table
+              ref="multipleTable"
+              v-loading="settings.loading"
+              :data="dataJson.tempJson.poOrderListData"
+              :element-loading-text="'正在拼命加载中...'"
+              element-loading-background="rgba(255, 255, 255, 0.5)"
+              stripe
+              border
+              fit
+              highlight-current-row
+              :default-sort="{prop: 'u_time', order: 'descending'}"
+              style="width: calc(100% - 20px);margin: 10px;"
+              height="200px"
+            >
+              <el-table-column
+                type="index"
+                width="45"
+                label="No"
+              />
+              <el-table-column
+                show-overflow-tooltip
+                min-width="130"
+                prop="po_contract_code"
+                label="合同编号"
+              />
+              <el-table-column
+                show-overflow-tooltip
+                min-width="130"
+                prop="po_order_code"
+                label="订单编号"
+              />
+              <el-table-column
+                show-overflow-tooltip
+                min-width="130"
+                prop="po_goods"
+                label="商品"
+              />
+              <el-table-column
+                show-overflow-tooltip
+                min-width="130"
+                prop="po_qty"
+                label="总采购数量"
+                align="right"
+              />
+              <el-table-column
+                show-overflow-tooltip
+                min-width="150"
+                prop="po_amount"
+                label="订单总金额"
+                align="right"
+              >
+                <template v-slot="scope">
+                  {{ scope.row.po_amount == null? '-' : formatCurrency(scope.row.po_amount, true) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                show-overflow-tooltip
+                min-width="150"
+                prop="refund_amount"
+                label="本次退款金额"
+                align="right"
+              >
+                <template v-slot="scope">
+                  {{ scope.row.refund_amount == null? '': formatCurrency(scope.row.refund_amount, true) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                show-overflow-tooltip
+                min-width="150"
+                prop="remark"
+                label="备注"
+              />
+            </el-table>
+          </el-collapse-item>
+        </el-collapse>
+        <!-- 原有的退款信息区域 -->
         <el-alert
           title="退款信息"
           type="info"
           :closable="false"
         />
-        <br>
-        <el-descriptions
-          title=""
-          :column="4"
-          :label-style="labelStyle"
-          :content-style="contentStyle"
-          direction="horizontal"
-          style="padding-right: 10px;padding-left: 10px;"
-          border
+        <div style="margin-bottom: 10px" />
+        <div
+          class="div-sum"
         >
+          <div class="right">
+            <span class="count-title">退款指令合计金额：</span>
+            <span class="count-data">{{ formatCurrency(refundAmountSum, true) }}</span>
+          </div>
+        </div>
 
-          <el-descriptions-item label="应付退款编号">
-            {{ dataJson.tempJson.code }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="退款状态">
-            {{ dataJson.tempJson.pay_status_name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="主体企业（付款方）">
-            {{ dataJson.tempJson.buyer_enterprise_name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="账户">
-            {{ dataJson.tempJson.bankListData!=null? dataJson.tempJson.bankListData[0].account_number:0 }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="供应商（收款方）">
-            {{ dataJson.tempJson.supplier_enterprise_name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="申请付款总金额">
-            {{ dataJson.tempJson.refund_amount == null ? '-' : formatNumber(dataJson.tempJson.refund_amount, true, 4) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="已退款总金额">
-            {{ dataJson.tempJson.refunded_amount == null ? '-' : formatNumber(dataJson.tempJson.refunded_amount, true, 4) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="未退款总金额">
-            {{
-              dataJson.tempJson.not_pay_amount == null ? '-' : formatNumber(dataJson.tempJson.not_pay_amount, true, 4)
-            }}
-          </el-descriptions-item>
-          <el-descriptions-item label="退款中金额">
-            {{ dataJson.tempJson.refunding_amount == null ? '-' : formatNumber(dataJson.tempJson.refunding_amount, true, 4) }}
-          </el-descriptions-item>
-
-        </el-descriptions>
-        <br>
-        <el-alert
-          title="付款指令"
-          type="info"
-          :closable="false"
-        />
-        <br>
-
+        <el-table
+          ref="bankTable"
+          v-loading="settings.loading"
+          :data="dataJson.tempJson.bankListData"
+          :element-loading-text="'正在拼命加载中...'"
+          element-loading-background="rgba(255, 255, 255, 0.5)"
+          stripe
+          border
+          fit
+          highlight-current-row
+          :default-sort="{prop: 'u_time', order: 'descending'}"
+          style="width: calc(100% - 20px);margin: 0 10px 10px 10px;"
+          height="150px"
+        >
+          <el-table-column
+            type="index"
+            width="45"
+            label="No"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="130"
+            prop="name"
+            label="退款账户名"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="200"
+            label="开户行|银行账号"
+          >
+            <template v-slot="scope">
+              <div>{{ scope.row.bank_name || '-' }}</div>
+              <div>{{ scope.row.account_number || '-' }}</div>
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="refund_amount"
+            label="计划退款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.refund_amount == null? '': formatCurrency(scope.row.refund_amount, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="refunded_amount"
+            label="已退款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.refunded_amount == null? '': formatCurrency(scope.row.refunded_amount, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="refunding_amount"
+            label="退款中金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.refunding_amount == null? '': formatCurrency(scope.row.refunding_amount, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="not_refund_amount"
+            label="未退款金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.not_refund_amount == null? '': formatCurrency(scope.row.not_refund_amount, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="150"
+            prop="remark"
+            label="备注"
+          />
+          <el-table-column
+            show-overflow-tooltip
+            min-width="200"
+            prop="refund_amount_pay"
+            label="退款指令金额"
+            align="right"
+            fixed="right"
+          >
+            <template v-slot="scope">
+              <div style="display: flex; align-items: center;">
+                <numeric
+                  v-model="scope.row.refund_amount_pay"
+                  :decimal-places="2"
+                  :currency-symbol="'¥'"
+                  style="flex: 1; margin-right: 8px;"
+                  @change.native="handleRefundAmountChange(scope.row)"
+                />
+                <el-button
+                  size="mini"
+                  type="primary"
+                  @click="handleFullAmountApply(scope.row)"
+                >
+                  全额
+                </el-button>
+              </div>
+            </template>
+          </el-table-column>
+        </el-table>
         <el-descriptions
           title=""
           :column="1"
@@ -83,33 +297,35 @@
               slot="label"
               class="required-mark"
             >
-              退款指令金额
+              退款日期
             </div>
             <el-form-item
-              prop="refund_amount_pay"
+              prop="refund_date"
               label-width="0"
             >
-              <numeric
-                v-model="dataJson.tempJson.refund_amount_pay"
-                :decimal-places="4"
+              <el-date-picker
+                v-model="dataJson.tempJson.refund_date"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                type="datetime"
                 clearable
-                :currency-symbol="''"
+                :placeholder="'选择日期'"
+                style="width: 100%"
               />
             </el-form-item>
           </el-descriptions-item>
-          <el-descriptions-item label="附件">
+          <el-descriptions-item label="退款指令附件材料">
+            <el-row>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleOtherUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
               <el-col
                 v-for="(item, i) in dataJson.push_att"
                 :key="i"
-                :offset="3"
+                :offset="0"
                 :span="5"
               >
                 <previewCard
@@ -121,7 +337,7 @@
               </el-col>
             </el-row>
           </el-descriptions-item>
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="退款单备注">
             <el-form-item
               prop="remark"
               label-width="0"
@@ -176,8 +392,42 @@
 
 <style scoped>
 .edit-container {
-  height: calc(100vh - 500px);
   overflow-x: auto;
+}
+
+.div-sum {
+  width: 100%;
+  height: 35px;
+  padding: 5px 5px;
+  margin: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+  background-color: #f5f7fa;
+  color: #666;
+  font-size: 16px;
+  border-top: 1px solid #dfe6ec;
+  border-left: 1px solid #dfe6ec;
+  border-right: 1px solid #dfe6ec;
+}
+
+.right {
+  position: absolute;
+  right: 10px;
+  margin-right: 10px;
+}
+
+.count-data {
+  color: #1890ff;
+  font-size: 20px;
+}
+
+.count-title {
+  margin-left: 10px;
+}
+
+.collapse-info {
+  margin-bottom: 10px;
 }
 .dialog-footer {
   text-align: center;
@@ -206,15 +456,16 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getDetailApi } from '@/api/40_business/aprefund/aprefund'
+import { getApi } from '@/api/40_business/aprefund/aprefund'
 import { insertApi } from '@/api/40_business/aprefundpay/aprefundpay'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
+import PreviewDescription from '@/components/51_preview_description/index.vue'
 
 export default {
   directives: { elDragDialog },
-  components: { numeric, SimpleUploadMutilFile, PreviewCard },
+  components: { numeric, SimpleUploadMutilFile, PreviewCard, PreviewDescription },
   mixins: [],
   props: {
     visible: {
@@ -333,7 +584,9 @@ export default {
         push_att: [],
         push_file: [],
         push_files: [],
+        refund_doc_att: [],
         typeListDate: [],
+        activeNames: ['basicInfo', 'businessInfo'],
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
@@ -370,6 +623,8 @@ export default {
           refund_date: null,
           /** * 退款单总金额*/
           refund_amount_pay: null,
+          /** * 未退款总金额*/
+          not_refund_amount: null,
           /** * 退款方式：1-银行转账*/
           refund_method: null,
           /** * 备注*/
@@ -415,9 +670,8 @@ export default {
         dialogStatus: this.editStatus,
         // pop的check内容
         rules: {
-          refund_amount_pay: [
-            { required: true, message: '请输入付款指令金额', trigger: 'change' },
-            { validator: this.verifyPayAmount, trigger: 'change' }
+          refund_date: [
+            { required: true, message: '请选择退款日期', trigger: 'change' }
           ]
         }
       }
@@ -426,6 +680,14 @@ export default {
   computed: {
     listenVisible () {
       return this.visible
+    },
+    refundAmountSum () {
+      if (!this.dataJson.tempJson.bankListData || this.dataJson.tempJson.bankListData.length === 0) {
+        return 0
+      }
+      return this.dataJson.tempJson.bankListData.reduce((sum, bank) => {
+        return sum + (parseFloat(bank.refund_amount_pay) || 0)
+      }, 0)
     }
   },
   // 监听器
@@ -462,11 +724,25 @@ export default {
     getData () {
       // 查询逻辑
       this.settings.loading = true
-      getDetailApi(this.data).then(response => {
+      getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
         this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
+
+        // 初始化银行账户的退款指令金额字段
+        this.dataJson.tempJson.bankListData.forEach(bank => {
+          if (!bank.refund_amount_pay) {
+            bank.refund_amount_pay = 0
+          }
+          // 计算未退款金额
+          bank.not_refund_amount = (bank.refund_amount || 0) - (bank.refunded_amount || 0) - (bank.refunding_amount || 0)
+        })
+
+        // 处理附件数据
+        if (response.data.attachment_files) {
+          this.dataJson.refund_doc_att = response.data.attachment_files
+        }
       }).finally(() => {
         this.settings.loading = false
       })
@@ -509,8 +785,9 @@ export default {
           tempData.buyer_enterprise_name = tempJson.buyer_enterprise_name
           tempData.remark = tempJson.remark
           tempData.push_files = tempJson.push_files
-          tempData.refund_amount = tempJson.refund_amount_pay
+          tempData.refund_date = tempJson.refund_date
           tempData.type = tempJson.type
+          tempData.bank_list_data = tempJson.bankListData.filter(bank => bank.refund_amount_pay > 0)
 
           this.settings.loading = true
           insertApi(tempData)
@@ -624,10 +901,22 @@ export default {
     },
     verifyPayAmount (rule, value, callback) {
       if (value > this.dataJson.tempJson.not_pay_amount) {
-        callback(new Error('付款金额不能大于未付款金额'))
+        callback(new Error('退款金额不能大于未退款金额'))
       } else {
         callback()
       }
+    },
+    // 退款金额变化处理
+    handleRefundAmountChange (row) {
+      // 验证退款金额不超过未退款金额
+      if (row.refund_amount_pay > row.not_refund_amount) {
+        this.$message.warning('退款金额不能大于未退款金额')
+        row.refund_amount_pay = row.not_refund_amount
+      }
+    },
+    // 全额退款处理
+    handleFullAmountApply (row) {
+      row.refund_amount_pay = row.not_refund_amount
     }
   }
 }
