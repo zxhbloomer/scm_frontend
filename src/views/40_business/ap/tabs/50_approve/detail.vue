@@ -280,7 +280,7 @@
           <el-table-column
             show-overflow-tooltip
             min-width="150"
-            prop="accounts_purpose_type_name"
+            prop="bank_type_name"
             label="类型"
             align="left"
           />

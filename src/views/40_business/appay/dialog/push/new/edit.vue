@@ -91,7 +91,6 @@
               highlight-current-row
               :default-sort="{prop: 'u_time', order: 'descending'}"
               style="width: calc(100% - 20px);margin: 10px;"
-              height="200px"
             >
               <el-table-column
                 type="index"
@@ -204,7 +203,6 @@
           highlight-current-row
           :default-sort="{prop: 'u_time', order: 'descending'}"
           style="width: calc(100% - 20px);margin: 0 10px 10px 10px;"
-          height="150px"
         >
           <el-table-column
             type="index"
@@ -370,7 +368,7 @@
                 type="textarea"
                 clearable
                 show-word-limit
-                :placeholder="isPlaceholderShow('请输入')"
+                :placeholder="'请输入'"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -903,14 +901,6 @@ export default {
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false
       this.doInsert()
-    },
-    // Placeholder设置
-    isPlaceholderShow (val) {
-      if (this.isViewModel) {
-        return ''
-      } else {
-        return val
-      }
     },
     // 其他附件上传成功
     handleOtherUploadFileSuccess (res) {

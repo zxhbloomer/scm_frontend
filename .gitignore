@@ -36,6 +36,4 @@ package-lock.json
 myvenv/
 
 # Local commands and scripts
-.claude/commands/
-.claude/fix_claude_session.py
-
+/.claude

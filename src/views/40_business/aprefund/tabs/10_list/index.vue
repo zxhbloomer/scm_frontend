@@ -213,7 +213,7 @@
         icon="el-icon-circle-close"
         :loading="settings.loading"
         @click="handlePush"
-      >下推付款指令
+      >下推退款指令
       </el-button>
       <!--      导出按钮-->
       <el-button
@@ -554,9 +554,6 @@
       @closeMeOk="handlePushOk"
       @closeMeCancel="handlePushCancel"
     />
-
-    <!--    vue-tour组件-->
-    <v-tour name="myTour" :steps="steps" :options="tourOption" />
 
     <!-- 作废弹窗-->
     <cancel-confirm-dialog

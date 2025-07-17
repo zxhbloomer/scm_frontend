@@ -38,41 +38,16 @@
               prop="type"
               label-width="0"
             >
-              <div class="tour-one">
-                <radio-dict
-                  v-model="dataJson.tempJson.type"
-                  :value="dataJson.tempJson.type"
-                  :para="CONSTANTS.DICT_B_AP_TYPE"
-                  :disabled="isBusinessTypeDisabled"
-                  @change="handleTypeChange"
-                />
-              </div>
+              <radio-dict
+                v-model="dataJson.tempJson.type"
+                :value="dataJson.tempJson.type"
+                :para="CONSTANTS.DICT_B_AP_TYPE"
+                :disabled="isBusinessTypeDisabled"
+                @change="handleTypeChange"
+              />
             </el-form-item>
           </el-descriptions-item>
-          <el-descriptions-item>
-            <div
-              slot="label"
-              class="required-mark"
-            >
-              添加关联单号
-            </div>
-            <div class="tour-two">
-              <el-button-group>
-                <el-button
-                  v-model="dataJson.tempJson.po_order_code"
-                  type="primary"
-                  size="mini"
-                  :disabled="isAddRelatedOrderDisabled"
-                  @click="handlePoOrderFountInsert"
-                >添加关联单号</el-button>
-                <el-button
-                  :disabled="isResetPageDisabled"
-                  @click="handlePoOrderFountRest"
-                >重置清空页面</el-button>
-              </el-button-group>
-            </div>
-          </el-descriptions-item>
-
+          <el-descriptions-item />
           <el-descriptions-item label="主体企业（付款方）">
             <el-form-item
               prop="purchaser_name"
@@ -324,24 +299,22 @@
             {{ dataJson.tempJson.detail_payable_amount == null ? '-': formatCurrency(dataJson.tempJson.detail_payable_amount, true) }}
           </el-descriptions-item>
         </el-descriptions>
-        <div class="tour-three">
-          <el-button-group>
-            <el-button
-              :disabled="settings.btnBankDisabledStatus.disabledInsert"
-              type="primary"
-              icon="el-icon-circle-plus-outline"
-              :loading="settings.loading"
-              @click="handleBankInsert"
-            >添加</el-button>
-            <el-button
-              :disabled="settings.btnBankDisabledStatus.disabledDelete"
-              type="primary"
-              icon="el-icon-circle-close"
-              :loading="settings.loading"
-              @click="handleBankDelete"
-            >删除</el-button>
-          </el-button-group>
-        </div>
+        <el-button-group>
+          <el-button
+            :disabled="settings.btnBankDisabledStatus.disabledInsert"
+            type="primary"
+            icon="el-icon-circle-plus-outline"
+            :loading="settings.loading"
+            @click="handleBankInsert"
+          >添加</el-button>
+          <el-button
+            :disabled="settings.btnBankDisabledStatus.disabledDelete"
+            type="primary"
+            icon="el-icon-circle-close"
+            :loading="settings.loading"
+            @click="handleBankDelete"
+          >删除</el-button>
+        </el-button-group>
         <el-table
           ref="multipleTable"
           v-loading="settings.loading"
@@ -384,7 +357,7 @@
           <el-table-column
             show-overflow-tooltip
             min-width="150"
-            prop="accounts_purpose_type_name"
+            prop="bank_type_name"
             label="类型"
             align="left"
           />
@@ -438,17 +411,17 @@
     >
       <el-divider />
 
-      <el-checkbox
-        v-model="skipTourGuide"
-        class="skip-tour-checkbox"
-        @change="handleSkipTourGuideChange"
-      >跳过指引</el-checkbox>
       <el-button
         size="medium"
         type="primary"
         :disabled="settings.loading"
         @click="startProcess()"
       >提交审批并保存</el-button>
+      <el-button
+        size="medium"
+        :disabled="isResetPageDisabled"
+        @click="handlePoOrderFountRest"
+      >重置</el-button>
       <el-button
         size="medium"
         :disabled="settings.loading"
@@ -515,8 +488,6 @@
       @closeMeOk="handleBankCloseOk"
       @closeMeCancel="handleBankCloseCancel"
     />
-    <!--    vue-tour组件-->
-    <v-tour name="myTour" :steps="steps" :options="tourOption" />
   </div>
 </template>
 
@@ -549,11 +520,6 @@
 }
 .el-form-item--mini.el-form-item {
   margin-bottom: 0px;
-}
-.skip-tour-checkbox {
-  font-size: 12px;
-  margin-right: 10px;
-  width:80px;
 }
 </style>
 
@@ -756,88 +722,12 @@ export default {
             { required: true, message: '请添加付款金额', trigger: 'change' }
           ]
         }
-      },
-      // 跳过指引控制
-      skipTourGuide: false,
-      // vue-tour组件
-      tourOption: {
-        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
-        labels: { // 指引项的按钮文案
-          buttonSkip: '跳过指引', // 跳过文案
-          buttonPrevious: '上一步', // 上一步文案
-          buttonNext: '下一步', // 下一步文案
-          buttonStop: '结束' // 结束文案
-        },
-        highlight: false // 是否高亮显示激活的的target项
-      },
-      steps: [
-        {
-          target: '.tour-one', // 当前项的id或class或data-v-step属性
-          content: '第一步，选择业务类型！', // 当前项指引内容
-          params: {
-            placement: 'left', // 指引在target的位置，支持上、下、左、右
-            highlight: false, // 当前项激活时是否高亮显示
-            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
-          },
-          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
-          before: type => new Promise((resolve, reject) => {
-            // 耗时的UI渲染或异步操作
-            resolve('foo')
-          })
-        },
-        {
-          target: '.tour-two', // 当前项的id或class或data-v-step属性
-          content: '第二步，添加关联单号！', // 当前项指引内容
-          params: {
-            placement: 'left', // 指引在target的位置，支持上、下、左、右
-            highlight: false, // 当前项激活时是否高亮显示
-            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
-          },
-          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
-          before: type => new Promise((resolve, reject) => {
-            // 耗时的UI渲染或异步操作
-            resolve('foo')
-          })
-        },
-        {
-          target: '.tour-three', // 当前项的id或class或data-v-step属性
-          content: '第三步，添加付款方账户信息！', // 当前项指引内容
-          params: {
-            placement: 'top', // 指引在target的位置，支持上、下、左、右
-            highlight: false, // 当前项激活时是否高亮显示
-            enableScrolling: true // 指引到当前项时是否滚动轴滚动到改项位置
-          },
-          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
-          before: type => new Promise((resolve, reject) => {
-            // 耗时的UI渲染或异步操作
-            resolve('foo')
-          })
-        }
-      ]
+      }
     }
   },
   computed: {
     CONSTANTS () {
       return constants_dict
-    },
-    // 计算添加关联单号按钮是否禁用
-    isAddRelatedOrderDisabled () {
-      // 1、当业务类型数据没有选择时，添加关联单号按钮组都不可用
-      if (!this.dataJson.tempJson.type) {
-        return true
-      }
-
-      // 3、当主体企业（付款方）中有数据时，添加关联单号按钮不可用
-      if (this.dataJson.tempJson.purchaser_id && this.dataJson.tempJson.purchaser_name) {
-        return true
-      }
-
-      // 当业务单据信息区域的el-table中有数据时，添加关联单号按钮组都不可用
-      if (this.dataJson.tempJson.poOrderListData && this.dataJson.tempJson.poOrderListData.length > 0) {
-        return true
-      }
-
-      return false
     },
     // 计算业务类型是否禁用
     isBusinessTypeDisabled () {
@@ -904,64 +794,12 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      // 初始化跳过指引状态
-      this.initSkipTourGuide()
-      // 根据跳过指引状态决定是否启动tour
-      if (!this.skipTourGuide) {
-        this.$tours['myTour'].start()
-      }
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
       // 初始化业务类型
       this.initTypeList()
       // 初始化款项类型
       this.initBankTypeList()
       this.settings.loading = false
-    },
-    // 初始化跳过指引状态
-    initSkipTourGuide () {
-      const SKIP_TOUR_KEY = 'ap_skip_tour_guide'
-      const savedSkipTour = localStorage.getItem(SKIP_TOUR_KEY)
-
-      if (savedSkipTour) {
-        try {
-          const skipTourData = JSON.parse(savedSkipTour)
-          const now = Date.now()
-
-          // 检查是否过期（1年 = 365 * 24 * 60 * 60 * 1000 毫秒）
-          if (now < skipTourData.expiry) {
-            this.skipTourGuide = skipTourData.value
-          } else {
-            // 过期了，删除localStorage中的数据
-            localStorage.removeItem(SKIP_TOUR_KEY)
-            this.skipTourGuide = false
-          }
-        } catch (error) {
-          // localStorage数据格式错误，删除并重置
-          localStorage.removeItem(SKIP_TOUR_KEY)
-          this.skipTourGuide = false
-        }
-      } else {
-        this.skipTourGuide = false
-      }
-    },
-    // 处理跳过指引勾选框变化
-    handleSkipTourGuideChange (value) {
-      const SKIP_TOUR_KEY = 'ap_skip_tour_guide'
-      const now = Date.now()
-      // 设置过期时间为1年后
-      const expiry = now + (365 * 24 * 60 * 60 * 1000)
-
-      const skipTourData = {
-        value: value,
-        expiry: expiry
-      }
-
-      localStorage.setItem(SKIP_TOUR_KEY, JSON.stringify(skipTourData))
-
-      // 如果取消勾选跳过指引，立即启动tour
-      if (!value) {
-        this.$tours['myTour'].start()
-      }
     },
     // 计算申请付款相关金额
     calculatePayableAmounts () {
@@ -1335,30 +1173,7 @@ export default {
             tempData.bank_accounts_id = _data.data.id
             tempData.bank_accounts_code = _data.data.code
             tempData.payable_amount = 0
-
-            // 款项类型
-            for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
-              const element = this.dataJson.bankTypeListDate[i]
-              if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_ONE &&
-                element.code === constants_dict.DICT_M_BANK_TYPE_THREE) {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
-                element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              } else {
-                tempData.bank_accounts_type_id = element.id
-                tempData.bank_accounts_type_code = element.code
-                tempData.accounts_purpose_type_name = element.name
-                break
-              }
-            }
-
+            tempData.bank_type_name = _data.data.bank_type_name
             // tempData.payable_amount = 0
             tempData.remark = null
             this.dataJson.tempJson.bankListData = []
@@ -1377,6 +1192,10 @@ export default {
     // 添加关联单选择关闭
     handlePoOrderFountCloseCancel () {
       this.popSettingsData.poOrderFountDialog.visible = false
+      // 如果是预付款类型弹窗被取消，需要清空业务类型选择
+      if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO) {
+        this.dataJson.tempJson.type = null
+      }
     },
     // 企业银行账户弹窗
     handleBankInsert () {
@@ -1433,7 +1252,7 @@ export default {
       tempData.bank_accounts_code = val.code
       // tempData.bank_accounts_purpose_id = val.bank_accounts_purpose_id
       // tempData.bank_accounts_purpose_code = val.bank_accounts_purpose_code
-      // tempData.accounts_purpose_type_name = val.accounts_purpose_type_name
+      // tempData.bank_type_name = val.bank_type_name
 
       // todo 款项类型
       for (let i = 0; i < this.dataJson.bankTypeListDate.length; i++) {
@@ -1442,18 +1261,18 @@ export default {
           element.code === constants_dict.DICT_M_BANK_TYPE_THREE) {
           tempData.bank_accounts_type_id = element.id
           tempData.bank_accounts_type_code = element.code
-          tempData.accounts_purpose_type_name = element.name
+          tempData.bank_type_name = element.name
           break
         } else if (this.dataJson.tempJson.type === constants_dict.DICT_B_AP_TYPE_TWO &&
           element.code === constants_dict.DICT_M_BANK_TYPE_ONE) {
           tempData.bank_accounts_type_id = element.id
           tempData.bank_accounts_type_code = element.code
-          tempData.accounts_purpose_type_name = element.name
+          tempData.bank_type_name = element.name
           break
         } else {
           tempData.bank_accounts_type_id = element.id
           tempData.bank_accounts_type_code = element.code
-          tempData.accounts_purpose_type_name = element.name
+          tempData.bank_type_name = element.name
           break
         }
       }
@@ -1644,6 +1463,11 @@ export default {
     },
     handleTypeChange (val) {
       this.dataJson.tempJson.type = val
+
+      // 当选择预付款类型时，弹出添加关联单号弹窗
+      if (val === constants_dict.DICT_B_AP_TYPE_TWO) {
+        this.handlePoOrderFountInsert()
+      }
     },
     /**
      * 处理全额申请：本次申请金额=可申请预付款金额

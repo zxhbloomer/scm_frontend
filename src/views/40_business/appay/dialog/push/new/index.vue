@@ -13,9 +13,7 @@
     destroy-on-close
     top="5vh"
   >
-    <div
-      :style="{ height: '700px',overflowY:'auto' } "
-    >
+    <div>
       <my-page
         ref="myPageRef"
         :data="data"

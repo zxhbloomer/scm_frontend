@@ -632,10 +632,6 @@
       @closeMeOk="handlePushOk"
       @closeMeCancel="handlePushCancel"
     />
-
-    <!--    vue-tour组件-->
-    <v-tour name="myTour" :steps="steps" :options="tourOption" />
-
     <!-- 作废弹窗-->
     <cancel-confirm-dialog
       v-if="popCancel.dialogVisible"

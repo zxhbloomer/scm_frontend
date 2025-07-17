@@ -12,13 +12,13 @@
 
         <!-- 作废区域 -->
         <el-alert
-          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_CANCEL"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_FIVE"
           title="作废理由"
           type="error"
           :closable="false"
         />
         <el-descriptions
-          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_CANCEL"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_AP_REFUND_STATUS_FIVE"
           title=""
           :column="3"
           :label-style="labelStyle"
