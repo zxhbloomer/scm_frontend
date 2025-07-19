@@ -142,10 +142,10 @@ import constants_para from '@/common/constants/constants_para'
 import enterprise_master_approve_template from '@/views/20_master/enterprise/tabs/50_approve/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import so_contract_master_approve_template from '@/views/40_business/socontract/tabs/50_approve/index.vue'
-import po_contract_master_approve_template from '@/views/40_business/pocontract/tabs/50_approve/index.vue'
-import po_order_master_approve_template from '@/views/40_business/poorder/tabs/50_approve/index.vue'
-import so_order_master_approve_template from '@/views/40_business/poorder/tabs/50_approve/index.vue'
-import p_ap_master_approve_template from '@/views/40_business/ap/tabs/50_approve/index.vue'
+import po_contract_master_approve_template from '@/views/40_business/10_po/pocontract/tabs/50_approve/index.vue'
+import po_order_master_approve_template from '@/views/40_business/10_po/poorder/tabs/50_approve/index.vue'
+import so_order_master_approve_template from '@/views/40_business/10_po/poorder/tabs/50_approve/index.vue'
+import p_ap_master_approve_template from '@/views/40_business/10_po/ap/tabs/50_approve/index.vue'
 
 export default {
   components: { p_ap_master_approve_template, so_order_master_approve_template, po_order_master_approve_template,

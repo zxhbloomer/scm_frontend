@@ -227,7 +227,7 @@
 </style>
 
 <script>
-import { getList2Api } from '@/api/40_business/inorder/inorder'
+import { getList2Api } from '@/api/40_business/30_in/inorder/inorder'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'

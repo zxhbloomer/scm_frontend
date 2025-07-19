@@ -237,9 +237,9 @@ import deepCopy from 'deep-copy'
 import { getQuickOperationApi, saveQuickApi } from '@/api/01_dashboard'
 import sysIconDialog from '@/views/10_system/icons/dialog/dialog'
 import entperprise_new_template from '@/views/20_master/enterprise/dialog/new'
-import pocontract_new_template from '@/views/40_business/pocontract/dialog/new'
+import pocontract_new_template from '@/views/40_business/10_po/pocontract/dialog/new'
 import socontract_new_template from '@/views/40_business/socontract/dialog/new'
-import poorder_new_template from '@/views/40_business/poorder/dialog/new'
+import poorder_new_template from '@/views/40_business/10_po/poorder/dialog/new'
 import soorder_new_template from '@/views/40_business/soorder/dialog/new'
 
 export default {

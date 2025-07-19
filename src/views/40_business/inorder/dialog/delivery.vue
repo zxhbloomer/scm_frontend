@@ -137,7 +137,7 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile'
 import previewCard from '@/components/50_preview_card/preview_card'
-import { getListApi, updateApi } from '@/api/40_business/inorder/inorderdocument'
+import { getListApi, updateApi } from '@/api/40_business/30_in/inorder/inorderdocument'
 import deepCopy from 'deep-copy'
 
 export default {

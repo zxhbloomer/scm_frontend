@@ -363,7 +363,7 @@ import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { insertApi, validateApi } from '@/api/40_business/inplanv2/inplanv2'
-import { getApi } from '@/api/40_business/poorder/poorder'
+import { getApi } from '@/api/40_business/10_po/poorder/poorder'
 import numeric from '@/components/40_input/numeric/index.vue'
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 export default {

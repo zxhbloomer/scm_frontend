@@ -419,7 +419,6 @@ import {
   delApi, updateStatusApi
 } from '@/api/20_master/bankaccounts/bankaccounts'
 import constants_para from '@/common/constants/constants_para'
-import constants_dict from '@/common/constants/constants_dict'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'

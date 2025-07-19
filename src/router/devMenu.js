@@ -116,14 +116,14 @@ export const router_two = [
       },
       {
         path: '/in/plan',
-        component: () => import('@/views/40_business/inplan/index'),
+        component: () => import('@/views/40_business/30_in/inplan/index'),
         name: 'P00000010',
         meta: { title: '入库计划', icon: 'inplan' }
       },
 
       {
         path: '/in/bill',
-        component: () => import('@/views/40_business/in/index'),
+        component: () => import('@/views/40_business/30_in/in/index'),
         name: 'P00000011',
         meta: { title: '入库单', icon: 'in' }
       },
@@ -149,13 +149,13 @@ export const router_two = [
     children: [
       {
         path: '/out/plan',
-        component: () => import('@/views/40_business/outplan/index'),
+        component: () => import('@/views/40_business/40_out/outplan/index'),
         name: 'P00000013',
         meta: { title: '出库计划', icon: 'outplan' }
       },
       {
         path: '/out/bill',
-        component: () => import('@/views/40_business/out/index'),
+        component: () => import('@/views/40_business/40_out/out/index'),
         name: 'P00000014',
         meta: { title: '出库单', icon: 'warehoueout' }
       }

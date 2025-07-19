@@ -528,7 +528,7 @@ a {
 </style>
 
 <script>
-import { getListApi, getListSumApi, exportApi, deleteApi } from '@/api/40_business/inorder/inorder'
+import { getListApi, getListSumApi, exportApi, deleteApi } from '@/api/40_business/30_in/inorder/inorder'
 import resizeMixin from '@/views/40_business/inorder/tabs/mixin/listResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'

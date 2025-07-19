@@ -190,7 +190,7 @@
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import { updateApi, insertApi } from '@/api/40_business/inorder/inorder'
+import { updateApi, insertApi } from '@/api/40_business/30_in/inorder/inorder'
 import supplierDialog from '@/views/30_wms/customer/dialog/dialog'
 
 export default {

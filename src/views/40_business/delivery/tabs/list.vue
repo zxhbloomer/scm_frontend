@@ -914,7 +914,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
-import cancelConfirmDialog from '@/views/40_business/in/dialog/cancel/index.vue'
+import cancelConfirmDialog from '@/views/40_business/30_in/in/dialog/cancel/index.vue'
 import urlUtil from '@/utils/urlUtil'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 import { mapState } from 'vuex'
