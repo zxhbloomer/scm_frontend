@@ -1,6 +1,26 @@
 <template>
   <div class="app-container">
     <FloatMenu />
+    <!-- 顶部tabs页签 -->
+    <el-tabs
+      ref="minusTabs"
+      v-model="dataJson.tabs.active"
+      type="card"
+      @tab-click="handleTabsClick"
+    >
+      <el-tab-pane name="0">
+        <template slot="label">全部</template>
+      </el-tab-pane>
+      <el-tab-pane name="1">
+        <template slot="label">待退款</template>
+      </el-tab-pane>
+      <el-tab-pane name="2">
+        <template slot="label">已退款</template>
+      </el-tab-pane>
+      <el-tab-pane name="3">
+        <template slot="label">作废</template>
+      </el-tab-pane>
+    </el-tabs>
     <div>
       <el-form
         ref="minusForm"
@@ -10,19 +30,68 @@
       >
         <el-form-item>
           <el-input
-            v-model.trim="dataJson.searchForm.account_name"
+            v-model.trim="dataJson.searchForm.po_contract_code"
             clearable
-            placeholder="账户名称"
+            placeholder="合同编号"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
-
         <el-form-item>
           <el-input
-            v-model.trim="dataJson.searchForm.bank_name"
+            v-model.trim="dataJson.searchForm.po_order_code"
             clearable
-            placeholder="开户行"
+            placeholder="订单编号"
             @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <select-se-customer
+            v-model.trim="dataJson.searchForm.purchaser_name"
+            :placeholder="'请选择主体企业'"
+            placement="left"
+            @keyup.enter.native="handleSearch"
+            @onReturnData="handleCustomerReturnDataName"
+          />
+        </el-form-item>
+        <el-form-item>
+          <select-cp-supplier
+            v-model.trim="dataJson.searchForm.supplier_name"
+            :placeholder="'请选择供应商'"
+            placement="left"
+            @keyup.enter.native="handleSearch"
+            @onReturnData="handleSupplierReturnDataName"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model.trim="dataJson.searchForm.ap_refund_code"
+            clearable
+            placeholder="退付款管理编号"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model.trim="dataJson.searchForm.code"
+            clearable
+            placeholder="退款单编号"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <!-- 退款单状态控件，全部tab下可用，其他tab下禁用 -->
+        <el-form-item v-if="dataJson.tabs.active === '0'">
+          <select-dicts
+            v-model="dataJson.searchForm.status_list"
+            :para="CONSTANTS.DICT_B_AP_REFUND_PAY_STATUS"
+            init-placeholder="请选择退款单状态"
+          />
+        </el-form-item>
+        <el-form-item v-else>
+          <select-dicts
+            v-model="dataJson.searchForm.status_list"
+            :para="CONSTANTS.DICT_B_AP_REFUND_PAY_STATUS"
+            init-placeholder="请选择退款单状态"
+            disabled
           />
         </el-form-item>
 
@@ -59,7 +128,7 @@
         icon="el-icon-s-check"
         :loading="settings.loading"
         @click="handleApprove"
-      >付款凭证
+      >上传退款凭证完成退款
       </el-button>
       <el-button
         v-permission="'P_B_AP_REFUND_PAY:CANCEL'"
@@ -74,12 +143,20 @@
         v-permission="'P_B_AP_REFUND_PAY:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
-        icon="el-icon-circle-close"
+        icon="el-icon-view"
         :loading="settings.loading"
         @click="handleView"
-      >查看凭证
+      >查看
       </el-button>
     </el-button-group>
+
+    <!-- 汇总区域 -->
+    <div class="div-sum">
+      <div class="right">
+        <span class="count-title">退款指令总金额：</span>
+        <span class="count-data">{{ dataJson.sumData.sum_refund_amount_total == null ? 0 : formatCurrency(dataJson.sumData.sum_refund_amount_total, true) }}</span>
+      </div>
+    </div>
 
     <el-table
       ref="multipleTable"
@@ -119,6 +196,15 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
+        prop="ap_refund_code"
+        label="退付款管理编号"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
         prop="code"
         label="退款单编号"
         align="left"
@@ -127,8 +213,8 @@
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        min-width="150"
-        prop="status_name"
+        min-width="90"
+        prop="type_name"
         label="类型"
         align="left"
       />
@@ -136,8 +222,8 @@
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        min-width="150"
-        prop="type_name"
+        min-width="90"
+        prop="status_name"
         label="状态"
         align="left"
       />
@@ -146,34 +232,16 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="po_contract_code"
-        label="合同编号"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="po_code"
-        label="订单编号"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="buyer_enterprise_name"
+        prop="purchaser_name"
         label="主体企业（付款方）"
-        align="right"
+        align="left"
       />
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="supplier_enterprise_name"
+        prop="supplier_name"
         label="供应商（收款方）"
         align="left"
       />
@@ -183,12 +251,12 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="refund_amount"
-        label="付款金额"
-        align="left"
+        prop="refund_order_amount"
+        label="退款指令金额"
+        align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.refund_amount == null?'':formatNumber(scope.row.refund_amount, true, 4) }}
+          {{ scope.row.refund_order_amount == null?'':formatCurrency(scope.row.refund_order_amount, true) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -201,21 +269,7 @@
         align="left"
       >
         <template v-slot="scope">
-          {{ scope.row.refund_date == null?'':formatDateTime(scope.row.refund_date) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="c_time"
-        label="发起时间"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.c_time == null?'':formatDateTime(scope.row.c_time) }}
+          {{ scope.row.refund_date == null?'':formatDate(scope.row.refund_date) }}
         </template>
       </el-table-column>
 
@@ -226,9 +280,8 @@
         min-width="160"
         prop="remark"
         label="备注"
-        align="right"
+        align="left"
       />
-
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -242,7 +295,7 @@
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        min-width="150"
+        min-width="160"
         prop="c_time"
         label="创建时间"
         align="left"
@@ -256,7 +309,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -286,33 +339,35 @@
     <v-tour name="myTour" :steps="steps" :options="tourOption" />
 
     <!-- 作废弹窗-->
-    <!--    <cancel-confirm-dialog-->
-    <!--      v-if="popSettings.one.visible"-->
-    <!--      :data="popSettings.one.props.data"-->
-    <!--      :visible="popSettings.one.visible"-->
-    <!--      destroy-on-close-->
-    <!--      @closeMeOk="handleCloseDialogOneOk"-->
-    <!--      @closeMeCancel="handleCloseDialogOneCancel"-->
-    <!--    />-->
-
-    <!--付款复核-->
-    <pay-review-dialog
-      v-if="popPayReview.dialogVisible"
-      :data="popPayReview.data"
-      :visible="popPayReview.dialogVisible"
+    <cancel-confirm-dialog
+      v-if="popCancel.dialogVisible"
+      :data="popCancel.data"
+      :visible="popCancel.dialogVisible"
       destroy-on-close
-      @closeMeOk="handleClosePayReviewDialogOk"
-      @closeMeCancel="handleClosePayReviewDialogCancel"
+      @closeMeOk="handleCloseDialogOneOk"
+      @closeMeCancel="handleCloseDialogOneCancel"
     />
 
     <!--查看-->
     <view-dialog
       v-if="popView.dialogVisible"
+      title="查看退款单"
       :data="popView.data"
       :visible="popView.dialogVisible"
       destroy-on-close
       @closeMeOk="handleCloseViewDialogOk"
       @closeMeCancel="handleCloseViewDialogOk"
+    />
+
+    <!--凭证附件-->
+    <voucher-dialog
+      v-if="popVoucher.dialogVisible"
+      title="上传退款凭证"
+      :data="popVoucher.data"
+      :visible="popVoucher.dialogVisible"
+      destroy-on-close
+      @closeMeOk="popVoucher.dialogVisible = false"
+      @closeMeCancel="popVoucher.dialogVisible = false"
     />
 
   </div>
@@ -486,7 +541,7 @@ br {
 <script>
 import {
   getListApi,
-  cancelApi
+  getListSumApi
 } from '@/api/40_business/aprefundpay/aprefundpay'
 import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination'
@@ -495,11 +550,15 @@ import deepCopy from 'deep-copy'
 import mixin from './mixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
-import payReviewDialog from './dialog/payreview.vue'
-import viewDialog from './dialog/view.vue'
+import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer'
+import viewDialog from '@/views/40_business/aprefundpay/dialog/view/index.vue'
+import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier'
+import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
+import voucherDialog from '@/views/40_business/aprefundpay/dialog/voucher/index.vue'
+import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 
 export default {
-  components: { payReviewDialog, Pagination, viewDialog },
+  components: { SelectDicts, SelectCpSupplier, Pagination, viewDialog, SelectSeCustomer, voucherDialog, cancelConfirmDialog },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -521,11 +580,19 @@ export default {
     return {
       // 监听器
       watch: {
-        unwatch_tempJson: null
+        unwatch_tempJson: null,
+        unwatch_statusList: null
       },
       dataJson: {
+        tabs: {
+          active: '0'
+        },
+        allTabStatusCache: [],
         // 查询使用的json
         searchForm: {
+          status: '',
+          status_list: [],
+          active_tabs_index: '',
           code: '',
           plan_code: '',
           // 翻页条件
@@ -537,9 +604,7 @@ export default {
         // table使用的json
         listData: null,
         sumData: {
-          actual_count: 0,
-          actual_weight: 0,
-          sync_error_count: 0
+          sum_refund_amount_total: 0
         },
         customerComboList: [],
         // 单条数据 json的，初始化原始数据
@@ -557,14 +622,14 @@ export default {
       popSettingsData: {
         dialogFormVisible: false
       },
-      // 付款复核的状态
-      popPayReview: {
+      // 查看窗口的状态
+      popView: {
         dialogVisible: false,
         editStatus: null,
         data: null
       },
-      // 查看窗口的状态
-      popView: {
+      // 凭证附件窗口的状态
+      popVoucher: {
         dialogVisible: false,
         editStatus: null,
         data: null
@@ -621,7 +686,13 @@ export default {
           }
         }
       },
-      screenNum: 0
+      screenNum: 0,
+      // 作废窗口的状态
+      popCancel: {
+        dialogVisible: false,
+        editStatus: null,
+        data: null
+      }
     }
   },
   computed: {
@@ -643,54 +714,10 @@ export default {
     }
   },
   beforeDestroy () {
-    // EventBus.$off(this.EMITS.EMIT_MST_B_AP_PAY_NEW_OK)
-    // EventBus.$off(this.EMITS.EMIT_MST_B_AP_PAY_UPDATE_OK)
-    // EventBus.$off(this.EMITS.EMIT_MST_B_AP_PAY_BPM_OK)
   },
   created () {
     // 描绘完成
     this.init()
-
-    // // 新增提交数据时监听
-    // EventBus.$on(this.EMITS.EMIT_MST_B_AP_PAY_NEW_OK, _data => {
-    //   console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_AP_PAY_NEW_OK', _data)
-    //   // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-    //   // 设置到table中绑定的json数据源
-    //   console.log('新增数据：', _data)
-    //   this.dataJson.listData.unshift(_data)
-    // })
-    //
-    // // 更新提交数据时监听
-    // EventBus.$on(this.EMITS.EMIT_MST_B_AP_PAY_UPDATE_OK, _data => {
-    //   console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_AP_PAY_UPDATE_OK', _data)
-    //   // EventBus.$off(this.EMITS.EMIT_MST_B_AP_PAY_UPDATE_OK)
-    //   // 设置到table中绑定的json数据源
-    //   console.log('更新数据：', _data)
-    //   // 设置到table中绑定的json数据源
-    //   this.dataJson.listData.splice(this.dataJson.rowIndex, 1, _data)
-    //   this.$nextTick(() => {
-    //     this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
-    //   })
-    // })
-    //
-    // // 提交审批流时监听
-    // EventBus.$on(this.EMITS.EMIT_MST_B_AP_PAY_BPM_OK, _data => {
-    //   console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_AP_PAY_BPM_OK', _data)
-    //   this.settings.loading = true
-    //   // 查询选中行数据，并更新到选中行的数据
-    //   getDetailApi({ id: this.dataJson.currentJson.id }).then(response => {
-    //     // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-    //     // 设置到table中绑定的json数据源
-    //     console.log('更新数据：', response.data)
-    //     // 设置到table中绑定的json数据源
-    //     this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
-    //     this.$nextTick(() => {
-    //       this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
-    //     })
-    //   }).finally(() => {
-    //     this.settings.loading = false
-    //   })
-    // })
   },
   beforeUpdate () {
     // 重新布局表格
@@ -700,22 +727,16 @@ export default {
   },
   mounted () {
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化页面
-    init () {
-      this.setWatch()
+    init (parm) {
       // 初始化查询
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-    },
-    setWatch () {},
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
+      // 初始化tabs缓存
+      if (this.dataJson.allTabStatusCache.length === 0) {
+        this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]
       }
     },
     // 获取行索引
@@ -768,6 +789,14 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
+      // 查询合计信息
+      getListSumApi(this.dataJson.searchForm).then(response => {
+        if (response.data !== null) {
+          this.dataJson.sumData = response.data
+        } else {
+          this.dataJson.sumData.sum_refund_amount_total = 0
+        }
+      })
     },
     // 重置查询区域
     doResetSearch () {
@@ -815,7 +844,7 @@ export default {
       }
 
       this.popView.dialogVisible = true
-      this.popView.data = this.dataJson.currentJson
+      this.popView.data = _data
     },
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
@@ -824,17 +853,21 @@ export default {
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnStatus.showView = true
 
-        // 付款凭证按钮高亮
-        if (this.dataJson.currentJson.status.toString() === constants_dict.DICT_B_AP_PAY_BILL_STATUS_ONE) {
+        const status = this.dataJson.currentJson.status?.toString()
+        if (status === constants_dict.DICT_B_AP_REFUND_PAY_STATUS_ZERO) { // 待退款
           this.settings.btnStatus.showApprove = true
+          this.settings.btnStatus.showCancel = true
+        } else if (status === constants_dict.DICT_B_AP_REFUND_PAY_STATUS_ONE) { // 已退款
+          this.settings.btnStatus.showApprove = false
+          this.settings.btnStatus.showCancel = true
+        } else if (status === constants_dict.DICT_B_AP_REFUND_PAY_STATUS_STOP) { // 中止
+          this.settings.btnStatus.showApprove = false
+          this.settings.btnStatus.showCancel = false
+        } else if (status === constants_dict.DICT_B_AP_REFUND_PAY_STATUS_TWO) { // 作废
+          this.settings.btnStatus.showApprove = false
+          this.settings.btnStatus.showCancel = false
         } else {
           this.settings.btnStatus.showApprove = false
-        }
-
-        // 作废按钮高亮
-        if (this.dataJson.currentJson.status.toString() === constants_dict.DICT_B_AP_PAY_BILL_STATUS_TWO) {
-          this.settings.btnStatus.showCancel = true
-        } else {
           this.settings.btnStatus.showCancel = false
         }
       } else {
@@ -851,44 +884,61 @@ export default {
         return
       }
 
-      this.popPayReview.dialogVisible = true
-      this.popPayReview.data = this.dataJson.currentJson
+      this.popVoucher.dialogVisible = true
+      this.popVoucher.data = _data
     },
     // 作废按钮
     handleCancel () {
-      this.$confirm('作废后无法恢复，确认要作废该条数据吗？', '确认信息', {
-      }).then(() => {
-        this.handleCancelStart()
-      }).catch(action => {
-        // 右上角X
-        if (action !== 'close') {
-          // 当前页所选择的数据导出
-          // this.handleExportSelectionData()
-        }
+      const _data = deepCopy(this.dataJson.currentJson)
+      if (_data.id === undefined) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.popCancel.dialogVisible = true
+      this.popCancel.data = _data
+    },
+    // 作废确认
+    handleCloseDialogOneOk (val) {
+      this.popCancel.dialogVisible = false
+      this.getDataList()
+      this.$notify({
+        title: '作废成功',
+        message: null,
+        type: 'success',
+        duration: this.settings.duration
       })
     },
-    // 开始作废
-    handleCancelStart () {
-      this.settings.loading = true
-      // 作废
-      cancelApi({ id: this.dataJson.currentJson.id }).then(_data => {
-        // 通知兄弟组件，新增数据更新
-        this.$notify({
-          title: '新增成功',
-          message: _data.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-      }).finally(() => {
-        this.settings.loading = false
-      })
+    handleCloseDialogOneCancel () {
+      this.popCancel.dialogVisible = false
     },
     handleTabsClick (tab, event) {
       if (this.dataJson.searchForm.active_tabs_index === tab.index) {
         return
       }
-
+      // 如果当前是在"全部"页签，保存用户手动选择的状态数据
+      if (this.dataJson.tabs.active === '0' && tab.index !== '0') {
+        this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]
+      }
+      // 设置当前激活的标签页
+      this.dataJson.tabs.active = tab.index
+      // 退款单状态常量
+      switch (tab.index) {
+        case '1': // 待退款
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AP_REFUND_PAY_STATUS_ZERO]
+          break
+        case '2': // 已退款
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AP_REFUND_PAY_STATUS_ONE]
+          break
+        case '3': // 作废
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AP_REFUND_PAY_STATUS_TWO]
+          break
+        case '4': // 中止
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AP_REFUND_PAY_STATUS_STOP]
+          break
+        default: // 全部 - 恢复之前保存的状态数据
+          this.dataJson.searchForm.status_list = this.dataJson.allTabStatusCache.length > 0 ? [...this.dataJson.allTabStatusCache] : []
+          break
+      }
       this.dataJson.searchForm.active_tabs_index = tab.index
       this.getDataList()
     },
@@ -919,21 +969,13 @@ export default {
       }
       return ''
     },
-    // 付款复核关闭弹窗 付款复核成功
-    handleClosePayReviewDialogOk (val) {
-      this.popPayReview.dialogVisible = false
-
-      this.getDataList()
-      this.$notify({
-        title: '复核成功',
-        message: null,
-        type: 'success',
-        duration: this.settings.duration
-      })
+    // 企业选择回调
+    handleCustomerReturnDataName (val) {
+      // 处理企业选择回调
     },
-    // 付款复核关闭弹窗
-    handleClosePayReviewDialogCancel (val) {
-      this.popPayReview.dialogVisible = false
+    // 供应商选择回调
+    handleSupplierReturnDataName (val) {
+      // 处理供应商选择回调
     },
     // 查看关闭弹窗
     handleCloseViewDialogOk (val) {

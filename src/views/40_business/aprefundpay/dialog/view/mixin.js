@@ -27,7 +27,7 @@ export default {
     setUIheight () {
       try {
         // 定义高度
-        const elementHeight = document.documentElement.clientHeight - 100
+        const elementHeight = document.documentElement.clientHeight - 180
         // 获取所有的ref，主要判断minus的refs
         const listRefsNames = Object.keys(this.$refs).map((key) => {
           return this.$refs[key]
@@ -38,7 +38,7 @@ export default {
             val = val + listRefsNames[i].$el.offsetHeight
           }
         }
-        let rtnVal = elementHeight - val - 85
+        let rtnVal = elementHeight - val - 95
 
         // 判断是否是弹出框
         if (this.meDialogStatus) {

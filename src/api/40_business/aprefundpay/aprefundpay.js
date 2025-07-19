@@ -36,9 +36,9 @@ export function validateApi (query) {
 /**
  * 获取详情
  */
-export function getDetailApi (query) {
+export function getApi (query) {
   return request({
-    url: '/api/v1/ap/refund/pay/getdetail',
+    url: '/api/v1/ap/refund/pay/get',
     method: 'post',
     data: query
   })
@@ -72,6 +72,28 @@ export function cancelApi (query) {
 export function getBankCollectionDataApi (query) {
   return request({
     url: '/api/v1/bank/accounts/get_bank_collection',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 完成退款
+ */
+export function refundCompleteAPi (query) {
+  return request({
+    url: '/api/v1/ap/refund/pay/complete',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 获取汇总数据
+ */
+export function getListSumApi (query) {
+  return request({
+    url: '/api/v1/ap/refund/pay/sum',
     method: 'post',
     data: query
   })

@@ -24,7 +24,7 @@
           border
         >
 
-          <el-descriptions-item label="应付账款编号">
+          <el-descriptions-item label="付款管理编号">
             {{ dataJson.tempJson.code == null || dataJson.tempJson.code === ''?'系统自动生成':dataJson.tempJson.code }}
           </el-descriptions-item>
 

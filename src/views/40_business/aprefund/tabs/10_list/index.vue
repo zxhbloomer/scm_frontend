@@ -36,7 +36,7 @@
           <el-input
             v-model.trim="dataJson.searchForm.code"
             clearable
-            placeholder="应付退款编号"
+            placeholder="退付款管理编号"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
@@ -309,7 +309,7 @@
         :auto-fit="true"
         min-width="150"
         prop="code"
-        label="应付退款编号"
+        label="退付款管理编号"
         align="left"
       />
       <el-table-column

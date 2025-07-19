@@ -144,7 +144,7 @@
         :auto-fit="true"
         min-width="150"
         prop="code"
-        label="应付账款编号"
+        label="付款管理编号"
         align="left"
       />
       <el-table-column
