@@ -42,9 +42,25 @@
       >
         <el-form-item>
           <el-input
-            v-model.trim="dataJson.searchForm.contract_code"
+            v-model.trim="dataJson.searchForm.po_order_code"
             clearable
-            placeholder="合同编号"
+            placeholder="采购订单号"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model.trim="dataJson.searchForm.po_contract_code"
+            clearable
+            placeholder="采购合同号"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-input
+            v-model.trim="dataJson.searchForm.code"
+            clearable
+            placeholder="货权转移编号"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
@@ -71,7 +87,7 @@
         <el-form-item v-if="dataJson.tabs.active === '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_PO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_B_CARGO_RIGHT_TRANSFER_STATUS"
             init-placeholder="请选择单据状态"
           />
         </el-form-item>
@@ -79,30 +95,9 @@
         <el-form-item v-if="dataJson.tabs.active !== '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_PO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_B_CARGO_RIGHT_TRANSFER_STATUS"
             init-placeholder="请选择单据状态"
             disabled
-          />
-        </el-form-item>
-        <el-form-item>
-          <select-dicts
-            v-model="dataJson.searchForm.type_list"
-            :para="CONSTANTS.DICT_B_PO_CONTRACT_TYPE"
-            init-placeholder="请选择合同类型"
-          />
-        </el-form-item>
-        <el-form-item>
-          <select-dicts
-            v-model="dataJson.searchForm.settle_list"
-            :para="CONSTANTS.DICT_B_PO_CONTRACT_SETTLE_TYPE"
-            init-placeholder="请选择结算方式"
-          />
-        </el-form-item>
-        <el-form-item>
-          <select-dicts
-            v-model="dataJson.searchForm.bill_type_list"
-            :para="CONSTANTS.DICT_B_PO_CONTRACT_BILL_TYPE"
-            init-placeholder="请选择结算单据类型"
           />
         </el-form-item>
 
@@ -174,7 +169,7 @@
 
     <el-button-group>
       <el-button
-        v-permission="'P_PO_CONTRACT:ADD'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -183,7 +178,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:UPDATE'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -192,7 +187,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:DELETE'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -201,7 +196,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:CANCEL'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -210,7 +205,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:AUDIT'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -219,16 +214,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:PUSH'"
-        :disabled="!settings.btnStatus.showPush"
-        type="primary"
-        icon="el-icon-s-promotion"
-        :loading="settings.loading"
-        @click="handlePush"
-      >下推订单
-      </el-button>
-      <el-button
-        v-permission="'P_PO_CONTRACT:FINISH'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
         icon="el-icon-success"
@@ -236,18 +222,10 @@
         @click="handleFinish"
       >完成
       </el-button>
-      <el-button
-        v-permission="'P_PO_CONTRACT:IMPORT'"
-        type="primary"
-        icon="el-icon-upload"
-        :loading="settings.loading"
-        @click="handleOpenImportDialog"
-      >导入
-      </el-button>
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_PO_CONTRACT:EXPORT'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -255,7 +233,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_PO_CONTRACT:EXPORT'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -263,7 +241,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'P_PO_CONTRACT:EXPORT'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -271,7 +249,7 @@
       >导出</el-button>
       <!--      导出按钮 结束-->
       <el-button
-        v-permission="'P_PO_CONTRACT:PRINT'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -280,7 +258,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'P_PO_CONTRACT:INFO'"
+        v-permission="'B_CARGO_RIGHT_TRANSFER:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"
@@ -294,11 +272,8 @@
       class="div-sum"
     >
       <div class="right">
-        <span class="count-title">合同总金额：</span><span class="count-data">{{ dataJson.sumData.order_amount_total == null ? 0 : formatCurrency(dataJson.sumData.order_amount_total,true) }}</span>
-        <span class="count-title">合同总采购数量：</span><span class="count-data">{{ dataJson.sumData.order_total == null ? 0 : formatNumber(dataJson.sumData.order_total,true,4) }}</span>
-        <span class="count-title">预付未付总金额：</span><span class="count-data">{{ dataJson.sumData.advance_unpay_total == null ? 0 : formatCurrency(dataJson.sumData.advance_unpay_total,true) }}</span>
-        <span class="count-title">预付已付款总金额：</span><span class="count-data">{{ dataJson.sumData.advance_paid_total == null ? 0 : formatCurrency(dataJson.sumData.advance_paid_total,true) }}</span>
-        <span class="count-title">结算总金额：</span><span class="count-data">{{ dataJson.sumData.settle_amount_total == null ? 0 : formatCurrency(dataJson.sumData.settle_amount_total,true) }}</span>
+        <span class="count-title">转移总金额：</span><span class="count-data">{{ dataJson.sumData.order_amount_total == null ? 0 : formatCurrency(dataJson.sumData.order_amount_total,true) }}</span>
+        <span class="count-title">转移总数量：</span><span class="count-data">{{ dataJson.sumData.order_total == null ? 0 : formatNumber(dataJson.sumData.order_total,true,4) }}</span>
       </div>
     </div>
 
@@ -336,15 +311,6 @@
         label="No"
       />
 
-      <!--      <el-table-column-->
-      <!--        sortable="custom"-->
-      <!--        :sort-orders="settings.sortOrders"-->
-      <!--        :auto-fit="true"-->
-      <!--        min-width="150"-->
-      <!--        prop="code"-->
-      <!--        label="编号"-->
-      <!--        align="left"-->
-      <!--      />-->
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -359,8 +325,26 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="contract_code"
-        label="合同编号"
+        prop="code"
+        label="货权转移编号"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
+        prop="po_order_code"
+        label="关联采购订单号"
+        align="left"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="150"
+        prop="po_contract_code"
+        label="关联采购合同号"
         align="left"
       />
       <el-table-column
@@ -368,17 +352,8 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="type_name"
-        label="类型"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="order_volume"
-        label="订单量"
+        prop="total_qty"
+        label="转移数量"
         align="right"
       />
       <el-table-column
@@ -419,201 +394,6 @@
         label="主体企业"
         align="left"
       />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="execution_progress"
-        label="执行进度"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="180"
-        prop="sign_date"
-        label="签约日期"
-        align="left"
-      />
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="expiry_date"
-        label="到期日期"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="delivery_date"
-        label="交货日期"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="160"
-        prop="delivery_type_name"
-        label="运输方式"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="settle_type_name"
-        label="结算方式"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        min-width="130"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        prop="bill_type_name"
-        label="结算单据类型"
-        align="left"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="120"
-        prop="payment_type_name"
-        label="付款方式"
-        align="left"
-      />
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="contract_amount_sum"
-        label="合同总金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.contract_amount_sum == null ? '' : formatCurrency(scope.row.contract_amount_sum, true) }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="contract_total"
-        label="总采购数量（吨）"
-        align="right"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="tax_amount_sum"
-        label="税额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.tax_amount_sum == null ? '' : formatCurrency(scope.row.tax_amount_sum, true) }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="settled_qty"
-        label="已结算数量（吨）"
-        align="right"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="settled_price"
-        label="结算金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.settled_price == null ? '' : formatNumber(scope.row.settled_price, true, 4) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="advance_pay_price"
-        label="预付款金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.advance_pay_price == null ? '' : formatCurrency(scope.row.advance_pay_price, true) }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="accumulated_act_price"
-        label="累计实付"
-        align="right"
-      >
-        <template v-slot="scope">
-          {{ scope.row.accumulated_act_price == null ? '' : formatCurrency(scope.row.accumulated_act_price, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="unpaid_amount"
-        label="未付"
-        align="left"
-      >
-        <template v-slot="scope">
-          {{ scope.row.unpaid_amount == null ? '' : formatCurrency(scope.row.unpaid_amount, true) }}
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="advance_refund_amount_total"
-        label="预付款可退金额"
-        align="right"
-      >
-        <template v-slot="scope">
-        <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="already_invoice_price"
-        label="已开票金额"
-        align="right"
-      >
-        <template v-slot="scope">
-          <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
-        </template>
-      </el-table-column>
 
       <el-table-column
         label="商品"
@@ -686,7 +466,7 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="数量"
+          label="转移数量"
           align="right"
         >
           <template v-slot="scope">
@@ -694,7 +474,7 @@
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            > {{ item.qty }}
+            > {{ item.transfer_qty }}
             </div>
           </template>
         </el-table-column>
@@ -702,7 +482,7 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="单价"
+          label="转移单价"
           align="right"
         >
           <template v-slot="scope">
@@ -710,7 +490,7 @@
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            >{{ item.price == null ? '' : formatCurrency(item.price, true) }}
+            >{{ item.transfer_price == null ? '' : formatCurrency(item.transfer_price, true) }}
             </div>
           </template>
         </el-table-column>
@@ -718,20 +498,40 @@
         <el-table-column
           :merge-cells="true"
           min-width="100"
-          label="税率"
-          align="right"
+          label="批次号"
+          align="left"
         >
           <template v-slot="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            > {{ item.tax_rate }} %
+            > {{ item.batch_no }}
             </div>
           </template>
         </el-table-column>
 
       </el-table-column>
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="180"
+        prop="transfer_date"
+        label="货权转移日期"
+        align="left"
+      />
+
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="160"
+        prop="transfer_location"
+        label="货权转移地点"
+        align="left"
+      />
 
       <el-table-column
         sortable="custom"
@@ -760,7 +560,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -854,18 +654,8 @@
       :v-if="popPrint.dialogVisible"
       :visible="popPrint.dialogVisible"
       :data="popPrint.data"
-      title="采购合同单据打印"
+      title="货权转移单据打印"
       @closeMeCancel="handlePrintCancel"
-    />
-
-    <!--  采购合同下推-->
-    <push_order_template
-      v-if="popPush.dialogVisible"
-      :visible="popPush.dialogVisible"
-      :data="popPush.data"
-      title="采购合同-下推采购订单"
-      @closeMeOk="handlePushOk"
-      @closeMeCancel="handlePushCancel"
     />
 
     <!--    vue-tour组件-->
@@ -1051,7 +841,7 @@ import {
   importDataApi,
   getListApi,
   delApi, getApi, getFinishApi
-} from '@/api/40_business/10_po/pocontract/pocontract'
+} from '@/api/40_business/10_po/cargo_right_transfer/cargorighttransfer'
 import constants_para from '@/common/constants/constants_para'
 import constants_type from '@/common/constants/constants_dict'
 import { getPageApi } from '@/api/10_system/pages/page'
@@ -1063,12 +853,11 @@ import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
-import print_template from '@/views/40_business/10_po/pocontract/tabs/60_print/index.vue'
-import push_order_template from '@/views/40_business/10_po/poorder/dialog/push/new/index.vue'
+import print_template from '@/views/40_business/10_po/cargo_right_transfer/tabs/60_print/index.vue'
 import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 export default {
-  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination },
+  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, print_template, SimpleUpload, Pagination },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -1103,18 +892,16 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
-          contract_code: '', // 合同编号
+          po_order_code: '', // 采购订单号
+          po_contract_code: '', // 采购合同号
+          code: '', // 货权转移编号
           active_tabs_index: '', // 当前被激活的页签
           status_list: [], // 单据状态
-          type_list: [], // 合同类型
-          settle_list: [], // 结算方式
-          bill_type_list: [], // 结算单据类型
           purchaser_name: '', // 客户名称
           purchaser_id: '', // 客户名称
           supplier_name: '', // 供应商名称
           supplier_id: '', // 供应商名称
           goods_name: '' // 物料名称或编码
-          // 是否包含放货指令
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -1142,12 +929,6 @@ export default {
         dialogVisible: false,
         data: null
       },
-      // 下推窗口的状态
-      popPush: {
-        dialogVisible: false,
-        editStatus: null,
-        data: null
-      },
       // 作废窗口的状态
       popCancel: {
         dialogVisible: false,
@@ -1170,7 +951,6 @@ export default {
           hidenExport: true,
           showApprove: false,
           showPrint: false,
-          showPush: false,
           showCancel: false,
           showFinish: false // 完成
         },
@@ -1225,21 +1005,21 @@ export default {
     }
   },
   beforeDestroy () {
-    EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_NEW_OK)
-    EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_UPDATE_OK)
-    EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_BPM_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK)
+    EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_BPM_OK)
   },
   created () {
     // 新增提交数据时监听
-    EventBus.$on(this.EMITS.EMIT_MST_POCONTRACT_NEW_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_POCONTRACT_NEW_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK', _data)
       // 设置到table中绑定的json数据源
       console.log('新增数据：', _data)
       this.dataJson.listData.unshift(_data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
       getApi({ id: _data.id }).then(response => {
-        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK)
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1253,12 +1033,12 @@ export default {
     })
 
     // 更新提交数据时监听
-    EventBus.$on(this.EMITS.EMIT_MST_POCONTRACT_UPDATE_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_POCONTRACT_UPDATE_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
       getApi({ id: this.dataJson.currentJson.id }).then(response => {
-        // EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_UPDATE_OK)
+        // EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK)
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1271,12 +1051,12 @@ export default {
       })
     })
     // 提交审批流时监听
-    EventBus.$on(this.EMITS.EMIT_MST_POCONTRACT_BPM_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_POCONTRACT_BPM_OK', _data)
+    EventBus.$on(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_BPM_OK, _data => {
+      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_BPM_OK', _data)
       this.settings.loading = true
       // 查询选中行数据，并更新到选中行的数据
       getApi({ id: this.dataJson.currentJson.id }).then(response => {
-        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
+        // EventBus.$off(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK)
         // 设置到table中绑定的json数据源
         console.log('更新数据：', response.data)
         // 设置到table中绑定的json数据源
@@ -1441,13 +1221,13 @@ export default {
     },
     // 处理URL参数
     handleUrlParams () {
-      // 获取URL参数p1（合同编号）
-      const contractCode = this.$route.query.p1
-      if (contractCode) {
+      // 获取URL参数p1（订单编号）
+      const orderCode = this.$route.query.p1
+      if (orderCode) {
         // 调用重置按钮功能
         this.doResetSearch()
-        // 将合同编号赋值到查询条件
-        this.dataJson.searchForm.contract_code = contractCode
+        // 将订单编号赋值到查询条件
+        this.dataJson.searchForm.po_order_code = orderCode
         // 触发查询
         this.handleSearch()
       }
@@ -1468,7 +1248,7 @@ export default {
         return
       }
       const operate_tab_data = {
-        operate_tab_info: { show: true, name: '修改采购合同' },
+        operate_tab_info: { show: true, name: '修改货权转移' },
         canEdit: true,
         editStatus: constants_para.STATUS_UPDATE,
         data: _data
@@ -1479,7 +1259,7 @@ export default {
     // 点击按钮 新增
     handleNew () {
       const operate_tab_data = {
-        operate_tab_info: { show: true, name: '新增采购合同' },
+        operate_tab_info: { show: true, name: '新增货权转移' },
         canEdit: true,
         editStatus: constants_para.STATUS_INSERT
       }
@@ -1499,7 +1279,7 @@ export default {
       }
 
       const operate_tab_data = {
-        operate_tab_info: { show: true, name: '查看采购合同' },
+        operate_tab_info: { show: true, name: '查看货权转移' },
         canEdit: true,
         editStatus: constants_para.STATUS_VIEW,
         data: _data
@@ -1524,47 +1304,39 @@ export default {
         this.settings.btnStatus.showView = true
         this.settings.btnStatus.showPrint = true
 
-        // 推送按钮高亮（只有框架合同且状态为执行中时高亮）
-        if (this.dataJson.currentJson.type === constants_dict.DICT_B_PO_CONTRACT_TYPE_ONE &&
-            this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_TWO) {
-          this.settings.btnStatus.showPush = true
-        } else {
-          this.settings.btnStatus.showPush = false
-        }
-
         // 审批中和驳回状态，修改按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_ZERO ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
+          this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
         // 待审批和驳回状态删除按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_ZERO ||
-            this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
         // 作废
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
         // 审批
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_ONE ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_FOUR) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ONE ||
+          this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
 
         // 完成按钮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
         } else {
           this.settings.btnStatus.showFinish = false
@@ -1574,7 +1346,6 @@ export default {
         this.settings.btnStatus.showUpdate = false
         this.settings.btnStatus.showDel = false
         this.settings.btnStatus.showApprove = false
-        this.settings.btnStatus.showPush = false
         this.settings.btnStatus.showPrint = false
         this.settings.btnStatus.showFinish = false
       }
@@ -1588,7 +1359,7 @@ export default {
       }
 
       _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_PO_CONTRACT
+      _data.serial_type = constants_dict.DICT_B_CARGO_RIGHT_TRANSFER
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
       if (_data.status === '4' || _data.status === '5') {
@@ -1596,7 +1367,7 @@ export default {
       }
 
       const operate_tab_data = {
-        operate_tab_info: { show: true, name: '采购合同审批' },
+        operate_tab_info: { show: true, name: '货权转移审批' },
         canEdit: true,
         editStatus: constants_para.STATUS_AUDIT,
         data: _data,
@@ -1618,8 +1389,8 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== constants_type.DICT_B_PO_CONTRACT_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_PO_CONTRACT_STATUS_THREE) {
-        this.showErrorMsg('采购合同状态异常，只有待审批或驳回状态才可以删除')
+      if (_data.status.toString() !== constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
+        this.showErrorMsg('货权转移状态异常，只有待审批或驳回状态才可以删除')
         return
       }
       this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
@@ -1672,25 +1443,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ONE]
           break
         case '3': // 执行中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_SIX]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_THREE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_FOUR]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CONTRACT_STATUS_FIVE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）
@@ -1766,27 +1537,11 @@ export default {
         return 'merge_cells2 cell'
       }
     },
-    // 下推
-    handlePush () {
-      this.popPush.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popPush.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popPush.editStatus = constants_para.STATUS_UPDATE
-      this.popPush.dialogVisible = true
-    },
     /**
      * 打印弹窗关闭
      */
     handlePrintCancel () {
       this.popPrint.dialogVisible = false
-    },
-    /**
-     * 下推弹窗关闭
-     */
-    handlePushCancel () {
-      this.popPush.dialogVisible = false
     },
     /**
      * 完成导出
@@ -1876,17 +1631,6 @@ export default {
         duration: this.settings.duration
       })
     },
-    // 下推确认
-    handlePushOk (val) {
-      this.popPush.dialogVisible = false
-      this.getDataList()
-      this.$notify({
-        title: '下推成功',
-        message: null,
-        type: 'success',
-        duration: this.settings.duration
-      })
-    },
     handleCloseDialogOneCancel () {
       this.popCancel.dialogVisible = false
     },
@@ -1948,7 +1692,7 @@ export default {
       }
 
       // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
-      if (row.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_ONE || row.status === constants_dict.DICT_B_PO_CONTRACT_STATUS_FOUR) {
+      if (row.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ONE || row.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

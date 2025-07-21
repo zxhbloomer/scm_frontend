@@ -132,6 +132,14 @@ const EMIT_MST_POCONTRACT_UPDATE_OK = 'global:mst:pocontract:update:ok'
 const EMIT_MST_POCONTRACT_BPM_OK = 'global:mst:pocontract:bpm:ok'
 
 /**
+ * 货权转移，新增完成
+ * @type {string}
+ */
+const EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK = 'global:mst:cargo_right_transfer:new:ok'
+const EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK = 'global:mst:cargo_right_transfer:update:ok'
+const EMIT_MST_CARGO_RIGHT_TRANSFER_BPM_OK = 'global:mst:cargo_right_transfer:bpm:ok'
+
+/**
  * 采购结算，新增完成
  * @type {string}
  */
@@ -288,6 +296,10 @@ export default {
   EMIT_MST_POCONTRACT_NEW_OK,
   EMIT_MST_POCONTRACT_UPDATE_OK,
   EMIT_MST_POCONTRACT_BPM_OK,
+
+  EMIT_MST_CARGO_RIGHT_TRANSFER_NEW_OK,
+  EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK,
+  EMIT_MST_CARGO_RIGHT_TRANSFER_BPM_OK,
 
   EMIT_MST_SETTLEMENT_NEW_OK,
   EMIT_MST_SETTLEMENT_UPDATE_OK,

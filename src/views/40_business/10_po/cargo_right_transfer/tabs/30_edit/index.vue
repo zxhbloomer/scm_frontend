@@ -9,31 +9,23 @@
         label-width="150px"
         status-icon
       >
-
         <el-alert
-          title="基本信息"
+          title="货权转移信息"
           type="info"
           :closable="false"
         />
         <el-descriptions
           title=""
           :column="3"
-          :content-style="contentStyle"
           :label-style="labelStyle"
+          :content-style="contentStyle"
           direction="horizontal"
-          border
           style="padding-right: 10px;padding-left: 10px;"
+          border
         >
-          <el-descriptions-item label="项目编号">
-            {{ dataJson.tempJson.code }}
-          </el-descriptions-item>
 
-          <el-descriptions-item label="项目名称">
-            {{ dataJson.tempJson.name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="类型">
-            {{ dataJson.tempJson.type_name }}
+          <el-descriptions-item label="转移编号">
+            {{ dataJson.tempJson.code == null || dataJson.tempJson.code === ''?'系统自动生成':dataJson.tempJson.code }}
           </el-descriptions-item>
 
           <el-descriptions-item>
@@ -41,7 +33,32 @@
               slot="label"
               class="required-mark"
             >
-              上游供应商
+              关联采购订单
+            </div>
+            <el-form-item
+              prop="po_order_code"
+              label-width="0"
+            >
+              <input-search
+                v-model.trim="dataJson.tempJson.po_order_code"
+                :readonly="true"
+                :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+                @onInputSearch="handlePoOrderDialog"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="关联采购合同">
+            {{ dataJson.tempJson.po_contract_code || '-' }}
+          </el-descriptions-item>
+
+          <!--供应商-->
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >
+              供应商
             </div>
             <el-form-item
               prop="supplier_name"
@@ -49,7 +66,28 @@
             >
               <input-search
                 v-model.trim="dataJson.tempJson.supplier_name"
+                :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
                 @onInputSearch="handleSupplierDialog"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+
+          <!--主体企业-->
+          <el-descriptions-item>
+            <div
+              slot="label"
+              class="required-mark"
+            >
+              主体企业
+            </div>
+            <el-form-item
+              prop="purchaser_name"
+              label-width="0"
+            >
+              <input-search
+                v-model.trim="dataJson.tempJson.purchaser_name"
+                :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+                @onInputSearch="handlePurchaserDialog"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -59,47 +97,41 @@
               slot="label"
               class="required-mark"
             >
-              下游客户
+              转移日期
             </div>
             <el-form-item
-              prop="purchaser_id"
+              prop="transfer_date"
               label-width="0"
             >
-              <input-search
-                v-model.trim="dataJson.tempJson.purchaser_name"
-                @onInputSearch="handleCustomerDialog"
+              <el-date-picker
+                v-model="dataJson.tempJson.transfer_date"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                type="datetime"
+                clearable
+                :placeholder="'选择日期'"
+                :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+                style="width: 100%"
               />
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item label="融资主体">
-            {{ dataJson.tempJson.financier_name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item>
-            <div
-              slot="label"
-            >
-              运输方式
-            </div>
-            <el-form-item
-              prop="delivery_type"
-              label-width="0"
-            >
-              <radio-dict
-                v-model="dataJson.tempJson.delivery_type"
-                :value="dataJson.tempJson.delivery_type"
-                :para="CONSTANTS.DICT_B_PROJECT_DELIVERY_TYPE"
-                @change="handleTransportTypeChange"
-              />
-            </el-form-item>
-          </el-descriptions-item>
-
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="转移地点">
             <el-input
-              v-model.trim="dataJson.tempJson.delivery_location"
+              v-model.trim="dataJson.tempJson.transfer_location"
               clearable
               placeholder="请输入"
+              :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+              :maxlength="dataJson.inputSettings.maxLength.transfer_location"
+            />
+          </el-descriptions-item>
+
+          <el-descriptions-item label="项目编号">
+            <el-input
+              v-model.trim="dataJson.tempJson.project_code"
+              clearable
+              placeholder="请输入"
+              :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+              :maxlength="dataJson.inputSettings.maxLength.project_code"
             />
           </el-descriptions-item>
 
@@ -108,31 +140,57 @@
               v-model.trim="dataJson.tempJson.remark"
               clearable
               placeholder="请输入"
+              :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+              :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
 
+          <el-descriptions-item label="转移总金额">
+            <span class="fontWeight">
+              {{ dataJson.tempJson.total_amount == null || dataJson.tempJson.total_amount === ''?'-':formatCurrency(dataJson.tempJson.total_amount,true) }}
+            </span>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="转移总数量（吨）">
+            <span class="fontWeight">
+              {{ dataJson.tempJson.total_qty == null || dataJson.tempJson.total_qty === '' ?'-':formatNumber(dataJson.tempJson.total_qty,true,4) }}
+            </span>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="货权转移附件材料">
+            <el-row style="display: flex;flex-wrap: wrap;">
+              <Simple-upload-mutil-file
+                v-if="!(dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0')"
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
+              <el-col
+                v-for="(item, i) in dataJson.doc_att"
+                :key="i"
+                :offset="0"
+                :span="3"
+              >
+                <previewCard
+                  :file-name="item.fileName"
+                  :url="item.url"
+                  :time="item.timestamp"
+                  :readonly="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
+                  @removeFile="removeOtherFile"
+                />
+              </el-col>
+            </el-row>
+          </el-descriptions-item>
         </el-descriptions>
+
         <el-alert
-          title="商品明细"
+          title="货权转移-商品信息"
           type="info"
           :closable="false"
         />
-        <el-button-group>
-          <el-button
-            type="primary"
-            icon="el-icon-circle-plus-outline"
-            :loading="settings.loading"
-            @click="handleGoodsInsert"
-          >新增</el-button>
 
-          <el-button
-            :disabled="settings.btnTableDisabledStatus.disabledDelete"
-            type="primary"
-            icon="el-icon-circle-close"
-            :loading="settings.loading"
-            @click="handleGoodsDelete"
-          >删除</el-button>
-        </el-button-group>
         <el-table
           ref="multipleTable"
           v-loading="settings.loading"
@@ -174,58 +232,111 @@
           />
           <el-table-column
             show-overflow-tooltip
-            min-width="150"
-            prop="qty"
-            label="合同数量"
+            min-width="120"
+            prop="order_qty"
+            label="订单数量"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.qty == null? '-' : formatNumber(scope.row.qty,true,4) }}
+              {{ scope.row.order_qty == null? '-' : formatNumber(scope.row.order_qty,true,4) }}
             </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            min-width="150"
-            prop="price"
-            label="单价（含税）"
+            min-width="120"
+            prop="order_price"
+            label="订单单价"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.price == null? '': formatCurrency(scope.row.price, true) }}
+              {{ scope.row.order_price == null? '': formatCurrency(scope.row.order_price, true) }}
             </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            min-width="150"
-            prop="amount"
-            label="金额"
+            min-width="120"
+            prop="order_amount"
+            label="订单金额"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.amount == null?'': formatCurrency(scope.row.amount,true) }}
+              {{ scope.row.order_amount == null? '' : formatCurrency(scope.row.order_amount,true) }}
             </template>
           </el-table-column>
           <el-table-column
             show-overflow-tooltip
-            min-width="90"
-            prop="tax_rate"
-            label="税率（%）"
+            min-width="120"
+            prop="transfer_qty"
+            label="转移数量"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.tax_rate == null? '': scope.row.tax_rate }}%
+              {{ scope.row.transfer_qty == null? '-' : formatNumber(scope.row.transfer_qty,true,4) }}
             </template>
           </el-table-column>
-
           <el-table-column
             show-overflow-tooltip
-            min-width="150"
-            prop="tax_amount"
-            label="税额"
+            min-width="120"
+            prop="transfer_price"
+            label="转移单价"
             align="right"
           >
             <template v-slot="scope">
-              {{ scope.row.tax_amount == null? '': formatCurrency(scope.row.tax_amount,true) }}
+              {{ scope.row.transfer_price == null? '': formatCurrency(scope.row.transfer_price, true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="120"
+            prop="transfer_amount"
+            label="转移金额"
+            align="right"
+          >
+            <template v-slot="scope">
+              {{ scope.row.transfer_amount == null? '' : formatCurrency(scope.row.transfer_amount,true) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="100"
+            prop="quality_status"
+            label="质量状态"
+          >
+            <template v-slot="scope">
+              <span v-if="scope.row.quality_status === '1'">合格</span>
+              <span v-else-if="scope.row.quality_status === '2'">不合格</span>
+              <span v-else-if="scope.row.quality_status === '3'">待检</span>
+              <span v-else>-</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="120"
+            prop="batch_no"
+            label="批次号"
+          >
+            <template v-slot="scope">
+              {{ scope.row.batch_no == null ? '': scope.row.batch_no }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="120"
+            prop="production_date"
+            label="生产日期"
+          >
+            <template v-slot="scope">
+              {{ scope.row.production_date == null ? '': scope.row.production_date }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            show-overflow-tooltip
+            min-width="120"
+            prop="expiry_date"
+            label="有效期"
+          >
+            <template v-slot="scope">
+              {{ scope.row.expiry_date == null ? '': scope.row.expiry_date }}
             </template>
           </el-table-column>
           <el-table-column
@@ -239,130 +350,6 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-alert
-          title="财务信息"
-          type="info"
-          :closable="false"
-        />
-        <el-descriptions
-          title=""
-          :column="3"
-          :content-style="contentStyle"
-          :label-style="labelStyle"
-          direction="horizontal"
-          border
-          style="padding-right: 10px;padding-left: 10px;"
-        >
-          <el-descriptions-item label="付款方式">
-            {{ dataJson.tempJson.payment_method_name == null?'-':dataJson.tempJson.payment_method_name }}
-          </el-descriptions-item>
-
-          <el-descriptions-item label="是否有账期/天数">
-            <numeric
-              v-model.trim="dataJson.tempJson.payment_days"
-              :decimal-places="0"
-              :currency-symbol="''"
-              placeholder="请输入"
-            />
-          </el-descriptions-item>
-
-          <el-descriptions-item label="项目周期">
-            <numeric
-              v-model.trim="dataJson.tempJson.project_cycle"
-              :decimal-places="0"
-              :currency-symbol="''"
-              placeholder="请输入"
-            />
-          </el-descriptions-item>
-
-          <el-descriptions-item label="融资额度">
-            <numeric
-              v-model.trim="dataJson.tempJson.amount"
-              :decimal-places="2"
-              :currency-symbol="'¥'"
-              placeholder="请输入"
-            />
-          </el-descriptions-item>
-
-          <el-descriptions-item label="费率">
-            <numeric
-              v-model.trim="dataJson.tempJson.rate"
-              :decimal-places="2"
-              :currency-symbol="''"
-              placeholder="请输入"
-            />
-          </el-descriptions-item>
-
-          <el-descriptions-item />
-        </el-descriptions>
-
-        <el-alert
-          title="项目说明"
-          type="info"
-          :closable="false"
-        />
-        <el-descriptions
-          title=""
-          :column="1"
-          :content-style="contentStyle2"
-          :label-style="labelStyle2"
-          direction="horizontal"
-          border
-          style="padding-right: 10px;padding-left: 10px;"
-        >
-
-          <el-descriptions-item label="项目说明">
-            <el-input
-              v-model.trim="dataJson.tempJson.project_remark"
-              clearable
-              placeholder="请输入"
-              type="textarea"
-              maxlength="500"
-            />
-          </el-descriptions-item>
-
-        </el-descriptions>
-
-        <el-alert
-          title="项目附件材料"
-          type="info"
-          :closable="false"
-        />
-        <el-descriptions
-          title=""
-          :column="1"
-          :label-style="fileLabelStyle"
-          :content-style="contentStyle"
-          direction="horizontal"
-          border
-          style="padding-right: 10px;padding-left: 10px;"
-        >
-          <el-descriptions-item label="附件材料">
-            <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleUploadFileSuccess"
-                  @upload-error="handleUploadFileError"
-                />
-              </el-col>
-              <el-col
-                v-for="(item, i) in dataJson.doc_att"
-                :key="i"
-                :offset="1"
-                :span="4"
-              >
-                <previewCard
-                  :file-name="item.fileName"
-                  :url="item.url"
-                  :time="item.timestamp"
-                  @removeFile="removeFile"
-                />
-              </el-col>
-            </el-row>
-          </el-descriptions-item>
-
-        </el-descriptions>
 
       </el-form>
     </div>
@@ -373,14 +360,15 @@
       <el-divider />
 
       <el-button
-        type="primary"
-        :disabled="settings.loading "
+        v-if="!(dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0')"
         size="medium"
+        type="primary"
+        :disabled="settings.loading"
         @click="startProcess()"
       >提交审批并保存</el-button>
       <el-button
-        :disabled="settings.loading"
         size="medium"
+        :disabled="settings.loading"
         @click="handleCancel()"
       >返回</el-button>
     </div>
@@ -394,33 +382,36 @@
       @closeMeOk="handleSupplierCloseOk"
       @closeMeCancel="handleSupplierCloseCancel"
     />
-    <!--下游客户-->
+
+    <!--主体企业-->
     <customer-dialog
       v-if="popSettingsData.purchaserDialogData.visible"
       :visible="popSettingsData.purchaserDialogData.visible"
       :data="popSettingsData.purchaserDialogData.data"
-      :title="'客户选择'"
-      @closeMeOk="handleCustomerCloseOk"
-      @closeMeCancel="handleCustomerCloseCancel"
+      :title="'主体企业选择'"
+      @closeMeOk="handlePurchaserCloseOk"
+      @closeMeCancel="handlePurchaserCloseCancel"
     />
 
-    <goods-dialog
-      v-if="popSettingsData.goodsDialog.visible"
-      :visible="popSettingsData.goodsDialog.visible"
-      :data="popSettingsData.goodsDialog.data"
-      @closeMeOk="handleGoodsCloseOk"
-      @closeMeCancel="handleGoodsCloseCancel"
+    <!--采购订单选择-->
+    <po-order-dialog
+      v-if="popSettingsData.poOrderDialog.visible"
+      :visible="popSettingsData.poOrderDialog.visible"
+      :data="popSettingsData.poOrderDialog.data"
+      :title="'采购订单选择'"
+      @closeMeOk="handlePoOrderCloseOk"
+      @closeMeCancel="handlePoOrderCloseCancel"
     />
 
+    <!-- 审批流程设置：选择人 -->
     <bpm-dialog
       v-if="popSettingsData.sponsorDialog.visible"
       :visible="popSettingsData.sponsorDialog.visible"
       :form-data="popSettingsData.sponsorDialog.form_data"
       :serial-type="popSettingsData.sponsorDialog.serial_type"
-      @closeMeCancel="handleBpmDialogCancel"
-      @closeMeOk="handleBpmDialogOk"
+      @closeMeCancel="handlebpmDialogCancel"
+      @closeMeOk="handlebpmDialogOk"
     />
-
   </div>
 </template>
 
@@ -442,12 +433,6 @@
 }
 .el-table {
   margin: 10px;
-}
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
 }
 .el-form-item .el-select {
   width: 100%;
@@ -487,27 +472,31 @@
 
 <script>
 import InputSearch from '@/components/40_input/inputSearch/index.vue'
-import RadioDict from '@/components/00_dict/redio/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import { updateApi, getApi, validateApi } from '@/api/40_business/project/project'
+import { getApi, updateApi, validateApi } from '@/api/40_business/10_po/cargo_right_transfer/cargorighttransfer'
 import SupplierDialog from '@/views/20_master/enterprise/dialog/supplier/counterparty/index.vue'
 import CustomerDialog from '@/views/20_master/enterprise/dialog/customer/system_enterprise/index.vue'
-import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
-import previewCard from '@/components/50_preview_card/preview_card.vue'
-import numeric from '@/components/40_input/numeric/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
-
-import goodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
-
-import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import PoOrderDialog from '@/views/40_business/10_po/poorder/dialog/listfor/cargorighttransfer/index.vue'
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
+import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
+import bpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
-  components: { BpmDialog, goodsDialog, InputSearch, RadioDict, CustomerDialog, SupplierDialog, previewCard, SimpleUploadMutilFile, numeric },
   directives: { elDragDialog },
+  components: {
+    CustomerDialog,
+    bpmDialog,
+    PreviewCard,
+    SimpleUploadMutilFile,
+    PoOrderDialog,
+    SupplierDialog,
+    InputSearch
+  },
   mixins: [],
   props: {
     data: {
@@ -524,16 +513,8 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      labelStyle2: {
-        width: '10.7%',
-        'text-align': 'right'
-      },
-      contentStyle2: {
-        width: '70%'
-      },
-      fileLabelStyle: {
-        width: '2.3%',
-        'text-align': 'right'
+      // 监听器
+      watch: {
       },
       popSettingsData: {
         // 供应商
@@ -546,7 +527,7 @@ export default {
             id: null
           }
         },
-        // 客户
+        // 主体企业
         purchaserDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -556,8 +537,8 @@ export default {
             id: null
           }
         },
-        // 弹出的商品查询框参数设置
-        goodsDialog: {
+        // 采购订单选择
+        poOrderDialog: {
           // 弹出框显示参数
           visible: false,
           data: {},
@@ -571,7 +552,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_PROJECT,
+          serial_type: constants_dict.DICT_B_CARGO_RIGHT_TRANSFER,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null
@@ -581,57 +562,67 @@ export default {
           // 自选用户
           process_users: {}
         }
-
       },
       dataJson: {
-        // 商品列表数据
-        detailListData: [],
-        // 附件
-        doc_att: [],
-        doc_att_file: [],
-        doc_att_files: [],
-
-        searchForm: {
-          reset: null
-        },
+        unitConvertList: [],
+        // 用于监听
+        actual_count: 0,
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
-          id: null,
-          type: '',
-          name: '',
-          value: '',
-          goods_name: null,
-          sku_id: null,
-          contract_no: null,
-          financier_name: '-',
-          detailListData: []
+          detailListData: [],
+          po_order_id: null,
+          po_order_code: '',
+          po_contract_id: null,
+          po_contract_code: '',
+          supplier_id: null,
+          supplier_name: '',
+          supplier_code: '',
+          purchaser_id: null,
+          purchaser_name: '',
+          purchaser_code: '',
+          transfer_date: '',
+          transfer_location: '',
+          project_code: '',
+          remark: '',
+          total_amount: 0,
+          total_qty: 0
         },
         // 单条数据 json
         tempJson: {
-          id: null,
-          type: '',
-          name: '',
-          value: '',
-          unit_id: null,
-          unit_name: null,
+          detailListData: [],
+          po_order_id: null,
+          po_order_code: '',
+          po_contract_id: null,
+          po_contract_code: '',
           supplier_id: null,
-          supplier_code: null,
-          supplier_name: null,
+          supplier_name: '',
+          supplier_code: '',
           purchaser_id: null,
-          purchaser_code: null,
-          purchaser_name: null,
-          goods_name: null,
-          sku_id: null,
-          contract_no: null,
-          financier_name: '-',
-          detailListData: []
+          purchaser_name: '',
+          purchaser_code: '',
+          transfer_date: '',
+          transfer_location: '',
+          project_code: '',
+          remark: '',
+          total_amount: 0,
+          total_qty: 0
+        },
+        searchForm: {
+          reset: false,
+          owner_id: undefined,
+          owner_name: ''
         },
         inputSettings: {
           maxLength: {
-
+            transfer_location: 100,
+            project_code: 20,
             remark: 100
           }
-        }
+        },
+        // 其他文件附件
+        doc_att: [],
+        doc_att_file: [],
+        doc_att_files: []
       },
       // 页面设置json
       settings: {
@@ -643,25 +634,25 @@ export default {
           disabledInsert: true,
           disabledDelete: true
         },
-        // pop的check内容
         rules: {
-          name: [
-            { required: true, message: '请输入项目名称', trigger: 'change' }
+          po_order_code: [
+            { required: true, message: '请选择关联采购订单', trigger: 'change' }
           ],
           supplier_name: [
-            { required: true, message: '请选择上游供应商', trigger: 'change' }
+            { required: true, message: '请选择供应商', trigger: 'change' }
           ],
           purchaser_name: [
-            { required: true, message: '请选择下游客户', trigger: 'change' }
+            { required: true, message: '请选择主体企业', trigger: 'change' }
           ],
-          type: [
-            { required: true, message: '请选择类型', trigger: 'change' }
+          transfer_date: [
+            { required: true, message: '请选择转移日期', trigger: 'change' }
           ]
         }
       }
     }
   },
-  computed: { },
+  computed: {
+  },
   // 监听器
   watch: {
     // 全屏loading监听
@@ -679,26 +670,58 @@ export default {
     }
   },
   created () {
-    this.init()
   },
   mounted () {
     // 描绘完成
+    this.init()
   },
   destroyed () {
+    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      if (this.data !== null && this.data !== undefined) {
-        this.getData()
-      }
+      // 数据初始化
+      this.dataJson.tempJson = deepCopy(this.data)
+      this.dataJson.tempJsonOriginal = deepCopy(this.data)
+      this.getDataInit()
+      // 初始化watch
+      this.setWatch()
       this.settings.loading = false
+    },
+    // 设置监听器
+    setWatch () {
+      this.unWatch()
+    },
+    unWatch () {
     },
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')
     },
+    // 获取数据初始化
+    getDataInit () {
+      this.settings.loading = true
+      getApi(this.data).then(response => {
+        this.dataJson.tempJson = deepCopy(response.data)
+        this.dataJson.tempJsonOriginal = deepCopy(response.data)
+        this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
+        // 其他附件
+        this.dataJson.doc_att = this.dataJson.tempJson.doc_att_files || []
+        if (this.dataJson.doc_att != null && this.dataJson.doc_att.length > 0) {
+          this.dataJson.tempJson.doc_att_files.forEach(item => {
+            this.dataJson.doc_att_file.push(item.url)
+          })
+        } else {
+          this.dataJson.doc_att = []
+          this.dataJson.doc_att_file = []
+          this.dataJson.doc_att_files = []
+        }
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
     // 更新逻辑
     doUpdate () {
       // 开始综合验证
@@ -710,18 +733,24 @@ export default {
           tempData.form_data = this.popSettingsData.sponsorDialog.form_data // 表单参数
           tempData.process_users = this.popSettingsData.sponsorDialog.process_users // 自选用户
 
+          if (tempData.detailListData == null || tempData.detailListData.length === 0) {
+            this.showErrorMsg('至少选择一个转移商品')
+            this.closeLoading()
+            return
+          }
+
           this.settings.loading = true
           updateApi(tempData)
             .then(
               _data => {
                 this.closeLoading()
                 this.$emit('closeMeOk', _data.data)
-                // 通知兄弟组件，更新数据更新
+                // 通知兄弟组件，更新数据
                 setTimeout(() => {
-                  EventBus.$emit(this.EMITS.EMIT_BUS_PROJECT_UPDATE_OK, _data.data)
+                  EventBus.$emit(this.EMITS.EMIT_MST_CARGO_RIGHT_TRANSFER_UPDATE_OK, _data.data)
                 }, 1000)
                 this.$notify({
-                  title: '更新成功',
+                  title: '修改处理成功',
                   message: _data.data.message,
                   type: 'success',
                   duration: this.settings.duration
@@ -730,7 +759,7 @@ export default {
               _error => {
                 this.closeLoading()
                 this.$notify({
-                  title: '更新失败',
+                  title: '修改处理失败',
                   message: _error.error.message,
                   type: 'error',
                   duration: this.settings.duration
@@ -745,7 +774,19 @@ export default {
         }
       })
     },
-    handleTabsClick (tab, event) {
+    handleRowClick (row) {
+      this.popSettingsData.goodsDialog.rowIndex = this.getRowIndex(row)
+    },
+    // 获取行索引
+    getRowIndex (row) {
+      const _index = this.dataJson.tempJson.detailListData.lastIndexOf(row)
+      return _index
+    },
+    handleCurrentChange (row) {
+      this.dataJson.currentJson = Object.assign({}, row) // copy obj
+      this.dataJson.currentJson.index = this.getRowIndex(row)
+      this.settings.btnTableDisabledStatus.disabledInsert = false
+      this.settings.btnTableDisabledStatus.disabledDelete = false
     },
     // 供应商
     handleSupplierDialog () {
@@ -765,34 +806,73 @@ export default {
     handleSupplierCloseCancel () {
       this.popSettingsData.supplierDialogData.visible = false
     },
-    // 下游客户
-    handleCustomerDialog () {
+    // 主体企业
+    handlePurchaserDialog () {
       this.popSettingsData.purchaserDialogData.visible = true
       this.popSettingsData.purchaserDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
-      this.popSettingsData.purchaserDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_ONE]
     },
-    // 下游客户：关闭对话框：确定
-    handleCustomerCloseOk (val) {
+    // 主体企业：关闭对话框：确定
+    handlePurchaserCloseOk (val) {
       this.popSettingsData.purchaserDialogData.selectedDataJson = val
       this.dataJson.tempJson.purchaser_id = val.id
       this.dataJson.tempJson.purchaser_code = val.code
       this.dataJson.tempJson.purchaser_name = val.name
       this.popSettingsData.purchaserDialogData.visible = false
     },
-    // 下游客户：关闭对话框：取消
-    handleCustomerCloseCancel () {
+    // 主体企业：关闭对话框：取消
+    handlePurchaserCloseCancel () {
       this.popSettingsData.purchaserDialogData.visible = false
     },
-
-    // 上传成功
-    handleUploadFileSuccess (res) {
+    // 采购订单选择
+    handlePoOrderDialog () {
+      this.popSettingsData.poOrderDialog.visible = true
+    },
+    // 采购订单：关闭对话框：确定
+    handlePoOrderCloseOk (val) {
+      this.popSettingsData.poOrderDialog.selectedDataJson = val
+      this.dataJson.tempJson.po_order_id = val.id
+      this.dataJson.tempJson.po_order_code = val.code
+      // 同步供应商和采购方信息
+      if (val.supplier_id) {
+        this.dataJson.tempJson.supplier_id = val.supplier_id
+        this.dataJson.tempJson.supplier_code = val.supplier_code
+        this.dataJson.tempJson.supplier_name = val.supplier_name
+      }
+      if (val.purchaser_id) {
+        this.dataJson.tempJson.purchaser_id = val.purchaser_id
+        this.dataJson.tempJson.purchaser_code = val.purchaser_code
+        this.dataJson.tempJson.purchaser_name = val.purchaser_name
+      }
+      if (val.project_code) {
+        this.dataJson.tempJson.project_code = val.project_code
+      }
+      // 清空已选择的商品明细
+      this.dataJson.tempJson.detailListData = []
+      this.calculateTotal()
+      this.popSettingsData.poOrderDialog.visible = false
+    },
+    // 采购订单：关闭对话框：取消
+    handlePoOrderCloseCancel () {
+      this.popSettingsData.poOrderDialog.visible = false
+    },
+    // 其他附件上传成功
+    handleOtherUploadFileSuccess (res) {
       res.response.data.timestamp = res.response.timestamp
       this.dataJson.doc_att.push(res.response.data)
       this.dataJson.doc_att_file.push(res.response.data.url)
       this.dataJson.tempJson.doc_att_files = this.dataJson.doc_att
     },
+    // 其他附件附件文件
+    removeOtherFile (val) {
+      // 获取下标
+      const _index = this.dataJson.doc_att_file.lastIndexOf(val)
+      // 从数组中移除
+      this.dataJson.doc_att.splice(_index, 1)
+      this.dataJson.doc_att_file.splice(_index, 1)
+      this.dataJson.tempJson.doc_att_files = this.dataJson.doc_att
+    },
     // 上传失败
-    handleUploadFileError () {
+    handleFileError () {
       console.debug('文件上传失败')
       this.$notify({
         title: '上传错误',
@@ -801,111 +881,6 @@ export default {
         duration: 0
       })
     },
-    // 删除文件
-    removeFile (val) {
-      // 获取下标
-      const _index = this.dataJson.doc_att_file.lastIndexOf(val)
-      // 从数组中移除
-      this.dataJson.doc_att.splice(_index, 1)
-      this.dataJson.doc_att_file.splice(_index, 1)
-      this.dataJson.tempJson.doc_att_files = this.dataJson.doc_att
-    },
-
-    // 弹出框关闭
-    handleDialogClose () {
-      this.settings.visible = false
-    },
-
-    // 商品数据新增
-    handleGoodsInsert () {
-      this.popSettingsData.goodsDialog.visible = true
-    },
-
-    // 商品数据编辑
-    handleGoodsEdit () {
-      if (this.dataJson.rowIndex === null) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettingsData.goodsDialog.data = deepCopy(this.dataJson.currentJson)
-
-      this.popSettingsData.goodsDialog.visible = true
-    },
-
-    // 商品数据删除
-    handleGoodsDelete () {
-      if (this.dataJson.rowIndex === null) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      // 删除
-      this.$confirm('是否确认删除该条数据', '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // 设置到table中绑定的json数据源
-        this.dataJson.tempJson.detailListData.splice(this.popSettingsData.goodsDialog.rowIndex, 1)
-      }).catch(action => {
-
-      })
-    },
-
-    // 商品选择完成
-    handleGoodsCloseOk (val) {
-      this.popSettingsData.goodsDialog.visible = false
-      this.dataJson.tempJson.detailListData.push(val.data)
-    },
-    // 商品取消
-    handleGoodsCloseCancel () {
-      this.popSettingsData.goodsDialog.visible = false
-    },
-
-    handleRowClick (row) {
-      this.popSettingsData.goodsDialog.rowIndex = this.getRowIndex(row)
-    },
-    // 获取行索引
-    getRowIndex (row) {
-      const _index = this.dataJson.tempJson.detailListData.lastIndexOf(row)
-      return _index
-    },
-    handleCurrentChange (row) {
-      this.dataJson.currentJson = Object.assign({}, row) // copy obj
-      this.dataJson.currentJson.index = this.getRowIndex(row)
-      this.settings.btnTableDisabledStatus.disabledInsert = false
-      this.settings.btnTableDisabledStatus.disabledDelete = false
-    },
-
-    getData () {
-      // 查询逻辑
-      this.settings.loading = true
-      getApi({ id: this.data.id }).then(response => {
-        this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
-        this.dataJson.tempJson.idx = this.data.idx
-
-        // 初始化附件数据
-        if (this.dataJson.tempJson.doc_att_files && this.dataJson.tempJson.doc_att_files.length > 0) {
-          this.dataJson.doc_att = this.dataJson.tempJson.doc_att_files
-          this.dataJson.doc_att_file = this.dataJson.tempJson.doc_att_files.map(item => item.url)
-        }
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-    // 取消
-    handleBpmDialogCancel () {
-      this.popSettingsData.sponsorDialog.visible = false
-      this.closeLoading()
-    },
-    // 审批流确定
-    handleBpmDialogOk (data) {
-      this.popSettingsData.sponsorDialog.initial_process = data.processData
-      this.popSettingsData.sponsorDialog.process_users = data.process_users
-      this.popSettingsData.sponsorDialog.visible = false
-      this.doUpdate()
-    },
-
     /**
      * 校验数据 获取审批流程
      */
@@ -959,14 +934,18 @@ export default {
           this.$message.error(err)
         })
     },
-    /**
-     * 运输方式选择
-     * @param val
-     */
-    handleTransportTypeChange (val) {
-      this.dataJson.tempJson.delivery_type = val
+    // 取消
+    handlebpmDialogCancel () {
+      this.popSettingsData.sponsorDialog.visible = false
+      this.closeLoading()
+    },
+    // 审批流确定
+    handlebpmDialogOk (data) {
+      this.popSettingsData.sponsorDialog.initial_process = data.processData
+      this.popSettingsData.sponsorDialog.process_users = data.process_users
+      this.popSettingsData.sponsorDialog.visible = false
+      this.doUpdate()
     }
   }
-
 }
 </script>

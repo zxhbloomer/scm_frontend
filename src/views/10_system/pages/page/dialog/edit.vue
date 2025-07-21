@@ -277,7 +277,7 @@ export default {
             component: 100,
             meta_title: 20,
             meta_icon: 20,
-            perms: 20,
+            perms: 30,
             descr: 200
           }
         }

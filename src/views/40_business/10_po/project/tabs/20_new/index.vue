@@ -187,7 +187,7 @@
             show-overflow-tooltip
             min-width="150"
             prop="sku_code"
-            label="物料编码"
+            label="商品编号"
           />
           <el-table-column
             show-overflow-tooltip

@@ -25,6 +25,30 @@ export function getListSumApi (query) {
 }
 
 /**
+ * 货权转移专用-查询采购订单列表
+ * @param {*} data
+ */
+export function getCargoRightTransferListApi (query) {
+  return request({
+    url: '/api/v1/poorder/pagelist/cargorighttransfer',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 货权转移专用-查询采购订单汇总
+ * @param {*} data
+ */
+export function getCargoRightTransferListSumApi (query) {
+  return request({
+    url: '/api/v1/poorder/sum/cargorighttransfer',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
  * 查询明细逻辑
  * @param {*} data
  */
@@ -184,6 +208,18 @@ export function getListByAprefundApi (query) {
 export function querySumByAprefund (query) {
   return request({
     url: '/api/v1/poorder/sum/aprefund',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 货权转移专用-获取采购订单明细数据
+ * @param {*} data
+ */
+export function setPodetailListDataApi (query) {
+  return request({
+    url: '/api/v1/poorder/list/detail',
     method: 'post',
     data: query
   })

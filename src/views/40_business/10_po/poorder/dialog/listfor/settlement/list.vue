@@ -137,11 +137,11 @@
         label-position="top"
         class="search-form-senior"
       >
-        <el-form-item label="物料编码或名称">
+        <el-form-item label="商品编号或名称">
           <el-input
             v-model.trim="dataJson.searchForm.goods_name"
             clearable
-            placeholder="物料编码或名称"
+            placeholder="商品编号或名称"
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
@@ -918,7 +918,7 @@ export default {
           type_list: [],
           settle_list: [],
           bill_type_list: [],
-          goods_name: '', // 高级查询-物料编码或名称
+          goods_name: '', // 高级查询-商品编号或名称
           // 启动日期
           batch: '',
           is_advance_pay: true // 是否预付款

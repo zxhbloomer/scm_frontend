@@ -159,11 +159,11 @@
       >
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="物料编码或名称">
+            <el-form-item label="商品编号或名称">
               <el-input
                 v-model.trim="dataJson.searchForm.goods_name"
                 clearable
-                placeholder="物料编码或名称"
+                placeholder="商品编号或名称"
                 @keyup.enter.native="handleSearch"
               />
             </el-form-item>
