@@ -9,14 +9,14 @@
         status-icon
       >
         <el-alert
-          v-if="dataJson.tempJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FIVE"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE"
           title="作废理由"
           type="error"
           :closable="false"
         />
         <div style="margin-bottom: 10px" />
         <el-descriptions
-          v-if="dataJson.tempJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FIVE"
+          v-if="dataJson.tempJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR || dataJson.tempJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE"
           title=""
           :column="3"
           :label-style="labelStyle"
@@ -429,11 +429,11 @@ export default {
     // 获取状态标签类型
     getStatusTagType (status) {
       const statusMap = {
-        [constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_ONE]: 'info', // 草稿
-        [constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_TWO]: 'warning', // 审批中
-        [constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_THREE]: 'success', // 已完成
-        [constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FOUR]: 'danger', // 已作废
-        [constants_dict.DICT_B_CARGO_RIGHT_TRANSFER_STATUS_FIVE]: 'danger' // 已拒绝
+        [constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE]: 'info', // 草稿
+        [constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO]: 'warning', // 审批中
+        [constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE]: 'success', // 已完成
+        [constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR]: 'danger', // 已作废
+        [constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE]: 'danger' // 已拒绝
       }
       return statusMap[status] || 'info'
     }

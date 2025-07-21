@@ -6,7 +6,7 @@ import request from '@/utils/request'
  */
 export function getListApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/pagelist',
+    url: '/api/v1/po_cargo_right_transfer/pagelist',
     method: 'post',
     data: query
   })
@@ -18,7 +18,7 @@ export function getListApi (query) {
  */
 export function getListSumApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/sum',
+    url: '/api/v1/po_cargo_right_transfer/sum',
     method: 'post',
     data: query
   })
@@ -30,7 +30,7 @@ export function getListSumApi (query) {
  */
 export function getApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/get',
+    url: '/api/v1/po_cargo_right_transfer/get',
     method: 'post',
     data: query
   })
@@ -42,7 +42,7 @@ export function getApi (query) {
  */
 export function updateApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/save',
+    url: '/api/v1/po_cargo_right_transfer/save',
     method: 'post',
     data
   })
@@ -54,7 +54,7 @@ export function updateApi (data) {
  */
 export function insertApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/insert',
+    url: '/api/v1/po_cargo_right_transfer/insert',
     method: 'post',
     data
   })
@@ -66,7 +66,7 @@ export function insertApi (data) {
  */
 export function importDataApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/import',
+    url: '/api/v1/po_cargo_right_transfer/import',
     method: 'post',
     data
   })
@@ -78,7 +78,7 @@ export function importDataApi (data) {
  */
 export function exportApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/export',
+    url: '/api/v1/po_cargo_right_transfer/export',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -91,7 +91,7 @@ export function exportApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/export_all',
+    url: '/api/v1/po_cargo_right_transfer/export_all',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -104,7 +104,7 @@ export function exportAllApi (data) {
  */
 export function delApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/delete',
+    url: '/api/v1/po_cargo_right_transfer/delete',
     method: 'post',
     data
   })
@@ -116,7 +116,7 @@ export function delApi (data) {
  */
 export function validateApi (data) {
   return request({
-    url: '/api/v1/cargo_right_transfer/validate',
+    url: '/api/v1/po_cargo_right_transfer/validate',
     method: 'post',
     data
   })
@@ -127,7 +127,7 @@ export function validateApi (data) {
  */
 export function printApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/print',
+    url: '/api/v1/po_cargo_right_transfer/print',
     method: 'post',
     data: query
   })
@@ -138,7 +138,7 @@ export function printApi (query) {
  */
 export function cancelApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/cancel',
+    url: '/api/v1/po_cargo_right_transfer/cancel',
     method: 'post',
     data: query
   })
@@ -150,7 +150,7 @@ export function cancelApi (query) {
  */
 export function getFinishApi (query) {
   return request({
-    url: '/api/v1/cargo_right_transfer/finish',
+    url: '/api/v1/po_cargo_right_transfer/finish',
     method: 'post',
     data: query
   })

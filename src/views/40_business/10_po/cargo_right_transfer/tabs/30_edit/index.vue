@@ -552,7 +552,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_CARGO_RIGHT_TRANSFER,
+          serial_type: constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null
