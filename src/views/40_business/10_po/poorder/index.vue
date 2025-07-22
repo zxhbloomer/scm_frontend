@@ -20,6 +20,7 @@
           @emitApprove="handleApprove"
           @emitInplanNew="handleInplanNew"
           @emitSettlementNew="handleSettlementNew"
+          @emitCargoRightTransferNew="handleCargoRightTransferNew"
         />
       </el-tab-pane>
       <!--新增-->
@@ -109,6 +110,19 @@
           @closeMeOk="handleCloseMeOk"
         />
       </el-tab-pane>
+      <!--货权转移新增-->
+      <el-tab-pane
+        v-if="dataJson.tab.showCargoRightTransferNew"
+        name="cargo_right_transfer_new"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.cargoRightTransferName }}</template>
+        <cargo_right_transfer_new_template
+          :data="dataJson.po_data"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
+        />
+      </el-tab-pane>
     </el-tabs>
 
   </div>
@@ -123,10 +137,11 @@ import detail_template from './tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
 import inplan_new_template from '@/views/40_business/30_in/inplan/component/push/bypoorder/index.vue'
 import settlement_new_template from '@/views/40_business/10_po/settlement/component/push/bypoorder/index.vue'
+import cargo_right_transfer_new_template from '@/views/40_business/10_po/cargo_right_transfer/component/push/index.vue'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
-  components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template, settlement_new_template },
+  components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template, settlement_new_template, cargo_right_transfer_new_template },
   directives: { elDragDialog },
   mixins: [resizeMixin],
   props: {
@@ -148,9 +163,12 @@ export default {
           showApprove: false, // 显示审批页面
           showInplanNew: false, // 显示入库计划新增页面
           showSettlementNew: false, // 显示结算单新增页面
+          showCargoRightTransferNew: false, // 显示货权转移新增页面
           inplanName: '入库计划新增', // 入库计划页签名称
-          settlementName: '结算单新增' // 结算单页签名称
+          settlementName: '结算单新增', // 结算单页签名称
+          cargoRightTransferName: '货权转移新增' // 货权转移页签名称
         },
+        po_data: null, // 采购订单数据
         operation_head_info: '',
         permissionId: null,
         canEdit: null
@@ -200,6 +218,7 @@ export default {
       this.dataJson.tab.showView = false
       this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = false
       this.dataJson.tab.showMain = true
       this.settings.tabs.activeName = 'main'
     },
@@ -264,6 +283,7 @@ export default {
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -277,6 +297,7 @@ export default {
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = false
       this.settings.tabs.activeName = 'main'
     },
     /**
@@ -296,6 +317,7 @@ export default {
       this.dataJson.tab.showApprove = true
       this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = false
       this.dataJson.canEdit = false
     },
     /**
@@ -312,6 +334,7 @@ export default {
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = true
       this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = false
     },
     /**
      * 结算单新增
@@ -327,6 +350,23 @@ export default {
       this.dataJson.tab.showApprove = false
       this.dataJson.tab.showInplanNew = false
       this.dataJson.tab.showSettlementNew = true
+      this.dataJson.tab.showCargoRightTransferNew = false
+    },
+    /**
+     * 货权转移新增
+     * @param _data
+     */
+    handleCargoRightTransferNew (_data) {
+      this.dataJson.po_data = _data
+      this.settings.tabs.activeName = 'cargo_right_transfer_new'
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showMain = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showInplanNew = false
+      this.dataJson.tab.showSettlementNew = false
+      this.dataJson.tab.showCargoRightTransferNew = true
     },
     /**
      * 获取标签页标题扩展文本
@@ -340,7 +380,8 @@ export default {
         'edit': this.dataJson.tab.showNew ? '-新增' : '-修改',
         'approve': '-审批',
         'inplan_new': '-入库计划新增',
-        'settlement_new': '-结算单新增'
+        'settlement_new': '-结算单新增',
+        'cargo_right_transfer_new': '-货权转移新增'
       }
       return titleMap[tabState] || ''
     },

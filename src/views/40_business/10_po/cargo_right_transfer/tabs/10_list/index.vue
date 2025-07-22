@@ -272,8 +272,10 @@
       class="div-sum"
     >
       <div class="right">
-        <span class="count-title">转移总金额：</span><span class="count-data">{{ dataJson.sumData.order_amount_total == null ? 0 : formatCurrency(dataJson.sumData.order_amount_total,true) }}</span>
-        <span class="count-title">转移总数量：</span><span class="count-data">{{ dataJson.sumData.order_total == null ? 0 : formatNumber(dataJson.sumData.order_total,true,4) }}</span>
+        <span class="count-title">未处理数量：</span><span class="count-data">{{ dataJson.sumData.cargo_right_untransfer_qty_total == null ? 0 : formatNumber(dataJson.sumData.cargo_right_untransfer_qty_total,true,4) }}</span>
+        <span class="count-title">处理中数量：</span><span class="count-data">{{ dataJson.sumData.cargo_right_transfering_qty_total == null ? 0 : formatNumber(dataJson.sumData.cargo_right_transfering_qty_total,true,4) }}</span>
+        <span class="count-title">已处理移数量：</span><span class="count-data">{{ dataJson.sumData.cargo_right_transferred_qty_total == null ? 0 : formatNumber(dataJson.sumData.cargo_right_transferred_qty_total,true,4) }}</span>
+        <span class="count-title">已作废数量：</span><span class="count-data">{{ dataJson.sumData.cargo_right_transfer_cancel_qty_total == null ? 0 : formatNumber(dataJson.sumData.cargo_right_transfer_cancel_qty_total,true,4) }}</span>
       </div>
     </div>
 

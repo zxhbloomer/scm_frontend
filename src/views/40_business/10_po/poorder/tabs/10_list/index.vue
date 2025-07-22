@@ -299,6 +299,7 @@
         <span class="count-title">预付未付总金额：</span><span class="count-data">{{ dataJson.sumData.advance_unpay_total == null ? 0 : formatCurrency(dataJson.sumData.advance_unpay_total,true) }}</span>
         <span class="count-title">预付已付款总金额：</span><span class="count-data">{{ dataJson.sumData.advance_paid_total == null ? 0 : formatCurrency(dataJson.sumData.advance_paid_total,true) }}</span>
         <span class="count-title">结算总金额：</span><span class="count-data">{{ dataJson.sumData.settle_amount_total == null ? 0 : formatCurrency(dataJson.sumData.settle_amount_total,true) }}</span>
+        <span class="count-title">待结算数量（吨）：</span><span class="count-data">{{ dataJson.sumData.settle_can_qty_total == null ? 0 : formatNumber(dataJson.sumData.settle_can_qty_total,true,4) }}</span>
       </div>
     </div>
 
@@ -499,6 +500,19 @@
       >
         <template v-slot="scope">
           {{ scope.row.in_qty == null ? '' : formatNumber(scope.row.in_qty, true, 4) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="settle_can_qty_total"
+        label="待结算数量（吨）"
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.settle_can_qty_total == null ? '' : formatNumber(scope.row.settle_can_qty_total, true, 4) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -821,6 +835,7 @@
       @closeMeCancel="handlePushCloseDialogCancel"
       @openInplanNew="handleOpenInplanNew"
       @openSettlementNew="handleOpenSettlementNew"
+      @openCargoRightTransferNew="handleOpenCargoRightTransferNew"
     />
   </div>
 </template>
@@ -1825,6 +1840,11 @@ export default {
     handleOpenSettlementNew (data) {
       // 向父组件发送事件，打开结算单新增页面
       this.$emit('emitSettlementNew', data)
+    },
+    // 处理打开货权转移新增页面
+    handleOpenCargoRightTransferNew (data) {
+      // 向父组件发送事件，打开货权转移新增页面
+      this.$emit('emitCargoRightTransferNew', data)
     }
   }
 }
