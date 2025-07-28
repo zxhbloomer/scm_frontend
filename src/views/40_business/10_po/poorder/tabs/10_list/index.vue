@@ -778,7 +778,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -1015,7 +1015,6 @@ import {
   delApi, getApi
 } from '@/api/40_business/10_po/poorder/poorder'
 import constants_para from '@/common/constants/constants_para'
-import constants_type from '@/common/constants/constants_dict'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -1158,6 +1157,12 @@ export default {
     }
   },
   computed: {
+    CONSTANTS () {
+      return constants_dict
+    },
+    PARAMETERS () {
+      return constants_para
+    },
     // 高级查询计数器
     screenNum () {
       let count = 0
@@ -1571,7 +1576,7 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== constants_type.DICT_B_PO_ORDER_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_PO_ORDER_STATUS_THREE) {
+      if (_data.status.toString() !== constants_dict.DICT_B_PO_ORDER_STATUS_ZERO && _data.status.toString() !== constants_dict.DICT_B_PO_ORDER_STATUS_THREE) {
         this.showErrorMsg('采购订单状态异常，只有待审批或驳回状态才可以删除')
         return
       }
@@ -1625,25 +1630,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_ONE]
           break
         case '3': // 执行中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_SIX]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_THREE]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_FOUR]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_ORDER_STATUS_FIVE]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_PO_ORDER_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）

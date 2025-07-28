@@ -506,7 +506,7 @@ import { updateApi, getOverReleaseConfigApi, newInsertApi, newGetApi } from '@/a
 import consignorDialog from '@/views/30_wms/customer/dialog/dialog'
 import ownerDialog from '@/views/30_wms/owner/dialog/dialog'
 import orderDialog from '@/views/40_business/order/dialog/dialog'
-import inventoryDialog from '@/views/40_business/40_out/outplan/tabs/dialog/inventoryEdit'
+import inventoryDialog from '@/views/40_business/40_out/outplan/dialog/select_goods'
 import InputSearch from '@/components/40_input/inputSearch'
 import mixin from '../mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'

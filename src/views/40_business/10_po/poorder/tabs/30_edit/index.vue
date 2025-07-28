@@ -514,6 +514,7 @@
 
 <script>
 import constants_para from '@/common/constants/constants_para'
+import constants_emits from '@/common/constants/constants_emits'
 import ElDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi, updateApi, validateApi } from '@/api/40_business/10_po/poorder/poorder'
@@ -659,6 +660,15 @@ export default {
     }
   },
   computed: {
+    CONSTANTS () {
+      return constants_dict
+    },
+    PARAMETERS () {
+      return constants_para
+    },
+    EMITS () {
+      return constants_emits
+    }
   },
   // 监听器
   watch: {

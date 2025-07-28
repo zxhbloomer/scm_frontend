@@ -196,12 +196,36 @@ const EMIT_MST_B_AP_PAY_UPDATE_OK = 'global:mst:b_ap_pay:update:ok'
 const EMIT_MST_B_AP_PAY_BPM_OK = 'global:mst:b_ap_pay:bpm:ok'
 
 /**
+ * 收款单管理，新增完成
+ * @type {string}
+ */
+const EMIT_MST_B_AR_RECEIVE_NEW_OK = 'global:mst:b_ar_receive:new:ok'
+const EMIT_MST_B_AR_RECEIVE_UPDATE_OK = 'global:mst:b_ar_receive:update:ok'
+const EMIT_MST_B_AR_RECEIVE_BPM_OK = 'global:mst:b_ar_receive:bpm:ok'
+
+/**
  * 退款管理，新增完成
  * @type {string}
  */
 const EMIT_MST_B_AP_REFUND_NEW_OK = 'global:mst:b_ap_refund:new:ok'
 const EMIT_MST_B_AP_REFUND_UPDATE_OK = 'global:mst:b_ap_refund:update:ok'
 const EMIT_MST_B_AP_REFUND_BPM_OK = 'global:mst:b_ap_refund:bpm:ok'
+
+/**
+ * 应收账款退款管理，审批完成
+ * @type {string}
+ */
+const EMIT_MST_B_AR_REFUND_NEW_OK = 'global:mst:b_ar_refund:new:ok'
+const EMIT_MST_B_AR_REFUND_UPDATE_OK = 'global:mst:b_ar_refund:update:ok'
+const EMIT_MST_B_AR_REFUND_BPM_OK = 'global:mst:b_ar_refund:bpm:ok'
+
+/**
+ * 应收账款退款单收款管理，审批完成
+ * @type {string}
+ */
+const EMIT_MST_B_AR_REFUND_RECEIVE_NEW_OK = 'global:mst:b_ar_refund_receive:new:ok'
+const EMIT_MST_B_AR_REFUND_RECEIVE_UPDATE_OK = 'global:mst:b_ar_refund_receive:update:ok'
+const EMIT_MST_B_AR_REFUND_RECEIVE_BPM_OK = 'global:mst:b_ar_refund_receive:bpm:ok'
 
 /**
  * 入库计划管理，新增完成
@@ -226,6 +250,14 @@ const EMIT_MST_INPLAN_BPM_OK = 'global:mst:inplan:bpm:ok'
 const EMIT_MST_B_IN_NEW_OK = 'global:mst:b_in:new:ok'
 const EMIT_MST_B_IN_UPDATE_OK = 'global:mst:b_in:update:ok'
 const EMIT_MST_B_IN_BPM_OK = 'global:mst:b_in:bpm:ok'
+
+/**
+ * 出库单模块(out)，新增完成
+ * @type {string}
+ */
+const EMIT_MST_B_OUT_NEW_OK = 'global:mst:b_out:new:ok'
+const EMIT_MST_B_OUT_UPDATE_OK = 'global:mst:b_out:update:ok'
+const EMIT_MST_B_OUT_BPM_OK = 'global:mst:b_out:bpm:ok'
 
 /**
  * 消息通知
@@ -329,9 +361,21 @@ export default {
   EMIT_MST_B_AP_PAY_UPDATE_OK,
   EMIT_MST_B_AP_PAY_BPM_OK,
 
+  EMIT_MST_B_AR_RECEIVE_NEW_OK,
+  EMIT_MST_B_AR_RECEIVE_UPDATE_OK,
+  EMIT_MST_B_AR_RECEIVE_BPM_OK,
+
   EMIT_MST_B_AP_REFUND_NEW_OK,
   EMIT_MST_B_AP_REFUND_UPDATE_OK,
   EMIT_MST_B_AP_REFUND_BPM_OK,
+
+  EMIT_MST_B_AR_REFUND_NEW_OK,
+  EMIT_MST_B_AR_REFUND_UPDATE_OK,
+  EMIT_MST_B_AR_REFUND_BPM_OK,
+
+  EMIT_MST_B_AR_REFUND_RECEIVE_NEW_OK,
+  EMIT_MST_B_AR_REFUND_RECEIVE_UPDATE_OK,
+  EMIT_MST_B_AR_REFUND_RECEIVE_BPM_OK,
 
   EMIT_MST_B_IN_PLAN_NEW_OK,
   EMIT_MST_B_IN_PLAN_UPDATE_OK,
@@ -344,6 +388,10 @@ export default {
   EMIT_MST_B_IN_NEW_OK,
   EMIT_MST_B_IN_UPDATE_OK,
   EMIT_MST_B_IN_BPM_OK,
+
+  EMIT_MST_B_OUT_NEW_OK,
+  EMIT_MST_B_OUT_UPDATE_OK,
+  EMIT_MST_B_OUT_BPM_OK,
 
   EMIT_NOTISE_BPM
 }

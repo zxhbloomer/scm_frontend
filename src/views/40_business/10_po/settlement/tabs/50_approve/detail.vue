@@ -364,7 +364,7 @@
 
 <script>
 import deepCopy from 'deep-copy'
-import { getApi } from '@/api/40_business/settlement/settlement'
+import { getApi } from '@/api/40_business/10_po/settlement/settlement'
 import constants_para from '@/common/constants/constants_para'
 import constants_dict from '@/common/constants/constants_dict'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'

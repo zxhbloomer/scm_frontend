@@ -667,7 +667,7 @@ export default {
           // this.dataJson.tempJson.over_charged_btn = null // 启用超收
           // this.dataJson.tempJson.over_inventory_upper = null // 超收百分比
 
-          this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG // 入库类型：（采购入库）
+          this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_ZERO // 入库类型：（采购入库）
           this.dataJson.tempJson.order_id = response.data.id // 订单id
           this.dataJson.tempJson.order_type = constants_dict.DICT_B_PO_ORDER // 订单类型
 

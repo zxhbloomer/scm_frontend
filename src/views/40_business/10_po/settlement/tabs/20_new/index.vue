@@ -420,7 +420,7 @@
 <script>
 import deepCopy from 'deep-copy'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import { validateApi, insertApi } from '@/api/40_business/settlement/settlement'
+import { validateApi, insertApi } from '@/api/40_business/10_po/settlement/settlement'
 import constants_para from '@/common/constants/constants_para'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'

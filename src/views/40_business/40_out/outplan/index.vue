@@ -1,122 +1,119 @@
 <template>
   <div>
     <el-tabs
-      ref="outPlanTabs"
+      ref="refTabs"
       v-model="settings.tabs.activeName"
       @tab-click="handleTabsClick"
       @tab-remove="handleRemoveTab"
     >
+      <!-- 出库计划-列表 -->
+      <!-- 注意：第一个list页面是不需要v-if来管理是否隐藏 -->
       <el-tab-pane
         name="main"
-        :disabled="dataJson.tab.show"
       >
-        <template slot="label">出库计划</template>
-        <outplan-template
-          @emitOperate="handleOperate"
-          @emitInsert="handleInsert"
+        <template slot="label">出库计划-列表</template>
+        <list_template
+          :data="dataJson.data"
           @emitView="handleView"
+          @emitNew="handleNew"
           @emitUpdate="handleUpdate"
-          @emitOperateReceive="handOperateReceive"
+          @emitApprove="handleApprove"
+          @emitOutbound="handleOutbound"
         />
       </el-tab-pane>
+      <!-- 新增 -->
       <el-tab-pane
-        v-if="dataJson.tab.showEdit"
-        name="edit_outplan"
+        v-if="dataJson.tab.showNew"
+        name="edit"
         closable
       >
         <template slot="label">{{ dataJson.tab.name }}</template>
-        <edit-template
+        <new_template
           :data="dataJson.data"
           :edit-status="dataJson.editStatus"
           :head-info="dataJson.operation_head_info"
           :can-edit="dataJson.canEdit"
-          @emitReturn="handleReturn"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
         />
       </el-tab-pane>
+      <!-- 修改 -->
       <el-tab-pane
-        v-if="dataJson.tab.showOperate"
-        name="operate_outplan"
+        v-if="dataJson.tab.showUpdate"
+        name="edit"
         closable
       >
         <template slot="label">{{ dataJson.tab.name }}</template>
-        <operate-template
+        <update_template
           :data="dataJson.data"
           :edit-status="dataJson.editStatus"
           :head-info="dataJson.operation_head_info"
           :can-edit="dataJson.canEdit"
-          @emitReturn="handleReturn"
+          :modify-reason="dataJson.modifyReason"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
         />
       </el-tab-pane>
-
+      <!-- 查看 -->
       <el-tab-pane
-        v-if="dataJson.tab.showOperate"
-        name="operate_receive"
+        v-if="dataJson.tab.showView"
+        name="view"
         closable
       >
         <template slot="label">{{ dataJson.tab.name }}</template>
-        <operate-receive-template
+        <detail_template
           :data="dataJson.data"
-          :edit-status="dataJson.editStatus"
-          :head-info="dataJson.operation_head_info"
-          :can-edit="dataJson.canEdit"
+          edit-status="view"
+          :enable-cancel="false"
           @emitReturn="handleReturn"
         />
       </el-tab-pane>
+      <!-- 审批 -->
+      <el-tab-pane
+        v-if="dataJson.tab.showApprove"
+        name="approve"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.name }}</template>
+        <approve_template
+          :data="dataJson.data"
+          :edit-status="dataJson.editStatus"
+          :enable-cancel="dataJson.enableCancel"
+          @emitReturn="handleReturn"
+        />
+      </el-tab-pane>
+      <!-- 出库操作 -->
+      <!-- 
+      <el-tab-pane
+        v-if="dataJson.tab.showOutbound"
+        name="outbound"
+        closable
+      >
+        <template slot="label">{{ dataJson.tab.name }}</template>
+        <outbound_template
+          :data="dataJson.data"
+          @closeMeCancel="handleReturn"
+          @closeMeOk="handleCloseMeOk"
+        />
+      </el-tab-pane>
+      -->
     </el-tabs>
-
   </div>
 </template>
 
-<style scoped>
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
-}
-.el-form-item .el-cascader {
-  width: 100%;
-}
-.grid-content {
-  border-radius: 2px;
-  min-height: 36px;
-  margin-bottom: 10px;
-}
-.bg-purple-light {
-  background: #e5e9f2;
-}
-.el-alert--info.is-light {
-  background: #eee;
-}
-.corner {
-  position: absolute;
-  top: 0px;
-  border: 0;
-  right: 0;
-}
-.buttonSearch {
-  color: #ffffff;
-  background-color: #1890ff;
-  border-color: #1890ff;
-}
-.buttonReset {
-  color: #ffffff;
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-}
-</style>
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import outplanTemplate from './tabs/list.vue'
-import editTemplate from './tabs/edit.vue'
-import operateTemplate from './tabs/operate.vue'
+import list_template from './tabs/10_list/index.vue'
+import new_template from './tabs/20_new/index.vue'
+import update_template from './tabs/30_edit/index.vue'
+import detail_template from './tabs/40_view/index.vue'
+import approve_template from './tabs/50_approve/index.vue'
+// import outbound_template from '@/views/40_business/40_out/out/component/push/byoutplan/index.vue'
 import resizeMixin from '@/mixin/resizeHandlerMixin'
-import urlUtil from '@/utils/urlUtil'
-import constants_para from '@/common/constants/constants_para'
-import operateReceiveTemplate from './tabs/operateReceive.vue'
 
 export default {
-  components: { outplanTemplate, editTemplate, operateTemplate, operateReceiveTemplate },
+  name: 'OutPlan',
+  components: { list_template, new_template, update_template, detail_template, approve_template }, // outbound_template
   directives: { elDragDialog },
   mixins: [resizeMixin],
   props: {
@@ -128,14 +125,13 @@ export default {
   data () {
     return {
       dataJson: {
-        // 左侧树的数据
-        leftTreeData: null,
         tab: {
-          show: false,
-          name: '',
-          showEdit: false,
-          showOperate: false,
-          showMain: true
+          showMain: true, // 显示主页面-列表
+          showNew: false, // 显示新增
+          showUpdate: false, // 显示修改页面
+          showView: false, // 显示查看页面
+          showApprove: false, // 显示审批页面
+          showOutbound: false // 显示出库操作页面
         },
         operation_head_info: '',
         permissionId: null,
@@ -155,125 +151,175 @@ export default {
   },
   // 监听器
   watch: {
+    // 监听页面状态变化，自动更新RouterTab标题
+    'settings.tabs.activeName': {
+      handler (newVal) {
+        this.$nextTick(() => {
+          this.updateTabTitleByState(newVal)
+        })
+      },
+      immediate: true
+    }
   },
   mounted () {
     // 描绘完成
     this.$nextTick(() => {
-      this.$refs.outPlanTabs.$el.children[0].style.margin = 0
-      this.$refs.outPlanTabs.$el.children[0].style.display = 'none'
+      this.$refs.refTabs.$el.children[0].style.margin = 0
+      this.$refs.refTabs.$el.children[0].style.display = 'none'
     })
   },
   created () {
-    location.href = urlUtil.delParam(window.location.href, 'fullpath')
-    const p4 = urlUtil.getHashQueryVariable(window.location.href, 'p4')
-    const sku_code = urlUtil.getHashQueryVariable(window.location.href, 'sku_code')
-    if (p4) {
-      // 打开入库计划新增页面
-      const operate_tab_data = {
-        operate_tab_info: { show: true, name: '新增出库计划' },
-        canEdit: true,
-        editStatus: constants_para.STATUS_INSERT,
-        data: { order_id: p4, sku_code: sku_code }
-      }
-      this.handleInsert(operate_tab_data)
-    }
   },
   methods: {
+    // 状态到标题扩展的映射
+    getTabTitleExtension (tabState) {
+      const titleMap = {
+        'main': '-查询',
+        'view': '-查看',
+        'edit': this.dataJson.tab.showNew ? '-新增' : '-修改',
+        'approve': '-审批',
+        'outbound': '-出库操作'
+      }
+      return titleMap[tabState] || ''
+    },
+
+    // 根据页面状态更新RouterTab标题
+    updateTabTitleByState (tabState) {
+      const extensionText = this.getTabTitleExtension(tabState)
+      // 使用RouterTab组件的通用方法
+      if (this.$routerTab && this.$routerTab.updateTabTitle) {
+        this.$routerTab.updateTabTitle(extensionText)
+      }
+    },
+
     handleTabsClick (tab, event) {
+      // console.log(tab, event)
     },
     // 点击tabs的关闭
     handleRemoveTab (targetName) {
-      if (this.settings.tabs.is_edit === false) {
-        this.doCloseTab()
-      } else {
-        if (targetName === 'edit_permission' && this.settings.tabs.is_edit) {
-          this.$confirm('您点击了关闭当前页签的操作，请注意保存当前数据。', '确认信息', {
-            distinguishCancelAndClose: true,
-            confirmButtonText: '取消',
-            cancelButtonText: '确认关闭'
-          }).then(() => {
-          }).catch(action => {
-            // 右上角X
-            if (action === 'cancel') {
-              this.doCloseTab()
-            }
-          })
-        }
-      }
     },
     doCloseTab () {
-      this.dataJson.tab.show = false
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showOutbound = false
+      this.dataJson.tab.showMain = true
       this.settings.tabs.activeName = 'main'
-      this.$off(this.EMITS.EMIT_PERMISSION_DEPT_OPERATE_EDIT_OK)
-      this.$emit(this.EMITS.EMIT_PERMISSION_DEPT_OPERATE_EDIT_OK, null)
-      this.$off(this.EMITS.EMIT_PERMISSION_DEPT_OPERATE_INFO_OK)
-      this.$emit(this.EMITS.EMIT_PERMISSION_DEPT_OPERATE_INFO_OK, null)
     },
-    handleInsert (_data) {
+    /**
+     * 查看
+     * @param _data
+     */
+    handleView (_data) {
+      // 查看出库计划
+      this.dataJson.data = _data.data
+      this.dataJson.tab = _data.operate_tab_info
+      this.settings.tabs.activeName = 'view'
+      this.dataJson.tab.showView = true
+      this.dataJson.tab.showMain = false
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showOutbound = false
+      this.dataJson.canEdit = false
+      this.dataJson.editStatus = _data.editStatus
+    },
+    /**
+     * 新增
+     * @param _data
+     */
+    handleNew (_data) {
       // 新增出库计划
       this.dataJson.data = _data.data
       this.dataJson.tab = _data.operate_tab_info
-      this.settings.tabs.activeName = 'edit_outplan'
-      this.dataJson.canEdit = true
-      this.dataJson.editStatus = _data.editStatus
-      this.dataJson.tab.showOperate = false
+      this.settings.tabs.activeName = 'edit'
+      this.dataJson.tab.showNew = true
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showOutbound = false
       this.dataJson.tab.showMain = false
-      this.dataJson.tab.showEdit = true
+      this.dataJson.canEdit = false
+      this.dataJson.editStatus = _data.editStatus
     },
+    /**
+     * 修改
+     * @param _data
+     */
     handleUpdate (_data) {
       // 修改出库计划
-      this.dataJson.tab = _data.operate_tab_info
-      this.settings.tabs.activeName = 'edit_outplan'
-      this.dataJson.canEdit = true
-      this.dataJson.editStatus = _data.editStatus
       this.dataJson.data = _data.data
-      this.dataJson.tab.showOperate = false
-      this.dataJson.tab.showMain = false
-      this.dataJson.tab.showEdit = true
-    },
-    handleView (_data) {
-      // 查看出库计划
       this.dataJson.tab = _data.operate_tab_info
-      this.settings.tabs.activeName = 'edit_outplan'
+      this.settings.tabs.activeName = 'edit'
+      this.dataJson.tab.showUpdate = true
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showOutbound = false
+      this.dataJson.tab.showMain = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
-      this.dataJson.data = _data.data
-      this.dataJson.tab.showOperate = false
-      this.dataJson.tab.showMain = false
-      this.dataJson.tab.showEdit = true
+      this.dataJson.modifyReason = _data.modifyReason
     },
-    handleOperate (_data) {
+    /**
+     * 审批
+     * @param _data
+     */
+    handleApprove (_data) {
+      // 审批出库计划
+      this.dataJson.data = _data.data
+      this.dataJson.tab = _data.operate_tab_info
+      this.settings.tabs.activeName = 'approve'
+      this.dataJson.tab.showApprove = true
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showOutbound = false
+      this.dataJson.tab.showMain = false
+      this.dataJson.canEdit = false
+      this.dataJson.editStatus = _data.editStatus
+      this.dataJson.enableCancel = _data.enableCancel
+    },
+    /**
+     * 出库操作
+     * @param _data
+     */
+    handleOutbound (_data) {
       // 出库操作
-      this.dataJson.tab = _data.operate_tab_info
-      this.settings.tabs.activeName = 'operate_outplan'
-      this.dataJson.canEdit = true
-      this.dataJson.editStatus = _data.editStatus
       this.dataJson.data = _data.data
-      this.dataJson.tab.showOperate = true
-      this.dataJson.tab.showMain = false
-      this.dataJson.tab.showEdit = false
-    },
-    handleReturn () {
-      // 返回列表
-      this.dataJson.tab.show = false
-      this.settings.tabs.activeName = 'main'
-      // this.dataJson.show = false
-      this.dataJson.tab.showOperate = false
-      this.dataJson.tab.showEdit = false
-      this.dataJson.tab.showMain = true
-    },
-
-    handOperateReceive (_data) {
-      // 查看出库计划
       this.dataJson.tab = _data.operate_tab_info
-      this.settings.tabs.activeName = 'operate_receive'
+      this.settings.tabs.activeName = 'outbound'
+      this.dataJson.tab.showOutbound = true
+      this.dataJson.tab.showView = false
+      this.dataJson.tab.showUpdate = false
+      this.dataJson.tab.showNew = false
+      this.dataJson.tab.showApprove = false
+      this.dataJson.tab.showMain = false
       this.dataJson.canEdit = false
       this.dataJson.editStatus = _data.editStatus
-      this.dataJson.data = _data.data
-      this.dataJson.tab.showOperate = true
-      this.dataJson.tab.showMain = false
-      this.dataJson.tab.showEdit = false
+    },
+    /**
+     * 返回列表
+     * @param _data
+     */
+    handleReturn (_data) {
+      // 关闭其他页面，显示主页面
+      this.doCloseTab()
+    },
+    /**
+     * 新增/修改完成回调
+     * @param _data
+     */
+    handleCloseMeOk (_data) {
+      // 关闭其他页面，显示主页面，并刷新列表数据
+      this.doCloseTab()
+      // 可以在这里触发列表刷新
+      this.$refs.list_template && this.$refs.list_template.handleSearch()
     }
   }
 }
 </script>
+
+<style lang="scss" scoped>
+</style>

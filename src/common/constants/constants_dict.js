@@ -150,14 +150,16 @@ const DICT_M_UNIT_J = '3'
 const DICT_M_UNIT_Z = '4'
 const DICT_M_UNIT_G = '4'
 
-/** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
+/** 入库单类型：0采购入库,1调拨入库,2退货入库,3监管入库,4普通入库,5生产入库,6提货入库 ,7监管退货 */
 const DICT_B_IN_TYPE = 'b_in_type'
-const DICT_B_IN_TYPE_CG = '0'
-const DICT_B_IN_TYPE_DB = '1'
-const DICT_B_IN_TYPE_TH = '2'
-const DICT_B_IN_TYPE_SC = '5'
-const DICT_B_IN_TYPE_JG = '9'
-const DICT_B_IN_TYPE_PT = '10'
+const DICT_B_IN_TYPE_ZERO = '0'
+const DICT_B_IN_TYPE_ONE = '1'
+const DICT_B_IN_TYPE_TWO = '2'
+const DICT_B_IN_TYPE_THREE = '3'
+const DICT_B_IN_TYPE_FOUR = '4'
+const DICT_B_IN_TYPE_FIVE = '5'
+const DICT_B_IN_TYPE_SIX = '6'
+const DICT_B_IN_TYPE_SEVEN = '7'
 
 /** 入库单状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_STATUS = 'b_in_status'
@@ -764,6 +766,20 @@ const DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR = '4'
 const DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE = '5'
 const DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_SIX = '6'
 
+/**  销售货权转移表 */
+const DICT_B_SO_CARGO_RIGHT_TRANSFER = 'b_so_cargo_right_transfer'
+
+/**  销售货权转移审批状态  0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成*/
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_CANCEL = 'b_so_cargo_right_transfer_cancel'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS = 'b_so_cargo_right_transfer_status'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_ZERO = '0'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_ONE = '1'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_TWO = '2'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_THREE = '3'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_FOUR = '4'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_FIVE = '5'
+const DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_SIX = '6'
+
 /**  销售合同表 */
 const DICT_B_SO_CONTRACT = 'b_so_contract'
 
@@ -1008,6 +1024,81 @@ const DICT_B_AP_REFUND_PAY_STATUS_ONE = '1'
 const DICT_B_AP_REFUND_PAY_STATUS_TWO = '2'
 const DICT_B_AP_REFUND_PAY_STATUS_STOP = '-1'
 
+/** 应收账款管理表(销售结算) */
+const DICT_B_AR = 'b_ar'
+
+/** 应收账款管理业务作废流程 */
+const DICT_B_AR_CANCEL = 'b_ar_cancel'
+
+/** 应收账款管理业务类型 1-应收款 2-预收款 3-其他收入 */
+const DICT_B_AR_TYPE = 'b_ar_type'
+const DICT_B_AR_TYPE_ONE = '1'
+const DICT_B_AR_TYPE_TWO = '2'
+const DICT_B_AR_TYPE_THREE = '3'
+
+/** 应收账款管理审批状态 0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+const DICT_B_AR_STATUS = 'b_ar_status'
+const DICT_B_AR_STATUS_ZERO = '0'
+const DICT_B_AR_STATUS_ONE = '1'
+const DICT_B_AR_STATUS_TWO = '2'
+const DICT_B_AR_STATUS_THREE = '3'
+const DICT_B_AR_STATUS_FOUR = '4'
+const DICT_B_AR_STATUS_FIVE = '5'
+const DICT_B_AR_STATUS_SIX = '6'
+
+/** 应收账款管理收款状态 收款状态：0-未收款、1-部分收款、2-已收款、-1-中止收款 */
+const DICT_B_AR_RECEIVE_STATUS = 'b_ar_receive_status'
+const DICT_B_AR_RECEIVE_STATUS_ZERO = '0'
+const DICT_B_AR_RECEIVE_STATUS_ONE = '1'
+const DICT_B_AR_RECEIVE_STATUS_TWO = '2'
+const DICT_B_AR_RECEIVE_STATUS_STOP = '-1'
+
+/** 收款单状态：状态（0-待收款、1已收款、2-作废、-1-中止收款） */
+const DICT_B_AR_RECEIVE_BILL_STATUS = 'b_ar_receive_bill_status'
+const DICT_B_AR_RECEIVE_BILL_STATUS_ZERO = '0'
+const DICT_B_AR_RECEIVE_BILL_STATUS_ONE = '1'
+const DICT_B_AR_RECEIVE_BILL_STATUS_TWO = '2'
+const DICT_B_AR_RECEIVE_BILL_STATUS_STOP = '-1'
+
+/** 应收退款管理表 */
+const DICT_B_AR_REFUND = 'b_ar_refund'
+
+/** 应收退款管理业务作废流程 */
+const DICT_B_AR_REFUND_CANCEL = 'b_ar_refund_cancel'
+
+/** 应收退款管理业务类型 1-应收款 2-预收款 3-其他收入 */
+const DICT_B_AR_REFUND_TYPE = 'b_ar_refund_type'
+const DICT_B_AR_REFUND_TYPE_ONE = '1'
+const DICT_B_AR_REFUND_TYPE_TWO = '2'
+const DICT_B_AR_REFUND_TYPE_THREE = '3'
+
+/** 应收退款管理审批状态 0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+const DICT_B_AR_REFUND_STATUS = 'b_ar_refund_status'
+const DICT_B_AR_REFUND_STATUS_ZERO = '0'
+const DICT_B_AR_REFUND_STATUS_ONE = '1'
+const DICT_B_AR_REFUND_STATUS_TWO = '2'
+const DICT_B_AR_REFUND_STATUS_THREE = '3'
+const DICT_B_AR_REFUND_STATUS_FOUR = '4'
+const DICT_B_AR_REFUND_STATUS_FIVE = '5'
+const DICT_B_AR_REFUND_STATUS_SIX = '6'
+
+/** 应收退款管理退款状态 退款状态：0-未退款、1-部分退款、2-已退款、-1-中止退款 */
+const DICT_B_AR_REFUND_PAY_STATUS = 'b_ar_refund_pay_status'
+const DICT_B_AR_REFUND_PAY_STATUS_ZERO = '0'
+const DICT_B_AR_REFUND_PAY_STATUS_ONE = '1'
+const DICT_B_AR_REFUND_PAY_STATUS_TWO = '2'
+const DICT_B_AR_REFUND_PAY_STATUS_STOP = '-1'
+
+/** 应收退款单收款状态 收款状态：0-待收款、1-已收款、2-作废、-1-中止收款 */
+const DICT_B_AR_REFUND_RECEIVE_STATUS = 'b_ar_refund_receive_status'
+const DICT_B_AR_REFUND_RECEIVE_STATUS_ZERO = '0'
+const DICT_B_AR_REFUND_RECEIVE_STATUS_ONE = '1'
+const DICT_B_AR_REFUND_RECEIVE_STATUS_TWO = '2'
+const DICT_B_AR_REFUND_RECEIVE_STATUS_STOP = '-1'
+
+/** 应收退款单收款业务作废流程 */
+const DICT_B_AR_REFUND_RECEIVE_CANCEL = 'b_ar_refund_receive_cancel'
+
 export default {
   /** 隐藏显示类型： 0：显示 1：隐藏 null:全部 */
   DICT_SYS_VISIBLE_TYPE,
@@ -1153,14 +1244,16 @@ export default {
   DICT_B_IN_STATUS_FIVE,
   DICT_B_IN_STATUS_SIX,
 
-  /** 入库类型：0采购入库，1调拨入库，2退货入库，5生产入库，9监管入库，10普通入库 */
+  /** 入库单类型：0采购入库,1调拨入库,2退货入库,3监管入库,4普通入库,5生产入库,6提货入库 ,7监管退货 */
   DICT_B_IN_TYPE,
-  DICT_B_IN_TYPE_CG,
-  DICT_B_IN_TYPE_DB,
-  DICT_B_IN_TYPE_TH,
-  DICT_B_IN_TYPE_SC,
-  DICT_B_IN_TYPE_JG,
-  DICT_B_IN_TYPE_PT,
+  DICT_B_IN_TYPE_ZERO,
+  DICT_B_IN_TYPE_ONE,
+  DICT_B_IN_TYPE_TWO,
+  DICT_B_IN_TYPE_THREE,
+  DICT_B_IN_TYPE_FOUR,
+  DICT_B_IN_TYPE_FIVE,
+  DICT_B_IN_TYPE_SIX,
+  DICT_B_IN_TYPE_SEVEN,
 
   /** 入库计划表 审批流 */
   DICT_B_IN_PLAN,
@@ -1733,6 +1826,18 @@ export default {
   DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE,
   DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_SIX,
 
+  /**  销售货权转移审批流 */
+  DICT_B_SO_CARGO_RIGHT_TRANSFER,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_CANCEL,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_ZERO,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_ONE,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_TWO,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_THREE,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_FOUR,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_FIVE,
+  DICT_B_SO_CARGO_RIGHT_TRANSFER_STATUS_SIX,
+
   /**  采购合同表 */
   DICT_B_SO_CONTRACT,
 
@@ -1975,6 +2080,81 @@ export default {
   DICT_B_AP_REFUND_PAY_STATUS_ONE,
   DICT_B_AP_REFUND_PAY_STATUS_TWO,
   DICT_B_AP_REFUND_PAY_STATUS_STOP,
+
+  /** 应收账款管理表(销售结算) */
+  DICT_B_AR,
+
+  /** 应收账款管理业务作废流程 */
+  DICT_B_AR_CANCEL,
+
+  /** 应收账款管理业务类型 1-应收款 2-预收款 3-其他收入 */
+  DICT_B_AR_TYPE,
+  DICT_B_AR_TYPE_ONE,
+  DICT_B_AR_TYPE_TWO,
+  DICT_B_AR_TYPE_THREE,
+
+  /** 应收账款管理审批状态 0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+  DICT_B_AR_STATUS,
+  DICT_B_AR_STATUS_ZERO,
+  DICT_B_AR_STATUS_ONE,
+  DICT_B_AR_STATUS_TWO,
+  DICT_B_AR_STATUS_THREE,
+  DICT_B_AR_STATUS_FOUR,
+  DICT_B_AR_STATUS_FIVE,
+  DICT_B_AR_STATUS_SIX,
+
+  /** 应收账款管理收款状态 收款状态：0-未收款、1-部分收款、2-已收款、-1-中止收款 */
+  DICT_B_AR_RECEIVE_STATUS,
+  DICT_B_AR_RECEIVE_STATUS_ZERO,
+  DICT_B_AR_RECEIVE_STATUS_ONE,
+  DICT_B_AR_RECEIVE_STATUS_TWO,
+  DICT_B_AR_RECEIVE_STATUS_STOP,
+
+  /** 收款单状态：状态（0-待收款、1已收款、2-作废、-1-中止收款） */
+  DICT_B_AR_RECEIVE_BILL_STATUS,
+  DICT_B_AR_RECEIVE_BILL_STATUS_ZERO,
+  DICT_B_AR_RECEIVE_BILL_STATUS_ONE,
+  DICT_B_AR_RECEIVE_BILL_STATUS_TWO,
+  DICT_B_AR_RECEIVE_BILL_STATUS_STOP,
+
+  /** 应收退款管理表 */
+  DICT_B_AR_REFUND,
+
+  /** 应收退款管理业务作废流程 */
+  DICT_B_AR_REFUND_CANCEL,
+
+  /** 应收退款管理业务类型 1-应收款 2-预收款 3-其他收入 */
+  DICT_B_AR_REFUND_TYPE,
+  DICT_B_AR_REFUND_TYPE_ONE,
+  DICT_B_AR_REFUND_TYPE_TWO,
+  DICT_B_AR_REFUND_TYPE_THREE,
+
+  /** 应收退款管理审批状态 0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成 */
+  DICT_B_AR_REFUND_STATUS,
+  DICT_B_AR_REFUND_STATUS_ZERO,
+  DICT_B_AR_REFUND_STATUS_ONE,
+  DICT_B_AR_REFUND_STATUS_TWO,
+  DICT_B_AR_REFUND_STATUS_THREE,
+  DICT_B_AR_REFUND_STATUS_FOUR,
+  DICT_B_AR_REFUND_STATUS_FIVE,
+  DICT_B_AR_REFUND_STATUS_SIX,
+
+  /** 应收退款管理退款状态 退款状态：0-未退款、1-部分退款、2-已退款、-1-中止退款 */
+  DICT_B_AR_REFUND_PAY_STATUS,
+  DICT_B_AR_REFUND_PAY_STATUS_ZERO,
+  DICT_B_AR_REFUND_PAY_STATUS_ONE,
+  DICT_B_AR_REFUND_PAY_STATUS_TWO,
+  DICT_B_AR_REFUND_PAY_STATUS_STOP,
+
+  /** 应收退款单收款状态 收款状态：0-待收款、1-已收款、2-作废、-1-中止收款 */
+  DICT_B_AR_REFUND_RECEIVE_STATUS,
+  DICT_B_AR_REFUND_RECEIVE_STATUS_ZERO,
+  DICT_B_AR_REFUND_RECEIVE_STATUS_ONE,
+  DICT_B_AR_REFUND_RECEIVE_STATUS_TWO,
+  DICT_B_AR_REFUND_RECEIVE_STATUS_STOP,
+
+  /** 应收退款单收款业务作废流程 */
+  DICT_B_AR_REFUND_RECEIVE_CANCEL,
 
   /**  税率：9%、13%、17%、6% */
   DICT_S_TAX_TYPE,

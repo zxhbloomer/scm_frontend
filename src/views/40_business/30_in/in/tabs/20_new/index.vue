@@ -1083,7 +1083,7 @@ export default {
     handleTypeChange (val) {
       this.dataJson.tempJson.type = val
       // 如果选择的是采购入库，弹出采购订单选择弹窗
-      if (val === constants_dict.DICT_B_IN_TYPE_CG) {
+      if (val === constants_dict.DICT_B_IN_TYPE_ZERO) {
         this.popSettingsData.poOrderDialog.visible = true
         this.popSettingsData.poOrderDialog.data = {}
       } else {
@@ -1388,7 +1388,7 @@ export default {
         // }
 
         // 设置入库类型为采购入库
-        this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
+        this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_ZERO
 
         // 补充2：当有数据返回后，入库类型控件为不可用
         this.settings.inputDisabledStatus.disabledInType = true

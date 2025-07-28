@@ -774,7 +774,7 @@ export default {
       this.calculateAmount()
 
       // 设置入库类型（从入库计划数据中获取）
-      this.dataJson.tempJson.type = planData.type || constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type = planData.type || constants_dict.DICT_B_IN_TYPE_ZERO
       this.dataJson.tempJson.type_name = planData.type_name || '采购入库'
 
       // 设置默认入库时间为当前时间
@@ -852,7 +852,7 @@ export default {
       this.calculateAmount()
 
       // 设置入库类型为采购入库
-      this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_ZERO
       this.dataJson.tempJson.type_name = '采购入库'
 
       // 设置默认入库时间为当前时间
@@ -968,7 +968,7 @@ export default {
       this.dataJson.tempJson.four_file = []
 
       // 重新设置入库类型为采购入库
-      this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_CG
+      this.dataJson.tempJson.type = constants_dict.DICT_B_IN_TYPE_ZERO
       this.dataJson.tempJson.type_name = '采购入库'
 
       // 重新设置默认入库时间为当前时间
