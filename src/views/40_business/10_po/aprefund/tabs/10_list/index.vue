@@ -162,7 +162,7 @@
 
     <el-button-group>
       <el-button
-        v-permission="'P_B_AP_REFUND:ADD'"
+        v-permission="'P_AP_REFUND:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -171,7 +171,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:UPDATE'"
+        v-permission="'P_AP_REFUND:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-zoom-in"
@@ -180,7 +180,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:DELETE'"
+        v-permission="'P_AP_REFUND:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-check"
@@ -189,7 +189,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:CANCEL'"
+        v-permission="'P_AP_REFUND:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -198,7 +198,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:AUDIT'"
+        v-permission="'P_AP_REFUND:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -207,7 +207,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:PUSH'"
+        v-permission="'P_AP_REFUND:PUSH'"
         :disabled="!settings.btnStatus.showPush"
         type="primary"
         icon="el-icon-circle-close"
@@ -218,7 +218,7 @@
       <!--      导出按钮-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_B_AP_REFUND:EXPORT'"
+        v-permission="'P_AP_REFUND:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -226,7 +226,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'P_B_AP_REFUND:EXPORT'"
+        v-permission="'P_AP_REFUND:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -235,14 +235,14 @@
       <!--      导出模式切换按钮-->
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'P_B_AP_REFUND:EXPORT'"
+        v-permission="'P_AP_REFUND:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleModelOpen"
       >导出</el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:PRINT'"
+        v-permission="'P_AP_REFUND:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -251,7 +251,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND:INFO'"
+        v-permission="'P_AP_REFUND:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-zoom-in"

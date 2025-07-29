@@ -167,7 +167,7 @@
     </el-popover>
     <el-button-group>
       <el-button
-        v-permission="'B_PROJECT:ADD'"
+        v-permission="'P_PO_PROJECT:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -176,7 +176,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:UPDATE'"
+        v-permission="'P_PO_PROJECT:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -185,7 +185,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:DELETE'"
+        v-permission="'P_PO_PROJECT:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -194,7 +194,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:CANCEL'"
+        v-permission="'P_PO_PROJECT:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -203,7 +203,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:AUDIT'"
+        v-permission="'P_PO_PROJECT:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -212,7 +212,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:PUSH'"
+        v-permission="'P_PO_PROJECT:PUSH'"
         :disabled="!settings.btnStatus.showPush"
         type="primary"
         icon="el-icon-s-promotion"
@@ -221,7 +221,7 @@
       >下推业务
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:FINISH'"
+        v-permission="'P_PO_PROJECT:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
         icon="el-icon-success"
@@ -232,7 +232,7 @@
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_PROJECT:EXPORT'"
+        v-permission="'P_PO_PROJECT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -240,7 +240,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_PROJECT:EXPORT'"
+        v-permission="'P_PO_PROJECT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -248,7 +248,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'B_PROJECT:EXPORT'"
+        v-permission="'P_PO_PROJECT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -256,7 +256,7 @@
       >导出</el-button>
       <!--      导出按钮 结束-->
       <el-button
-        v-permission="'B_PROJECT:PRINT'"
+        v-permission="'P_PO_PROJECT:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -265,7 +265,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'B_PROJECT:INFO'"
+        v-permission="'P_PO_PROJECT:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"

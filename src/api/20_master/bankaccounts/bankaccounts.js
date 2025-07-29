@@ -131,6 +131,17 @@ export function getPurchaserApi (query) {
     data: query
   })
 }
+
+/**
+ * 获取销售方企业的默认银行账户
+ */
+export function getSellerApi (query) {
+  return request({
+    url: '/api/v1/bank/accounts/get_seller',
+    method: 'post',
+    data: query
+  })
+}
 //
 // /**
 //  * 获取款项类型

@@ -343,7 +343,7 @@
 import constants_dict from '@/common/constants/constants_dict'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import { getApi, refundCompleteARi } from '@/api/40_business/20_so/arrefundreceive/arrefundreceive'
+import { getApi, refundCompleteApi } from '@/api/40_business/20_so/arrefundreceive/arrefundreceive'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import previewCard from '@/components/50_preview_card/preview_card.vue'
@@ -640,7 +640,7 @@ export default {
             voucher_files: this.dataJson.tempJson.voucher_files
           }
           this.settings.loading = true
-          refundCompleteARi(submitData).then(response => {
+          refundCompleteApi(submitData).then(response => {
             this.$notify({
               title: '退款完成',
               message: '退款凭证上传成功',

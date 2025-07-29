@@ -71,7 +71,7 @@
         <el-form-item v-if="dataJson.tabs.active === '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_SO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_P_SO_CONTRACT_STATUS"
             init-placeholder="请选择单据状态"
           />
         </el-form-item>
@@ -79,7 +79,7 @@
         <el-form-item v-if="dataJson.tabs.active !== '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_SO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_P_SO_CONTRACT_STATUS"
             init-placeholder="请选择单据状态"
             disabled
           />
@@ -87,21 +87,21 @@
         <el-form-item>
           <select-dicts
             v-model="dataJson.searchForm.type_list"
-            :para="CONSTANTS.DICT_B_SO_CONTRACT_TYPE"
+            :para="CONSTANTS.DICT_P_SO_CONTRACT_TYPE"
             init-placeholder="请选择合同类型"
           />
         </el-form-item>
         <el-form-item>
           <select-dicts
             v-model="dataJson.searchForm.settle_list"
-            :para="CONSTANTS.DICT_B_SO_CONTRACT_SETTLE_TYPE"
+            :para="CONSTANTS.DICT_P_SO_CONTRACT_SETTLE_TYPE"
             init-placeholder="请选择结算方式"
           />
         </el-form-item>
         <el-form-item>
           <select-dicts
             v-model="dataJson.searchForm.bill_type_list"
-            :para="CONSTANTS.DICT_B_SO_CONTRACT_BILL_TYPE"
+            :para="CONSTANTS.DICT_P_SO_CONTRACT_BILL_TYPE"
             init-placeholder="请选择结算单据类型"
           />
         </el-form-item>
@@ -174,7 +174,7 @@
 
     <el-button-group>
       <el-button
-        v-permission="'B_SO_CONTRACT:ADD'"
+        v-permission="'P_SO_CONTRACT:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -183,7 +183,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:UPDATE'"
+        v-permission="'P_SO_CONTRACT:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -192,7 +192,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:DELETE'"
+        v-permission="'P_SO_CONTRACT:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -201,7 +201,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:CANCEL'"
+        v-permission="'P_SO_CONTRACT:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -210,7 +210,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:AUDIT'"
+        v-permission="'P_SO_CONTRACT:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -219,7 +219,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:PUSH'"
+        v-permission="'P_SO_CONTRACT:PUSH'"
         :disabled="!settings.btnStatus.showPush"
         type="primary"
         icon="el-icon-s-promotion"
@@ -228,7 +228,7 @@
       >下推订单
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:FINISH'"
+        v-permission="'P_SO_CONTRACT:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
         icon="el-icon-success"
@@ -237,7 +237,7 @@
       >完成
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:IMPORT'"
+        v-permission="'P_SO_CONTRACT:IMPORT'"
         type="primary"
         icon="el-icon-upload"
         :loading="settings.loading"
@@ -247,7 +247,7 @@
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_SO_CONTRACT:EXPORT'"
+        v-permission="'P_SO_CONTRACT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -255,7 +255,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_SO_CONTRACT:EXPORT'"
+        v-permission="'P_SO_CONTRACT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -263,7 +263,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'B_SO_CONTRACT:EXPORT'"
+        v-permission="'P_SO_CONTRACT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -271,7 +271,7 @@
       >导出</el-button>
       <!--      导出按钮 结束-->
       <el-button
-        v-permission="'B_SO_CONTRACT:PRINT'"
+        v-permission="'P_SO_CONTRACT:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -280,7 +280,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'B_SO_CONTRACT:INFO'"
+        v-permission="'P_SO_CONTRACT:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"
@@ -1034,7 +1034,6 @@ a {
 </style>
 
 <script>
-import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 import {
   getListSumApi,
@@ -1059,7 +1058,7 @@ import push_order_template from '@/views/40_business/20_so/soorder/dialog/push/n
 import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 export default {
-  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination },
+  components: { SelectDicts, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -1516,46 +1515,46 @@ export default {
         this.settings.btnStatus.showPrint = true
 
         // 推送按钮高亮（只有框架合同且状态为执行中时高亮）
-        if (this.dataJson.currentJson.type === constants_dict.DICT_B_SO_CONTRACT_TYPE_ONE &&
-            this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.type === constants_dict.DICT_P_SO_CONTRACT_TYPE_ONE &&
+            this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showPush = true
         } else {
           this.settings.btnStatus.showPush = false
         }
 
         // 审批中和驳回状态，修改按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ZERO ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ZERO ||
+          this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
         // 待审批和驳回状态删除按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ZERO ||
-            this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
         // 作废
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
         // 审批
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ONE ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_FOUR) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ONE ||
+          this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
 
         // 完成按钮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
         } else {
           this.settings.btnStatus.showFinish = false
@@ -1579,7 +1578,7 @@ export default {
       }
 
       _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_SO_CONTRACT
+      _data.serial_type = constants_dict.DICT_P_SO_CONTRACT
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
       if (_data.status === '4' || _data.status === '5') {
@@ -1609,7 +1608,7 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== constants_type.DICT_B_SO_CONTRACT_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_SO_CONTRACT_STATUS_THREE) {
+      if (_data.status.toString() !== constants_type.DICT_P_SO_CONTRACT_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_P_SO_CONTRACT_STATUS_THREE) {
         this.showErrorMsg('销售合同状态异常，只有待审批或驳回状态才可以删除')
         return
       }
@@ -1663,25 +1662,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_ONE]
           break
         case '3': // 执行中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_SIX]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_THREE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_FOUR]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_FIVE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）
@@ -1939,7 +1938,7 @@ export default {
       }
 
       // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
-      if (row.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ONE || row.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_FOUR) {
+      if (row.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ONE || row.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

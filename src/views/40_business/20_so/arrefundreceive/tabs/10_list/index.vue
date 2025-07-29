@@ -122,7 +122,7 @@
     <el-button-group>
 
       <el-button
-        v-permission="'B_AR_REFUND:AUDIT'"
+        v-permission="'P_AR_REFUND_RECEIVE:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -131,7 +131,7 @@
       >上传收款凭证完成收款
       </el-button>
       <el-button
-        v-permission="'B_AR_REFUND:CANCEL'"
+        v-permission="'P_AR_REFUND_RECEIVE:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -140,7 +140,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_AR_REFUND:INFO'"
+        v-permission="'P_AR_REFUND_RECEIVE:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"

@@ -168,13 +168,13 @@
                 {{ dataJson.socontract.contract_total == null || dataJson.socontract.contract_total === '' ?'-':formatNumber(dataJson.socontract.contract_total,true,4) }}
               </span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="已结算数量（吨）">
               <span class="fontWeight">
                 {{ dataJson.socontract.settle_qty == null || dataJson.socontract.settle_qty === '' ? '-' : formatNumber(dataJson.socontract.settle_qty,true,4) }}
               </span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="总税额">
               <span class="fontWeight">
                 {{ dataJson.socontract.tax_amount_sum == null || dataJson.socontract.tax_amount_sum === ''?'-':formatCurrency(dataJson.socontract.tax_amount_sum,true,4) }}
@@ -257,7 +257,7 @@
               {{ dataJson.tempJson.tax_amount_sum == null || dataJson.tempJson.tax_amount_sum === ''?'-':formatCurrency(dataJson.tempJson.tax_amount_sum,true,4) }}
             </span>
           </el-descriptions-item>
-          
+
           <el-descriptions-item label="订单附件材料" :span="3">
             <preview-card :attachment-files="dataJson.tempJson.doc_att_files" />
           </el-descriptions-item>

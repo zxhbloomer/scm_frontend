@@ -107,7 +107,7 @@
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="修改原因" span="3" v-if="modifyReason && modifyReason.trim() !== ''">
+          <el-descriptions-item v-if="modifyReason && modifyReason.trim() !== ''" label="修改原因" span="3">
             <el-input
               v-model.trim="dataJson.tempJson.modify_reason"
               clearable
@@ -756,23 +756,23 @@ export default {
         // 从传入的数据初始化表单
         this.dataJson.tempJson = deepCopy(this.data)
         this.dataJson.tempJsonOriginal = deepCopy(this.data)
-        
+
         // 初始化附件数据
         if (this.data.doc_att_files && this.data.doc_att_files.length > 0) {
           this.dataJson.doc_att = this.data.doc_att_files
           this.dataJson.doc_att_file = this.data.doc_att_files.map(file => file.url)
         }
-        
+
         // 初始化明细数据
         if (this.data.detailListData && this.data.detailListData.length > 0) {
           this.dataJson.tempJson.detailListData = this.data.detailListData
         }
-        
+
         // 设置按钮状态
         if (this.dataJson.tempJson.detailListData.length > 0) {
           this.settings.btnTableDisabledStatus.disabledInsert = false
         }
-        
+
         // 根据状态设置字段禁用状态
         this.setFieldDisabledStatus()
       } else {
@@ -782,7 +782,7 @@ export default {
         this.dataJson.doc_att_file = []
       }
     },
-    
+
     // 根据当前状态设置字段禁用状态
     setFieldDisabledStatus () {
       // 根据计划状态判断哪些字段可以修改
@@ -791,12 +791,12 @@ export default {
         this.settings.inputDisabledStatus.disabledTypeSelect = true
       }
     },
-    
+
     // 取消
     handleCancel () {
       this.$emit('closeMeCancel')
     },
-    
+
     /**
      * 更新数据
      */
@@ -889,14 +889,14 @@ export default {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      
+
       // 检查该行是否已经有出库记录，如果有则不允许删除
       const selectedRow = this.dataJson.tempJson.detailListData[this.dataJson.rowIndex]
       if (selectedRow && selectedRow.processed_qty > 0) {
         this.showErrorMsg('该商品已有出库记录，不允许删除')
         return
       }
-      
+
       // 删除
       this.$confirm('是否确认删除该条数据', '确认信息', {
         distinguishCancelAndClose: true,
@@ -1142,7 +1142,7 @@ export default {
       // 重置当前选择状态
       this.dataJson.currentJson = {}
       this.dataJson.rowIndex = null
-      
+
       // 重新初始化数据
       this.initData()
     },

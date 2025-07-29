@@ -85,14 +85,14 @@
         <el-form-item v-if="dataJson.tabs.active === '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_AR_RECEIVE_BILL_STATUS"
+            :para="CONSTANTS.DICT_P_AR_RECEIVE_BILL_STATUS"
             init-placeholder="请选择收款单状态"
           />
         </el-form-item>
         <el-form-item v-else>
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_AR_RECEIVE_BILL_STATUS"
+            :para="CONSTANTS.DICT_P_AR_RECEIVE_BILL_STATUS"
             init-placeholder="请选择收款单状态"
             disabled
           />
@@ -122,7 +122,7 @@
     <el-button-group>
 
       <el-button
-        v-permission="'B_AR_RECEIVE:AUDIT'"
+        v-permission="'P_AR_RECEIVE:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -131,7 +131,7 @@
       >上传收款凭证完成收款
       </el-button>
       <el-button
-        v-permission="'B_AR_RECEIVE:CANCEL'"
+        v-permission="'P_AR_RECEIVE:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -140,7 +140,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_AR_RECEIVE:INFO'"
+        v-permission="'P_AR_RECEIVE:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"
@@ -882,16 +882,16 @@ export default {
         this.settings.btnStatus.showView = true
 
         const status = this.dataJson.currentJson.status?.toString()
-        if (status === constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_ZERO) { // 待收款
+        if (status === constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_ZERO) { // 待收款
           this.settings.btnStatus.showApprove = true
           this.settings.btnStatus.showCancel = true
-        } else if (status === constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_ONE) { // 已收款
+        } else if (status === constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_ONE) { // 已收款
           this.settings.btnStatus.showApprove = false
           this.settings.btnStatus.showCancel = true
-        } else if (status === constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_STOP) { // 中止
+        } else if (status === constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_STOP) { // 中止
           this.settings.btnStatus.showApprove = false
           this.settings.btnStatus.showCancel = false
-        } else if (status === constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_TWO) { // 作废
+        } else if (status === constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_TWO) { // 作废
           this.settings.btnStatus.showApprove = false
           this.settings.btnStatus.showCancel = false
         } else {
@@ -952,16 +952,16 @@ export default {
       // 收款单状态常量
       switch (tab.index) {
         case '1': // 待收款
-          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_ZERO]
           break
         case '2': // 已收款
-          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_ONE]
           break
         case '3': // 作废
-          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_TWO]
           break
         case '4': // 中止
-          this.dataJson.searchForm.status_list = [constants_dict.DICT_B_AR_RECEIVE_BILL_STATUS_STOP]
+          this.dataJson.searchForm.status_list = [constants_dict.DICT_P_AR_RECEIVE_BILL_STATUS_STOP]
           break
         default: // 全部 - 恢复之前保存的状态数据
           this.dataJson.searchForm.status_list = this.dataJson.allTabStatusCache.length > 0 ? [...this.dataJson.allTabStatusCache] : []

@@ -80,7 +80,7 @@ export function getBankCollectionDataApi (query) {
 /**
  * 完成收款
  */
-export function refundCompleteAPi (query) {
+export function refundCompleteApi (query) {
   return request({
     url: '/api/v1/ar/refund/receive/complete',
     method: 'post',

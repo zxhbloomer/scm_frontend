@@ -642,15 +642,15 @@ export default {
     init () {
       // 初始化watch
       this.setWatch()
-      
+
       // 如果传入了销售订单数据，自动填充并查询
       if (this.data) {
         this.loadSoOrderData(this.data)
       }
-      
+
       this.settings.loading = false
     },
-    
+
     // 加载销售订单数据
     loadSoOrderData (soOrderData) {
       // 设置销售订单信息
@@ -658,25 +658,25 @@ export default {
       this.dataJson.tempJson.so_order_code = soOrderData.code
       this.dataJson.tempJson.so_contract_code = soOrderData.so_contract_code
       this.dataJson.tempJson.project_code = soOrderData.project_code
-      
+
       // 设置客户信息
       if (soOrderData.customer_id) {
         this.dataJson.tempJson.customer_id = soOrderData.customer_id
         this.dataJson.tempJson.customer_code = soOrderData.customer_code
         this.dataJson.tempJson.customer_name = soOrderData.customer_name
       }
-      
+
       // 设置销售方信息
       if (soOrderData.seller_id) {
         this.dataJson.tempJson.seller_id = soOrderData.seller_id
         this.dataJson.tempJson.seller_code = soOrderData.seller_code
         this.dataJson.tempJson.seller_name = soOrderData.seller_name
       }
-      
+
       // 自动触发获取订单明细数据
       this.setSodetailListData(soOrderData)
     },
-    
+
     // 设置监听器
     setWatch () {
       this.unWatch()

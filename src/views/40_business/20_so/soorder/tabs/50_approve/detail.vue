@@ -176,13 +176,13 @@
                 {{ dataJson.socontract.contract_total == null || dataJson.socontract.contract_total === '' ?'-':formatNumber(dataJson.socontract.contract_total,true,4) }}
               </span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="已结算数量（吨）">
               <span class="fontWeight">
                 {{ dataJson.socontract.settle_qty == null || dataJson.socontract.settle_qty === '' ? '-' : formatNumber(dataJson.socontract.settle_qty,true,4) }}
               </span>
             </el-descriptions-item>
-            
+
             <el-descriptions-item label="总税额">
               <span class="fontWeight">
                 {{ dataJson.socontract.tax_amount_sum == null || dataJson.socontract.tax_amount_sum === ''?'-':formatCurrency(dataJson.socontract.tax_amount_sum,true,4) }}
@@ -253,7 +253,7 @@
               {{ dataJson.tempJson.tax_amount_sum == null || dataJson.tempJson.tax_amount_sum === ''?'-':formatCurrency(dataJson.tempJson.tax_amount_sum,true,4) }}
             </span>
           </el-descriptions-item>
-          
+
           <el-descriptions-item label="订单附件材料" :span="3">
             <preview-card :attachment-files="dataJson.tempJson.doc_att_files" />
           </el-descriptions-item>
@@ -315,7 +315,7 @@
           type="success"
           :closable="false"
         />
-        
+
         <el-table
           :data="dataJson.tempJson.detailListData"
           style="width: 100%; margin-top: 10px;"
@@ -488,7 +488,6 @@ import constants_dict from '@/common/constants/constants_dict'
 import { getApi } from '@/api/40_business/20_so/soorder/soorder'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
-import deepCopy from 'deep-copy'
 
 export default {
   components: { PreviewCard, PreviewDescription },
@@ -530,7 +529,7 @@ export default {
     },
     // 是否有风险警告
     hasRiskWarning () {
-      return this.dataJson.tempJson.order_amount_sum > 1000000 || 
+      return this.dataJson.tempJson.order_amount_sum > 1000000 ||
              this.dataJson.tempJson.qty_total > 10000 ||
              this.isDeliveryDateTight
     },
@@ -564,20 +563,20 @@ export default {
     },
     getRowClassName ({ row, rowIndex }) {
       // 为重要行添加样式
-      if (row.amount > 100000) {  // 金额超过10万的行高亮
+      if (row.amount > 100000) { // 金额超过10万的行高亮
         return 'high-value-row'
       }
       return ''
     },
     getStatusTagType (status) {
       const statusMap = {
-        [constants_dict.DICT_B_SO_ORDER_STATUS_ZERO]: 'info',    // 待审批
-        [constants_dict.DICT_B_SO_ORDER_STATUS_ONE]: 'warning',  // 审批中
-        [constants_dict.DICT_B_SO_ORDER_STATUS_TWO]: 'success',  // 执行中
+        [constants_dict.DICT_B_SO_ORDER_STATUS_ZERO]: 'info', // 待审批
+        [constants_dict.DICT_B_SO_ORDER_STATUS_ONE]: 'warning', // 审批中
+        [constants_dict.DICT_B_SO_ORDER_STATUS_TWO]: 'success', // 执行中
         [constants_dict.DICT_B_SO_ORDER_STATUS_THREE]: 'danger', // 驳回
         [constants_dict.DICT_B_SO_ORDER_STATUS_FOUR]: 'warning', // 作废审批中
-        [constants_dict.DICT_B_SO_ORDER_STATUS_FIVE]: 'info',    // 已作废
-        [constants_dict.DICT_B_SO_ORDER_STATUS_SIX]: 'success'   // 已完成
+        [constants_dict.DICT_B_SO_ORDER_STATUS_FIVE]: 'info', // 已作废
+        [constants_dict.DICT_B_SO_ORDER_STATUS_SIX]: 'success' // 已完成
       }
       return statusMap[status] || 'info'
     },

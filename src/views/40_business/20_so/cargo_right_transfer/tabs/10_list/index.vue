@@ -835,7 +835,6 @@ a {
 </style>
 
 <script>
-import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 import {
   getListSumApi,
@@ -859,7 +858,7 @@ import print_template from '@/views/40_business/20_so/cargo_right_transfer/tabs/
 import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 export default {
-  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, print_template, SimpleUpload, Pagination },
+  components: { SelectDicts, SelectSeCustomer, cancelConfirmDialog, print_template, SimpleUpload, Pagination },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {

@@ -90,8 +90,8 @@ export default {
         // 业务数据查询组装
         serialData: { id: this.data.serial_id },
         // 审批流程数据查询
-        processData: { 
-          process_code: this.data.bmp_instance_code, 
+        processData: {
+          process_code: this.data.bmp_instance_code,
           task_id: this.data.task_id,
           // 审批特有的数据
           business_id: this.data.id,

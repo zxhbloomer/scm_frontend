@@ -46,7 +46,7 @@
             <preview-description :attachment-files="dataJson.tempJson.project.doc_att_files" />
           </el-descriptions-item>
         </el-descriptions>
-        
+
         <div v-if="dataJson.tempJson.so_contract_code">
           <el-alert
             title="合同信息"
@@ -229,7 +229,7 @@
               {{ dataJson.tempJson.tax_amount_sum == null || dataJson.tempJson.tax_amount_sum === 0 ? '-' : formatCurrency(dataJson.tempJson.tax_amount_sum, true, 4) }}
             </span>
           </el-descriptions-item>
-          
+
           <el-descriptions-item label="订单附件材料">
             <el-row style="display: flex;flex-wrap: wrap;">
               <el-col :span="1">

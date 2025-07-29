@@ -442,14 +442,14 @@
         @closeMeCancel="handleGoodsCloseCancel"
       />
 
-      <!--bmp流程弹窗-->
+      <!--bpm流程弹窗-->
       <bpm-dialog
         v-if="popSettingsData.sponsorDialog.visible"
         :visible="popSettingsData.sponsorDialog.visible"
         :form-data="popSettingsData.sponsorDialog.form_data"
         :serial-type="popSettingsData.sponsorDialog.serial_type"
         @closeMeOk="handleBpmDialogOk"
-        @closeMeCancel="handleBmpDialogCancel"
+        @closeMeCancel="handleBpmDialogCancel"
       />
 
     </div>
@@ -532,7 +532,7 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
 import RadioDict from '@/components/00_dict/redio/index.vue'
-import BmpDialog from '@/components/60_bpm/submitBpmDialog.vue'
+import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 export default {
   directives: { elDragDialog }, components: {
@@ -542,7 +542,7 @@ export default {
     SimpleUploadMutilFile,
     GoodsDialog,
     SelectDict,
-    BmpDialog
+    BpmDialog
   },
   mixins: [],
   props: {
@@ -599,7 +599,7 @@ export default {
             id: null
           }
         },
-        // bmp对话框
+        // bpm对话框
         sponsorDialog: {
           // 弹出框显示参数
           visible: false,
@@ -950,14 +950,14 @@ export default {
     },
     removeOtherFile (index) {
       this.dataJson.doc_att.splice(index, 1)
-    }, // bmp流程处理
-    handleBmpDialogOk (data) {
+    }, // bpm流程处理
+    handleBpmDialogOk (data) {
       this.popSettingsData.sponsorDialog.initial_process = data.processData
       this.popSettingsData.sponsorDialog.process_users = data.process_users
       this.popSettingsData.sponsorDialog.visible = false
       this.doInsert()
     },
-    handleBmpDialogCancel () {
+    handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
       this.closeLoading()
     }, // 提交流程

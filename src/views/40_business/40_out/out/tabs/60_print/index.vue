@@ -2,17 +2,17 @@
   <div class="print-container">
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
-      <el-icon class="is-loading"><i class="el-icon-loading"></i></el-icon>
+      <el-icon class="is-loading"><i class="el-icon-loading" /></el-icon>
       <span>正在加载打印数据...</span>
     </div>
-    
+
     <!-- 打印内容 -->
     <div v-else>
       <!-- 打印页面标题 -->
       <div class="print-header">
         <h1>出库单</h1>
       </div>
-      
+
       <!-- 基本信息区域 -->
       <div class="info-section">
         <table class="info-table">
@@ -48,9 +48,9 @@
           </tr>
         </table>
       </div>
-      
+
       <!-- 明细信息区域 -->
-      <div class="detail-section" v-if="printData.detailListData && printData.detailListData.length > 0">
+      <div v-if="printData.detailListData && printData.detailListData.length > 0" class="detail-section">
         <h3>出库明细</h3>
         <table class="detail-table">
           <thead>
@@ -81,9 +81,9 @@
           </tbody>
         </table>
       </div>
-      
+
       <!-- 汇总信息 -->
-      <div class="summary-section" v-if="printData.detailListData && printData.detailListData.length > 0">
+      <div v-if="printData.detailListData && printData.detailListData.length > 0" class="summary-section">
         <table class="summary-table">
           <tr>
             <td class="label">总数量：</td>
@@ -93,7 +93,7 @@
           </tr>
         </table>
       </div>
-      
+
       <!-- 签字区域 -->
       <div class="signature-section">
         <table class="signature-table">
@@ -105,13 +105,13 @@
           </tr>
         </table>
       </div>
-      
+
       <!-- 打印时间 -->
       <div class="print-time">
         <p>打印时间：{{ formatDateTime(new Date()) }}</p>
       </div>
     </div>
-    
+
     <!-- 操作按钮区域 -->
     <div class="print-actions">
       <el-button type="primary" icon="el-icon-printer" @click="handlePrint">打印</el-button>
@@ -132,23 +132,23 @@ export default {
       default: () => ({})
     }
   },
-  data() {
+  data () {
     return {
       printData: {},
       loading: false
     }
   },
-  mounted() {
+  mounted () {
     this.loadPrintData()
   },
   methods: {
     // 加载打印数据
-    async loadPrintData() {
+    async loadPrintData () {
       if (!this.data.id) {
         this.$message.error('缺少出库单ID')
         return
       }
-      
+
       this.loading = true
       try {
         const response = await printApi({ id: this.data.id })
@@ -164,52 +164,40 @@ export default {
         this.loading = false
       }
     },
-    
+
     // 计算总数量
-    getTotalQty() {
+    getTotalQty () {
       if (!this.printData.detailListData || this.printData.detailListData.length === 0) {
         return '0'
       }
-      
-      const total = this.printData.detailListData.reduce((sum, item) => {
-        return sum + (parseFloat(item.qty) || 0)
-      }, 0)
-      
-      return formatNumber(total, true, 4)
     },
-    
+
     // 计算总金额
-    getTotalAmount() {
+    getTotalAmount () {
       if (!this.printData.detailListData || this.printData.detailListData.length === 0) {
         return '¥0.00'
       }
-      
-      const total = this.printData.detailListData.reduce((sum, item) => {
-        return sum + (parseFloat(item.order_amount) || 0)
-      }, 0)
-      
-      return formatCurrency(total, true)
     },
-    
+
     // 执行打印
-    handlePrint() {
+    handlePrint () {
       // 隐藏操作按钮
       const printActions = document.querySelector('.print-actions')
       if (printActions) {
         printActions.style.display = 'none'
       }
-      
+
       // 执行打印
       window.print()
-      
+
       // 恢复操作按钮显示
       if (printActions) {
         printActions.style.display = 'block'
       }
     },
-    
+
     // 关闭打印页面
-    handleClose() {
+    handleClose () {
       this.$emit('close')
     }
   }
@@ -222,22 +210,22 @@ export default {
   background: white;
   font-family: Arial, '微软雅黑', sans-serif;
   min-height: 500px;
-  
+
   .loading-container {
     text-align: center;
     padding: 50px;
     color: #666;
-    
+
     .el-icon {
       font-size: 24px;
       margin-right: 8px;
     }
   }
-  
+
   .print-header {
     text-align: center;
     margin-bottom: 30px;
-    
+
     h1 {
       font-size: 28px;
       font-weight: bold;
@@ -245,26 +233,26 @@ export default {
       color: #333;
     }
   }
-  
+
   .info-section {
     margin-bottom: 25px;
-    
+
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      
+
       td {
         padding: 10px;
         border: 1px solid #ddd;
         font-size: 14px;
-        
+
         &.label {
           background-color: #f8f9fa;
           font-weight: bold;
           width: 120px;
           color: #333;
         }
-        
+
         &.value {
           width: 180px;
           color: #666;
@@ -272,68 +260,68 @@ export default {
       }
     }
   }
-  
+
   .detail-section {
     margin-bottom: 25px;
-    
+
     h3 {
       margin: 0 0 15px 0;
       font-size: 18px;
       color: #333;
       font-weight: bold;
     }
-    
+
     .detail-table {
       width: 100%;
       border-collapse: collapse;
-      
+
       th, td {
         padding: 10px 8px;
         border: 1px solid #ddd;
         text-align: left;
         font-size: 13px;
-        
+
         &.center {
           text-align: center;
         }
-        
+
         &.right {
           text-align: right;
         }
       }
-      
+
       th {
         background-color: #f8f9fa;
         font-weight: bold;
         color: #333;
         text-align: center;
       }
-      
+
       tbody tr:nth-child(even) {
         background-color: #fafafa;
       }
     }
   }
-  
+
   .summary-section {
     margin-bottom: 25px;
-    
+
     .summary-table {
       width: 100%;
       border-collapse: collapse;
-      
+
       td {
         padding: 12px;
         border: 1px solid #ddd;
         font-size: 15px;
         font-weight: bold;
-        
+
         &.label {
           background-color: #f0f8ff;
           width: 120px;
           color: #333;
         }
-        
+
         &.value {
           width: 180px;
           color: #e74c3c;
@@ -341,20 +329,20 @@ export default {
       }
     }
   }
-  
+
   .signature-section {
     margin-bottom: 25px;
-    
+
     .signature-table {
       width: 100%;
       border-collapse: collapse;
-      
+
       td {
         padding: 20px 10px;
         border: 1px solid #ddd;
         text-align: center;
         font-size: 14px;
-        
+
         &.signature-item {
           width: 25%;
           color: #333;
@@ -362,20 +350,20 @@ export default {
       }
     }
   }
-  
+
   .print-time {
     text-align: right;
     margin-bottom: 20px;
     color: #999;
     font-size: 12px;
   }
-  
+
   .print-actions {
     text-align: center;
     margin-top: 30px;
     padding-top: 20px;
     border-top: 2px solid #eee;
-    
+
     .el-button {
       margin: 0 10px;
     }
@@ -387,11 +375,11 @@ export default {
   body * {
     visibility: hidden;
   }
-  
+
   .print-container, .print-container * {
     visibility: visible;
   }
-  
+
   .print-container {
     position: absolute;
     left: 0;
@@ -399,30 +387,30 @@ export default {
     width: 100%;
     padding: 0;
     font-size: 12px;
-    
+
     .print-actions {
       display: none !important;
     }
-    
+
     .info-section .info-table td {
       padding: 6px;
     }
-    
+
     .detail-section .detail-table th,
     .detail-section .detail-table td {
       padding: 6px 4px;
       font-size: 11px;
     }
-    
+
     .summary-section .summary-table td {
       padding: 8px;
     }
-    
+
     .signature-section .signature-table td {
       padding: 15px 8px;
     }
   }
-  
+
   @page {
     margin: 1cm;
     size: A4;

@@ -122,7 +122,7 @@
     <el-button-group>
 
       <el-button
-        v-permission="'P_B_AP_REFUND_PAY:AUDIT'"
+        v-permission="'P_AP_REFUND_PAY:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -131,7 +131,7 @@
       >上传退款凭证完成退款
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND_PAY:CANCEL'"
+        v-permission="'P_AP_REFUND_PAY:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -140,7 +140,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'P_B_AP_REFUND_PAY:INFO'"
+        v-permission="'P_AP_REFUND_PAY:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"

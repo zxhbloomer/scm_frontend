@@ -87,7 +87,7 @@
         <el-form-item v-if="dataJson.tabs.active === '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS"
+            :para="CONSTANTS.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS"
             init-placeholder="请选择单据状态"
           />
         </el-form-item>
@@ -95,7 +95,7 @@
         <el-form-item v-if="dataJson.tabs.active !== '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS"
+            :para="CONSTANTS.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS"
             init-placeholder="请选择单据状态"
             disabled
           />
@@ -169,7 +169,7 @@
 
     <el-button-group>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:ADD'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -178,7 +178,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:UPDATE'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -187,7 +187,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:DELETE'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -196,7 +196,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:CANCEL'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -205,7 +205,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:AUDIT'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -214,7 +214,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:FINISH'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:FINISH'"
         :disabled="!settings.btnStatus.showFinish"
         type="primary"
         icon="el-icon-success"
@@ -225,7 +225,7 @@
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -233,7 +233,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -241,7 +241,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -249,7 +249,7 @@
       >导出</el-button>
       <!--      导出按钮 结束-->
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:PRINT'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -258,7 +258,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'B_PO_CARGO_RIGHT_TRANSFER:INFO'"
+        v-permission="'P_PO_CARGO_RIGHT_TRANSFER:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"
@@ -1307,38 +1307,38 @@ export default {
         this.settings.btnStatus.showPrint = true
 
         // 审批中和驳回状态，修改按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
+          this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
         // 待审批和驳回状态删除按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
-            this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
         // 作废
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
         // 审批
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE ||
-          this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE ||
+          this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
 
         // 完成按钮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
         } else {
           this.settings.btnStatus.showFinish = false
@@ -1361,7 +1361,7 @@ export default {
       }
 
       _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER
+      _data.serial_type = constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
       if (_data.status === '4' || _data.status === '5') {
@@ -1391,7 +1391,7 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
+      if (_data.status.toString() !== constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE) {
         this.showErrorMsg('货权转移状态异常，只有待审批或驳回状态才可以删除')
         return
       }
@@ -1445,25 +1445,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE]
           break
         case '3': // 执行中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_SIX]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = [constants_type.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）
@@ -1694,7 +1694,7 @@ export default {
       }
 
       // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
-      if (row.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE || row.status === constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
+      if (row.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_ONE || row.status === constants_dict.DICT_P_PO_CARGO_RIGHT_TRANSFER_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

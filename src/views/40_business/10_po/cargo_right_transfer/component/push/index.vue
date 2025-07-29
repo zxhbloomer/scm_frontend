@@ -642,15 +642,15 @@ export default {
     init () {
       // 初始化watch
       this.setWatch()
-      
+
       // 如果传入了采购订单数据，自动填充并查询
       if (this.data) {
         this.loadPoOrderData(this.data)
       }
-      
+
       this.settings.loading = false
     },
-    
+
     // 加载采购订单数据
     loadPoOrderData (poOrderData) {
       // 设置采购订单信息
@@ -658,25 +658,25 @@ export default {
       this.dataJson.tempJson.po_order_code = poOrderData.code
       this.dataJson.tempJson.po_contract_code = poOrderData.po_contract_code
       this.dataJson.tempJson.project_code = poOrderData.project_code
-      
+
       // 设置供应商信息
       if (poOrderData.supplier_id) {
         this.dataJson.tempJson.supplier_id = poOrderData.supplier_id
         this.dataJson.tempJson.supplier_code = poOrderData.supplier_code
         this.dataJson.tempJson.supplier_name = poOrderData.supplier_name
       }
-      
+
       // 设置采购方信息
       if (poOrderData.purchaser_id) {
         this.dataJson.tempJson.purchaser_id = poOrderData.purchaser_id
         this.dataJson.tempJson.purchaser_code = poOrderData.purchaser_code
         this.dataJson.tempJson.purchaser_name = poOrderData.purchaser_name
       }
-      
+
       // 自动触发获取订单明细数据
       this.setPodetailListData(poOrderData)
     },
-    
+
     // 设置监听器
     setWatch () {
       this.unWatch()

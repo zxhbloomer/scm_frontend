@@ -242,7 +242,7 @@
     <!-- 操作按钮区域 -->
     <el-button-group>
       <el-button
-        v-permission="'B_OUT:ADD'"
+        v-permission="'P_OUT:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -251,7 +251,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'B_OUT:UPDATE'"
+        v-permission="'P_OUT:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -260,7 +260,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'B_OUT:DELETE'"
+        v-permission="'P_OUT:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -269,7 +269,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'B_OUT:CANCEL'"
+        v-permission="'P_OUT:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -278,7 +278,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_OUT:AUDIT'"
+        v-permission="'P_OUT:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -289,7 +289,7 @@
       <!--      导出按钮 开始-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_OUT:EXPORT'"
+        v-permission="'P_OUT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -297,7 +297,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_OUT:EXPORT'"
+        v-permission="'P_OUT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -305,7 +305,7 @@
       >关闭导出</el-button>
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'B_OUT:EXPORT'"
+        v-permission="'P_OUT:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -313,7 +313,7 @@
       >导出</el-button>
       <!--      导出按钮 结束-->
       <el-button
-        v-permission="'B_OUT:PRINT'"
+        v-permission="'P_OUT:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -322,7 +322,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'B_OUT:INFO'"
+        v-permission="'P_OUT:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"

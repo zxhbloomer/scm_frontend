@@ -154,7 +154,7 @@
 
     <el-button-group>
       <el-button
-        v-permission="'B_AR:ADD'"
+        v-permission="'P_AR:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
@@ -163,7 +163,7 @@
         新增
       </el-button>
       <el-button
-        v-permission="'B_AR:UPDATE'"
+        v-permission="'P_AR:UPDATE'"
         :disabled="!settings.btnStatus.showUpdate"
         type="primary"
         icon="el-icon-edit"
@@ -172,7 +172,7 @@
       >修改
       </el-button>
       <el-button
-        v-permission="'B_AR:DELETE'"
+        v-permission="'P_AR:DELETE'"
         :disabled="!settings.btnStatus.showDel"
         type="primary"
         icon="el-icon-delete"
@@ -181,7 +181,7 @@
       >删除
       </el-button>
       <el-button
-        v-permission="'B_AR:CANCEL'"
+        v-permission="'P_AR:CANCEL'"
         :disabled="!settings.btnStatus.showCancel"
         type="primary"
         icon="el-icon-error"
@@ -190,7 +190,7 @@
       >作废
       </el-button>
       <el-button
-        v-permission="'B_AR:AUDIT'"
+        v-permission="'P_AR:AUDIT'"
         :disabled="!settings.btnStatus.showApprove"
         type="primary"
         icon="el-icon-s-check"
@@ -199,7 +199,7 @@
       >审批
       </el-button>
       <el-button
-        v-permission="'B_AR:PUSH'"
+        v-permission="'P_AR:PUSH'"
         :disabled="!settings.btnStatus.showPush"
         type="primary"
         icon="el-icon-circle-close"
@@ -208,7 +208,7 @@
       >下推收款指令
       </el-button>
       <el-button
-        v-permission="'B_AR:STOP'"
+        v-permission="'P_AR:STOP'"
         :disabled="!settings.btnStatus.showStopPush"
         type="primary"
         icon="el-icon-upload"
@@ -219,7 +219,7 @@
       <!--      导出按钮-->
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_AR:EXPORT'"
+        v-permission="'P_AR:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -227,7 +227,7 @@
       >开始导出</el-button>
       <el-button
         v-if="!settings.btnStatus.hidenExport"
-        v-permission="'B_AR:EXPORT'"
+        v-permission="'P_AR:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
@@ -236,14 +236,14 @@
       <!--      导出模式切换按钮-->
       <el-button
         v-if="settings.btnStatus.hidenExport"
-        v-permission="'B_AR:EXPORT'"
+        v-permission="'P_AR:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleModelOpen"
       >导出</el-button>
       <el-button
-        v-permission="'B_AR:PRINT'"
+        v-permission="'P_AR:PRINT'"
         :disabled="!settings.btnStatus.showPrint"
         type="primary"
         icon="el-icon-printer"
@@ -252,7 +252,7 @@
       >打印
       </el-button>
       <el-button
-        v-permission="'B_AR:INFO'"
+        v-permission="'P_AR:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-view"
