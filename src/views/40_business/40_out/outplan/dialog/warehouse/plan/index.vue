@@ -221,10 +221,6 @@ export default {
       },
       // 参数设置
       PARAMETERS: constants_para.PARAMETERS,
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       // 设置信息
       settings: {
         loading: false,
@@ -292,10 +288,6 @@ export default {
     this.initDataJson()
   },
   mounted () {
-  },
-  destroyed () {
-    // 移除监听器
-    this.watch.unwatch_tempJson && this.watch.unwatch_tempJson()
   },
   methods: {
     // 初始化数据

@@ -535,7 +535,8 @@ import RadioDict from '@/components/00_dict/redio/index.vue'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 export default {
-  directives: { elDragDialog }, components: {
+  directives: { elDragDialog },
+  components: {
     RadioDict,
     PreviewCard,
     PreviewDescription,
@@ -563,10 +564,6 @@ export default {
       fileLabelStyle: {
         width: '2.3%',
         'text-align': 'right'
-      },
-      // 监听器
-      watch: {
-        unwatch_detail_qty: null
       },
       popSettingsData: {
         // 弹出的商品查询框参数设置
@@ -728,7 +725,29 @@ export default {
   computed: {
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 监听数量和单价变化，自动计算金额
+    'dataJson.tempJson.detailListData': {
+      handler (newVal, oldVal) {
+        if (newVal && newVal.length > 0) {
+          newVal.forEach((item, index) => {
+            if (item.qty && item.price) {
+              // 计算金额
+              item.amount = (parseFloat(item.qty) || 0) * (parseFloat(item.price) || 0)
+              // 计算税额
+              const taxRate = parseFloat(item.tax_rate) || 0
+              item.tax_amount = item.amount * (taxRate / 100)
+            }
+          })
+          // 重新计算总计
+          this.sumData()
+        }
+      },
+      deep: true
+    },
+    // 全屏loading监听
+    'settings.loading': {}
+  },
   created () {
   },
   mounted () {
@@ -737,7 +756,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -745,34 +763,6 @@ export default {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
       this.getData()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听数量和单价变化，自动计算金额
-      this.watch.unwatch_detail_qty = this.$watch(
-        'dataJson.tempJson.detailListData',
-        (newVal, oldVal) => {
-          if (newVal && newVal.length > 0) {
-            newVal.forEach((item, index) => {
-              if (item.qty && item.price) {
-                // 计算金额
-                item.amount = (parseFloat(item.qty) || 0) * (parseFloat(item.price) || 0)
-                // 计算税额
-                const taxRate = parseFloat(item.tax_rate) || 0
-                item.tax_amount = item.amount * (taxRate / 100)
-              }
-            })
-            // 重新计算总计
-            this.sumData()
-          }
-        },
-        { deep: true }
-      )
-    },
-    // 销毁监听器
-    unWatch () {
-      this.watch.unwatch_detail_qty = null
     },
     getData () {
       // 查询逻辑
@@ -1069,3 +1059,4 @@ export default {
   }
 }
 </script>
+

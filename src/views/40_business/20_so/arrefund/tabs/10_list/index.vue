@@ -777,10 +777,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       dataJson: {
         tabsCount: {
           all: 0,
@@ -939,6 +935,23 @@ export default {
             break
         }
       }
+    },
+    // 监听搜索表单的变化
+    'dataJson.searchForm': {
+      handler (newVal, oldVal) {
+        const screenKeys = ['customer_name', 'seller_name']
+        const { searchForm } = this.dataJson
+        const data = Object.keys(searchForm).map(item => {
+          if (screenKeys.includes(item)) {
+            if (searchForm[item] || searchForm[item] === 0) {
+              return searchForm[item]
+            }
+          }
+        })
+        const len = data.filter(x => x).length || 0
+        this.screenNum = len
+      },
+      deep: true
     }
   },
   beforeDestroy () {
@@ -1016,43 +1029,14 @@ export default {
   mounted () {
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
     init (parm) {
-      this.setWatch()
       // 初始化查询
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听搜索表单的变化
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.searchForm',
-        (newVal, oldVal) => {
-          // 这里可以添加您需要的逻辑
-          const screenKeys = ['customer_name', 'seller_name']
-          const { searchForm } = this.dataJson
-          const data = Object.keys(searchForm).map(item => {
-            if (screenKeys.includes(item)) {
-              if (searchForm[item] || searchForm[item] === 0) {
-                return searchForm[item]
-              }
-            }
-          })
-          const len = data.filter(x => x).length || 0
-          this.screenNum = len
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
     // 获取行索引
     getRowIndex (row) {

@@ -430,9 +430,6 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
       popSettingsData: {
         // 客户
         customerDialogData: {
@@ -565,15 +562,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     async init () {
       // 初始化按钮
       this.getData()
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     getData () {
@@ -600,20 +594,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
     },
     // 取消按钮
     handleCancel () {

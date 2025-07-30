@@ -396,7 +396,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -424,7 +423,6 @@ export default {
         this.settings.loading = false
       })
     },
-    unWatch () {},
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')

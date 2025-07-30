@@ -577,11 +577,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_statusList: null
-      },
       dataJson: {
         tabs: {
           active: '0'
@@ -716,6 +711,15 @@ export default {
             break
         }
       }
+    },
+    // 监听"全部"标签页中状态选择的变化，实时保存到缓存
+    'dataJson.searchForm.status_list': {
+      handler (newVal, oldVal) {
+        if (this.dataJson.tabs.active === '0') {
+          this.dataJson.allTabStatusCache = [...newVal]
+        }
+      },
+      deep: true
     }
   },
   beforeDestroy () {
@@ -723,7 +727,6 @@ export default {
   created () {
     // 描绘完成
     this.init()
-    this.setWatch()
   },
   beforeUpdate () {
     // 重新布局表格
@@ -734,12 +737,10 @@ export default {
   mounted () {
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
     init (parm) {
-      this.setWatch()
       // 初始化查询
       this.getDataList()
       // 数据初始化
@@ -747,24 +748,6 @@ export default {
       // 初始化tabs缓存
       if (this.dataJson.allTabStatusCache.length === 0) {
         this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]
-      }
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听"全部"标签页中状态选择的变化，实时保存到缓存
-      this.watch.unwatch_statusList = this.$watch(
-        'dataJson.searchForm.status_list',
-        (newVal, oldVal) => {
-          if (this.dataJson.tabs.active === '0') {
-            this.dataJson.allTabStatusCache = [...newVal]
-          }
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_statusList) {
-        this.watch.unwatch_statusList = null
       }
     },
     // 获取行索引

@@ -533,10 +533,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       contentStyle: {
         width: '15%'
       },
@@ -812,21 +808,60 @@ export default {
 
   // 监听器
   watch: {
+    // 监听采购订单列表数据变化，触发金额计算
     'dataJson.tempJson.poOrderListData': {
-      handler: 'calculatePayableAmounts',
+      handler (newVal, oldVal) {
+        // 当采购订单列表数据发生变化时，重新计算申请付款金额
+        this.calculatePayableAmounts()
+        console.log('采购订单列表数据发生变化，重新计算金额')
+
+        // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
+        if (!newVal || newVal.length === 0) {
+          this.settings.btnPoOrderDisabledStatus.disabledDelete = true
+        }
+      },
       deep: true,
       immediate: true
     },
+    // 监听银行账户列表数据变化
     'dataJson.tempJson.bankListData': {
-      handler: 'handleBankListDataChange',
+      handler (newVal, oldVal) {
+        // 当银行账户列表数据发生变化时的处理逻辑
+        console.log('银行账户列表数据发生变化', newVal)
+
+        // 重新计算付款总金额
+        this.calculateDetailPayableAmount()
+
+        // 可以在这里添加银行账户数据变化时的业务逻辑
+        if (newVal && newVal.length > 0) {
+          console.log('可用银行账户数量:', newVal.length)
+        }
+
+        // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
+        if (!newVal || newVal.length === 0) {
+          this.settings.btnBankDisabledStatus.disabledDelete = true
+        }
+      },
       deep: true,
       immediate: true
     },
+    // 监听主体企业变化，控制按钮状态
     'dataJson.tempJson.purchaser_id': {
-      handler: 'updateButtonStatusByPurchaser',
+      handler () {
+        this.updateButtonStatusByPurchaser()
+      },
       deep: true,
       immediate: true
-    }
+    },
+    'dataJson.tempJson.purchaser_name': {
+      handler () {
+        this.updateButtonStatusByPurchaser()
+      },
+      deep: true,
+      immediate: true
+    },
+    // 全屏loading监听
+    'settings.loading': {}
   },
   created () {
   },
@@ -835,7 +870,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -851,8 +885,6 @@ export default {
       this.initTypeList()
       // 初始化款项类型
       this.initBankTypeList()
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     initTempJsonOriginal () {
@@ -885,85 +917,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-
-      // 监听采购订单列表数据变化，触发金额计算
-      this.watch.unwatch_poOrderListData = this.$watch(
-        'dataJson.tempJson.poOrderListData',
-        (newVal, oldVal) => {
-          // 当采购订单列表数据发生变化时，重新计算申请付款金额
-          this.calculatePayableAmounts()
-          console.log('采购订单列表数据发生变化，重新计算金额')
-
-          // 业务单据信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnPoOrderDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-
-      // 监听银行账户列表数据变化
-      this.watch.unwatch_bankListData = this.$watch(
-        'dataJson.tempJson.bankListData',
-        (newVal, oldVal) => {
-          // 当银行账户列表数据发生变化时的处理逻辑
-          console.log('银行账户列表数据发生变化', newVal)
-
-          // 重新计算付款总金额
-          this.calculateDetailPayableAmount()
-
-          // 可以在这里添加银行账户数据变化时的业务逻辑
-          if (newVal && newVal.length > 0) {
-            console.log('可用银行账户数量:', newVal.length)
-          }
-
-          // 付款账户信息区域的el-table的数据为空时，删除按钮不可用
-          if (!newVal || newVal.length === 0) {
-            this.settings.btnBankDisabledStatus.disabledDelete = true
-          }
-        },
-        { deep: true, immediate: true }
-      )
-
-      // 监听主体企业变化，控制按钮状态
-      this.watch.unwatch_purchaser = this.$watch(
-        () => ({
-          purchaser_id: this.dataJson.tempJson.purchaser_id,
-          purchaser_name: this.dataJson.tempJson.purchaser_name
-        }),
-        (newVal, oldVal) => {
-          // 当主体企业有数据时，更新按钮状态
-          this.updateButtonStatusByPurchaser()
-        },
-        { deep: true, immediate: true }
-      )
-    },
-    unWatch () {
-      // 取消监听器
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_poOrderListData) {
-        this.watch.unwatch_poOrderListData()
-      }
-      if (this.watch.unwatch_bankListData) {
-        this.watch.unwatch_bankListData()
-      }
-      if (this.watch.unwatch_purchaser) {
-        this.watch.unwatch_purchaser()
-      }
     },
     // 取消按钮
     handleCancel () {

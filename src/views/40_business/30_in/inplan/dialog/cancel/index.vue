@@ -194,10 +194,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -270,15 +266,10 @@ export default {
   mounted () {
     // 描绘完成
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化处理
     init () {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
 
@@ -311,17 +302,6 @@ export default {
       })
 
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
 
     // 取消按钮

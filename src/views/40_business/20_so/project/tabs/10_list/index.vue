@@ -938,10 +938,6 @@ export default {
         data: null
       },
       screenNum: 0,
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_statusList: null
-      },
       // vue-tour组件
       tourOption: {
         useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
@@ -985,6 +981,77 @@ export default {
             break
         }
       }
+    },
+    // 监听多选状态变化，更新按钮状态
+    'dataJson.multipleSelection': {
+      handler (newVal, oldVal) {
+        if (newVal.length > 0) {
+          this.settings.btnStatus.showEnable = true
+          this.settings.btnStatus.showDisable = true
+          this.settings.btnStatus.showSubmit = true
+          this.settings.btnStatus.showAudit = true
+          this.settings.btnStatus.showReject = true
+          this.settings.btnStatus.showSync = true
+          this.settings.btnStatus.showExport = true
+        } else {
+          this.settings.btnStatus.showEnable = false
+          this.settings.btnStatus.showDisable = false
+          this.settings.btnStatus.showSubmit = false
+          this.settings.btnStatus.showAudit = false
+          this.settings.btnStatus.showReject = false
+          this.settings.btnStatus.showSync = false
+          this.settings.btnStatus.showExport = false
+        }
+
+        newVal.forEach((value) => {
+          if (value.status !== constants_type.DICT_B_PROJECT_STATUS_ZERO) {
+            if (value.status === constants_type.DICT_B_PROJECT_STATUS_THREE) {
+              // 驳回状态可提交
+              this.settings.btnStatus.showSubmit = true
+            } else {
+              // 非待审批状态不可提交
+              this.settings.btnStatus.showSubmit = false
+            }
+          }
+
+          if (value.status !== constants_type.DICT_B_PROJECT_STATUS_ONE && value.status !== constants_type.DICT_B_PROJECT_STATUS_FOUR) {
+            // 非审批中/作废审批中状态不可审核/驳回
+            this.settings.btnStatus.showAudit = false
+            this.settings.btnStatus.showReject = false
+          }
+        })
+      },
+      deep: true
+    },
+    // 监听搜索表单变化，处理日期逻辑
+    'dataJson.searchForm': {
+      handler (newVal, oldVal) {
+        if (this.dataJson.searchForm.daterange === null) {
+          this.dataJson.searchForm.start_time = null
+          this.dataJson.searchForm.over_time = null
+        }
+
+        if (this.dataJson.searchForm.ed_dt === null) {
+          this.dataJson.searchForm.e_dt_start = null
+          this.dataJson.searchForm.e_dt_end = null
+        }
+
+        if (this.dataJson.searchForm.create_dt === null) {
+          this.dataJson.searchForm.c_time_start = null
+          this.dataJson.searchForm.c_time_end = null
+        }
+      },
+      deep: true
+    },
+    // 监听"全部"页签中用户手动选择的状态变化，自动缓存起来
+    'dataJson.searchForm.status_list': {
+      handler (newVal, oldVal) {
+        // 只有在"全部"页签时才缓存用户选择的状态
+        if (this.dataJson.tabs.active === '0' && newVal !== oldVal) {
+          this.dataJson.allTabStatusCache = [...newVal]
+        }
+      },
+      deep: true
     }
   },
   created () {
@@ -1063,15 +1130,12 @@ export default {
     this.handleUrlParams()
   },
   destroyed () {
-    this.unWatch()
     // 清理EventBus监听器
     EventBus.$off(this.EMITS.EMIT_BUS_PROJECT_NEW_OK)
   },
   methods: {
     // 初始化页面
     init (parm) {
-      this.setWatch()
-
       // 初始化按钮状态 - 没有选中任何行时，所有按钮都不可用
       this.initButtonStatus()
 
@@ -1093,87 +1157,6 @@ export default {
       this.settings.btnStatus.showPush = false
       this.settings.btnStatus.showPrint = false
       this.settings.btnStatus.showFinish = false
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      const _this = this
-      _this.watch.unwatch_tempJson = _this.$watch('dataJson.multipleSelection', (newVal, oldVal) => {
-        if (newVal.length > 0) {
-          _this.settings.btnStatus.showEnable = true
-          _this.settings.btnStatus.showDisable = true
-          _this.settings.btnStatus.showSubmit = true
-          _this.settings.btnStatus.showAudit = true
-          _this.settings.btnStatus.showReject = true
-          _this.settings.btnStatus.showSync = true
-          _this.settings.btnStatus.showExport = true
-        } else {
-          _this.settings.btnStatus.showEnable = false
-          _this.settings.btnStatus.showDisable = false
-          _this.settings.btnStatus.showSubmit = false
-          _this.settings.btnStatus.showAudit = false
-          _this.settings.btnStatus.showReject = false
-          _this.settings.btnStatus.showSync = false
-          _this.settings.btnStatus.showExport = false
-        }
-
-        _this.dataJson.multipleSelection.forEach(function (value, index, array) {
-          if (value.status !== constants_type.DICT_B_PROJECT_STATUS_ZERO) {
-            if (value.status === constants_type.DICT_B_PROJECT_STATUS_THREE) {
-              // 驳回状态可提交
-              _this.settings.btnStatus.showSubmit = true
-            } else {
-              // 非待审批状态不可提交
-              _this.settings.btnStatus.showSubmit = false
-            }
-          }
-
-          if (value.status !== constants_type.DICT_B_PROJECT_STATUS_ONE && value.status !== constants_type.DICT_B_PROJECT_STATUS_FOUR) {
-            // 非审批中/作废审批中状态不可审核/驳回
-            _this.settings.btnStatus.showAudit = false
-            _this.settings.btnStatus.showReject = false
-          }
-        })
-      }, { deep: true }
-      )
-
-      this.watch.unwatch_tempJson1 = this.$watch('dataJson.searchForm', (newVal, oldVal) => {
-        if (this.dataJson.searchForm.daterange === null) {
-          this.dataJson.searchForm.start_time = null
-          this.dataJson.searchForm.over_time = null
-        }
-
-        if (this.dataJson.searchForm.ed_dt === null) {
-          this.dataJson.searchForm.e_dt_start = null
-          this.dataJson.searchForm.e_dt_end = null
-        }
-
-        if (this.dataJson.searchForm.create_dt === null) {
-          this.dataJson.searchForm.c_time_start = null
-          this.dataJson.searchForm.c_time_end = null
-        }
-      }, { deep: true }
-      )
-
-      // 监听"全部"页签中用户手动选择的状态变化，自动缓存起来
-      this.watch.unwatch_statusList = this.$watch(
-        'dataJson.searchForm.status_list',
-        (newVal, oldVal) => {
-          // 只有在"全部"页签时才缓存用户选择的状态
-          if (this.dataJson.tabs.active === '0' && newVal !== oldVal) {
-            this.dataJson.allTabStatusCache = [...newVal]
-          }
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_statusList) {
-        this.watch.unwatch_statusList()
-      }
     },
     // 弹出框设置初始化
     initDialogStatus () {

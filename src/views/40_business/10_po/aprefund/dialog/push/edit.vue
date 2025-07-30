@@ -384,17 +384,6 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null,
-        'dataJson.tempJson.unit_id': {
-          handler (newVal, oldVal) {
-            console.log(newVal)
-          }
-        }
-      },
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -539,7 +528,6 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -554,8 +542,6 @@ export default {
       // 初始化页面数据
       this.initData()
 
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     initTempJsonOriginal () {
@@ -572,20 +558,6 @@ export default {
       // 数据初始化
       this.initTempJsonOriginal()
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
     },
     // 取消按钮
     handleCancel () {

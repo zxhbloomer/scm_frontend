@@ -116,9 +116,6 @@ export default {
       labelStyle: {
         width: '10%',
         'text-align': 'right'
-      }, // 监听器
-      watch: {
-        unwatch_tempJson: null
       },
       popSettingsData: {
 
@@ -174,23 +171,13 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-    }, handleClose () {
+    handleClose () {
       this.$emit('closeMeCancel')
     },
     // 下推采购合同

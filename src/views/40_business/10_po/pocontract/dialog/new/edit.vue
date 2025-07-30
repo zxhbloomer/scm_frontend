@@ -585,9 +585,6 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
       popSettingsData: {
         // 弹出的商品查询框参数设置
         goodsDialog: {
@@ -718,29 +715,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
       this.dataJson.tempJson = this.data
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_actual_count) {
-        this.watch.unwatch_actual_count()
-      }
-      if (this.watch.unwatch_actual_price) {
-        this.watch.unwatch_actual_price()
-      }
     },
     // 取消按钮
     handleCancel () {

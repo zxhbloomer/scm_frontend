@@ -481,9 +481,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
       popSettingsData: {
         // 供应商
         supplierDialogData: {
@@ -635,14 +632,10 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      // 初始化watch
-      this.setWatch()
-
       // 如果传入了采购订单数据，自动填充并查询
       if (this.data) {
         this.loadPoOrderData(this.data)
@@ -677,12 +670,6 @@ export default {
       this.setPodetailListData(poOrderData)
     },
 
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-    },
-    unWatch () {
-    },
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')

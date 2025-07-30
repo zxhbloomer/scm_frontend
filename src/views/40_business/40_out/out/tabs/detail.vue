@@ -394,10 +394,6 @@ export default {
         // 错误数据文件
         errorFileUrl: ''
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       popSettingsData: {
         // 弹出窗口状态名称
         dialogStatus: '',
@@ -568,15 +564,22 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 监听页面上面是否有修改，有修改按钮高亮
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        this.settings.btnDisabledStatus.disabledInsert = false
+        this.settings.btnDisabledStatus.disabledUpdate = false
+        this.unitChange(this.dataJson.tempJson.unit_convert_id)
+      },
+      deep: true
+    }
+  },
   created () {
     this.init()
   },
   mounted () {
     // 描绘完成
-  },
-  destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -660,25 +663,6 @@ export default {
 
       this.dataJson.pounds = this.dataJson.tempJson.pound_files
       this.dataJson.out_photos = this.dataJson.tempJson.out_photo_files
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-          this.settings.btnDisabledStatus.disabledInsert = false
-          this.settings.btnDisabledStatus.disabledUpdate = false
-          this.unitChange(this.dataJson.tempJson.unit_convert_id)
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
 
     // 取消按钮
@@ -795,9 +779,6 @@ export default {
         // })
         // console.log(obj)
         // this.dataJson.tempJson.hs_gx = obj.hs_gx
-
-        // 初始化watch
-        this.setWatch()
       }, (_error) => {
       })
     },

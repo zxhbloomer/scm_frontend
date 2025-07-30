@@ -846,10 +846,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       dataJson: {
         tabs: {
           active: ''
@@ -997,6 +993,23 @@ export default {
             break
         }
       }
+    },
+    // 监听搜索表单的变化
+    'dataJson.searchForm': {
+      handler (newVal, oldVal) {
+        const screenKeys = ['seller_name', 'customer_name']
+        const { searchForm } = this.dataJson
+        const data = Object.keys(searchForm).map(item => {
+          if (screenKeys.includes(item)) {
+            if (searchForm[item] || searchForm[item] === 0) {
+              return searchForm[item]
+            }
+          }
+        })
+        const len = data.filter(x => x).length || 0
+        this.screenNum = len
+      },
+      deep: true
     }
   },
   beforeDestroy () {
@@ -1073,7 +1086,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
@@ -1082,34 +1094,6 @@ export default {
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      this.setWatch()
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听搜索表单的变化
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.searchForm',
-        (newVal, oldVal) => {
-          // 这里可以添加您需要的逻辑
-          const screenKeys = ['seller_name', 'customer_name']
-          const { searchForm } = this.dataJson
-          const data = Object.keys(searchForm).map(item => {
-            if (screenKeys.includes(item)) {
-              if (searchForm[item] || searchForm[item] === 0) {
-                return searchForm[item]
-              }
-            }
-          })
-          const len = data.filter(x => x).length || 0
-          this.screenNum = len
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson = null
-      }
     },
     // 获取行索引
     getRowIndex (row) {

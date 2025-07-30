@@ -708,17 +708,6 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null,
-        'dataJson.tempJson.unit_id': {
-          handler (newVal, oldVal) {
-            console.log(newVal)
-          }
-        }
-      },
       popSettingsData: {
         // 弹出窗口状态名称
         dialogStatus: '',
@@ -960,6 +949,33 @@ export default {
   },
   // 监听器
   watch: {
+    // 监听页面上面是否有修改，有修改按钮高亮
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        this.settings.btnDisabledStatus.disabledInsert = false
+        this.settings.btnDisabledStatus.disabledUpdate = false
+      },
+      deep: true
+    },
+    // 监听实际数量变化
+    'dataJson.tempJson.actual_count': {
+      handler (newVal, oldVal) {
+        this.reCalcCountByUnit()
+        this.reCalcTotalPrice()
+      }
+    },
+    // 监听出库单价变化
+    'dataJson.tempJson.price': {
+      handler (newVal, oldVal) {
+        this.reCalcTotalPrice()
+      }
+    },
+    // 监听单位ID变化
+    'dataJson.tempJson.unit_id': {
+      handler (newVal, oldVal) {
+        console.log(newVal)
+      }
+    },
     // 监听毛重
     'dataJson.tempJson.gross_weight': {
       handler (newVal) {
@@ -1002,9 +1018,6 @@ export default {
   mounted () {
     // 描绘完成
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化处理
     init () {
@@ -1031,8 +1044,6 @@ export default {
           break
       }
 
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     initTempJsonOriginal () {
@@ -1118,44 +1129,6 @@ export default {
       // this.dataJson.tempJson = deepCopy(this.data)
       // 数据初始化
       this.getData()
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-          this.settings.btnDisabledStatus.disabledInsert = false
-          this.settings.btnDisabledStatus.disabledUpdate = false
-        },
-        { deep: true }
-      )
-      this.watch.unwatch_actual_count = this.$watch(
-        'dataJson.tempJson.actual_count',
-        (newVal, oldVal) => {
-          this.reCalcCountByUnit()
-          this.reCalcTotalPrice()
-        },
-      )
-      // 监听出库单位,是否有变化，判断是否要显示单位换算按钮
-      this.watch.unwatch_actual_price = this.$watch(
-        'dataJson.tempJson.price',
-        (newVal, oldVal) => {
-          this.reCalcTotalPrice()
-        },
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_actual_count) {
-        this.watch.unwatch_actual_count()
-      }
-      if (this.watch.unwatch_actual_price) {
-        this.watch.unwatch_actual_price()
-      }
     },
 
     // 取消按钮

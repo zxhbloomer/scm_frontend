@@ -899,9 +899,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-      },
       dataJson: {
         // 查询使用的json
         searchForm: {
@@ -1043,15 +1040,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
     init (parm) {
       // 处理传入的data参数
       this.handleInitData()
-
-      this.setWatch()
 
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
@@ -1076,9 +1070,6 @@ export default {
           this.dataJson.searchForm.purchaser_id = this.data.purchaser_id
         }
       }
-    },
-    setWatch () {},
-    unWatch () {
     },
     // 获取行索引
     getRowIndex (row) {

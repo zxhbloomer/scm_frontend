@@ -197,9 +197,6 @@ export default {
         'text-align': 'right'
       },
       // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -286,7 +283,6 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     /**
@@ -330,24 +326,6 @@ export default {
       })
 
       this.settings.loading = false
-    },
-
-    /**
-     * 设置监听器
-     */
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = null
-    },
-
-    /**
-     * 取消监听
-     */
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
 
     /**

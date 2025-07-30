@@ -507,9 +507,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
       popSettingsData: {
         // 供应商
         supplierDialogData: {
@@ -674,20 +671,11 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-    },
-    unWatch () {
     },
     // 取消按钮
     handleCancel () {

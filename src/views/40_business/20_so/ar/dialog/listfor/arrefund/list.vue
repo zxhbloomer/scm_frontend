@@ -636,9 +636,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-      },
       dataJson: {
         tabsCount: {
           all: 0,
@@ -818,7 +815,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
@@ -826,7 +822,6 @@ export default {
       // 处理传入的data参数
       this.handleInitData()
 
-      this.setWatch()
       // 将props.data参数合并到searchForm中，保留原有的pageCondition等结构
       if (this.data) {
         Object.assign(this.dataJson.searchForm, deepCopy(this.data))
@@ -852,12 +847,6 @@ export default {
           this.dataJson.searchForm.seller_name = this.data.seller_name
           this.dataJson.searchForm.seller_id = this.data.seller_id
         }
-      }
-    },
-    setWatch () {},
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
       }
     },
     // 获取行索引

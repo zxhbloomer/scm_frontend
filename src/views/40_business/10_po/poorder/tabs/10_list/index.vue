@@ -1039,9 +1039,6 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-      },
       dataJson: {
         tabs: {
           active: '0'
@@ -1160,9 +1157,6 @@ export default {
     CONSTANTS () {
       return constants_dict
     },
-    PARAMETERS () {
-      return constants_para
-    },
     // 高级查询计数器
     screenNum () {
       let count = 0
@@ -1186,6 +1180,47 @@ export default {
             break
         }
       }
+    },
+    // 监听页面上面是否有修改，有修改按钮高亮
+    'dataJson.multipleSelection': {
+      handler (newVal, oldVal) {
+        if (newVal.length > 0) {
+          this.settings.btnStatus.showDel = true
+          this.settings.btnStatus.showUpdate = true
+          this.settings.btnStatus.showView = true
+          this.settings.btnStatus.showExport = false
+          this.settings.btnStatus.hidenExport = false
+          this.settings.btnStatus.showApprove = true
+          this.settings.btnStatus.showPrint = true
+          this.settings.btnStatus.showCancel = true
+          this.settings.btnStatus.showPush = true
+          this.settings.btnStatus.showFinish = true
+        } else {
+          this.settings.btnStatus.showDel = false
+          this.settings.btnStatus.showUpdate = false
+          this.settings.btnStatus.showView = false
+          this.settings.btnStatus.showExport = false
+          this.settings.btnStatus.hidenExport = true
+          this.settings.btnStatus.showApprove = false
+          this.settings.btnStatus.showPrint = false
+          this.settings.btnStatus.showCancel = false
+          this.settings.btnStatus.showPush = false
+          this.settings.btnStatus.showFinish = false
+        }
+      },
+      deep: true
+    },
+    // 监听"全部"页签中状态列表的变化，实时保存到缓存中
+    'dataJson.searchForm.status_list': {
+      handler (newVal, oldVal) {
+        // 只有在"全部"页签时才保存状态变化
+        if (this.dataJson.tabs.active === '0') {
+          if (Array.isArray(newVal)) {
+            this.dataJson.allTabStatusCache = [...newVal]
+          }
+        }
+      },
+      deep: true
     }
   },
   beforeDestroy () {
@@ -1264,14 +1299,9 @@ export default {
     // 描绘完成
     this.init()
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化页面
     init (parm) {
-      this.setWatch()
-
       // 初始化"全部"标签页的状态缓存 - 默认为空数组（显示所有状态）
       if (this.dataJson.allTabStatusCache.length === 0) {
         this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]
@@ -1281,54 +1311,6 @@ export default {
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      const _this = this
-      _this.watch.unwatch_tempJson = _this.$watch('dataJson.multipleSelection', (newVal, oldVal) => {
-        if (newVal.length > 0) {
-          _this.settings.btnStatus.showDel = true
-          _this.settings.btnStatus.showUpdate = true
-          _this.settings.btnStatus.showView = true
-          _this.settings.btnStatus.showExport = false
-          _this.settings.btnStatus.hidenExport = false
-          _this.settings.btnStatus.showApprove = true
-          _this.settings.btnStatus.showPrint = true
-          _this.settings.btnStatus.showCancel = true
-          _this.settings.btnStatus.showPush = true
-          _this.settings.btnStatus.showFinish = true
-        } else {
-          _this.settings.btnStatus.showDel = false
-          _this.settings.btnStatus.showUpdate = false
-          _this.settings.btnStatus.showView = false
-          _this.settings.btnStatus.showExport = false
-          _this.settings.btnStatus.hidenExport = true
-          _this.settings.btnStatus.showApprove = false
-          _this.settings.btnStatus.showPrint = false
-          _this.settings.btnStatus.showCancel = false
-          _this.settings.btnStatus.showPush = false
-          _this.settings.btnStatus.showFinish = false
-        }
-      }, { deep: true }
-      )
-
-      // 监听"全部"页签中状态列表的变化，实时保存到缓存中
-      _this.watch.unwatch_statusList = _this.$watch('dataJson.searchForm.status_list', (newVal, oldVal) => {
-        // 只有在"全部"页签时才保存状态变化
-        if (_this.dataJson.tabs.active === '0') {
-          if (Array.isArray(newVal)) {
-            this.dataJson.allTabStatusCache = [...newVal]
-          }
-        }
-      },
-      { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_statusList) {
-        this.watch.unwatch_statusList = null
-      }
     },
     // 获取行索引
     getRowIndex (row) {

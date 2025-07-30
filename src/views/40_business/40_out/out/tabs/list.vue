@@ -1178,10 +1178,6 @@ export default {
             }
           }]
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       // 导入窗口的状态
       popSettingsImport: {
         // 弹出窗口会否显示
@@ -1355,10 +1351,75 @@ export default {
         }
       }
     },
-    // 监听高级查询个数
+    // 监听多选状态，控制按钮显示
+    'dataJson.multipleSelection': {
+      handler (newVal, oldVal) {
+        if (newVal.length > 0) {
+          this.settings.btnStatus.showEnable = true
+          this.settings.btnStatus.showDisable = true
+          this.settings.btnStatus.showSubmit = true
+          this.settings.btnStatus.showAudit = true
+          this.settings.btnStatus.showReject = true
+          this.settings.btnStatus.showFinish = true
+          this.settings.btnStatus.showSync = true
+          this.settings.btnStatus.showExport = true
+        } else {
+          this.settings.btnStatus.showEnable = false
+          this.settings.btnStatus.showDisable = false
+          this.settings.btnStatus.showSubmit = false
+          this.settings.btnStatus.showAudit = false
+          this.settings.btnStatus.showReject = false
+          this.settings.btnStatus.showFinish = false
+          this.settings.btnStatus.showSync = false
+          this.settings.btnStatus.showExport = false
+        }
+
+        newVal.forEach((value, index, array) => {
+          if (value.status !== constants_type.DICT_B_OUT_STATUS_ZD) {
+            if (value.status === constants_type.DICT_B_OUT_STATUS_BH) {
+              // 审核驳回后可再次提交
+              this.settings.btnStatus.showSubmit = true
+            } else {
+              // 非制单状态不可提交
+              this.settings.btnStatus.showSubmit = false
+            }
+          }
+
+          if (value.status !== constants_type.DICT_B_OUT_STATUS_YTJ && value.status !== constants_type.DICT_B_OUT_STATUS_CANCEL_BEING_AUDITED) {
+            // 非已提交状态不可审核/驳回
+            this.settings.btnStatus.showAudit = false
+            this.settings.btnStatus.showReject = false
+          }
+
+          if (value.status !== constants_type.DICT_B_OUT_STATUS_TG) {
+            // 非审核通过状态不可完成
+            this.settings.btnStatus.showFinish = false
+          }
+        })
+      },
+      deep: true
+    },
+    // 监听高级查询个数和日期范围处理
     'dataJson.searchForm': {
       deep: true,
       handler (newVal, oldVal) {
+        // 处理日期范围
+        if (this.dataJson.searchForm.daterange === null) {
+          this.dataJson.searchForm.start_time = null
+          this.dataJson.searchForm.over_time = null
+        }
+
+        if (this.dataJson.searchForm.ed_dt === null) {
+          this.dataJson.searchForm.ed_dt_end = null
+          this.dataJson.searchForm.ed_dt_start = null
+        }
+
+        if (this.dataJson.searchForm.create_dt === null) {
+          this.dataJson.searchForm.c_time_start = null
+          this.dataJson.searchForm.c_time_end = null
+        }
+
+        // 处理高级查询个数
         const screenKeys = ['consignor_Name', 'ship_name', 'bill_type', 'type', 'goods_name', 'ed_dt', 'prop', 'client_name', 'sync_status', 'vehicle_no', 'warehouse_type', 'type_list', 'out_release_status']
         if (this.isZhongLin) {
           screenKeys.push('owner_name')
@@ -1582,83 +1643,7 @@ export default {
   mounted () {
     // 描绘完成
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      const _this = this
-      _this.watch.unwatch_tempJson = _this.$watch('dataJson.multipleSelection', (newVal, oldVal) => {
-        if (newVal.length > 0) {
-          _this.settings.btnStatus.showEnable = true
-          _this.settings.btnStatus.showDisable = true
-          _this.settings.btnStatus.showSubmit = true
-          _this.settings.btnStatus.showAudit = true
-          _this.settings.btnStatus.showReject = true
-          _this.settings.btnStatus.showFinish = true
-          _this.settings.btnStatus.showSync = true
-          _this.settings.btnStatus.showExport = true
-        } else {
-          _this.settings.btnStatus.showEnable = false
-          _this.settings.btnStatus.showDisable = false
-          _this.settings.btnStatus.showSubmit = false
-          _this.settings.btnStatus.showAudit = false
-          _this.settings.btnStatus.showReject = false
-          _this.settings.btnStatus.showFinish = false
-          _this.settings.btnStatus.showSync = false
-          _this.settings.btnStatus.showExport = false
-        }
-
-        _this.dataJson.multipleSelection.forEach(function (value, index, array) {
-          if (value.status !== constants_type.DICT_B_OUT_STATUS_ZD) {
-            if (value.status === constants_type.DICT_B_OUT_STATUS_BH) {
-              // 审核驳回后可再次提交
-              _this.settings.btnStatus.showSubmit = true
-            } else {
-              // 非制单状态不可提交
-              _this.settings.btnStatus.showSubmit = false
-            }
-          }
-
-          if (value.status !== constants_type.DICT_B_OUT_STATUS_YTJ && value.status !== constants_type.DICT_B_OUT_STATUS_CANCEL_BEING_AUDITED) {
-            // 非已提交状态不可审核/驳回
-            _this.settings.btnStatus.showAudit = false
-            _this.settings.btnStatus.showReject = false
-          }
-
-          if (value.status !== constants_type.DICT_B_OUT_STATUS_TG) {
-            // 非审核通过状态不可完成
-            _this.settings.btnStatus.showFinish = false
-          }
-        })
-      }, { deep: true }
-      )
-
-      this.watch.unwatch_tempJson1 = this.$watch('dataJson.searchForm', (newVal, oldVal) => {
-        if (this.dataJson.searchForm.daterange === null) {
-          this.dataJson.searchForm.start_time = null
-          this.dataJson.searchForm.over_time = null
-        }
-
-        if (this.dataJson.searchForm.ed_dt === null) {
-          this.dataJson.searchForm.ed_dt_end = null
-          this.dataJson.searchForm.ed_dt_start = null
-        }
-
-        if (this.dataJson.searchForm.create_dt === null) {
-          this.dataJson.searchForm.c_time_start = null
-          this.dataJson.searchForm.c_time_end = null
-        }
-      }, { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-    },
     // 弹出框设置初始化
     initDialogStatus () {
     },

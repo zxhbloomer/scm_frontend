@@ -611,9 +611,6 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
       popSettingsData: {
         // 弹出的商品查询框参数设置
         goodsDialog: {
@@ -753,7 +750,6 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -762,15 +758,7 @@ export default {
       this.dataJson.tempJson = deepCopy(this.data)
       this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-    },
-    unWatch () {
     },
     // 取消按钮
     handleCancel () {
