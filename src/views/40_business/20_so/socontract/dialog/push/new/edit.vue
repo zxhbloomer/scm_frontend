@@ -527,6 +527,7 @@ import { getApi } from '@/api/40_business/project/project'
 
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -604,7 +605,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_SO_CONTRACT,
+          serial_type: constants_bpm.BPM_B_SO_CONTRACT,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null
@@ -743,6 +744,7 @@ export default {
     // 初始化处理
     init () {
       this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.setWatch()
       this.getData()
       this.settings.loading = false
     },
@@ -782,13 +784,17 @@ export default {
         this.dataJson.tempJsonOriginal.project = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
-        this.dataJson.tempJson.customer_id = response.data.customer_id
-        this.dataJson.tempJson.customer_name = response.data.customer_name
-        this.dataJson.tempJson.customer_code = response.data.customer_code
-        this.dataJson.tempJson.seller_id = response.data.seller_id
-        this.dataJson.tempJson.seller_name = response.data.seller_name
-        this.dataJson.tempJson.seller_code = response.data.seller_code
-        this.dataJson.tempJson.seller_code = response.data.seller_code
+        // PO到SO的数据转换：供应商 → 客户，采购方 → 销售方
+        // 项目中的供应商信息转换为SO的客户信息
+        this.dataJson.tempJson.customer_id = response.data.supplier_id
+        this.dataJson.tempJson.customer_name = response.data.supplier_name
+        this.dataJson.tempJson.customer_code = response.data.supplier_code
+        
+        // 项目中的采购方信息转换为SO的销售方信息
+        this.dataJson.tempJson.seller_id = response.data.purchaser_id
+        this.dataJson.tempJson.seller_name = response.data.purchaser_name
+        this.dataJson.tempJson.seller_code = response.data.purchaser_code
+        
         this.dataJson.tempJson.delivery_type = response.data.delivery_type
 
         // 合同附件
@@ -807,32 +813,37 @@ export default {
         this.dataJson.doc_att = []
         this.dataJson.doc_att_file = []
         this.dataJson.doc_att_files = []
+        // 计算商品总金额
+        this.sumData()
         this.settings.loading = false
       })
     },
     // 计算总金额
     sumData () {
       if (!this.dataJson.tempJson.detailListData || this.dataJson.tempJson.detailListData.length === 0) {
-        this.dataJson.tempJson.total_amount = 0
-        this.dataJson.tempJson.total_tax_amount = 0
-        this.dataJson.tempJson.total_amount_with_tax = 0
+        this.dataJson.tempJson.contract_amount_sum = 0
+        this.dataJson.tempJson.contract_total = 0
+        this.dataJson.tempJson.tax_amount_sum = 0
         return
       }
 
       let totalAmount = 0
       let totalTaxAmount = 0
+      let totalQty = 0
 
       this.dataJson.tempJson.detailListData.forEach(item => {
         const amount = parseFloat(item.amount) || 0
         const taxAmount = parseFloat(item.tax_amount) || 0
+        const qty = parseFloat(item.qty) || 0
 
         totalAmount += amount
         totalTaxAmount += taxAmount
+        totalQty += qty
       })
 
-      this.dataJson.tempJson.total_amount = totalAmount.toFixed(2)
-      this.dataJson.tempJson.total_tax_amount = totalTaxAmount.toFixed(2)
-      this.dataJson.tempJson.total_amount_with_tax = (totalAmount + totalTaxAmount).toFixed(2)
+      this.dataJson.tempJson.contract_amount_sum = totalAmount.toFixed(2)
+      this.dataJson.tempJson.tax_amount_sum = totalTaxAmount.toFixed(2)
+      this.dataJson.tempJson.contract_total = totalQty.toFixed(4)
     },
     // 客户选择弹窗
     handleCustomerDialog () {

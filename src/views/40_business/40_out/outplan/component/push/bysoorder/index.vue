@@ -420,6 +420,7 @@
 import numeric from '@/components/40_input/numeric/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import constants_para from '@/common/constants/constants_para'
+import constants_bpm from '@/common/constants/constants_bpm'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { insertApi, validateApi, initPlanDataApi } from '@/api/40_business/40_out/outplan/outplan.js'
@@ -497,7 +498,7 @@ export default {
       popSettingsData: {
         sponsorDialog: {
           visible: false,
-          serial_type: 'b_out_plan',
+          serial_type: constants_bpm.BPM_B_OUT_PLAN,
           form_data: {},
           initial_process: null,
           process_users: []

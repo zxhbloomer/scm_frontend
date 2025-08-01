@@ -162,6 +162,7 @@ import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/project/project'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 
@@ -191,7 +192,7 @@ export default {
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
-          serial_type: constants_dict.DICT_B_PROJECT_CANCEL,
+          serial_type: constants_bpm.BPM_PO_B_PROJECT_CANCEL,
           // 弹出框显示参数
           visible: false,
           form_data: { },

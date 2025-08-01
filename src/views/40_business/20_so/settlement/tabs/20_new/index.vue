@@ -432,6 +432,7 @@ import { getApi as getDictDataApi } from '@/api/10_system/dictdata/dictdata'
 import CONSTANTS from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
 import constants_dict from '@/common/constants/constants_dict' // EventBus事件总线
+import constants_bpm from '@/common/constants/constants_bpm'
 
 export default {
   name: 'SoSettlementNew',
@@ -536,7 +537,7 @@ export default {
         // 审批流程设置
         sponsorDialog: {
           visible: false,
-          serial_type: 'b_so_settlement', // 结算新增审批流程
+          serial_type: constants_bpm.BPM_B_SO_SETTLEMENT, // 结算新增审批流程
           form_data: {},
           initial_process: null,
           process_users: []

@@ -489,6 +489,7 @@ import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/sele
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import constants_para from '@/common/constants/constants_para'
 import deepCopy from 'deep-copy'
 import { updateApi, getApi, validateApi } from '@/api/40_business/30_in/in/in'
@@ -642,7 +643,7 @@ export default {
         // 审批流程设置
         sponsorDialog: {
           visible: false,
-          serial_type: 'b_in', // 入库单更新审批流程
+          serial_type: constants_bpm.BPM_B_IN, // 入库单更新审批流程
           form_data: {},
           initial_process: null,
           process_users: []

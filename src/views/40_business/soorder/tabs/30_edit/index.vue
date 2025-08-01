@@ -509,6 +509,7 @@ import deepCopy from 'deep-copy'
 import { getApi, updateApi, validateApi } from '@/api/40_business/soorder/soorder'
 import SupplierDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/40_business/soorder/tabs/dialog/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -604,7 +605,7 @@ export default {
           visible: false,
           form_data: { },
           // 弹出框传入参数
-          serial_type: constants_dict.DICT_B_SO_ORDER,
+          serial_type: constants_bpm.BPM_B_SO_ORDER,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

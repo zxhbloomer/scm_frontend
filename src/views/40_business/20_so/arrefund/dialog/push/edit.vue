@@ -337,6 +337,7 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -401,7 +402,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_AR_REFUND,
+          serial_type: constants_bpm.BPM_B_AR_REFUND,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

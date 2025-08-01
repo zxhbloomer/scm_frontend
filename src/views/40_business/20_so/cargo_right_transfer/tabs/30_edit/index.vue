@@ -479,6 +479,7 @@ import { getApi, updateApi, validateApi } from '@/api/40_business/20_so/cargo_ri
 import CustomerDialog from '@/views/20_master/enterprise/dialog/selecttablelist/customer/counterparty/index.vue'
 import SellerDialog from '@/views/20_master/enterprise/dialog/selecttablelist/seller/system_enterprise/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import SoOrderDialog from '@/views/40_business/20_so/soorder/dialog/listfor/cargorighttransfer/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -552,7 +553,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_SO_CARGO_RIGHT_TRANSFER,
+          serial_type: constants_bpm.BPM_B_SO_CARGO_RIGHT_TRANSFER,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

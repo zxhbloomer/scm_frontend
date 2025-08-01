@@ -624,7 +624,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_SO_CONTRACT,
+          serial_type: constants_bpm.BPM_B_SO_CONTRACT,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

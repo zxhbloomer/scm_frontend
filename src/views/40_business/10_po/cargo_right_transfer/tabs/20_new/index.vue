@@ -471,6 +471,7 @@ import { setPodetailListDataApi } from '@/api/40_business/10_po/poorder/poorder'
 import SupplierDialog from '@/views/20_master/enterprise/dialog/selecttablelist/supplier/counterparty/index.vue'
 import CustomerDialog from '@/views/20_master/enterprise/dialog/selecttablelist/customer/system_enterprise/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import PoOrderDialog from '@/views/40_business/10_po/poorder/dialog/listfor/cargorighttransfer/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -553,7 +554,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_PO_CARGO_RIGHT_TRANSFER,
+          serial_type: constants_bpm.BPM_B_PO_CARGO_RIGHT_TRANSFER,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

@@ -509,6 +509,7 @@ import RadioDict from '@/components/00_dict/redio/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { insertApi, validateApi, initPlanDataApi } from '@/api/40_business/40_out/outplan/outplan'
@@ -576,7 +577,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: 'b_out_plan',
+          serial_type: constants_bpm.BPM_B_OUT_PLAN,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

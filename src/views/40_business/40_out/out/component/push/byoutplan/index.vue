@@ -429,6 +429,7 @@ import constants_para from '@/common/constants/constants_para'
 import { insertApi, validateApi } from '@/api/40_business/40_out/out/out'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import { EventBus } from '@/common/eventbus/eventbus'
+import constants_bpm from '@/common/constants/constants_bpm'
 
 // 导入组件
 import numeric from '@/components/40_input/numeric/index.vue'
@@ -469,7 +470,7 @@ export default {
         // 审批流程设置
         sponsorDialog: {
           visible: false,
-          serial_type: 'b_out',
+          serial_type: constants_bpm.BPM_B_OUT,
           form_data: {},
           initial_process: null,
           process_users: []

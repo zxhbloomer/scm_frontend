@@ -514,6 +514,7 @@ import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
 import { getTypeApi, getApi, validateApi, updateApi } from '@/api/40_business/20_so/ar/ar'
+import constants_bpm from '@/common/constants/constants_bpm'
 import soorder_list_template from '@/views/40_business/20_so/soorder/dialog/listfor/outplan/index.vue'
 import bank_list_template from '@/views/20_master/bankaccounts/dialog/list/index.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
@@ -574,7 +575,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_AR,
+          serial_type: constants_bpm.BPM_B_AR,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

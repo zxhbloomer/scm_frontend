@@ -1,8 +1,7 @@
 <template>
-  <div>
+  <div v-if="listenVisible">
     <!-- pop窗口 数据编辑:新增、修改 废弃-->
     <el-dialog
-      v-if="listenVisible"
       v-el-drag-dialog
       v-loading="settings.loading"
       element-loading-text="拼命加载中，请稍后..."
@@ -149,6 +148,7 @@ export default {
       select: [],
       selectedNode: {},
       process_users: {},
+      internalVisible: false, // 内部控制弹窗显示状态
       form: {
         id: '',
         name: '',
@@ -212,7 +212,7 @@ export default {
       }
     },
     listenVisible () {
-      return this.visible
+      return  this.internalVisible
     },
     ...mapGetters([
       'name',
@@ -252,6 +252,9 @@ export default {
           this.orgUserVo = rsp.data.orgUserVo
 
           this.startProcess(form.process, this.formData)
+
+          // 检查是否只有一个有效的用户节点，如果是则自动执行handleOk
+          this.checkAndAutoExecute()
         })
         .catch((err) => {
           this.loading = false
@@ -452,43 +455,67 @@ export default {
       }
       processData.push(data)
     },
+    /**
+     * 获取符合条件的分支节点
+     * @param {Array} processData - 流程数据数组
+     * @param {Object} process - 当前流程节点
+     * @returns {Object|null} 返回符合条件的分支节点或null
+     */
     getConditionNode (processData, process) {
-      for (var r = null, s = 0; s < process.branchs.length; s++) {
-        for (
-          var a = process.branchs[s], n = false, o = 0, i = 0;
-          i < a.props.groups.length;
-          i++
-        ) {
-          if (
-            ((n = this.getConditionResultByGroup(a.props.groups[i])),
-            a.props.groupsType === 'OR' && n)
-          ) {
-            r = a
+      let matchedBranch = null
+
+      // 遍历所有分支，寻找符合条件的分支
+      for (let branchIndex = 0; branchIndex < process.branchs.length; branchIndex++) {
+        const currentBranch = process.branchs[branchIndex]
+        let isConditionMet = false
+        let andSuccessCount = 0
+
+        // 检查当前分支的所有条件组
+        for (let groupIndex = 0; groupIndex < currentBranch.props.groups.length; groupIndex++) {
+          const conditionGroup = currentBranch.props.groups[groupIndex]
+          isConditionMet = this.getConditionResultByGroup(conditionGroup)
+
+          // 如果是OR类型且条件满足，则找到匹配的分支
+          if (currentBranch.props.groupsType === 'OR' && isConditionMet) {
+            matchedBranch = currentBranch
             break
           }
-          a.props.groupsType === 'AND' && n && o++
+
+          // 如果是AND类型且条件满足，增加成功计数
+          if (currentBranch.props.groupsType === 'AND' && isConditionMet) {
+            andSuccessCount++
+          }
         }
 
-        if (r) {
+        // 如果已找到匹配的分支，退出外层循环
+        if (matchedBranch) {
           break
         }
-        if (o === a.props.groups.length) {
-          r = a
+
+        // 对于AND类型，检查是否所有条件都满足
+        if (andSuccessCount === currentBranch.props.groups.length) {
+          matchedBranch = currentBranch
           break
         }
       }
+
       console.log(
         '符合分支条件,继续执行递归,获取符合条件下节点下的子节点!' +
-        JSON.stringify(r)
+        JSON.stringify(matchedBranch)
       )
-      r
-        ? this.getProcess(r, processData)
-        : console.log(
+
+      // 如果找到匹配的分支，继续处理该分支；否则输出警告信息
+      if (matchedBranch) {
+        return this.getProcess(matchedBranch, processData)
+      } else {
+        console.log(
           '条件节点 '
             .concat(process.id, ' => ')
             .concat(process.name, ' 均不满足，无法继续'),
           process
         )
+        return null
+      }
     },
 
     getConcurrentNode (processData, process) {
@@ -598,13 +625,39 @@ export default {
     },
     // 取消按钮
     handleCancel () {
+      this.internalVisible = false // 重置内部显示状态
       this.$emit('closeMeCancel')
+    },
+    /**
+     * 检查是否只有一个有效的用户节点，如果是则自动执行handleOk
+     */
+    checkAndAutoExecute () {
+      // 统计有users且users.length > 0的节点数量
+      const validUserNodes = this.processData.filter(task => {
+        return task.users && task.users.length > 0
+      })
+
+      console.log('有效用户节点数量:', validUserNodes.length)
+      console.log('有效用户节点:', validUserNodes)
+
+      // 如果只有一个有效的用户节点，则自动执行handleOk
+      if (validUserNodes.length === 1) {
+        console.log('检测到只有一个有效用户节点，将在1秒后自动执行确定操作')
+        setTimeout(() => {
+          this.handleOk()
+        }, 1000) // 1秒后自动执行
+      } else {
+        // 多个用户节点时显示弹窗让用户选择
+        console.log('检测到多个有效用户节点，显示弹窗供用户选择')
+        this.internalVisible = true
+      }
     },
     handleOk () {
       const ifEnd = this.processData.some((task) => task.type !== 'END' && task.users.length === 0)
       if (ifEnd) {
         this.$message.warning('请完善表单/流程选项😥')
       } else {
+        this.internalVisible = false // 重置内部显示状态
         this.$emit('closeMeOk', { processData: this.processData, process_users: this.process_users })
       }
     },

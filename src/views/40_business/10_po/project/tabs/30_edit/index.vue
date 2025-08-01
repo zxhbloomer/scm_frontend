@@ -498,6 +498,7 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import previewCard from '@/components/50_preview_card/preview_card.vue'
 import numeric from '@/components/40_input/numeric/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 
 import goodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 
@@ -571,7 +572,7 @@ export default {
           // 弹出框显示参数
           visible: false,
           form_data: { },
-          serial_type: constants_dict.DICT_B_PROJECT,
+          serial_type: constants_bpm.BPM_PO_B_PROJECT,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null

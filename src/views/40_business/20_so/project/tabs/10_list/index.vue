@@ -83,6 +83,7 @@
             v-model="dataJson.searchForm.type"
             :para="CONSTANTS.DICT_B_PROJECT_TYPE"
             init-placeholder="请选择单据类型"
+            :disabled="true"
           />
         </el-form-item>
 
@@ -646,6 +647,15 @@
       @closeMeCancel="handlePushCancel"
     />
 
+    <!-- 销售合同下推弹窗 -->
+    <so-contract-push-new
+      :visible="soContractDialogVisible"
+      :title="'项目管理-下推销售合同'"
+      :data="soContractDialogData"
+      @closeMeOk="handleSoContractOk"
+      @closeMeCancel="handleSoContractCancel"
+    />
+
   </div>
 </template>
 
@@ -800,6 +810,7 @@ import constants_para from '@/common/constants/constants_para'
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_type from '@/common/constants/constants_dict'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import mixin from './mixin'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -811,9 +822,10 @@ import { mapState } from 'vuex'
 import { EventBus } from '@/common/eventbus/eventbus'
 import print_template from '@/views/40_business/20_so/project/tabs/60_print/index.vue'
 import pushDialog from '@/views/40_business/20_so/project/dialog/push/next/index.vue'
+import SoContractPushNew from '@/views/40_business/20_so/socontract/dialog/push/new/index.vue'
 
 export default {
-  components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog },
+  components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog, SoContractPushNew },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -831,6 +843,7 @@ export default {
           code: '',
           name: '', // 项目名称
           plan_code: '',
+          type: '2', // 默认选择销售业务
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
@@ -937,6 +950,9 @@ export default {
         dialogVisible: false,
         data: null
       },
+      // 销售合同下推弹窗配置
+      soContractDialogVisible: false,
+      soContractDialogData: null,
       screenNum: 0,
       // vue-tour组件
       tourOption: {
@@ -1411,7 +1427,7 @@ export default {
       }
 
       _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_PROJECT
+      _data.serial_type = constants_bpm.BPM_SO_B_PROJECT
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
       if (_data.status === '4' || _data.status === '5') {
@@ -1783,12 +1799,28 @@ export default {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      this.popPush.data = _data
-      this.popPush.dialogVisible = true
+      // 直接打开销售合同下推弹窗
+      this.soContractDialogData = _data
+      this.soContractDialogVisible = true
     },
     // 下推取消
     handlePushCancel () {
       this.popPush.dialogVisible = false
+    },
+    // 销售合同下推确认
+    handleSoContractOk (val) {
+      this.soContractDialogVisible = false
+      this.getDataList()
+      this.$notify({
+        title: '下推成功',
+        message: '销售合同已成功创建',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+    // 销售合同下推取消
+    handleSoContractCancel () {
+      this.soContractDialogVisible = false
     },
     handleFinish () {
     },

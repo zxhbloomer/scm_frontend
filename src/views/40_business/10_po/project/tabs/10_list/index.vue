@@ -83,6 +83,7 @@
             v-model="dataJson.searchForm.type"
             :para="CONSTANTS.DICT_B_PROJECT_TYPE"
             init-placeholder="请选择单据类型"
+            :disabled="true"
           />
         </el-form-item>
 
@@ -646,6 +647,15 @@
       @closeMeCancel="handlePushCancel"
     />
 
+    <!-- 采购合同下推弹窗 -->
+    <po-contract-push-new
+      :visible="poContractDialogVisible"
+      :title="'项目管理-下推采购合同'"
+      :data="poContractDialogData"
+      @closeMeOk="handlePoContractOk"
+      @closeMeCancel="handlePoContractCancel"
+    />
+
   </div>
 </template>
 
@@ -811,9 +821,10 @@ import { mapState } from 'vuex'
 import { EventBus } from '@/common/eventbus/eventbus'
 import print_template from '@/views/40_business/10_po/project/tabs/60_print/index.vue'
 import pushDialog from '@/views/40_business/10_po/project/dialog/push/next/index.vue'
+import PoContractPushNew from '@/views/40_business/10_po/pocontract/dialog/push/new/index.vue'
 
 export default {
-  components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog },
+  components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog, PoContractPushNew },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -831,6 +842,7 @@ export default {
           code: '',
           name: '', // 项目名称
           plan_code: '',
+          type: '1', // 默认选择采购业务
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
@@ -937,6 +949,9 @@ export default {
         dialogVisible: false,
         data: null
       },
+      // 采购合同下推弹窗数据
+      poContractDialogVisible: false,
+      poContractDialogData: null,
       screenNum: 0,
       // vue-tour组件
       tourOption: {
@@ -1783,12 +1798,28 @@ export default {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      this.popPush.data = _data
-      this.popPush.dialogVisible = true
+      // 直接显示采购合同下推弹窗
+      this.poContractDialogData = _data
+      this.poContractDialogVisible = true
     },
     // 下推取消
     handlePushCancel () {
       this.popPush.dialogVisible = false
+    },
+    // 采购合同弹窗确认
+    handlePoContractOk () {
+      this.poContractDialogVisible = false
+      this.getDataList()
+      this.$notify({
+        title: '下推成功',
+        message: '采购合同创建成功',
+        type: 'success',
+        duration: this.settings.duration
+      })
+    },
+    // 采购合同弹窗取消
+    handlePoContractCancel () {
+      this.poContractDialogVisible = false
     },
     handleFinish () {
     },

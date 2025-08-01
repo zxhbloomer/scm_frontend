@@ -164,6 +164,7 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/10_po/aprefundpay/aprefundpay'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 export default {
@@ -196,7 +197,7 @@ export default {
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
-          serial_type: constants_dict.DICT_B_AP_REFUND_PAY_CANCEL,
+          serial_type: constants_bpm.BPM_B_AP_REFUND_PAY_CANCEL,
           // 弹出框显示参数
           visible: false,
           form_data: { },

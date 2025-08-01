@@ -824,6 +824,7 @@ import deepCopy from 'deep-copy'
 import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import { EventBus } from '@/common/eventbus/eventbus'
 import print_template from '@/views/40_business/20_so/ar/tabs/60_print/index.vue'
 import push_arreceive_template from '@/views/40_business/20_so/arreceive/dialog/push/new/index.vue'
@@ -1297,7 +1298,7 @@ export default {
       }
 
       _data.serial_id = _data.id
-      _data.serial_type = constants_dict.DICT_B_AR
+      _data.serial_type = constants_bpm.BPM_B_AR
 
       // 状态 0-3显示新增审批流 4-5显示作废审批流
       if (_data.status === '4' || _data.status === '5') {
