@@ -663,7 +663,7 @@ const DICT_M_ENTERPRISE_TYPE_FIVE = '5'
 
 const DICT_B_PROJECT = 'b_project'
 
-/** 项目类型 0全托 1代采 2代销 */
+/** 项目类型 0采购、销售 1采购业务 2销售业务 */
 const DICT_B_PROJECT_TYPE = 'b_project_type'
 const DICT_B_PROJECT_TYPE_ZERO = '0'
 const DICT_B_PROJECT_TYPE_ONE = '1'
@@ -1724,7 +1724,7 @@ export default {
   DICT_BPM_INSTANCE_PROCESS_BTN_CANCEL,
   DICT_BPM_INSTANCE_PROCESS_BTN_COMMENT,
 
-  /** 项目类型 0全托 1代采 2代销 */
+  /** 项目类型 0采购、销售 1采购业务 2销售业务 */
   DICT_B_PROJECT_TYPE,
   DICT_B_PROJECT_TYPE_ZERO,
   DICT_B_PROJECT_TYPE_ONE,

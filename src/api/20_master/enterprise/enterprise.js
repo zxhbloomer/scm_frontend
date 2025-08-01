@@ -270,3 +270,27 @@ export function getSystemEnterpriseCustomerListApi (query) {
     data: query
   })
 }
+
+/**
+ * 查询逻辑：根据查询条件，获取企业列表（交易对手、供应商、主体企业）
+ * getSystemEnterpriseSupplierListApi
+ */
+export function getSystemEnterpriseSupplierListApi (query) {
+  return request({
+    url: '/api/v1/enterprise/se/supplier/pagelist',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 查询逻辑：根据查询条件，获取企业列表（系统企业、买方、经销商）
+ * getCounterpartyCustomerListApi
+ */
+export function getCounterpartyCustomerListApi (query) {
+  return request({
+    url: '/api/v1/enterprise/cp/customer/pagelist',
+    method: 'post',
+    data: query
+  })
+}

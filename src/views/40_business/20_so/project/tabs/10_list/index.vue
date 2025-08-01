@@ -791,8 +791,8 @@ br {
 <script>
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
-import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
-import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
+import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/supplier/index.vue'
+import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/customer/index.vue'
 
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import { exportApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi } from '@/api/40_business/project/project'
@@ -805,12 +805,12 @@ import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission' // 权限判断指令
-import cancelConfirmDialog from '@/views/40_business/10_po/project/dialog/cancel/index.vue'
+import cancelConfirmDialog from '@/views/40_business/20_so/project/dialog/cancel/index.vue'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 import { mapState } from 'vuex'
 import { EventBus } from '@/common/eventbus/eventbus'
-import print_template from '@/views/40_business/10_po/project/tabs/60_print/index.vue'
-import pushDialog from '@/views/40_business/10_po/project/dialog/push/next/index.vue'
+import print_template from '@/views/40_business/20_so/project/tabs/60_print/index.vue'
+import pushDialog from '@/views/40_business/20_so/project/dialog/push/next/index.vue'
 
 export default {
   components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog },

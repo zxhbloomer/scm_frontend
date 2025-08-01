@@ -27,14 +27,6 @@
         >
           下推采购合同
         </el-button>
-        <el-button
-          type="primary"
-          class="button-btn"
-          :disabled="!isSalesType"
-          @click="handlePushSalesContract"
-        >
-          下推销售合同
-        </el-button>
       </div>    </el-dialog>
 
     <!-- 采购合同下推弹窗 -->
@@ -150,7 +142,8 @@ export default {
     // 判断是否为采购业务类型
     isPurchaseType () {
       if (this.data && this.data.type_name) {
-        return this.data.type_name === '采购业务'
+        // 支持"采购业务"和"采购、销售"两种类型
+        return this.data.type_name === '采购业务' || this.data.type_name === '采购、销售'
       }
       return false
     },
@@ -193,11 +186,6 @@ export default {
     // 采购合同弹窗取消
     handlePoContractCancel () {
       this.poContractDialogVisible = false
-    },
-    // 下推销售合同
-    handlePushSalesContract () {
-      alert('下推销售合同')
-      this.$emit('closeMeOk')
     }
   }
 }

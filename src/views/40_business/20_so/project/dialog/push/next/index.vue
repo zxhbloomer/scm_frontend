@@ -22,14 +22,6 @@
         <el-button
           type="primary"
           class="button-btn"
-          :disabled="!isPurchaseType"
-          @click="handlePushPurchaseContract"
-        >
-          下推采购合同
-        </el-button>
-        <el-button
-          type="primary"
-          class="button-btn"
           :disabled="!isSalesType"
           @click="handlePushSalesContract"
         >
@@ -37,13 +29,13 @@
         </el-button>
       </div>    </el-dialog>
 
-    <!-- 采购合同下推弹窗 -->
-    <po-contract-push-new
-      :visible="poContractDialogVisible"
-      :title="'项目管理-下推采购合同'"
+    <!-- 销售合同下推弹窗 -->
+    <so-contract-push-new
+      :visible="soContractDialogVisible"
+      :title="'项目管理-下推销售合同'"
       :data="data"
-      @closeMeOk="handlePoContractOk"
-      @closeMeCancel="handlePoContractCancel"
+      @closeMeOk="handleSoContractOk"
+      @closeMeCancel="handleSoContractCancel"
     />
   </div>
 </template>
@@ -82,11 +74,11 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import PoContractPushNew from '@/views/40_business/10_po/pocontract/dialog/push/new/index.vue'
+import SoContractPushNew from '@/views/40_business/20_so/socontract/dialog/push/new/index.vue'
 
 export default {
   components: {
-    PoContractPushNew
+    SoContractPushNew
   },
   directives: { elDragDialog },
   mixins: [],
@@ -142,8 +134,8 @@ export default {
         rules: {
         }
       },
-      // 采购合同弹窗可见性
-      poContractDialogVisible: false
+      // 销售合同弹窗可见性
+      soContractDialogVisible: false
     }
   },
   computed: {
@@ -160,7 +152,8 @@ export default {
     // 判断是否为销售业务类型
     isSalesType () {
       if (this.data && this.data.type_name) {
-        return this.data.type_name === '销售业务'
+        // 支持"销售业务"和"采购、销售"两种类型
+        return this.data.type_name === '销售业务' || this.data.type_name === '采购、销售'
       }
       return false
     }
@@ -193,24 +186,19 @@ export default {
     }, handleClose () {
       this.$emit('closeMeCancel')
     },
-    // 下推采购合同
-    handlePushPurchaseContract () {
-      // 显示采购合同弹窗
-      this.poContractDialogVisible = true
-    },
-    // 采购合同弹窗确认
-    handlePoContractOk () {
-      this.poContractDialogVisible = false
-      this.$emit('closeMeOk')
-    },
-    // 采购合同弹窗取消
-    handlePoContractCancel () {
-      this.poContractDialogVisible = false
-    },
     // 下推销售合同
     handlePushSalesContract () {
-      alert('下推销售合同')
+      // 显示销售合同弹窗
+      this.soContractDialogVisible = true
+    },
+    // 销售合同弹窗确认
+    handleSoContractOk () {
+      this.soContractDialogVisible = false
       this.$emit('closeMeOk')
+    },
+    // 销售合同弹窗取消
+    handleSoContractCancel () {
+      this.soContractDialogVisible = false
     }
   }
 }

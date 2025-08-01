@@ -479,7 +479,7 @@ export default {
       }
       console.log(
         '符合分支条件,继续执行递归,获取符合条件下节点下的子节点!' +
-          JSON.stringify(r)
+        JSON.stringify(r)
       )
       r
         ? this.getProcess(r, processData)
@@ -656,9 +656,9 @@ export default {
 }
 
 .el-timeline-item
-  .el-timeline-item__content
-  .process-node-render
-  > div:last-child {
+.el-timeline-item__content
+.process-node-render
+> div:last-child {
   right: 0;
   top: -10px;
 }

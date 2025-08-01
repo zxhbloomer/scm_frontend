@@ -30,6 +30,7 @@
             v-model="dataJson.searchForm.type_ids"
             :para="CONSTANTS.DICT_M_ENTERPRISE_TYPE"
             init-placeholder="企业类型"
+            disabled
           />
         </el-form-item>
         <el-form-item label="">
@@ -264,7 +265,7 @@
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
 import {
-  getListApi, deleteApi, exportApi, exportAllApi, importApi, getDetailApi
+  getSystemEnterpriseSupplierListApi, deleteApi, exportApi, exportAllApi, importApi
 } from '@/api/20_master/enterprise/enterprise.js'
 import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
@@ -324,7 +325,8 @@ export default {
           schedule_code: '',
           // settlement_status: null,
           waybill_contract_no: null,
-          status: null
+          status: '2',
+          type_ids: ['2']
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -395,7 +397,6 @@ export default {
   created () {
     // 描绘完成
     this.init()
-
   },
   mounted () {
     this.dataJson.searchForm.status = '2'
@@ -489,8 +490,7 @@ export default {
       }
       // 查询逻辑
       this.settings.loading = true
-
-      getListApi(this.dataJson.searchForm).then(response => {
+      getSystemEnterpriseSupplierListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.listData = response.data.records
         this.dataJson.paging = response.data
         this.dataJson.paging.records = {}
@@ -501,7 +501,7 @@ export default {
     refreshList () {
       // 查询逻辑
       this.settings.loading = true
-      getListApi(this.dataJson.searchForm).then(response => {
+      getSystemEnterpriseSupplierListApi(this.dataJson.searchForm).then(response => {
         // 增加对象属性，columnTypeShowIcon，columnNameShowIcon
         this.dataJson.listData = response.data
       }).finally(() => {

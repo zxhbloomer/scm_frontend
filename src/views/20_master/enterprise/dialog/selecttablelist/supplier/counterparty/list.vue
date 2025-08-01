@@ -274,7 +274,6 @@ import deepCopy from 'deep-copy'
 import permission from '@/directive/permission' // 权限判断指令
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_dict from '@/common/constants/constants_dict'
-import { EventBus } from '@/common/eventbus/eventbus'
 import { isEmpty } from '@/components/30_table/ExTable/util'
 import { MessageBox } from 'element-ui'
 import mixin from './mixin'
@@ -399,44 +398,6 @@ export default {
     // 描绘完成
     this.init()
 
-    // 新增提交数据时监听
-    EventBus.$on(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK', _data)
-      // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-      // 设置到table中绑定的json数据源
-      console.log('新增数据：', _data)
-      this.dataJson.listData.unshift(_data)
-    })
-    // 更新提交数据时监听
-    EventBus.$on(this.EMITS.EMIT_MST_ENTERPRISE_UPDATE_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_ENTERPRISE_UPDATE_OK', _data)
-      // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-      // 设置到table中绑定的json数据源
-      console.log('更新数据：', _data)
-      // 设置到table中绑定的json数据源
-      this.dataJson.listData.splice(this.dataJson.rowIndex, 1, _data)
-      this.$nextTick(() => {
-        this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
-      })
-    })
-    // 提交审批流时监听
-    EventBus.$on(this.EMITS.EMIT_MST_ENTERPRISE_BPM_OK, _data => {
-      console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_ENTERPRISE_BPM_OK', _data)
-      this.settings.loading = true
-      // 查询选中行数据，并更新到选中行的数据
-      getDetailApi({ id: this.dataJson.currentJson.id }).then(response => {
-        // EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-        // 设置到table中绑定的json数据源
-        console.log('更新数据：', response.data)
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, response.data)
-        this.$nextTick(() => {
-          this.$refs.multipleTable.setCurrentRow(this.dataJson.listData[this.dataJson.rowIndex])
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    })
   },
   mounted () {
     this.dataJson.searchForm.status = '2'
@@ -446,10 +407,6 @@ export default {
     this.$nextTick(() => {
       this.$refs.multipleTable.doLayout()
     })
-  },
-  beforeDestroy () {
-    EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_NEW_OK)
-    EventBus.$off(this.EMITS.EMIT_MST_ENTERPRISE_BPM_OK)
   },
   methods: {
     getTemplate () {
