@@ -592,50 +592,6 @@ export default {
           // 已退款总金额
           refunded_amount_total: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          // id
-          id: null,
-          /** * 付款单编号*/
-          code: null,
-          /** * 应付账款id*/
-          ap_id: null,
-          /** * 应付账款code*/
-          ap_code: null,
-          /** * 状态*/
-          status: null,
-          /** * type*/
-          type: null,
-          /** * 采购订单编号*/
-          po_order_code: null,
-          /** * 采购合同编号*/
-          po_contract_code: null,
-          /** * 供应商企业编号*/
-          supplier_enterprise_code: null,
-          /** * 供应商企业版本号*/
-          supplier_enterprise_version: null,
-          /** * 供应商企业名称*/
-          supplier_enterprise_name: null,
-          /** * 主体企业买家企业编号*/
-          buyer_enterprise_code: null,
-          /** * 主体企业买家企业版本号*/
-          buyer_enterprise_version: null,
-          /** * 主体企业买家企业名称*/
-          buyer_enterprise_name: null,
-          /** * 付款日期*/
-          pay_date: null,
-          /** * 付款单总金额*/
-          pay_amount: null,
-          /** * 付款方式：1-银行转账*/
-          payment_method: null,
-          /** * 备注*/
-          remark: null,
-          /** * 凭证附件备注*/
-          payment_voucher_remark: null,
-          /** * 下推附件*/
-          push_file: null,
-          push_files: null
-        },
         // 单条数据 json
         tempJson: {},
         searchForm: {
@@ -714,10 +670,6 @@ export default {
 
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnPoOrderDisabledStatus = this.$options.data.call(this).settings.btnPoOrderDisabledStatus
@@ -728,7 +680,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 

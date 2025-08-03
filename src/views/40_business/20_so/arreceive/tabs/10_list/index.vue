@@ -601,10 +601,6 @@ export default {
           sum_receivable_amount_total: 0
         },
         customerComboList: [],
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -745,7 +741,7 @@ export default {
       // 初始化查询
       this.getDataList()
       // 数据初始化
-      this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化tabs缓存
       if (this.dataJson.allTabStatusCache.length === 0) {
         this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]

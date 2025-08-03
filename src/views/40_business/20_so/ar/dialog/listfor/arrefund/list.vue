@@ -679,9 +679,6 @@ export default {
         },
         customerComboList: [],
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -829,7 +826,7 @@ export default {
       // 初始化查询
       this.getDataList()
       // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
     },
     // 处理传入的data参数
     handleInitData () {

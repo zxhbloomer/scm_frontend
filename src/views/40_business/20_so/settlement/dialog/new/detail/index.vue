@@ -219,7 +219,6 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import deepCopy from 'deep-copy'
 import constants_para from '@/common/constants/constants_para'
 import numeric from '@/components/40_input/numeric/index.vue'
 
@@ -313,8 +312,7 @@ export default {
           settled_qty: null, // 实结算数量
           settled_price: null, // 实结算单价
           settled_amount: null // 实结算金额
-        },
-        tempJsonOriginal: {}
+        }
       }
     }
   },
@@ -363,7 +361,6 @@ export default {
      * 初始化数据
      */
     initDataJson () {
-      this.dataJson.tempJsonOriginal = deepCopy(this.dataJson.tempJson)
       if (this.data) {
         // 设置传入的数据 - 合同订单信息
         this.dataJson.tempJson.so_contract_code = this.data.so_contract_code || ''

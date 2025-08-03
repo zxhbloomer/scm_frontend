@@ -606,24 +606,6 @@ export default {
       dataJson: {
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          type: '',
-          type_name: '',
-          owner_id: null,
-          owner_name: '',
-          owner_code: '',
-          plan_time: null,
-          over_delivery_rate: null,
-          remark: '',
-          plan_total: 0,
-          so_order_id: null,
-          so_order_code: '',
-          so_contract_code: '',
-          project_code: '',
-          doc_att_files: []
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -714,7 +696,7 @@ export default {
     },
     // 重置
     initData () {
-      this.dataJson.tempJson = this.$options.data.call(this).dataJson.tempJsonOriginal
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []
     },
@@ -1042,7 +1024,7 @@ export default {
       }
     },
     resetDataJson () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []
       this.dataJson.doc_att_files = []

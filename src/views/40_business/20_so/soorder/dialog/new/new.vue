@@ -539,12 +539,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          customer_name: '',
-          seller_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -603,7 +597,7 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化watch
       this.setWatch()
       this.settings.loading = false

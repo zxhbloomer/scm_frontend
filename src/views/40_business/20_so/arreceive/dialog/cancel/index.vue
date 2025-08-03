@@ -216,12 +216,6 @@ export default {
         cancel_file: [],
         cancel_files: [],
 
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: '',
-          cancel_files: []
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -258,7 +252,7 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化watch
       this.settings.loading = false
     },

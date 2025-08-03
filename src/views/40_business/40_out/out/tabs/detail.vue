@@ -479,12 +479,6 @@ export default {
         // 出库明细
         out_photos: [],
         out_photo_file: [],
-        tempJsonOriginal: {
-          unit_id: '',
-          plan_code: '',
-          outbound_time: '',
-          actual_count: ''
-        },
         // 单条数据 json
         tempJson: { unit: '吨', plan_code: '' },
         inputSettings: {
@@ -605,12 +599,6 @@ export default {
       }
 
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(
-        this
-      ).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
@@ -798,7 +786,6 @@ export default {
       this.settings.loading = true
       getPlanDetailApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.idx = this.data.idx
         this.getUnitConvertComboData()
       }).finally(() => {

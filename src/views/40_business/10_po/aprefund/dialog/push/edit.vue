@@ -417,53 +417,6 @@ export default {
         bankTypeListDate: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          buyer_enterprise_code: null,
-          buyer_enterprise_name: null,
-          po_code: null,
-          po_contract_code: null,
-          po_order_code: null,
-          project_code: null,
-          supplier_enterprise_code: null,
-          supplier_enterprise_name: null,
-          // 新增字段
-          po_contract_id: null,
-          po_order_id: null,
-          type_name: null,
-          purchaser_name: null,
-          purchaser_id: null,
-          supplier_name: null,
-          supplier_id: null,
-          goods_name_concact: null,
-          advance_paid_total: null,
-          advance_cancelpay_total: null,
-          advance_refund_amount_total: null,
-          order_amount: 0,
-          // 银行账户信息
-          name: null,
-          bank_name: null,
-          account_number: null,
-          bank_type_name: null,
-          refund_amount: null,
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: constants_dict.DICT_B_AP_TYPE_TWO,
-          detailListData: [],
-          // 申请付款总金额
-          payable_amount: null,
-          // 未付款总金额
-          not_pay_amount: null,
-          // 已付款总金额
-          paid_amount: null,
-          // 付款中金额
-          paying_amount: null,
-          // 付款信息付款总额
-          detail_payable_amount: null
-        },
         // 单条数据 json
         tempJson: {
           bankListData: [],
@@ -545,10 +498,6 @@ export default {
 
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnPoOrderDisabledStatus = this.$options.data.call(this).settings.btnPoOrderDisabledStatus
@@ -557,8 +506,7 @@ export default {
     // 新增时的初始化
     initInsertModel () {
       // 数据初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
     },
     // 取消按钮
     handleCancel () {

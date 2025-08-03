@@ -163,7 +163,6 @@ import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/20_so/arrefundreceive/arrefundreceive'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
@@ -194,10 +193,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -221,12 +216,6 @@ export default {
         cancel_file: [],
         cancel_files: [],
 
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: '',
-          cancel_files: []
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -251,34 +240,26 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        this.settings.btnDisabledStatus.disabledInsert = false
+        this.settings.btnDisabledStatus.disabledUpdate = false
+      },
+      deep: true
+    }
+  },
   created () {
     this.init()
   },
   mounted () {
     // 描绘完成
   },
-  destroyed () {
-    this.unWatch()
-  },
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      // 初始化watch
-      this.setWatch()
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
 
     // 取消按钮

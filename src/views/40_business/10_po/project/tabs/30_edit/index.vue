@@ -595,18 +595,6 @@ export default {
         searchForm: {
           reset: null
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: null,
-          type: '',
-          name: '',
-          value: '',
-          goods_name: null,
-          sku_id: null,
-          contract_no: null,
-          financier_name: '-',
-          detailListData: []
-        },
         // 单条数据 json
         tempJson: {
           id: null,
@@ -882,7 +870,6 @@ export default {
       this.settings.loading = true
       getApi({ id: this.data.id }).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.idx = this.data.idx
 
         // 初始化附件数据

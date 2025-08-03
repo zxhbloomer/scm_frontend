@@ -1121,10 +1121,6 @@ export default {
           actual_weight: 0,
           sync_error_count: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -1335,8 +1331,6 @@ export default {
       }
       // 初始化查询
       this.getDataList()
-      // 数据初始化
-      this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
       // 获取模板文件
       this.getImportTemplate()
     },

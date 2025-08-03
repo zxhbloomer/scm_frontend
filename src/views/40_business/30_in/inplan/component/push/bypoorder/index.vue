@@ -473,11 +473,6 @@ export default {
         }
       },
       dataJson: {
-        tempJsonOriginal: {
-          detailListData: [],
-          type: constants_dict.DICT_B_IN_PLAN_TYPE_CG, // 采购入库
-          doc_att_files: []
-        },
         tempJson: {
           detailListData: [],
           code: '',

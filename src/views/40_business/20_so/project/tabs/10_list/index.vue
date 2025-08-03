@@ -879,14 +879,6 @@ export default {
           sync_error_count: 0,
           amount_sum: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          config_key: '',
-          value: '',
-          descr: ''
-        },
 
         // 单条数据 json
         currentJson: null,
@@ -1161,7 +1153,7 @@ export default {
       // 初始化查询
       this.getDataList()
       // 数据初始化
-      this.dataJson.tempJson = deepCopy({}, this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
     },
     // 初始化按钮状态
     initButtonStatus () {

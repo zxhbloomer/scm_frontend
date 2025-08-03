@@ -578,7 +578,6 @@ export default {
           four_file: [],
           detailListData: [] // 入库单明细数据
         },
-        tempJsonOriginal: {},
         inputSettings: {
           maxLength: {
             remark: 200
@@ -712,7 +711,6 @@ export default {
         console.log('获取入库单数据:', response.data)
 
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.idx = this.data.idx
 
         // 初始化附件数据

@@ -527,42 +527,6 @@ export default {
         bankTypeListDate: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          po_order_code: null,
-          po_contract_code: null,
-          project_code: null,
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          buyer_enterprise_name: '',
-          buyer_enterprise_code: '',
-          supplier_enterprise_name: '',
-          supplier_enterprise_code: '',
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: '2', // 预付款
-          detailListData: [],
-          // 申请付款总金额
-          payable_amount: null,
-          // 未付款总金额
-          unpay_amount: null,
-          // 已付款总金额
-          paid_amount: null,
-          // 付款中金额
-          paying_amount: null,
-          // 付款信息付款总额
-          detail_payable_amount: null,
-          // 付款附件材料
-          payment_doc_att_files: [],
-          remark: ''
-        },
         // 单条数据 json
         tempJson: {
           bankListData: [],
@@ -654,7 +618,7 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化业务类型
       this.initTypeList()
       // 初始化款项类型

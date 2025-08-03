@@ -163,7 +163,6 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/40_out/out/out'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -218,12 +217,6 @@ export default {
         cancel_file: [],
         cancel_files: [],
 
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          cancel_reason: '',
-          cancel_files: []
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -275,7 +268,7 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.settings.loading = false
     },
 

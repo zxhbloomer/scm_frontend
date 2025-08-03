@@ -540,6 +540,7 @@ import deepCopy from 'deep-copy'
 import { insertApi, validateApi } from '@/api/40_business/socontract/socontract'
 import SupplierDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/40_business/socontract/tabs/dialog/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -649,14 +650,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          type: '',
-          supplier_name: '',
-          purchaser_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -753,12 +746,6 @@ export default {
       this.setWatch()
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(
-        this
-      ).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnShowStatus = this.$options.data.call(
@@ -774,8 +761,7 @@ export default {
     // 新增时的初始化
     initInsertModel () {
       // 数据初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
       // 设置按钮
       this.settings.btnShowStatus.showInsert = true

@@ -94,7 +94,6 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import pushAdvanceDialog from '@/views/40_business/10_po/ap/dialog/push/new/advance_pay/index.vue'
 import pushAdvanceRefundDialog from '@/views/40_business/10_po/aprefund/dialog/push/index.vue'
-import deepCopy from 'deep-copy'
 
 export default {
   components: { pushAdvanceDialog, pushAdvanceRefundDialog },
@@ -131,11 +130,6 @@ export default {
 
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: ''
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -220,14 +214,8 @@ export default {
       this.initButtonDisabledStatus()
 
       // 数据初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
 
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏

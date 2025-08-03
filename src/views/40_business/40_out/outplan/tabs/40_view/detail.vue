@@ -351,40 +351,6 @@ export default {
         rules: {}
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          code: '',
-          type: '',
-          type_name: '',
-          owner_id: null,
-          owner_name: '',
-          owner_code: '',
-          plan_time: null,
-          over_delivery_rate: null,
-          remark: '',
-          plan_total: 0,
-          so_order_id: null,
-          so_order_code: '',
-          so_contract_code: '',
-          project_code: '',
-          status: '',
-          status_name: '',
-          consignor_name: '',
-          next_approve_name: '',
-          c_name: '',
-          c_time: '',
-          u_name: '',
-          u_time: '',
-          bpm_instance_code: '',
-          bpm_process_name: '',
-          dbversion: null,
-          cancel_reason: '',
-          cancel_name: '',
-          cancel_time: '',
-          cancel_doc_att_files: [],
-          doc_att_files: []
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -463,7 +429,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

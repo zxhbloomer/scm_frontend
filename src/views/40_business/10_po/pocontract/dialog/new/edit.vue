@@ -634,18 +634,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          type: '',
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []

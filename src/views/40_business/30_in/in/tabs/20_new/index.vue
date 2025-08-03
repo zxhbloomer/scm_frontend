@@ -641,46 +641,6 @@ export default {
             tax_amount: null
           }
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          code: '',
-          type: '',
-          type_name: '',
-          owner_id: null,
-          owner_name: '',
-          owner_code: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          order_id: null,
-          order_code: '',
-          contract_code: '',
-          sku_id: null,
-          sku_code: '',
-          goods_name: '',
-          sku_name: '',
-          warehouse_id: null,
-          warehouse_code: '',
-          warehouse_name: '',
-          location_id: null,
-          location_code: '',
-          location_name: '',
-          bin_id: null,
-          bin_code: '',
-          bin_name: '',
-          warehouse_location_bin_display: '',
-          wlb_data: null,
-          original_qty: null,
-          qty: null,
-          price: null,
-          amount: null,
-          inbound_time: null,
-          remark: '',
-          one_file: [],
-          two_file: [],
-          three_file: [],
-          four_file: []
-        },
         // 单条数据 json
         tempJson: {
           code: '',
@@ -823,7 +783,7 @@ export default {
       // 获取组件的初始数据状态
       const initialData = this.$options.data.call(this)
       // 重置tempJson
-      this.dataJson.tempJson = deepCopy(initialData.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(initialData.dataJson.tempJson)
       // 重置合同订单数据
       this.dataJson.contractOrderData = deepCopy(initialData.dataJson.contractOrderData)
       // 重置文件相关数组
@@ -843,7 +803,7 @@ export default {
       // 获取组件的初始数据状态
       const initialData = this.$options.data.call(this)
       // 重置tempJson
-      this.dataJson.tempJson = this.$options.data.call(this).dataJson.tempJsonOriginal
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 重置合同订单数据
       this.dataJson.contractOrderData = deepCopy(initialData.dataJson.contractOrderData)
       // 重置文件相关数组

@@ -647,14 +647,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          type: '',
-          supplier_name: '',
-          purchaser_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -755,10 +747,6 @@ export default {
       this.setWatch()
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnShowStatus = this.$options.data.call(this).settings.btnShowStatus
@@ -771,7 +759,6 @@ export default {
     initUpdateModel () {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
 
       // 设置按钮
@@ -855,7 +842,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

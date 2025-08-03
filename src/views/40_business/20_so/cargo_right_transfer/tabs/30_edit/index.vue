@@ -568,26 +568,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          so_order_id: null,
-          so_order_code: '',
-          so_contract_id: null,
-          so_contract_code: '',
-          customer_id: null,
-          customer_name: '',
-          customer_code: '',
-          seller_id: null,
-          seller_name: '',
-          seller_code: '',
-          transfer_date: '',
-          transfer_location: '',
-          project_code: '',
-          remark: '',
-          total_amount: 0,
-          total_qty: 0
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -684,7 +664,6 @@ export default {
     init () {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getDataInit()
       // 初始化watch
       this.setWatch()
@@ -705,7 +684,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

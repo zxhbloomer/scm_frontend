@@ -622,7 +622,7 @@ export default {
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
+        tempJson: {
           customer_id: null,
           customer_name: '',
           customer_code: '',
@@ -649,13 +649,6 @@ export default {
           receiving_amount: null,
           // 收款信息收款总额
           detail_receivable_amount: null,
-          // 收款附件材料
-          receive_doc_att_files: []
-        },
-        // 单条数据 json
-        tempJson: {
-          bankListData: [],
-          soOrderListData: [],
           // 收款附件材料
           receive_doc_att: [],
           receive_doc_att_file: [],
@@ -858,16 +851,11 @@ export default {
       this.initBankTypeList()
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     getData () {
       // 查询逻辑
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.soOrderListData = [...response.data.soOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 
@@ -1092,8 +1080,7 @@ export default {
     // 重置
     handleSoOrderFountRest () {
       // 数据重新初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 清空收款附件数据
       this.dataJson.receive_doc_att = []
       this.dataJson.receive_doc_att_file = []

@@ -354,8 +354,6 @@ export default {
           sum_pay_amount_total: 0,
           unpay_amount_total: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {},
         // 单条数据 json
         tempJson: {},
         searchForm: {
@@ -407,7 +405,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         // 初始化付款附件数据
         if (response.data.doc_att_files && response.data.doc_att_files.length > 0) {
           this.dataJson.tempJson.payment_doc_att_files = [...response.data.doc_att_files]

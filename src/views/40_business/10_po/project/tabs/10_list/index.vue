@@ -878,14 +878,6 @@ export default {
           sync_error_count: 0,
           amount_sum: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          config_key: '',
-          value: '',
-          descr: ''
-        },
 
         // 单条数据 json
         currentJson: null,
@@ -1153,14 +1145,10 @@ export default {
     init (parm) {
       // 初始化按钮状态 - 没有选中任何行时，所有按钮都不可用
       this.initButtonStatus()
-
       // 初始化"全部"标签页的状态缓存 - 确保为空数组（状态控件保持为空）
       this.dataJson.allTabStatusCache = []
-
       // 初始化查询
       this.getDataList()
-      // 数据初始化
-      this.dataJson.tempJson = deepCopy({}, this.dataJson.tempJsonOriginal)
     },
     // 初始化按钮状态
     initButtonStatus () {

@@ -282,8 +282,6 @@ export default {
         rules: {}
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据（查看页面简化）
-        tempJsonOriginal: {},
         // 单条数据 json
         tempJson: {
           code: '',

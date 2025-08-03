@@ -664,23 +664,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          type: '',
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          settle_type: undefined,
-          bill_type: undefined,
-          payment_type: '1', // 银行转账
-          delivery_type: undefined,
-          auto_create_order: constants_dict.DICT_B_SO_CONTRACT_AUTO_CREATE_ORDER_ONE // 默认自动生成订单
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],

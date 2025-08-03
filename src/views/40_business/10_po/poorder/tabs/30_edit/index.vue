@@ -600,12 +600,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          supplier_name: '',
-          purchaser_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -698,15 +692,8 @@ export default {
       this.dataJson.tempJson = this.data
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(
-        this
-      ).dataJson.tempJsonOriginal
     },
 
     // 取消按钮
@@ -776,7 +763,6 @@ export default {
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
         this.dataJson.pocontract = deepCopy(response.data.po_contract)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

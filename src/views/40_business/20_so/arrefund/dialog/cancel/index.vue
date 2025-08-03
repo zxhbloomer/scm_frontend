@@ -160,7 +160,6 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/20_so/arrefund/arrefund'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -196,10 +195,6 @@ export default {
         width: '10%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null
-      },
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -224,11 +219,6 @@ export default {
         cancel_files: [],
 
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: '',
-          cancel_files: []
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -265,15 +255,20 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        this.settings.btnDisabledStatus.disabledInsert = false
+        this.settings.btnDisabledStatus.disabledUpdate = false
+      },
+      deep: true
+    }
+  },
   created () {
     this.init()
   },
   mounted () {
     // 描绘完成
-  },
-  destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -283,15 +278,9 @@ export default {
 
       // 数据初始化
       this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
@@ -304,24 +293,6 @@ export default {
       this.settings.btnDisabledStatus = this.$options.data.call(
         this
       ).settings.btnDisabledStatus
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-          this.settings.btnDisabledStatus.disabledInsert = false
-          this.settings.btnDisabledStatus.disabledUpdate = false
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
 
     // 取消按钮

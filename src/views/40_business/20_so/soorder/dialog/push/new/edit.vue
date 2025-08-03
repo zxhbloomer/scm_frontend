@@ -570,13 +570,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          customer_name: '',
-          seller_name: '',
-          delivery_type: undefined
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -676,7 +669,6 @@ export default {
       this.dataJson.tempJson = this.data
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
       // 初始化watch
       this.setWatch()
@@ -750,7 +742,6 @@ export default {
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
         this.dataJson.socontract = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
         // 合同附件
         this.dataJson.contract_doc_att = this.dataJson.tempJson.doc_att_files

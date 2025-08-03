@@ -188,8 +188,8 @@
             >
               <el-date-picker
                 v-model="dataJson.tempJson.expiry_date"
-                value-format="yyyy-MM-dd HH:mm:ss"
-                type="datetime"
+                value-format="yyyy-MM-dd"
+                type="date"
                 clearable
                 :placeholder="'选择日期'"
                 style="width: 100%"
@@ -220,8 +220,8 @@
             >
               <el-date-picker
                 v-model="dataJson.tempJson.sign_date"
-                value-format="yyyy-MM-dd HH:mm:ss"
-                type="datetime"
+                value-format="yyyy-MM-dd"
+                type="date"
                 clearable
                 :placeholder="'选择日期'"
                 style="width: 100%"
@@ -526,7 +526,6 @@ import { insertApi, validateApi } from '@/api/40_business/10_po/pocontract/pocon
 import { getApi } from '@/api/40_business/project/project'
 
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
@@ -616,36 +615,6 @@ export default {
       dataJson: {
         // 当前表格中的索引，第几条
         rowIndex: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          code: '',
-          contract_code: '',
-          type: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          payment_type: '1',
-          expiry_date: null,
-          delivery_date: null,
-          sign_date: null,
-          auto_create_order: '1',
-          delivery_location: '',
-          remark: '',
-          project_id: null,
-          project_code: '',
-          detailListData: [],
-          contract_amount_sum: 0,
-          contract_total: 0,
-          tax_amount_sum: 0,
-          settle_type: undefined,
-          bill_type: undefined,
-          delivery_type: undefined,
-          project: null
-        },
         // 单条数据 json
         tempJson: {
           id: undefined,
@@ -761,7 +730,6 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
       this.getData()
       this.settings.loading = false
     },
@@ -770,7 +738,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson.project = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal.project = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         this.dataJson.tempJson.supplier_id = response.data.supplier_id

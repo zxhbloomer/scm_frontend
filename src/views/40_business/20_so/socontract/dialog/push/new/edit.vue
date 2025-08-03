@@ -188,8 +188,8 @@
             >
               <el-date-picker
                 v-model="dataJson.tempJson.expiry_date"
-                value-format="yyyy-MM-dd HH:mm:ss"
-                type="datetime"
+                value-format="yyyy-MM-dd"
+                type="date"
                 clearable
                 :placeholder="'选择日期'"
                 style="width: 100%"
@@ -220,8 +220,8 @@
             >
               <el-date-picker
                 v-model="dataJson.tempJson.sign_date"
-                value-format="yyyy-MM-dd HH:mm:ss"
-                type="datetime"
+                value-format="yyyy-MM-dd"
+                type="date"
                 clearable
                 :placeholder="'选择日期'"
                 style="width: 100%"
@@ -526,7 +526,6 @@ import { insertApi, validateApi } from '@/api/40_business/20_so/socontract/socon
 import { getApi } from '@/api/40_business/project/project'
 
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
@@ -564,10 +563,6 @@ export default {
       fileLabelStyle: {
         width: '2.3%',
         'text-align': 'right'
-      },
-      // 监听器
-      watch: {
-        unwatch_detail_qty: null
       },
       popSettingsData: {
         // 弹出的商品查询框参数设置
@@ -620,35 +615,6 @@ export default {
         // 当前表格中的索引，第几条
         rowIndex: 0,
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          code: '',
-          contract_code: '',
-          type: '',
-          customer_id: null,
-          customer_name: '',
-          customer_code: '',
-          seller_id: null,
-          seller_name: '',
-          seller_code: '',
-          payment_type: '1',
-          expiry_date: null,
-          delivery_date: null,
-          sign_date: null,
-          auto_create_order: '1',
-          delivery_location: '',
-          remark: '',
-          project_id: null,
-          project_code: '',
-          detailListData: [],
-          contract_amount_sum: 0,
-          contract_total: 0,
-          tax_amount_sum: 0,
-          settle_type: undefined,
-          bill_type: undefined,
-          delivery_type: undefined,
-          project: null
-        },
         // 单条数据 json
         tempJson: {
           id: undefined,
@@ -729,7 +695,27 @@ export default {
   computed: {
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 监听数量和单价变化，自动计算金额
+    'dataJson.tempJson.detailListData': {
+      handler (newVal, oldVal) {
+        if (newVal && newVal.length > 0) {
+          newVal.forEach((item, index) => {
+            if (item.qty && item.price) {
+              // 计算金额
+              item.amount = (parseFloat(item.qty) || 0) * (parseFloat(item.price) || 0)
+              // 计算税额
+              const taxRate = parseFloat(item.tax_rate) || 0
+              item.tax_amount = item.amount * (taxRate / 100)
+            }
+          })
+          // 重新计算总计
+          this.sumData()
+        }
+      },
+      deep: true
+    }
+  },
   created () {
   },
   mounted () {
@@ -738,50 +724,19 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      this.setWatch()
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.getData()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听数量和单价变化，自动计算金额
-      this.watch.unwatch_detail_qty = this.$watch(
-        'dataJson.tempJson.detailListData',
-        (newVal, oldVal) => {
-          if (newVal && newVal.length > 0) {
-            newVal.forEach((item, index) => {
-              if (item.qty && item.price) {
-                // 计算金额
-                item.amount = (parseFloat(item.qty) || 0) * (parseFloat(item.price) || 0)
-                // 计算税额
-                const taxRate = parseFloat(item.tax_rate) || 0
-                item.tax_amount = item.amount * (taxRate / 100)
-              }
-            })
-            // 重新计算总计
-            this.sumData()
-          }
-        },
-        { deep: true }
-      )
-    },
-    // 销毁监听器
-    unWatch () {
-      this.watch.unwatch_detail_qty = null
     },
     getData () {
       // 查询逻辑
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson.project = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal.project = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // PO到SO的数据转换：供应商 → 客户，采购方 → 销售方
@@ -789,12 +744,12 @@ export default {
         this.dataJson.tempJson.customer_id = response.data.supplier_id
         this.dataJson.tempJson.customer_name = response.data.supplier_name
         this.dataJson.tempJson.customer_code = response.data.supplier_code
-        
+
         // 项目中的采购方信息转换为SO的销售方信息
         this.dataJson.tempJson.seller_id = response.data.purchaser_id
         this.dataJson.tempJson.seller_name = response.data.purchaser_name
         this.dataJson.tempJson.seller_code = response.data.purchaser_code
-        
+
         this.dataJson.tempJson.delivery_type = response.data.delivery_type
 
         // 合同附件

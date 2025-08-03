@@ -579,12 +579,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          supplier_name: '',
-          purchaser_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -677,10 +671,6 @@ export default {
       this.setWatch()
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnShowStatus = this.$options.data.call(this).settings.btnShowStatus
@@ -692,8 +682,7 @@ export default {
     // 新增时的初始化
     initInsertModel () {
       // 数据初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
       // 设置按钮
       this.settings.btnShowStatus.showInsert = true

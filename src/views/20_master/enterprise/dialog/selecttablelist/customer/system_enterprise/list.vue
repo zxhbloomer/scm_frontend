@@ -265,7 +265,7 @@
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
 import {
-  getSystemEnterpriseCustomerListApi, deleteApi, exportApi, exportAllApi, importApi, getDetailApi
+  getSystemEnterpriseCustomerListApi, deleteApi, exportApi, exportAllApi, importApi
 } from '@/api/20_master/enterprise/enterprise.js'
 import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
@@ -397,7 +397,6 @@ export default {
   created () {
     // 描绘完成
     this.init()
-
   },
   mounted () {
     this.dataJson.searchForm.status = '2'

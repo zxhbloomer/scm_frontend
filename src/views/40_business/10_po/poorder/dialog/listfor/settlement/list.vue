@@ -929,10 +929,6 @@ export default {
           actual_weight: 0,
           sync_error_count: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -1048,7 +1044,6 @@ export default {
       this.handleInitData()
 
       // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
 
       // 最后触发查询
       this.getDataList()

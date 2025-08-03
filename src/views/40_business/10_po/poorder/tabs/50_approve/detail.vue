@@ -467,10 +467,6 @@ export default {
       dataChangeLogDialogVisible: false,
       dataChangeLogDialogData: null,
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: []
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -522,7 +518,6 @@ export default {
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
         this.dataJson.pocontract = deepCopy(response.data.po_contract)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

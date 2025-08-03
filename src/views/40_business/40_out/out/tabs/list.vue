@@ -1242,14 +1242,6 @@ export default {
           { 'status_name': '同步失败', 'sync_status': '0' }
         ],
         customerComboList: [],
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          config_key: '',
-          value: '',
-          descr: ''
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -1632,7 +1624,7 @@ export default {
     this.getDataList()
 
     // 数据初始化
-    this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
+    this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
     // 获取模板文件
     this.getTemplate()

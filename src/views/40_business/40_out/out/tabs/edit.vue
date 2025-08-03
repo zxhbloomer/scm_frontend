@@ -815,15 +815,6 @@ export default {
         // 出库明细
         out_photos: [],
         out_photo_file: [],
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          goods_name: '',
-          owner_id: null,
-          owner_name: '',
-          unitData: { content: '' },
-          qty_avaible: 0
-        },
         // 单条数据 json
         tempJson: {
           id: undefined,
@@ -1046,12 +1037,6 @@ export default {
 
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(
-        this
-      ).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnShowStatus = this.$options.data.call(
@@ -1077,8 +1062,7 @@ export default {
     // 新增时的初始化
     initInsertModel () {
       // 数据初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.dataJson.tempJson.unit = '吨'
 
       // 获取单位数据
@@ -1109,13 +1093,10 @@ export default {
     initUpdateModel () {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
       // this.dataJson.pounds = this.dataJson.tempJson.pound_files
       // this.dataJson.out_photos = this.dataJson.tempJson.out_photo_files
       // this.dataJson.tempJson = deepCopy(this.$route.params.routeParams)
-      // this.dataJson.tempJsonOriginal = deepCopy(this.$route.params.routeParams)
-      // this.dataJson.tempJson.hs_gx = this.dataJson.tempJsonOriginal.detailVo[0].hs_gx
       // 设置按钮
       this.settings.btnShowStatus.showUpdate = true
       // 控件focus
@@ -1563,7 +1544,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.unitData = this.data.unitData
         this.dataJson.tempJson.idx = this.data.idx
         this.dataJson.pounds = this.dataJson.tempJson.pound_files ? this.dataJson.tempJson.pound_files : []

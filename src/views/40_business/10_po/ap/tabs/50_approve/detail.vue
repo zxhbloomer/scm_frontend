@@ -347,7 +347,6 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import constants_dict from '@/common/constants/constants_dict'
 import { getApi } from '@/api/40_business/10_po/ap/ap'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 export default {
@@ -444,35 +443,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          po_order_code: null,
-          po_contract_code: null,
-          project_code: null,
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: constants_dict.DICT_B_AP_TYPE_TWO,
-          detailListData: [],
-          // 申请付款总金额
-          payable_amount: null,
-          // 未付款总金额
-          unpay_amount: null,
-          // 已付款总金额
-          paid_amount: null,
-          // 付款中金额
-          paying_amount: null,
-          // 付款信息付款总额
-          detail_payable_amount: null
-        },
         // 单条数据 json
         tempJson: {
         },
@@ -522,7 +492,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 

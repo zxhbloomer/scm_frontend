@@ -621,37 +621,6 @@ export default {
         bankTypeListDate: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          po_order_code: null,
-          po_contract_code: null,
-          project_code: null,
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: null,
-          detailListData: [],
-          // 申请付款总金额
-          payable_amount: null,
-          // 未付款总金额
-          unpay_amount: null,
-          // 已付款总金额
-          paid_amount: null,
-          // 付款中金额
-          paying_amount: null,
-          // 付款信息付款总额
-          detail_payable_amount: null,
-          // 付款附件材料
-          payment_doc_att_files: []
-        },
         // 单条数据 json
         tempJson: {
           bankListData: [],
@@ -888,16 +857,11 @@ export default {
       this.initBankTypeList()
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     getData () {
       // 查询逻辑
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.poOrderListData = [...response.data.poOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 
@@ -1122,8 +1086,7 @@ export default {
     // 重置
     handlePoOrderFountRest () {
       // 数据重新初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 清空付款附件数据
       this.dataJson.payment_doc_att = []
       this.dataJson.payment_doc_att_file = []

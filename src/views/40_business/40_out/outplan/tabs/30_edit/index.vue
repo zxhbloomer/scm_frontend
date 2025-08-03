@@ -642,25 +642,6 @@ export default {
       dataJson: {
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          type: '',
-          type_name: '',
-          owner_id: null,
-          owner_name: '',
-          owner_code: '',
-          plan_time: null,
-          over_delivery_rate: null,
-          remark: '',
-          modify_reason: '',
-          plan_total: 0,
-          so_order_id: null,
-          so_order_code: '',
-          so_contract_code: '',
-          project_code: '',
-          doc_att_files: []
-        },
         // 单条数据 json
         tempJson: {
           detailListData: [],
@@ -756,7 +737,6 @@ export default {
       if (this.data) {
         // 从传入的数据初始化表单
         this.dataJson.tempJson = deepCopy(this.data)
-        this.dataJson.tempJsonOriginal = deepCopy(this.data)
 
         // 初始化附件数据
         if (this.data.doc_att_files && this.data.doc_att_files.length > 0) {
@@ -778,7 +758,7 @@ export default {
         this.setFieldDisabledStatus()
       } else {
         // 如果没有传入数据，使用空数据初始化
-        this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+        this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
         this.dataJson.doc_att = []
         this.dataJson.doc_att_file = []
       }
@@ -1129,9 +1109,9 @@ export default {
     resetDataJson () {
       // 编辑页的重置：恢复到初始传入的数据状态
       if (this.data) {
-        this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+        this.dataJson.tempJson = deepCopy(this.data)
       } else {
-        this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJsonOriginal)
+        this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       }
       this.dataJson.doc_att = []
       this.dataJson.doc_att_file = []

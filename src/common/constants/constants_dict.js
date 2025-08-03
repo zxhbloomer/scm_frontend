@@ -696,7 +696,6 @@ const DICT_B_PROJECT_PAYMENT_METHOD_ZERO = '0'
 const DICT_B_PROJECT_PAYMENT_METHOD_ONE = '1'
 const DICT_B_PROJECT_PAYMENT_METHOD_TWO = '2'
 
-
 /**  采购合同审批流 */
 const DICT_B_PO_CONTRACT = 'b_po_contract'
 /**  采购合同作废审批流 */
@@ -1759,7 +1758,6 @@ export default {
 
   /**  采购合同表 */
   DICT_B_PO_CONTRACT,
-
 
   /**  采购合同审批状态  0-待审批 1-审批中 2-审批通过 3-驳回 4-作废审批中 5-已作废 6-已完成*/
   DICT_B_PO_CONTRACT_CANCEL,

@@ -660,24 +660,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
-          type: '',
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
-          settle_type: undefined,
-          bill_type: undefined,
-          payment_type: '1', // 银行转账
-          delivery_type: undefined,
-          auto_create_order: constants_dict.DICT_B_PO_CONTRACT_AUTO_CREATE_ORDER_ZERO // 默认自动生成订单
-
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -757,7 +739,6 @@ export default {
     init () {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.getData()
       this.settings.loading = false
     },
@@ -823,7 +804,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.detailListData = [...response.data.detailListData]
 
         // 其他附件

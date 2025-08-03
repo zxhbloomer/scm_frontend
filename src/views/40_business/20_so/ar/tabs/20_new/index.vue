@@ -646,7 +646,7 @@ export default {
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
+        tempJson: {
           customer_id: null,
           customer_name: '',
           customer_code: '',
@@ -675,11 +675,6 @@ export default {
           detail_receivable_amount: null,
           // 收款附件材料
           receive_doc_att_files: []
-        },
-        // 单条数据 json
-        tempJson: {
-          bankListData: [],
-          soOrderListData: []
         },
         searchForm: {
           reset: false
@@ -795,7 +790,7 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化业务类型
       this.initTypeList()
       // 初始化款项类型
@@ -1057,14 +1052,9 @@ export default {
     // 重置
     handleSoOrderFountRest () {
       // 数据重新初始化
-      this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 控制按钮
       this.initButtonShowStatus()
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     // 初始化按钮状态
     initButtonShowStatus () {

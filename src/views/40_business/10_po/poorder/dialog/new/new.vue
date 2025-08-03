@@ -536,12 +536,6 @@ export default {
         unitConvertList: [],
         // 用于监听
         actual_count: 0,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          supplier_name: '',
-          purchaser_name: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -599,7 +593,6 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
       this.settings.loading = false
     },
     // 取消按钮

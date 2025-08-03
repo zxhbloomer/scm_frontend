@@ -385,17 +385,7 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-        unwatch_tempJson: null,
-        unwatch_actual_count: null,
-        unwatch_actual_price: null,
-        'dataJson.tempJson.unit_id': {
-          handler (newVal, oldVal) {
-            console.log(newVal)
-          }
-        }
-      },
+      // 监听器配置（已移除）
       popSettingsData: {
         // 审批流程
         sponsorDialog: {
@@ -429,52 +419,6 @@ export default {
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          buyer_enterprise_code: null,
-          buyer_enterprise_name: null,
-          po_code: null,
-          po_contract_code: null,
-          po_order_code: null,
-          project_code: null,
-          supplier_enterprise_code: null,
-          supplier_enterprise_name: null,
-          // 新增字段
-          po_contract_id: null,
-          po_order_id: null,
-          type_name: null,
-          purchaser_name: null,
-          purchaser_id: null,
-          supplier_name: null,
-          supplier_id: null,
-          goods_name_concact: null,
-          advance_paid_total: null,
-          advance_cancelpay_total: null,
-          advance_refund_amount_total: null,
-          order_amount: 0,
-          // 银行账户信息
-          name: null,
-          bank_name: null,
-          account_number: null,
-          bank_type_name: null,
-          refund_amount: null,
-          // 采购订单
-          poOrderListData: [],
-          // 银行账户
-          bankListData: [],
-          // 类型
-          type: constants_dict.DICT_B_AR_TYPE_TWO,
-          detailListData: [],
-          // 申请付款总金额
-          payable_amount: null,
-          // 未付款总金额
-          not_pay_amount: null,
-          // 已付款总金额
-          paid_amount: null,
-          // 付款中金额
-          paying_amount: null,
-          // 付款信息付款总额
-          detail_payable_amount: null
-        },
         // 单条数据 json
         tempJson: {
           bankListData: [],
@@ -532,7 +476,19 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    'dataJson.tempJson': {
+      handler(newVal, oldVal) {
+        // 监听页面上面是否有修改，有修改按钮高亮
+      },
+      deep: true
+    },
+    'dataJson.tempJson.unit_id': {
+      handler(newVal, oldVal) {
+        console.log(newVal)
+      }
+    }
+  },
   created () {
     this.init()
   },
@@ -540,7 +496,7 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
+    // 组件销毁时清理资源
   },
   methods: {
     // 初始化处理
@@ -555,13 +511,8 @@ export default {
       // 初始化页面数据
       this.initData()
 
-      // 初始化watch
-      this.setWatch()
+      // 初始化完成
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
@@ -572,21 +523,7 @@ export default {
     initInsertModel () {
       // 数据初始化
       this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
     },
     // 取消按钮
     handleCancel () {

@@ -191,7 +191,6 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
-import deepCopy from 'deep-copy'
 import constants_para from '@/common/constants/constants_para'
 import { isNotEmpty } from '@/utils'
 import numeric from '@/components/40_input/numeric/index.vue'
@@ -267,8 +266,7 @@ export default {
           processed_qty: 0, // 已入库数量
           unprocessed_qty: 0, // 待入库数量
           price: null // 入库单价
-        },
-        tempJsonOriginal: {}
+        }
       }
     }
   },
@@ -292,7 +290,6 @@ export default {
   methods: {
     // 初始化数据
     initDataJson () {
-      this.dataJson.tempJsonOriginal = deepCopy(this.dataJson.tempJson)
       if (this.data) {
         // 设置传入的数据
         this.dataJson.tempJson.contract_code = this.data.contract_code || ''

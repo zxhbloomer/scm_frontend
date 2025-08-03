@@ -131,11 +131,6 @@ export default {
 
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: ''
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -221,14 +216,10 @@ export default {
 
       // 数据初始化
       this.initTempJsonOriginal()
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
       // 初始化watch
       this.settings.loading = false
-    },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏

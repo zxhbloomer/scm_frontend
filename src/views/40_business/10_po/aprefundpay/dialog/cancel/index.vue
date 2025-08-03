@@ -163,7 +163,6 @@ import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import deepCopy from 'deep-copy'
 import { cancelApi } from '@/api/40_business/10_po/aprefundpay/aprefundpay'
-import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
@@ -217,12 +216,6 @@ export default {
         cancel_file: [],
         cancel_files: [],
 
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: '',
-          cancel_files: []
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {
@@ -259,7 +252,7 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.settings.loading = false
     },
 

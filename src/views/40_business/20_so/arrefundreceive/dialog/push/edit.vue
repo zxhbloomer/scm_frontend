@@ -372,9 +372,7 @@ export default {
         width: '2.3%',
         'text-align': 'right'
       },
-      // 监听器
-      watch: {
-      },
+      // 监听器配置（已移除）
       dataJson: {
         // 折叠面板默认收缩状态
         activeNames: [],
@@ -427,7 +425,14 @@ export default {
   computed: {
   },
   // 监听器
-  watch: {},
+  watch: {
+    'dataJson.tempJson': {
+      handler(newVal, oldVal) {
+        // 监听页面上面是否有修改，有修改按钮高亮
+      },
+      deep: true
+    }
+  },
   created () {
     this.init()
   },
@@ -435,14 +440,13 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
+    // 组件销毁时清理资源
   },
   methods: {
     // 初始化处理
     async init () {
       this.getData()
-      // 初始化watch
-      this.setWatch()
+      // 初始化完成
       this.settings.loading = false
     },
     getData () {
@@ -516,23 +520,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-    },
-    // 设置监听器
-    setWatch () {
-      this.unWatch()
-      // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.tempJson',
-        (newVal, oldVal) => {
-
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
     // 格式化日期时间
     formatDateTime (dateTime) {

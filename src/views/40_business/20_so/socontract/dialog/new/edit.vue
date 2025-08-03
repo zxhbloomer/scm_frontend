@@ -544,6 +544,7 @@ import deepCopy from 'deep-copy'
 import { insertApi, validateApi } from '@/api/40_business/20_so/socontract/socontract'
 import SupplierDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
+import constants_bpm from '@/common/constants/constants_bpm'
 import GoodsDialog from '@/views/00_platform/dialog/sku/new/goodsdialog.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
@@ -584,9 +585,6 @@ export default {
       fileLabelStyle: {
         width: '2.3%',
         'text-align': 'right'
-      },
-      // 监听器
-      watch: {
       },
       popSettingsData: {
         // 弹出的商品查询框参数设置
@@ -636,18 +634,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          detailListData: [],
-          contract_code: '',
-          customer_id: null,
-          customer_name: '',
-          customer_code: '',
-          type: '',
-          seller_id: null,
-          seller_name: '',
-          seller_code: ''
-        },
         // 单条数据 json
         tempJson: {
           detailListData: []
@@ -718,29 +704,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
     init () {
       this.dataJson.tempJson = this.data
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
-    },
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
-      if (this.watch.unwatch_actual_count) {
-        this.watch.unwatch_actual_count()
-      }
-      if (this.watch.unwatch_actual_price) {
-        this.watch.unwatch_actual_price()
-      }
     },
     // 取消按钮
     handleCancel () {

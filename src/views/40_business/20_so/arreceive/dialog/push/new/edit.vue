@@ -592,50 +592,6 @@ export default {
           // 已退款总金额
           refunded_amount_total: 0
         },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          // id
-          id: null,
-          /** * 收款单编号*/
-          code: null,
-          /** * 应收账款id*/
-          ar_id: null,
-          /** * 应收账款code*/
-          ar_code: null,
-          /** * 状态*/
-          status: null,
-          /** * type*/
-          type: null,
-          /** * 销售订单编号*/
-          so_order_code: null,
-          /** * 销售合同编号*/
-          so_contract_code: null,
-          /** * 客户企业编号*/
-          customer_enterprise_code: null,
-          /** * 客户企业版本号*/
-          customer_enterprise_version: null,
-          /** * 客户企业名称*/
-          customer_enterprise_name: null,
-          /** * 主体企业销售方企业编号*/
-          seller_enterprise_code: null,
-          /** * 主体企业销售方企业版本号*/
-          seller_enterprise_version: null,
-          /** * 主体企业销售方企业名称*/
-          seller_enterprise_name: null,
-          /** * 收款日期*/
-          receive_date: null,
-          /** * 收款单总金额*/
-          receive_amount: null,
-          /** * 收款方式：1-银行转账*/
-          receive_method: null,
-          /** * 备注*/
-          remark: null,
-          /** * 凭证附件备注*/
-          receive_voucher_remark: null,
-          /** * 下推附件*/
-          push_file: null,
-          push_files: null
-        },
         // 单条数据 json
         tempJson: {},
         searchForm: {
@@ -721,10 +677,6 @@ export default {
       // 初始化watch
       this.settings.loading = false
     },
-    initTempJsonOriginal () {
-      // 单条数据 json的，初始化原始数据
-      this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
-    },
     initButtonShowStatus () {
       // 初始化按钮状态：默认都隐藏
       this.settings.btnSoOrderDisabledStatus = this.$options.data.call(this).settings.btnSoOrderDisabledStatus
@@ -735,7 +687,6 @@ export default {
       this.settings.loading = true
       getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.tempJson.soOrderListData = [...response.data.soOrderListData]
         this.dataJson.tempJson.bankListData = [...response.data.bankListData]
 

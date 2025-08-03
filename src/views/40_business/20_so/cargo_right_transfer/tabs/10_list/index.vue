@@ -869,10 +869,7 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
-        unwatch_statusList: null
-      },
+      // 监听器配置（已移除）
       // 导入窗口的状态
       popSettingsImport: {
         // 弹出窗口会否显示
@@ -912,10 +909,6 @@ export default {
           actual_count: 0,
           actual_weight: 0,
           sync_error_count: 0
-        },
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined
         },
         // 单条数据 json
         currentJson: null,
@@ -1003,6 +996,34 @@ export default {
             break
         }
       }
+    },
+    // 监听搜索表单的变化
+    'dataJson.searchForm': {
+      handler(newVal, oldVal) {
+        // 这里可以添加您需要的逻辑
+        const screenKeys = ['goods_name']
+        const { searchForm } = this.dataJson
+        const data = Object.keys(searchForm).map(item => {
+          if (screenKeys.includes(item)) {
+            if (searchForm[item] || searchForm[item] === 0) {
+              return searchForm[item]
+            }
+          }
+        })
+        const len = data.filter(x => x).length || 0
+        this.screenNum = len
+      },
+      deep: true
+    },
+    // 监听"全部"标签页中状态选择的变化，实时保存到缓存
+    'dataJson.searchForm.status_list': {
+      handler(newVal, oldVal) {
+        // 只有在"全部"标签页时才保存状态到缓存
+        if (this.dataJson.tabs.active === '0') {
+          this.dataJson.allTabStatusCache = [...newVal]
+        }
+      },
+      deep: true
     }
   },
   beforeDestroy () {
@@ -1084,12 +1105,12 @@ export default {
     this.handleUrlParams()
   },
   destroyed () {
-    this.unWatch()
+    // 组件销毁时清理资源
   },
   methods: {
     // 初始化页面
     init (parm) {
-      this.setWatch()
+      // 初始化监听器配置完成
       // 初始化"全部"标签页的状态缓存 - 默认为空数组（显示所有状态）
       if (this.dataJson.allTabStatusCache.length === 0) {
         this.dataJson.allTabStatusCache = [...this.dataJson.searchForm.status_list]
@@ -1097,48 +1118,9 @@ export default {
       // 初始化查询
       this.getDataList()
       // 数据初始化
-      this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 获取模板文件
       this.getImportTemplate()
-    },
-    setWatch () {
-      this.unWatch()
-      // 监听搜索表单的变化
-      this.watch.unwatch_tempJson = this.$watch(
-        'dataJson.searchForm',
-        (newVal, oldVal) => {
-          // 这里可以添加您需要的逻辑
-          const screenKeys = ['goods_name']
-          const { searchForm } = this.dataJson
-          const data = Object.keys(searchForm).map(item => {
-            if (screenKeys.includes(item)) {
-              if (searchForm[item] || searchForm[item] === 0) {
-                return searchForm[item]
-              }
-            }
-          })
-          const len = data.filter(x => x).length || 0
-          this.screenNum = len
-        },
-        { deep: true }
-      )
-
-      // 监听"全部"标签页中状态选择的变化，实时保存到缓存
-      this.watch.unwatch_statusList = this.$watch(
-        'dataJson.searchForm.status_list',
-        (newVal, oldVal) => {
-          // 只有在"全部"标签页时才保存状态到缓存
-          if (this.dataJson.tabs.active === '0') {
-            this.dataJson.allTabStatusCache = [...newVal]
-          }
-        },
-        { deep: true }
-      )
-    },
-    unWatch () {
-      if (this.watch.unwatch_statusList) {
-        this.watch.unwatch_statusList = null
-      }
     },
     // 获取行索引
     getRowIndex (row) {

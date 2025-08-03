@@ -116,11 +116,6 @@ export default {
 
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          remark: ''
-        },
         // 单条数据 json
         tempJson: null,
         inputSettings: {

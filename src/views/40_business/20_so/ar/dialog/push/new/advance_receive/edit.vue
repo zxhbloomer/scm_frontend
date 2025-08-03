@@ -528,7 +528,7 @@ export default {
         // 用于监听
         actual_count: 0,
         // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
+        tempJson: {
           customer_id: null,
           customer_name: '',
           customer_code: '',
@@ -562,11 +562,6 @@ export default {
           // 收款附件材料
           receive_doc_att_files: [],
           remark: ''
-        },
-        // 单条数据 json
-        tempJson: {
-          bankListData: [],
-          soOrderListData: []
         },
         currentJson: null,
         searchForm: {
@@ -654,7 +649,7 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       // 初始化业务类型
       this.initTypeList()
       // 初始化款项类型
