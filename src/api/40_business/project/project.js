@@ -228,3 +228,15 @@ export function printApi (query) {
     data: query
   })
 }
+
+/**
+ * 项目管理完成api
+ * @param {*} data
+ */
+export function completeApi (data) {
+  return request({
+    url: '/api/v1/project/complete',
+    method: 'post',
+    data
+  })
+}

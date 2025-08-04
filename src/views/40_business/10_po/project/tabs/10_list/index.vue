@@ -375,14 +375,6 @@
         label="下游客户"
       />
       <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="120"
-        prop="financier_name"
-        label="融资主体"
-      />
-      <el-table-column
         label="商品"
         align="center"
         :merge-group="true"

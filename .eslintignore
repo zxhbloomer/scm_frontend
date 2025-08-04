@@ -4,3 +4,5 @@ public
 dist
 src/components/60_bpm/**
 /node_modules/*
+tests/**
+test-results/**
