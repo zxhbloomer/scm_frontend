@@ -338,18 +338,18 @@
           style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="附件材料">
+            <el-row>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleUploadFileSuccess"
+                @upload-error="handleUploadFileError"
+              />
+            </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleUploadFileSuccess"
-                  @upload-error="handleUploadFileError"
-                />
-              </el-col>
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard

@@ -63,7 +63,7 @@
           </el-descriptions-item>
 
           <el-descriptions-item label="退款附件材料" span="3">
-            <el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <Simple-upload-mutil-file
                 :accept="'*'"
                 @upload-success="handleRefundUploadFileSuccess"

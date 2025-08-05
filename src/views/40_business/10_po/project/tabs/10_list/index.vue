@@ -797,7 +797,7 @@ import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/cou
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 
 import FloatMenu from '@/components/FloatMenu/index.vue'
-import { exportApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi } from '@/api/40_business/project/project'
+import { exportApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi, completeApi } from '@/api/40_business/project/project'
 import constants_para from '@/common/constants/constants_para'
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_type from '@/common/constants/constants_dict'
@@ -1802,6 +1802,35 @@ export default {
       this.poContractDialogVisible = false
     },
     handleFinish () {
+      // 确认对话框
+      this.$confirm('确定要完成该项目吗？完成后将无法修改。', '项目完成确认', {
+        confirmButtonText: '确定完成',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 显示加载状态
+        this.settings.loading = true
+
+        // 调用完成API
+        completeApi({
+          id: this.dataJson.currentJson.id,
+          code: this.dataJson.currentJson.code
+        }).then(response => {
+          // 成功提示
+          this.$message.success('项目完成成功')
+          // 刷新列表数据
+          this.handleSearch()
+        }).catch(error => {
+          // 错误处理 - 显示后端返回的详细错误信息
+          this.$message.error(error.message || '完成操作失败')
+        }).finally(() => {
+          // 隐藏加载状态
+          this.settings.loading = false
+        })
+      }).catch(() => {
+        // 取消操作
+        this.$message.info('已取消完成操作')
+      })
     },
     // 处理URL参数
     handleUrlParams () {

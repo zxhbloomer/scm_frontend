@@ -49,6 +49,7 @@
             <el-input
               v-model.trim="dataJson.tempJson.remark"
               clearable
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>

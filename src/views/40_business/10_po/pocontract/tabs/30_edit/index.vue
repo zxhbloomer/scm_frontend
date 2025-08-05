@@ -79,6 +79,7 @@
                 v-model.trim="dataJson.tempJson.contract_code"
                 clearable
                 placeholder="请输入"
+                show-word-limit
                 :maxlength="dataJson.inputSettings.maxLength.contract_code"
               />
             </el-form-item>
@@ -288,6 +289,7 @@
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
@@ -296,6 +298,7 @@
               v-model.trim="dataJson.tempJson.remark"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
@@ -315,18 +318,18 @@
             </span>
           </el-descriptions-item>
           <el-descriptions-item label="合同附件材料">
+            <el-row>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleOtherUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="3"
               >
                 <previewCard
@@ -672,8 +675,8 @@ export default {
         inputSettings: {
           maxLength: {
             contract_code: 20,
-            delivery_location: 100,
-            remark: 100
+            delivery_location: 200,
+            remark: 200
           }
         },
         // 其他文件附件

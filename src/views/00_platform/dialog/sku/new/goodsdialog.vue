@@ -267,7 +267,8 @@ export default {
         inputSettings: {
           maxLength: {
             name: 20,
-            code: 20
+            code: 20,
+            origin: 20
           }
         }
       },
@@ -302,6 +303,9 @@ export default {
           ],
           delivery_type: [
             { required: true, message: '请选择交货方式', trigger: 'change' }
+          ],
+          origin: [
+            { max: 20, message: '产地长度不能超过20个字符', trigger: 'blur' }
           ]
         }
       }

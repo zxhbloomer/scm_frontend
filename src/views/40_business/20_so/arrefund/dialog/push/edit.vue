@@ -478,13 +478,13 @@ export default {
   // 监听器
   watch: {
     'dataJson.tempJson': {
-      handler(newVal, oldVal) {
+      handler (newVal, oldVal) {
         // 监听页面上面是否有修改，有修改按钮高亮
       },
       deep: true
     },
     'dataJson.tempJson.unit_id': {
-      handler(newVal, oldVal) {
+      handler (newVal, oldVal) {
         console.log(newVal)
       }
     }

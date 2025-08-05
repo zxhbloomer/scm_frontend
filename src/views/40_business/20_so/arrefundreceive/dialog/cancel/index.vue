@@ -62,16 +62,13 @@
           </el-descriptions-item>
           <el-descriptions-item label="附件">
             <el-row>
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleOtherUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
             </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-
               <el-col
                 v-for="(item, i) in dataJson.cancel_data"
                 :key="i"
@@ -217,7 +214,10 @@ export default {
         cancel_files: [],
 
         // 单条数据 json
-        tempJson: null,
+        tempJson: {
+          cancel_reason: '',
+          cancel_files: []
+        },
         inputSettings: {
         }
       },

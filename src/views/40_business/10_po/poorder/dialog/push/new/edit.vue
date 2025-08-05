@@ -192,6 +192,7 @@
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
@@ -199,6 +200,7 @@
             <el-input
               v-model.trim="dataJson.tempJson.remark"
               clearable
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
@@ -221,18 +223,18 @@
             </span>
           </el-descriptions-item>
           <el-descriptions-item label="订单附件材料">
+            <el-row>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleOtherUploadFileSuccess"
+                @upload-error="handleFileError"
+              />
+            </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col :span="1">
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleOtherUploadFileSuccess"
-                  @upload-error="handleFileError"
-                />
-              </el-col>
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard
@@ -581,8 +583,8 @@ export default {
         inputSettings: {
           maxLength: {
             contract_code: 20,
-            delivery_location: 100,
-            remark: 100
+            delivery_location: 200,
+            remark: 200
           }
         },
         // 合同附件

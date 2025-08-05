@@ -101,7 +101,7 @@
           </el-descriptions-item>
           <el-descriptions-item />
           <el-descriptions-item label="附件材料">
-            <el-row style="display: flex;flex-wrap: wrap;">
+            <el-row>
               <Simple-upload-mutil-file
                 :accept="'*'"
                 @upload-success="handleOtherUploadFileSuccess"

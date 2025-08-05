@@ -999,7 +999,7 @@ export default {
     },
     // 监听搜索表单的变化
     'dataJson.searchForm': {
-      handler(newVal, oldVal) {
+      handler (newVal, oldVal) {
         // 这里可以添加您需要的逻辑
         const screenKeys = ['goods_name']
         const { searchForm } = this.dataJson
@@ -1017,7 +1017,7 @@ export default {
     },
     // 监听"全部"标签页中状态选择的变化，实时保存到缓存
     'dataJson.searchForm.status_list': {
-      handler(newVal, oldVal) {
+      handler (newVal, oldVal) {
         // 只有在"全部"标签页时才保存状态到缓存
         if (this.dataJson.tabs.active === '0') {
           this.dataJson.allTabStatusCache = [...newVal]

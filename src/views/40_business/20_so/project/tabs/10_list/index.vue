@@ -1815,7 +1815,7 @@ export default {
       }).then(() => {
         // 显示加载状态
         this.settings.loading = true
-        
+
         // 调用完成API
         completeApi({
           id: this.dataJson.currentJson.id,

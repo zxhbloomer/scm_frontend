@@ -98,6 +98,8 @@
           <el-descriptions-item label="交货地点">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
+              :maxlength="200"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
@@ -106,6 +108,8 @@
           <el-descriptions-item label="备注">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              :maxlength="500"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
@@ -314,10 +318,11 @@
           <el-descriptions-item label="项目说明">
             <el-input
               v-model.trim="dataJson.tempJson.project_remark"
+              :maxlength="500"
+              show-word-limit
               clearable
               placeholder="请输入"
               type="textarea"
-              maxlength="500"
             />
           </el-descriptions-item>
 
@@ -339,17 +344,17 @@
         >
           <el-descriptions-item label="附件材料">
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleUploadFileSuccess"
-                  @upload-error="handleUploadFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleUploadFileSuccess"
+                @upload-error="handleUploadFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard
@@ -617,8 +622,9 @@ export default {
         },
         inputSettings: {
           maxLength: {
-
-            remark: 100
+            delivery_location: 200,
+            remark: 500,
+            project_remark: 500
           }
         }
       },
@@ -645,6 +651,15 @@ export default {
           ],
           type: [
             { required: true, message: '请选择类型', trigger: 'change' }
+          ],
+          delivery_location: [
+            { max: 200, message: '交货地点长度不能超过200个字符', trigger: 'blur' }
+          ],
+          remark: [
+            { max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }
+          ],
+          project_remark: [
+            { max: 500, message: '项目说明长度不能超过500个字符', trigger: 'blur' }
           ]
         }
       }

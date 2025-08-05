@@ -158,7 +158,7 @@
           </el-descriptions-item>
 
           <el-descriptions-item label="货权转移附件材料">
-            <el-row style="display: flex;flex-wrap: wrap;">
+            <el-row>
               <Simple-upload-mutil-file
                 v-if="!(dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0')"
                 :accept="'*'"

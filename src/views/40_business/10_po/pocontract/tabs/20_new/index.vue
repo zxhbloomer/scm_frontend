@@ -45,9 +45,10 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.contract_code"
+                :maxlength="20"
+                show-word-limit
                 clearable
                 placeholder="请输入"
-                :maxlength="dataJson.inputSettings.maxLength.contract_code"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -273,17 +274,19 @@
           <el-descriptions-item label="交货地点">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
+              :maxlength="200"
+              show-word-limit
               clearable
               placeholder="请输入"
-              :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
           <el-descriptions-item label="备注">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              :maxlength="200"
+              show-word-limit
               clearable
               placeholder="请输入"
-              :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
           <el-descriptions-item label="合同总金额">
@@ -683,8 +686,8 @@ export default {
         inputSettings: {
           maxLength: {
             contract_code: 20,
-            delivery_location: 100,
-            remark: 100
+            delivery_location: 200,
+            remark: 200
           }
         },
         // 其他文件附件
@@ -714,6 +717,12 @@ export default {
           ],
           purchaser_name: [
             { required: true, message: '请选择主体企业', trigger: 'change' }
+          ],
+          delivery_location: [
+            { max: 200, message: '交货地点长度不能超过200个字符', trigger: 'blur' }
+          ],
+          remark: [
+            { max: 200, message: '备注长度不能超过200个字符', trigger: 'blur' }
           ],
           settle_type: [
             { required: true, message: '请选择结算方式', trigger: 'change' }

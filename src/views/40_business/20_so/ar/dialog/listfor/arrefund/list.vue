@@ -681,7 +681,10 @@ export default {
         // 单条数据 json的，初始化原始数据
         // 单条数据 json
         currentJson: null,
-        tempJson: null,
+        tempJson: {
+          remark: '',
+          cancel_files: []
+        },
         inputSettings: {
           maxLength: {
             name: 20,

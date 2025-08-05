@@ -217,7 +217,10 @@ export default {
         cancel_files: [],
 
         // 单条数据 json
-        tempJson: null,
+        tempJson: {
+          cancel_reason: '',
+          cancel_files: []
+        },
         inputSettings: {
         }
       },

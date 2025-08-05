@@ -204,7 +204,10 @@ export default {
         license_back: [],
 
         // 单条数据 json
-        tempJson: null,
+        tempJson: {
+          remark: '',
+          cancel_files: []
+        },
         inputSettings: {
           maxLength: {
             name: 20,

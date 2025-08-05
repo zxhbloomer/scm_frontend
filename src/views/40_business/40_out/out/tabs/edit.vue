@@ -482,18 +482,18 @@
         >
           <el-descriptions-item label="磅单文件">
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  v-show="!isViewModel"
-                  :accept="'*'"
-                  @upload-success="handlePoundUploadFileSuccess"
-                  @upload-error="handlePoundUploadFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                v-show="!isViewModel"
+                :accept="'*'"
+                @upload-success="handlePoundUploadFileSuccess"
+                @upload-error="handlePoundUploadFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <el-col
                 v-for="(item, i) in dataJson.pounds"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard
@@ -507,18 +507,18 @@
           </el-descriptions-item>
           <el-descriptions-item label="出库照片">
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  v-show="!isViewModel"
-                  :accept="'*'"
-                  @upload-success="handleOutPhotoUploadFileSuccess"
-                  @upload-error="handleOutPhotoUploadFileError"
-                />
-              </el-col>
+              <Simple-upload-mutil-file
+                v-show="!isViewModel"
+                :accept="'*'"
+                @upload-success="handleOutPhotoUploadFileSuccess"
+                @upload-error="handleOutPhotoUploadFileError"
+              />
+            </el-row>
+            <el-row style="display: flex;flex-wrap: wrap;">
               <el-col
                 v-for="(item, i) in dataJson.out_photos"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard

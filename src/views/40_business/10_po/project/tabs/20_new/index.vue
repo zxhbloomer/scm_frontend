@@ -40,6 +40,8 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.name"
+                :maxlength="50"
+                show-word-limit
                 clearable
                 placeholder="请输入"
               />
@@ -112,6 +114,8 @@
           <el-descriptions-item label="交货地点">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
+              :maxlength="200"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
@@ -120,6 +124,8 @@
           <el-descriptions-item label="备注">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              :maxlength="500"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
@@ -327,10 +333,11 @@
           <el-descriptions-item label="项目说明">
             <el-input
               v-model.trim="dataJson.tempJson.project_remark"
+              :maxlength="500"
+              show-word-limit
               clearable
               placeholder="请输入"
               type="textarea"
-              maxlength="500"
             />
           </el-descriptions-item>
 
@@ -351,18 +358,18 @@
           style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="附件材料">
+            <el-row>
+              <Simple-upload-mutil-file
+                :accept="'*'"
+                @upload-success="handleUploadFileSuccess"
+                @upload-error="handleUploadFileError"
+              />
+            </el-row>
             <el-row style="display: flex;flex-wrap: wrap;">
-              <el-col>
-                <Simple-upload-mutil-file
-                  :accept="'*'"
-                  @upload-success="handleUploadFileSuccess"
-                  @upload-error="handleUploadFileError"
-                />
-              </el-col>
               <el-col
                 v-for="(item, i) in dataJson.doc_att"
                 :key="i"
-                :offset="1"
+                :offset="0"
                 :span="4"
               >
                 <previewCard
@@ -642,13 +649,23 @@ export default {
         // pop的check内容
         rules: {
           name: [
-            { required: true, message: '请输入项目名称', trigger: 'change' }
+            { required: true, message: '请输入项目名称', trigger: 'change' },
+            { max: 50, message: '项目名称长度不能超过50个字符', trigger: 'blur' }
           ],
           supplier_name: [
             { required: true, message: '请选择上游供应商', trigger: 'change' }
           ],
           purchaser_name: [
             { required: true, message: '请选择下游客户', trigger: 'change' }
+          ],
+          delivery_location: [
+            { max: 200, message: '交货地点长度不能超过200个字符', trigger: 'blur' }
+          ],
+          remark: [
+            { max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }
+          ],
+          project_remark: [
+            { max: 500, message: '项目说明长度不能超过500个字符', trigger: 'blur' }
           ]
         }
       }

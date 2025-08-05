@@ -98,6 +98,7 @@
             <el-input
               v-model.trim="dataJson.tempJson.remark"
               clearable
+              show-word-limit
               placeholder="请输入"
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />

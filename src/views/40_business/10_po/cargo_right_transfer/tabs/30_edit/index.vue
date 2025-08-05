@@ -139,6 +139,7 @@
             <el-input
               v-model.trim="dataJson.tempJson.remark"
               clearable
+              show-word-limit
               placeholder="请输入"
               :disabled="dataJson.tempJson.bpm_status && dataJson.tempJson.bpm_status !== '0'"
               :maxlength="dataJson.inputSettings.maxLength.remark"
