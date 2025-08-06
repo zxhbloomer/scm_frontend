@@ -238,9 +238,9 @@ import { getQuickOperationApi, saveQuickApi } from '@/api/01_dashboard'
 import sysIconDialog from '@/views/10_system/icons/dialog/dialog'
 import entperprise_new_template from '@/views/20_master/enterprise/dialog/new'
 import pocontract_new_template from '@/views/40_business/10_po/pocontract/dialog/new'
-import socontract_new_template from '@/views/40_business/socontract/dialog/new'
+import socontract_new_template from '@/views/40_business/20_so/socontract/dialog/new'
 import poorder_new_template from '@/views/40_business/10_po/poorder/dialog/new'
-import soorder_new_template from '@/views/40_business/soorder/dialog/new'
+import soorder_new_template from '@/views/40_business/20_so/soorder/dialog/new'
 
 export default {
   components: { sysIconDialog, entperprise_new_template, pocontract_new_template, socontract_new_template, poorder_new_template, soorder_new_template },

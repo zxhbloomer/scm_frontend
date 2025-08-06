@@ -56,6 +56,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.code"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.code"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -74,11 +76,13 @@
               <el-input
                 v-model.trim="dataJson.tempJson.name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.name"
               />
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item v-model.trim="dataJson.tempJson.currency" label="币别">RMB</el-descriptions-item>
+          <el-descriptions-item />
 
           <el-descriptions-item label="银行账号">
             <el-form-item
@@ -88,6 +92,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.account_number"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.account_number"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -100,6 +106,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.holder_name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.holder_name"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -112,21 +120,13 @@
               <el-input
                 v-model.trim="dataJson.tempJson.bank_name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.bank_name"
               />
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
-            <el-form-item
-              prop="remark"
-              label-width="0"
-            >
-              <el-input
-                v-model.trim="dataJson.tempJson.remarks"
-                clearable
-              />
-            </el-form-item>
-          </el-descriptions-item>
+          <el-descriptions-item v-model.trim="dataJson.tempJson.currency" label="币别">RMB</el-descriptions-item>
 
           <el-descriptions-item label="默认账户">
             <el-form-item
@@ -154,7 +154,7 @@
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item>
+          <el-descriptions-item span="2">
             <div
               slot="label"
               class="required-mark"
@@ -172,6 +172,23 @@
                   :label="item.code"
                 >{{ item.name }}</el-checkbox-button>
               </el-checkbox-group>
+            </el-form-item>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="备注" span="2">
+            <el-form-item
+              prop="remark"
+              label-width="0"
+            >
+              <el-input
+                v-model.trim="dataJson.tempJson.remarks"
+                type="textarea"
+                :rows="3"
+                clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.remarks"
+                placeholder="请输入备注"
+              />
             </el-form-item>
           </el-descriptions-item>
 
@@ -360,7 +377,12 @@ export default {
         },
         inputSettings: {
           maxLength: {
-            remark: 100
+            code: 20,
+            name: 20,
+            account_number: 20,
+            holder_name: 20,
+            bank_name: 20,
+            remarks: 500
           }
         }
       },

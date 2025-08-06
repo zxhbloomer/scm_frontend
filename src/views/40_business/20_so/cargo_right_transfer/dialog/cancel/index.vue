@@ -57,6 +57,7 @@
                 type="textarea"
                 clearable
                 show-word-limit
+                maxlength="500"
                 :placeholder="'请输入'"
               />
             </el-form-item>

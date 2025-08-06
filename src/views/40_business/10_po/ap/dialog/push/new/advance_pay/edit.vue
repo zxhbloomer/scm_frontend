@@ -541,7 +541,7 @@ export default {
         },
         inputSettings: {
           maxLength: {
-            remark: 100
+            remark: 500
           }
         },
         // 付款附件材料

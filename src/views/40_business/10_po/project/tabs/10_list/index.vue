@@ -71,7 +71,7 @@
         <el-form-item label="">
           <select-se-customer
             v-model.trim="dataJson.searchForm.purchaser_name"
-            :placeholder="isPlaceholderShow('请选择下游客户')"
+            :placeholder="isPlaceholderShow('请选择下游客户（主体企业）')"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleCustomerReturnDataName"
@@ -372,7 +372,7 @@
         :auto-fit="true"
         min-width="160"
         prop="purchaser_name"
-        label="下游客户"
+        label="下游客户（主体企业）"
       />
       <el-table-column
         label="商品"
@@ -841,8 +841,8 @@ export default {
           consignor_id: '',
           supplier_id: '',
           supplier_name: '', // 供应商名称
-          purchaser_name: '', // 下游客户名称
-          purchaser_id: '', // 下游客户ID
+          purchaser_name: '', // 下游客户（主体企业）名称
+          purchaser_id: '', // 下游客户（主体企业）ID
           todo_status: '0',
           // 审核时间
           ed_dt: [],
@@ -1748,7 +1748,7 @@ export default {
     },
     handleCustomerReturnDataName (val) {
       if (val) {
-        // 正常选择下游客户的情况
+        // 正常选择下游客户（主体企业）的情况
         this.dataJson.searchForm.purchaser_name = val.name
         this.dataJson.searchForm.purchaser_id = val.id
       } else {

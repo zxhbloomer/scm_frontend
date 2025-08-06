@@ -102,7 +102,7 @@
               slot="label"
               class="required-mark"
             >
-              主体企业
+              采购方（主体企业）
             </div>
             <el-form-item
               prop="purchaser_name"
@@ -453,12 +453,12 @@
       @closeMeCancel="handleSupplierCloseCancel"
     />
 
-    <!--主体企业-->
+    <!--采购方（主体企业）-->
     <supplier-dialog
       v-if="popSettingsData.purchaserDialogData.visible"
       :visible="popSettingsData.purchaserDialogData.visible"
       :data="popSettingsData.purchaserDialogData.data"
-      :title="'主体企业选择'"
+      :title="'采购方（主体企业）选择'"
       @closeMeOk="handlePurchaserCloseOk"
       @closeMeCancel="handlePurchaserCloseCancel"
     />
@@ -607,7 +607,7 @@ export default {
             id: null
           }
         },
-        // 主体企业
+        // 采购方（主体企业）
         purchaserDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -684,7 +684,7 @@ export default {
             { required: true, message: '请选择供应商', trigger: 'change' }
           ],
           purchaser_name: [
-            { required: true, message: '请选择主体企业', trigger: 'change' }
+            { required: true, message: '请选择采购方（主体企业）', trigger: 'change' }
           ]
         }
       }
@@ -864,13 +864,13 @@ export default {
     handleSupplierCloseCancel () {
       this.popSettingsData.supplierDialogData.visible = false
     },
-    // 主体企业
+    // 采购方（主体企业）
     handlePurchaserDialog () {
       this.popSettingsData.purchaserDialogData.visible = true
       this.popSettingsData.purchaserDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
       // this.popSettingsData.supplierDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_TWO]
     },
-    // 主体企业：关闭对话框：确定
+    // 采购方（主体企业）：关闭对话框：确定
     handlePurchaserCloseOk (val) {
       this.popSettingsData.purchaserDialogData.selectedDataJson = val
       this.dataJson.tempJson.purchaser_id = val.id
@@ -878,7 +878,7 @@ export default {
       this.dataJson.tempJson.purchaser_name = val.name
       this.popSettingsData.purchaserDialogData.visible = false
     },
-    // 主体企业：关闭对话框：取消
+    // 采购方（主体企业）：关闭对话框：取消
     handlePurchaserCloseCancel () {
       this.popSettingsData.purchaserDialogData.visible = false
     },

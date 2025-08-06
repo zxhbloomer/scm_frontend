@@ -522,7 +522,7 @@
         <el-table-column
           :merge-cells="true"
           min-width="120"
-          label="订单量"
+          label="订单笔数"
           align="right"
         >
           <template v-slot="scope">

@@ -364,7 +364,7 @@
         :auto-fit="true"
         min-width="160"
         prop="supplier_name"
-        label="上游供应商"
+        label="上游供应商（主体企业）"
       />
       <el-table-column
         sortable="custom"

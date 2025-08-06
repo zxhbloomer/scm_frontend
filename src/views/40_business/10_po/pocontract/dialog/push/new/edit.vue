@@ -104,8 +104,8 @@
             {{ dataJson.tempJson.supplier_name }}
           </el-descriptions-item>
 
-          <!--主体企业-->
-          <el-descriptions-item label="主体企业">
+          <!--采购方（主体企业）-->
+          <el-descriptions-item label="采购方（主体企业）">
             {{ dataJson.tempJson.purchaser_name }}
           </el-descriptions-item>
 
@@ -241,7 +241,7 @@
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="2">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
@@ -251,9 +251,10 @@
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              type="textarea"
               clearable
               placeholder="请输入"
               show-word-limit
@@ -589,7 +590,7 @@ export default {
             id: null
           }
         },
-        // 主体企业
+        // 采购方（主体企业）
         purchaserDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -683,7 +684,7 @@ export default {
             { required: true, message: '请选择供应商', trigger: 'change' }
           ],
           purchaser_name: [
-            { required: true, message: '请选择主体企业', trigger: 'change' }
+            { required: true, message: '请选择采购方（主体企业）', trigger: 'change' }
           ],
           settle_type: [
             { required: true, message: '请选择结算方式', trigger: 'change' }
@@ -812,7 +813,7 @@ export default {
     handleSupplierCloseCancel () {
       this.popSettingsData.supplierDialogData.visible = false
     },
-    // 主体企业选择弹窗
+    // 采购方（主体企业）选择弹窗
     handlePurchaserDialog () {
       this.popSettingsData.purchaserDialogData.visible = true
       this.popSettingsData.purchaserDialogData.data = {}

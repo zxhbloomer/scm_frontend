@@ -73,6 +73,7 @@
                 v-model.trim="dataJson.tempJson.contract_code"
                 clearable
                 placeholder="请输入"
+                show-word-limit
                 :maxlength="dataJson.inputSettings.maxLength.contract_code"
               />
             </el-form-item>
@@ -103,8 +104,8 @@
             {{ dataJson.tempJson.customer_name }}
           </el-descriptions-item>
 
-          <!--主体企业-->
-          <el-descriptions-item label="主体企业">
+          <!--销售方（主体企业）-->
+          <el-descriptions-item label="销售方（主体企业）">
             {{ dataJson.tempJson.seller_name }}
           </el-descriptions-item>
 
@@ -240,20 +241,23 @@
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="2">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              type="textarea"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
@@ -585,7 +589,7 @@ export default {
             id: null
           }
         },
-        // 主体企业
+        // 销售方（主体企业）
         sellerDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -652,7 +656,7 @@ export default {
         project_doc_att_files: [],
         inputSettings: {
           maxLength: {
-            contract_code: 50,
+            contract_code: 20,
             delivery_location: 200,
             remark: 500
           }
@@ -680,7 +684,7 @@ export default {
             { required: true, message: '请选择客户', trigger: 'change' }
           ],
           seller_name: [
-            { required: true, message: '请选择主体企业', trigger: 'change' }
+            { required: true, message: '请选择销售方（主体企业）', trigger: 'change' }
           ],
           settle_type: [
             { required: true, message: '请选择结算方式', trigger: 'change' }
@@ -728,7 +732,6 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       this.getData()
       this.settings.loading = false
     },
@@ -753,9 +756,9 @@ export default {
         this.dataJson.tempJson.delivery_type = response.data.delivery_type
 
         // 合同附件
-        this.dataJson.project_doc_att_files = this.dataJson.tempJson.project.doc_att_files
+        this.dataJson.project_doc_att_files = this.dataJson.tempJson.project && this.dataJson.tempJson.project.doc_att_files ? this.dataJson.tempJson.project.doc_att_files : []
         if (this.dataJson.project_doc_att_files != null && this.dataJson.project_doc_att_files.length > 0) {
-          this.dataJson.tempJson.project_doc_att_files.forEach(item => {
+          this.dataJson.project_doc_att_files.forEach(item => {
             this.dataJson.project_doc_att_file.push(item.url)
           })
         } else {
@@ -817,7 +820,7 @@ export default {
     handleCustomerCloseCancel () {
       this.popSettingsData.customerDialogData.visible = false
     },
-    // 主体企业选择弹窗
+    // 销售方（主体企业）选择弹窗
     handleSellerDialog () {
       this.popSettingsData.sellerDialogData.visible = true
       this.popSettingsData.sellerDialogData.data = {}

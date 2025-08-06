@@ -595,9 +595,9 @@ export default {
         },
         inputSettings: {
           maxLength: {
-            transfer_location: 100,
+            transfer_location: 200,
             project_code: 20,
-            remark: 100
+            remark: 500
           }
         },
         // 其他文件附件

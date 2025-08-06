@@ -368,8 +368,8 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="order_volume"
-        label="订单量"
+        prop="order_count"
+        label="订单笔数"
         align="right"
       />
       <el-table-column

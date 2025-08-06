@@ -151,7 +151,21 @@ export default {
     }
   },
   // 监听器
-  watch: {},
+  watch: {
+    // 全屏loading
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        switch (newVal) {
+          case true:
+            this.showLoading('正在处理，请稍后...')
+            break
+          case false:
+            this.closeLoading()
+            break
+        }
+      }
+    }
+  },
   created () {
     this.init()
   },
@@ -163,15 +177,48 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      this.settings.loading = false
+      // 初始化时显示loading，数据加载完成后关闭
+      this.settings.loading = true
+
+      // 模拟初始化完成
+      setTimeout(() => {
+        this.settings.loading = false
+      }, 500)
     },
     handleClose () {
       this.$emit('closeMeCancel')
     },
     // 下推采购合同
-    handlePushPurchaseContract () {
-      // 显示采购合同弹窗
-      this.poContractDialogVisible = true
+    async handlePushPurchaseContract () {
+      try {
+        // 开启loading
+        this.settings.loading = true
+
+        // 验证下推条件
+        await this.validatePushConditions()
+
+        // 关闭loading，显示采购合同弹窗
+        this.settings.loading = false
+        this.poContractDialogVisible = true
+      } catch (error) {
+        this.settings.loading = false
+        this.$message.error('下推操作失败：' + error.message)
+      }
+    },
+
+    // 验证下推条件
+    async validatePushConditions () {
+      return new Promise((resolve, reject) => {
+        // 模拟验证处理时间
+        setTimeout(() => {
+          // 这里可以添加具体的验证逻辑
+          if (!this.data || !this.data.id) {
+            reject(new Error('缺少项目数据'))
+            return
+          }
+          resolve()
+        }, 800)
+      })
     },
     // 采购合同弹窗确认
     handlePoContractOk () {

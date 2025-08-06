@@ -113,7 +113,7 @@
             {{ dataJson.tempJson.customer_name }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="主体企业">
+          <el-descriptions-item label="销售方（主体企业）">
             {{ dataJson.tempJson.seller_name }}
           </el-descriptions-item>
 
@@ -147,11 +147,11 @@
           <!--          <el-descriptions-item label="审批后自动生成订单">-->
           <!--            {{ dataJson.tempJson.auto_create_name }}-->
           <!--          </el-descriptions-item>-->
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="2">
             {{ dataJson.tempJson.delivery_location }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             {{ dataJson.tempJson.remark }}
           </el-descriptions-item>
 

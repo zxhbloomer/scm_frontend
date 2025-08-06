@@ -139,15 +139,15 @@
         <el-divider />
         <el-button
           plain
-          :disabled="settings.loading"
-          @click="handleCancel()"
-        >取消</el-button>
-        <el-button
-          plain
           type="primary"
           :disabled="settings.loading "
           @click="doInsert()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
       </div>
     </el-dialog>
 

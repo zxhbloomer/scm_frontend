@@ -315,8 +315,8 @@ class ProjectListPage extends ProjectBasePage {
   // 列属性与标签映射
   getColumnLabel(columnProp) {
     const columnLabels = {
-      'supplier_name': '上游供应商',
-      'purchaser_name': '下游客户',
+      'supplier_name': '上游供应商（主体企业）',
+      'purchaser_name': '下游客户（主体企业）',
       'financier_name': '融资主体',
       'payment_method_name': '付款方式',
       'payment_days': '是否有账期/天数',
@@ -678,8 +678,8 @@ class ProjectListPage extends ProjectBasePage {
         status: cells[4] || '',             // 状态
         approvalStatus: cells[5] || '',     // 审批情况
         type: cells[6] || '',               // 类型
-        supplier: cells[7] || '',           // 上游供应商
-        customer: cells[8] || '',           // 下游客户
+        supplier: cells[7] || '',           // 上游供应商（主体企业）
+        customer: cells[8] || '',           // 下游客户（主体企业）
         financier: cells[9] || '',          // 融资主体
         paymentMethod: cells[10] || '',     // 付款方式
         amount: cells[11] || '',            // 融资额度
@@ -1275,14 +1275,14 @@ class ProjectListPage extends ProjectBasePage {
    * 测试供应商列排序
    */
   async testSupplierColumnSort() {
-    return await this.testGenericColumnSort('supplier_name', '上游供应商');
+    return await this.testGenericColumnSort('supplier_name', '上游供应商（主体企业）');
   }
 
   /**
    * 测试客户列排序
    */
   async testPurchaserColumnSort() {
-    return await this.testGenericColumnSort('purchaser_name', '下游客户');
+    return await this.testGenericColumnSort('purchaser_name', '下游客户（主体企业）');
   }
 
   /**

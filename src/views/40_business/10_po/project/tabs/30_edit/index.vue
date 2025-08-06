@@ -59,7 +59,7 @@
               slot="label"
               class="required-mark"
             >
-              下游客户
+              下游客户（主体企业）
             </div>
             <el-form-item
               prop="purchaser_id"
@@ -95,7 +95,7 @@
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" span="2">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               :maxlength="200"
@@ -105,9 +105,11 @@
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              type="textarea"
+              :rows="3"
               :maxlength="500"
               show-word-limit
               clearable
@@ -647,7 +649,7 @@ export default {
             { required: true, message: '请选择上游供应商', trigger: 'change' }
           ],
           purchaser_name: [
-            { required: true, message: '请选择下游客户', trigger: 'change' }
+            { required: true, message: '请选择下游客户（主体企业）', trigger: 'change' }
           ],
           type: [
             { required: true, message: '请选择类型', trigger: 'change' }
@@ -769,13 +771,13 @@ export default {
     handleSupplierCloseCancel () {
       this.popSettingsData.supplierDialogData.visible = false
     },
-    // 下游客户
+    // 下游客户（主体企业）
     handleCustomerDialog () {
       this.popSettingsData.purchaserDialogData.visible = true
       this.popSettingsData.purchaserDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
       this.popSettingsData.purchaserDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_ONE]
     },
-    // 下游客户：关闭对话框：确定
+    // 下游客户（主体企业）：关闭对话框：确定
     handleCustomerCloseOk (val) {
       this.popSettingsData.purchaserDialogData.selectedDataJson = val
       this.dataJson.tempJson.purchaser_id = val.id
@@ -783,7 +785,7 @@ export default {
       this.dataJson.tempJson.purchaser_name = val.name
       this.popSettingsData.purchaserDialogData.visible = false
     },
-    // 下游客户：关闭对话框：取消
+    // 下游客户（主体企业）：关闭对话框：取消
     handleCustomerCloseCancel () {
       this.popSettingsData.purchaserDialogData.visible = false
     },

@@ -112,11 +112,11 @@
               客户
             </div>
             <el-form-item
-              prop="supplier_name"
+              prop="customer_name"
               label-width="0"
             >
               <input-search
-                v-model.trim="dataJson.tempJson.supplier_name"
+                v-model.trim="dataJson.tempJson.customer_name"
                 :disabled="dataJson.tempJson.project != null"
                 @onInputSearch="handleCustomerDialog"
               />
@@ -128,14 +128,14 @@
               slot="label"
               class="required-mark"
             >
-              销售方
+              销售方（主体企业）
             </div>
             <el-form-item
-              prop="purchaser_name"
+              prop="seller_name"
               label-width="0"
             >
               <input-search
-                v-model.trim="dataJson.tempJson.purchaser_name"
+                v-model.trim="dataJson.tempJson.seller_name"
                 :disabled="dataJson.tempJson.project != null"
                 @onInputSearch="handleSellerDialog"
               />
@@ -265,19 +265,22 @@
               :disabled="true"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="2">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              type="textarea"
               clearable
               placeholder="请输入"
+              show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.remark"
             />
           </el-descriptions-item>
@@ -484,7 +487,7 @@
       v-if="popSettingsData.purchaserDialogData.visible"
       :visible="popSettingsData.purchaserDialogData.visible"
       :data="popSettingsData.purchaserDialogData.data"
-      :title="'销售方选择'"
+      :title="'销售方（主体企业）选择'"
       @closeMeOk="handleSellerCloseOk"
       @closeMeCancel="handleSellerCloseCancel"
     />
@@ -634,7 +637,7 @@ export default {
             id: null
           }
         },
-        // 销售方
+        // 销售方（主体企业）
         purchaserDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -668,13 +671,13 @@ export default {
         tempJson: {
           detailListData: [],
           contract_code: '',
-          supplier_id: null,
-          supplier_name: '',
-          supplier_code: '',
+          customer_id: null,
+          customer_name: '',
+          customer_code: '',
           type: '',
-          purchaser_id: null,
-          purchaser_name: '',
-          purchaser_code: '',
+          seller_id: null,
+          seller_name: '',
+          seller_code: '',
           settle_type: undefined,
           bill_type: undefined,
           payment_type: '1', // 银行转账
@@ -715,11 +718,11 @@ export default {
           type: [
             { required: true, message: '请选择合同类型', trigger: 'change' }
           ],
-          supplier_name: [
+          customer_name: [
             { required: true, message: '请选择客户', trigger: 'change' }
           ],
-          purchaser_name: [
-            { required: true, message: '请选择销售方', trigger: 'change' }
+          seller_name: [
+            { required: true, message: '请选择销售方（主体企业）', trigger: 'change' }
           ],
           settle_type: [
             { required: true, message: '请选择结算方式', trigger: 'change' }
@@ -930,30 +933,30 @@ export default {
     // 客户：关闭对话框：确定
     handleCustomerCloseOk (val) {
       this.popSettingsData.customerDialogData.selectedDataJson = val
-      this.dataJson.tempJson.supplier_id = val.id
-      this.dataJson.tempJson.supplier_code = val.code
-      this.dataJson.tempJson.supplier_name = val.name
+      this.dataJson.tempJson.customer_id = val.id
+      this.dataJson.tempJson.customer_code = val.code
+      this.dataJson.tempJson.customer_name = val.name
       this.popSettingsData.customerDialogData.visible = false
     },
     // 客户：关闭对话框：取消
     handleCustomerCloseCancel () {
       this.popSettingsData.customerDialogData.visible = false
     },
-    // 销售方
+    // 销售方（主体企业）
     handleSellerDialog () {
       this.popSettingsData.purchaserDialogData.visible = true
       this.popSettingsData.purchaserDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
       // this.popSettingsData.purchaserDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_TWO]
     },
-    // 销售方：关闭对话框：确定
+    // 销售方（主体企业）：关闭对话框：确定
     handleSellerCloseOk (val) {
       this.popSettingsData.purchaserDialogData.selectedDataJson = val
-      this.dataJson.tempJson.purchaser_id = val.id
-      this.dataJson.tempJson.purchaser_code = val.code
-      this.dataJson.tempJson.purchaser_name = val.name
+      this.dataJson.tempJson.seller_id = val.id
+      this.dataJson.tempJson.seller_code = val.code
+      this.dataJson.tempJson.seller_name = val.name
       this.popSettingsData.purchaserDialogData.visible = false
     },
-    // 销售方：关闭对话框：取消
+    // 销售方（主体企业）：关闭对话框：取消
     handleSellerCloseCancel () {
       this.popSettingsData.purchaserDialogData.visible = false
     },

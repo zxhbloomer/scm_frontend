@@ -24,22 +24,8 @@
           style="padding-right: 10px;padding-left: 10px;"
           border
         >
-          <el-descriptions-item>
-            <div
-              slot="label"
-              class="required-mark"
-            >
-              主体企业
-            </div>
-            <el-form-item
-              prop="enterprise_name"
-              label-width="0"
-            >
-              <input-search
-                v-model.trim="dataJson.tempJson.enterprise_name"
-                @onInputSearch="handleSupplierDialog"
-              />
-            </el-form-item>
+          <el-descriptions-item label="主体企业">
+            {{ dataJson.tempJson.enterprise_name || '-' }}
           </el-descriptions-item>
 
           <el-descriptions-item>
@@ -56,6 +42,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.code"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.code"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -74,11 +62,13 @@
               <el-input
                 v-model.trim="dataJson.tempJson.name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.name"
               />
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item v-model.trim="dataJson.tempJson.currency" label="币别">RMB</el-descriptions-item>
+          <el-descriptions-item />
 
           <el-descriptions-item label="银行账号">
             <el-form-item
@@ -88,6 +78,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.account_number"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.account_number"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -100,6 +92,8 @@
               <el-input
                 v-model.trim="dataJson.tempJson.holder_name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.holder_name"
               />
             </el-form-item>
           </el-descriptions-item>
@@ -112,21 +106,13 @@
               <el-input
                 v-model.trim="dataJson.tempJson.bank_name"
                 clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.bank_name"
               />
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
-            <el-form-item
-              prop="remark"
-              label-width="0"
-            >
-              <el-input
-                v-model.trim="dataJson.tempJson.remarks"
-                clearable
-              />
-            </el-form-item>
-          </el-descriptions-item>
+          <el-descriptions-item v-model.trim="dataJson.tempJson.currency" label="币别">RMB</el-descriptions-item>
 
           <el-descriptions-item label="默认账户">
             <el-form-item
@@ -154,7 +140,7 @@
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item>
+          <el-descriptions-item span="2">
             <div
               slot="label"
               class="required-mark"
@@ -172,6 +158,22 @@
                   :label="item.code"
                 >{{ item.name }}</el-checkbox-button>
               </el-checkbox-group>
+            </el-form-item>
+          </el-descriptions-item>
+
+          <el-descriptions-item label="备注" span="2">
+            <el-form-item
+              prop="remark"
+              label-width="0"
+            >
+              <el-input
+                v-model.trim="dataJson.tempJson.remarks"
+                type="textarea"
+                clearable
+                show-word-limit
+                :maxlength="dataJson.inputSettings.maxLength.remarks"
+                placeholder="请输入备注"
+              />
             </el-form-item>
           </el-descriptions-item>
 
@@ -199,16 +201,6 @@
         @click="handleCancel()"
       >取消</el-button>
     </div>
-
-    <!--供应商-->
-    <enterprise-dialog
-      v-if="popSettingsData.enterpriseDialogData.visible"
-      :visible="popSettingsData.enterpriseDialogData.visible"
-      :data="popSettingsData.enterpriseDialogData.data"
-      :title="'供应商选择'"
-      @closeMeOk="handleSupplierCloseOk"
-      @closeMeCancel="handleSupplierCloseCancel"
-    />
 
   </div>
 </template>
@@ -264,18 +256,16 @@ br {
 </style>
 
 <script>
-import InputSearch from '@/components/40_input/inputSearch'
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi, updateApi, validateApi } from '@/api/20_master/bankaccounts/bankaccounts'
 import { selectListDataApi } from '@/api/10_system/dictdata/dictdata'
-import EnterpriseDialog from '@/views/20_master/enterprise/dialog/list/index.vue'
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
 export default {
   directives: { elDragDialog },
-  components: { EnterpriseDialog, InputSearch },
+  components: { },
   mixins: [],
   props: {
     visible: {
@@ -325,16 +315,6 @@ export default {
         dialogFormVisible: false,
         btnDisabledStatus: {
           disabledOK: false
-        },
-        // 主体企业
-        enterpriseDialogData: {
-          // 弹出框显示参数
-          visible: false,
-          data: {},
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
         }
       },
       dataJson: {
@@ -359,7 +339,12 @@ export default {
         },
         inputSettings: {
           maxLength: {
-            remark: 100
+            code: 20,
+            name: 20,
+            account_number: 20,
+            holder_name: 20,
+            bank_name: 20,
+            remarks: 500
           }
         }
       },
@@ -393,9 +378,6 @@ export default {
         dialogStatus: this.editStatus,
         // pop的check内容
         rules: {
-          enterprise_name: [
-            { required: true, message: '请选择主体企业', trigger: 'change' }
-          ],
           code: [
             { required: true, message: '请填写账户编码', trigger: 'change' }
           ],
@@ -573,24 +555,6 @@ export default {
       this.settings.btnTableDisabledStatus.disabledInsert = false
       this.settings.btnTableDisabledStatus.disabledUpdate = false
       this.settings.btnTableDisabledStatus.disabledDelete = false
-    },
-    // 主体企业
-    handleSupplierDialog () {
-      this.popSettingsData.enterpriseDialogData.visible = true
-      this.popSettingsData.enterpriseDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
-      this.popSettingsData.enterpriseDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_TWO]
-    },
-    // 供应商：关闭对话框：确定
-    handleSupplierCloseOk (val) {
-      this.popSettingsData.enterpriseDialogData.selectedDataJson = val
-      this.dataJson.tempJson.enterprise_id = val.id
-      this.dataJson.tempJson.enterprise_code = val.code
-      this.dataJson.tempJson.enterprise_name = val.name
-      this.popSettingsData.enterpriseDialogData.visible = false
-    },
-    // 供应商：关闭对话框：取消
-    handleSupplierCloseCancel () {
-      this.popSettingsData.enterpriseDialogData.visible = false
     },
 
     /**

@@ -36,6 +36,8 @@
           type="textarea"
           :autosize="{ minRows: 2, maxRows: 4}"
           placeholder="请输入意见内容"
+          maxlength="200"
+          show-word-limit
         />
         <div style="margin: 10px 0;" />
         <!--      推荐回复-->

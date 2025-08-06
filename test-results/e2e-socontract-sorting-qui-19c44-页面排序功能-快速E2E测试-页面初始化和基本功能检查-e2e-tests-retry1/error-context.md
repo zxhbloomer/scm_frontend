@@ -1,0 +1,963 @@
+# Page snapshot
+
+```yaml
+- img: 先款后货 框架 标准 客户 文 件 供应商
+- link "云物流系统":
+  - /url: "#/"
+  - img
+  - heading "云物流系统" [level=1]
+- menubar:
+  - menuitem "项目管理 " [expanded]:
+    - text: 项目管理 
+    - menu:
+      - link "项目管理":
+        - /url: "#/so/project"
+        - menuitem "项目管理"
+  - menuitem "合同管理 " [expanded]:
+    - text: 合同管理 
+    - menu:
+      - link "销售合同":
+        - /url: "#/so/contract"
+        - menuitem "销售合同"
+  - menuitem "订单管理 " [expanded]:
+    - text: 订单管理 
+    - menu:
+      - link "销售订单":
+        - /url: "#/so/order"
+        - menuitem "销售订单"
+      - link "销售货权转移":
+        - /url: "#/so/cargo_right_transfer"
+        - menuitem "销售货权转移"
+  - menuitem "出库管理 " [expanded]:
+    - text: 出库管理 
+    - menu:
+      - link "出库计划管理":
+        - /url: "#/po/out/plan"
+        - menuitem "出库计划管理"
+      - link "出库单管理":
+        - /url: "#/po/out"
+        - menuitem "出库单管理"
+  - menuitem "结算管理 " [expanded]:
+    - text: 结算管理 
+    - menu:
+      - link "销售结算管理":
+        - /url: "#/so/settlement"
+        - menuitem "销售结算管理"
+  - menuitem "收款管理 " [expanded]:
+    - text: 收款管理 
+    - menu:
+      - link "收款管理":
+        - /url: "#/so/receive"
+        - menuitem "收款管理"
+      - link "收款单":
+        - /url: "#/so/receive/doc"
+        - menuitem "收款单"
+      - link "退款管理":
+        - /url: "#/so/receive/refund"
+        - menuitem "退款管理"
+      - link "销售退款单":
+        - /url: "#/so/receive/refund/doc"
+        - menuitem "销售退款单"
+  - menuitem "基础数据 " [expanded]:
+    - text: 基础数据 
+    - menu:
+      - link "企业登记":
+        - /url: "#/so/enterprise"
+        - menuitem "企业登记"
+- text:  
+- menubar:
+  - menuitem "工作台"
+  - menuitem "采购管理"
+  - menuitem "销售管理"
+  - menuitem "生产管理"
+  - menuitem "仓储管理"
+  - menuitem "运输管理"
+  - menuitem "监管中心"
+  - menuitem "报表查询"
+  - menuitem "组织机构管理"
+  - menuitem "基础数据管理"
+  - menuitem "系统设置"
+- superscript: 99+
+- img
+- button "测试用户 "
+- list:
+  - listitem "首页"
+  - listitem "销售合同-查询": 销售合同-查询 
+- tabpanel "销售合同-列表":
+  - text: 
+  - tablist:
+    - tab "全部" [selected]
+    - tab "待审批"
+    - tab "审批中"
+    - tab "执行中"
+    - tab "已完成"
+    - tab "驳回"
+    - tab "作废审批中"
+    - tab "已作废"
+  - tabpanel "全部"
+  - textbox "合同编号"
+  - textbox "请选择客户"
+  - text: 
+  - textbox "请选择销售方"
+  - text: 
+  - textbox "请选择单据状态"
+  - text: 
+  - textbox "请选择合同类型"
+  - text: 
+  - textbox "请选择结算方式"
+  - text: 
+  - textbox "请选择结算单据类型"
+  - text: 
+  - button " 高级查询"
+  - superscript: "0"
+  - button " 查询"
+  - button " 新增"
+  - button " 修改" [disabled]
+  - button " 删除" [disabled]
+  - button " 作废" [disabled]
+  - button " 审批" [disabled]
+  - button " 下推订单" [disabled]
+  - button " 导入"
+  - button " 导出"
+  - button " 打印" [disabled]
+  - button " 查看" [disabled]
+  - text: 合同总金额：¥0.00合同总销售数量：0.0000预收未收总金额：0预收已收款总金额：0结算总金额：¥0.00
+  - table:
+    - rowgroup:
+      - row "No 项目编号 合同编号 类型 订单量 状态 审批情况 客户 销售方（主体企业） 执行进度 签约日期 到期日期 交货日期 运输方式 结算方式 结算单据类型 付款方式 合同总金额 总销售数量（吨） 税额 已结算数量（吨） 结算金额 预收款金额 累计实收 未收 预收款可退金额 已开票金额 商品 创建人 创建时间 更新人 更新时间":
+        - cell "No"
+        - cell "项目编号"
+        - cell "合同编号"
+        - cell "类型"
+        - cell "订单量"
+        - cell "状态"
+        - cell "审批情况"
+        - cell "客户"
+        - cell "销售方（主体企业）"
+        - cell "执行进度"
+        - cell "签约日期"
+        - cell "到期日期"
+        - cell "交货日期"
+        - cell "运输方式"
+        - cell "结算方式"
+        - cell "结算单据类型"
+        - cell "付款方式"
+        - cell "合同总金额"
+        - cell "总销售数量（吨）"
+        - cell "税额"
+        - cell "已结算数量（吨）"
+        - cell "结算金额"
+        - cell "预收款金额"
+        - cell "累计实收"
+        - cell "未收"
+        - cell "预收款可退金额"
+        - cell "已开票金额"
+        - cell "商品"
+        - cell "创建人"
+        - cell "创建时间"
+        - cell "更新人"
+        - cell "更新时间"
+        - cell
+      - row "商品编码 商品名称 规格 产地 数量 单价 税率":
+        - cell "商品编码"
+        - cell "商品名称"
+        - cell "规格"
+        - cell "产地"
+        - cell "数量"
+        - cell "单价"
+        - cell "税率"
+        - cell
+  - table:
+    - rowgroup:
+      - row "1 PRJ202508040001 222xxx 框架合同 审批中 待用户测试用户审批 帕力粮油有限公司 2025-08-16 00:00:00 2025-08-13 00:00:00 2025-08-25 00:00:00 公路 先款后货 实际到货结算 银行转账 ¥1,221.00 11 ¥109.89 CSSP20240903-01 x无x 11 ¥111.00 9 % 测试用户 2025年08月05日 23:07:25 测试用户 2025年08月05日 23:07:27":
+        - cell "1"
+        - cell "PRJ202508040001"
+        - cell "222xxx"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户测试用户审批"
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell "2025-08-16 00:00:00"
+        - cell "2025-08-13 00:00:00"
+        - cell "2025-08-25 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥1,221.00"
+        - cell "11"
+        - cell "¥109.89"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥111.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 23:07:25"
+        - cell "测试用户"
+        - cell "2025年08月05日 23:07:27"
+      - row "2 PRJ202508040001 so002 框架合同 审批中 待用户测试用户审批 帕力粮油有限公司 2025-08-21 00:00:00 2025-08-14 00:00:00 2025-08-16 00:00:00 公路 先款后货 实际到货结算 银行转账 ¥1,221.00 11 ¥109.89 CSSP20240903-01 x无x 11 ¥111.00 9 % 测试用户 2025年08月05日 22:15:44 测试用户 2025年08月05日 22:15:45":
+        - cell "2"
+        - cell "PRJ202508040001"
+        - cell "so002"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户测试用户审批"
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell "2025-08-21 00:00:00"
+        - cell "2025-08-14 00:00:00"
+        - cell "2025-08-16 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥1,221.00"
+        - cell "11"
+        - cell "¥109.89"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥111.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 22:15:44"
+        - cell "测试用户"
+        - cell "2025年08月05日 22:15:45"
+      - row "3 PRJ202508040001 221122 框架合同 待审批 审批撤销 帕力粮油有限公司 公路 先款后货 实际到货结算 银行转账 ¥1,221.00 11 ¥109.89 CSSP20240903-01 x无x 11 ¥111.00 9 % 测试用户 2025年08月05日 21:43:17 测试用户 2025年08月05日 21:43:41":
+        - cell "3"
+        - cell "PRJ202508040001"
+        - cell "221122"
+        - cell "框架合同"
+        - cell
+        - cell "待审批"
+        - cell "审批撤销"
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥1,221.00"
+        - cell "11"
+        - cell "¥109.89"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥111.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 21:43:17"
+        - cell "测试用户"
+        - cell "2025年08月05日 21:43:41"
+      - row "4 PRJ202508040001 wwwqq 框架合同 执行中 审批通过 帕力粮油有限公司 公路 先款后货 实际到货结算 银行转账 ¥1,221.00 11 ¥109.89 CSSP20240903-01 x无x 11 ¥111.00 9 % 测试用户 2025年08月05日 21:42:07 测试用户 2025年08月05日 21:42:37":
+        - cell "4"
+        - cell "PRJ202508040001"
+        - cell "wwwqq"
+        - cell "框架合同"
+        - cell
+        - cell "执行中"
+        - cell "审批通过"
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥1,221.00"
+        - cell "11"
+        - cell "¥109.89"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥111.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 21:42:07"
+        - cell "测试用户"
+        - cell "2025年08月05日 21:42:37"
+      - row "5 PRJ202508020001 测试112 框架合同 待审批 审批撤销 帕力粮油有限公司 公路 先款后货 实际到货结算 银行转账 ¥24,642.00 111 ¥2,217.78 CSSP20240903-01 x无x 111 ¥222.00 9 % 测试用户 2025年08月05日 19:10:07 测试用户 2025年08月05日 20:06:34":
+        - cell "5"
+        - cell "PRJ202508020001"
+        - cell "测试112"
+        - cell "框架合同"
+        - cell
+        - cell "待审批"
+        - cell "审批撤销"
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥24,642.00"
+        - cell "111"
+        - cell "¥2,217.78"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "111"
+        - cell "¥222.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 19:10:07"
+        - cell "测试用户"
+        - cell "2025年08月05日 20:06:34"
+      - row "6 啊啊啊11 框架合同 审批中 待用户王东明审批 公路 先款后货 实际到货结算 银行转账 ¥135,744.00 112 ¥12,216.96 CSSP20240903-01 x无x 112 ¥1,212.00 9 % 测试用户 2025年08月05日 16:58:58 测试用户 2025年08月05日 16:59:10":
+        - cell "6"
+        - cell
+        - cell "啊啊啊11"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户王东明审批"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥135,744.00"
+        - cell "112"
+        - cell "¥12,216.96"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "112"
+        - cell "¥1,212.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:58:58"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:59:10"
+      - row "7 11QQ 框架合同 审批中 公路 货到付款 货转凭证结算 银行转账 ¥14,884.00 122 ¥1,339.56 DGCS20240902 混合物测试 122 ¥122.00 9 % 测试用户 2025年08月05日 16:54:48 测试用户 2025年08月05日 16:54:48":
+        - cell "7"
+        - cell
+        - cell "11QQ"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "货到付款"
+        - cell "货转凭证结算"
+        - cell "银行转账"
+        - cell "¥14,884.00"
+        - cell "122"
+        - cell "¥1,339.56"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "混合物测试"
+        - cell
+        - cell "122"
+        - cell "¥122.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:54:48"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:54:48"
+      - row "8 11去 框架合同 审批中 公路 货到付款 货转凭证结算 银行转账 ¥146,652.00 1212 ¥13,198.68 CSSP20240903-01 x无x 1212 ¥121.00 9 % 测试用户 2025年08月05日 16:52:33 测试用户 2025年08月05日 16:52:33":
+        - cell "8"
+        - cell
+        - cell "11去"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "货到付款"
+        - cell "货转凭证结算"
+        - cell "银行转账"
+        - cell "¥146,652.00"
+        - cell "1212"
+        - cell "¥13,198.68"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "1212"
+        - cell "¥121.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:52:33"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:52:33"
+      - row "9 阿萨斯 框架合同 审批中 公路 货到付款 实际到货结算 银行转账 ¥121.00 11 ¥10.89 CSSP20240903-01 x无x 11 ¥11.00 9 % 测试用户 2025年08月05日 16:51:07 测试用户 2025年08月05日 16:51:07":
+        - cell "9"
+        - cell
+        - cell "阿萨斯"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "货到付款"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥121.00"
+        - cell "11"
+        - cell "¥10.89"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥11.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:51:07"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:51:07"
+      - row "10 啊啊 框架合同 审批中 先款后货 实际到货结算 银行转账 ¥121.00 11 ¥15.73 DGCS20240902 混合物测试 11 ¥11.00 13 % 测试用户 2025年08月05日 16:42:16 测试用户 2025年08月05日 16:42:16":
+        - cell "10"
+        - cell
+        - cell "啊啊"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥121.00"
+        - cell "11"
+        - cell "¥15.73"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "混合物测试"
+        - cell
+        - cell "11"
+        - cell "¥11.00"
+        - cell "13 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:42:16"
+        - cell "测试用户"
+        - cell "2025年08月05日 16:42:16"
+      - row "11 PRJ202508020001 so001 框架合同 审批中 帕力粮油有限公司 公路 先款后货 实际到货结算 银行转账 ¥24,642.00 111 ¥2,217.78 CSSP20240903-01 x无x 111 ¥222.00 9 % 测试用户 2025年08月05日 15:30:35 测试用户 2025年08月05日 15:30:35":
+        - cell "11"
+        - cell "PRJ202508020001"
+        - cell "so001"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥24,642.00"
+        - cell "111"
+        - cell "¥2,217.78"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "111"
+        - cell "¥222.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月05日 15:30:35"
+        - cell "测试用户"
+        - cell "2025年08月05日 15:30:35"
+      - row "12 PRJ202508010014 12 标准合同 审批中 帕力粮油有限公司 铁路 先款后货 货转凭证结算 银行转账 ¥2,541.00 121 ¥228.69 DGCS20240902 混合物测试 121 ¥21.00 9 % 测试用户 2025年08月02日 22:09:49 测试用户 2025年08月02日 22:09:49":
+        - cell "12"
+        - cell "PRJ202508010014"
+        - cell "12"
+        - cell "标准合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "铁路"
+        - cell "先款后货"
+        - cell "货转凭证结算"
+        - cell "银行转账"
+        - cell "¥2,541.00"
+        - cell "121"
+        - cell "¥228.69"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "混合物测试"
+        - cell
+        - cell "121"
+        - cell "¥21.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月02日 22:09:49"
+        - cell "测试用户"
+        - cell "2025年08月02日 22:09:49"
+      - row "13 PRJ202508020001 333 框架合同 审批中 帕力粮油有限公司 2025-08-04 00:00:00 2025-08-30 00:00:00 2025-08-04 00:00:00 公路 先款后货 实际到货结算 银行转账 ¥529.00 23 ¥47.61 CSSP20240903-01 x无x 23 ¥23.00 9 % 测试用户 2025年08月02日 19:08:32 测试用户 2025年08月02日 19:08:32":
+        - cell "13"
+        - cell "PRJ202508020001"
+        - cell "333"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell "2025-08-04 00:00:00"
+        - cell "2025-08-30 00:00:00"
+        - cell "2025-08-04 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥529.00"
+        - cell "23"
+        - cell "¥47.61"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "23"
+        - cell "¥23.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月02日 19:08:32"
+        - cell "测试用户"
+        - cell "2025年08月02日 19:08:32"
+      - row "14 PRJ202508020001 xs01 框架合同 审批中 帕力粮油有限公司 2025-08-06 00:00:00 2025-08-06 00:00:00 2025-08-05 00:00:00 公路 先款后货 实际到货结算 银行转账 ¥2,442.00 11 ¥219.78 CSSP20240903-01 x无x 11 ¥222.00 9 % 测试用户 2025年08月02日 12:31:57 测试用户 2025年08月02日 12:31:57":
+        - cell "14"
+        - cell "PRJ202508020001"
+        - cell "xs01"
+        - cell "框架合同"
+        - cell
+        - cell "审批中"
+        - cell
+        - cell "帕力粮油有限公司"
+        - cell
+        - cell
+        - cell "2025-08-06 00:00:00"
+        - cell "2025-08-06 00:00:00"
+        - cell "2025-08-05 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥2,442.00"
+        - cell "11"
+        - cell "¥219.78"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "CSSP20240903-01"
+        - cell
+        - cell "x无x"
+        - cell
+        - cell "11"
+        - cell "¥222.00"
+        - cell "9 %"
+        - cell "测试用户"
+        - cell "2025年08月02日 12:31:57"
+        - cell "测试用户"
+        - cell "2025年08月02日 12:31:57"
+      - row "15 11111232 标准合同 作废审批中 待用户王东明审批 ¥9,990.00 999 ¥199.80 DGCS20240902 稻谷 999 ¥10.00 2 % 郝有林 2025年03月11日 10:03:36 郝有林 2025年03月11日 11:18:06":
+        - cell "15"
+        - cell
+        - cell "11111232"
+        - cell "标准合同"
+        - cell
+        - cell "作废审批中"
+        - cell "待用户王东明审批"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "¥9,990.00"
+        - cell "999"
+        - cell "¥199.80"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "稻谷"
+        - cell
+        - cell "999"
+        - cell "¥10.00"
+        - cell "2 %"
+        - cell "郝有林"
+        - cell "2025年03月11日 10:03:36"
+        - cell "郝有林"
+        - cell "2025年03月11日 11:18:06"
+      - row "16 23123132 标准合同 审批中 待用户王东明审批 ¥555.00 555 ¥5.55 DGCS20240902 稻谷 555 ¥1.00 1 % 测试用户 2025年03月10日 16:51:59 测试用户 2025年03月10日 16:52:00":
+        - cell "16"
+        - cell
+        - cell "23123132"
+        - cell "标准合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户王东明审批"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "¥555.00"
+        - cell "555"
+        - cell "¥5.55"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "稻谷"
+        - cell
+        - cell "555"
+        - cell "¥1.00"
+        - cell "1 %"
+        - cell "测试用户"
+        - cell "2025年03月10日 16:51:59"
+        - cell "测试用户"
+        - cell "2025年03月10日 16:52:00"
+      - row "17 11112313 标准合同 执行中 审批通过 ¥11,100.00 555 ¥111.00 DGCS20240902 稻谷 555 ¥20.00 1 % 测试用户 2025年03月07日 17:26:49 测试用户 2025年03月10日 10:03:03":
+        - cell "17"
+        - cell
+        - cell "11112313"
+        - cell "标准合同"
+        - cell
+        - cell "执行中"
+        - cell "审批通过"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "¥11,100.00"
+        - cell "555"
+        - cell "¥111.00"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "稻谷"
+        - cell
+        - cell "555"
+        - cell "¥20.00"
+        - cell "1 %"
+        - cell "测试用户"
+        - cell "2025年03月07日 17:26:49"
+        - cell "测试用户"
+        - cell "2025年03月10日 10:03:03"
+      - row "18 31231231 标准合同 审批中 待用户王东明审批 2025-02-20 17:04:17 2025-02-20 17:04:28 2025-02-20 00:00:00 铁路 先款后货 实际到货结算 银行转账 ¥61,105.00 5555 ¥611.05 SPGG20230417001 水稻1 5555 ¥11.00 1 % 测试用户 2025年02月20日 17:05:02 测试用户 2025年02月20日 17:05:04":
+        - cell "18"
+        - cell
+        - cell "31231231"
+        - cell "标准合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户王东明审批"
+        - cell
+        - cell
+        - cell
+        - cell "2025-02-20 17:04:17"
+        - cell "2025-02-20 17:04:28"
+        - cell "2025-02-20 00:00:00"
+        - cell "铁路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell "银行转账"
+        - cell "¥61,105.00"
+        - cell "5555"
+        - cell "¥611.05"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "SPGG20230417001"
+        - cell
+        - cell "水稻1"
+        - cell
+        - cell "5555"
+        - cell "¥11.00"
+        - cell "1 %"
+        - cell "测试用户"
+        - cell "2025年02月20日 17:05:02"
+        - cell "测试用户"
+        - cell "2025年02月20日 17:05:04"
+      - row "19 124342 标准合同 执行中 审批通过 2025-02-07 16:28:29 2025-02-14 15:52:56 2025-02-07 00:00:00 公路 先款后货 实际到货结算 ¥6,000.00 500 ¥600.00 cs---zlsd-0100507-3 稻谷 500 ¥12.00 10 % 郝有林 2025年02月07日 16:29:02 郝有林 2025年02月14日 16:47:00":
+        - cell "19"
+        - cell
+        - cell "124342"
+        - cell "标准合同"
+        - cell
+        - cell "执行中"
+        - cell "审批通过"
+        - cell
+        - cell
+        - cell
+        - cell "2025-02-07 16:28:29"
+        - cell "2025-02-14 15:52:56"
+        - cell "2025-02-07 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell "实际到货结算"
+        - cell
+        - cell "¥6,000.00"
+        - cell "500"
+        - cell "¥600.00"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "cs---zlsd-0100507-3"
+        - cell
+        - cell "稻谷"
+        - cell
+        - cell "500"
+        - cell "¥12.00"
+        - cell "10 %"
+        - cell "郝有林"
+        - cell "2025年02月07日 16:29:02"
+        - cell "郝有林"
+        - cell "2025年02月14日 16:47:00"
+      - row "20 12312 标准合同 审批中 待用户王东明审批 2025-02-07 15:00:46 2025-02-07 15:00:25 2025-02-07 00:00:00 公路 先款后货 ¥60,000.00 6000 ¥1,200.00 DGCS20240902 稻谷 1 6000 ¥10.00 2 % 测试用户 2025年02月07日 15:00:59 测试用户 2025年02月07日 15:09:34":
+        - cell "20"
+        - cell
+        - cell "12312"
+        - cell "标准合同"
+        - cell
+        - cell "审批中"
+        - cell "待用户王东明审批"
+        - cell
+        - cell
+        - cell
+        - cell "2025-02-07 15:00:46"
+        - cell "2025-02-07 15:00:25"
+        - cell "2025-02-07 00:00:00"
+        - cell "公路"
+        - cell "先款后货"
+        - cell
+        - cell
+        - cell "¥60,000.00"
+        - cell "6000"
+        - cell "¥1,200.00"
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell
+        - cell "DGCS20240902"
+        - cell
+        - cell "稻谷"
+        - cell "1"
+        - cell "6000"
+        - cell "¥10.00"
+        - cell "2 %"
+        - cell "测试用户"
+        - cell "2025年02月07日 15:00:59"
+        - cell "测试用户"
+        - cell "2025年02月07日 15:09:34"
+  - text: 共 24 条
+  - textbox "请选择": 20条/页
+  - text: 
+  - button "" [disabled]
+  - list:
+    - listitem: "1"
+    - listitem: "2"
+  - button ""
+  - text: 前往
+  - spinbutton: "1"
+  - text: 页
+```

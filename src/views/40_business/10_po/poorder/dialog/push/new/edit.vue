@@ -108,11 +108,11 @@
           <!--          <el-descriptions-item label="审批后自动生成订单">-->
           <!--            {{ dataJson.pocontract.auto_create_name }}-->
           <!--          </el-descriptions-item>-->
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="3">
             {{ dataJson.pocontract.delivery_location }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             {{ dataJson.pocontract.remark }}
           </el-descriptions-item>
 
@@ -188,7 +188,7 @@
               />
             </el-form-item>
           </el-descriptions-item>
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="3">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
               clearable
@@ -196,7 +196,7 @@
               :maxlength="dataJson.inputSettings.maxLength.delivery_location"
             />
           </el-descriptions-item>
-          <el-descriptions-item label="订单备注" :span="2">
+          <el-descriptions-item label="订单备注" :span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
               clearable

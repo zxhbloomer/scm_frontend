@@ -102,7 +102,7 @@
               slot="label"
               class="required-mark"
             >
-              主体企业
+              销售方（主体企业）
             </div>
             <el-form-item
               prop="seller_name"
@@ -453,12 +453,12 @@
       @closeMeCancel="handleCustomerCloseCancel"
     />
 
-    <!--主体企业-->
+    <!--销售方（主体企业）-->
     <supplier-dialog
       v-if="popSettingsData.sellerDialogData.visible"
       :visible="popSettingsData.sellerDialogData.visible"
       :data="popSettingsData.sellerDialogData.data"
-      :title="'主体企业选择'"
+      :title="'销售方（主体企业）选择'"
       @closeMeOk="handleSellerCloseOk"
       @closeMeCancel="handleSellerCloseCancel"
     />
@@ -607,7 +607,7 @@ export default {
             id: null
           }
         },
-        // 主体企业
+        // 销售方（主体企业）
         sellerDialogData: {
           // 弹出框显示参数
           visible: false,
@@ -684,7 +684,7 @@ export default {
             { required: true, message: '请选择客户', trigger: 'change' }
           ],
           seller_name: [
-            { required: true, message: '请选择主体企业', trigger: 'change' }
+            { required: true, message: '请选择销售方（主体企业）', trigger: 'change' }
           ]
         }
       }
@@ -864,13 +864,13 @@ export default {
     handleCustomerCloseCancel () {
       this.popSettingsData.customerDialogData.visible = false
     },
-    // 主体企业
+    // 销售方（主体企业）
     handleSellerDialog () {
       this.popSettingsData.sellerDialogData.visible = true
       this.popSettingsData.sellerDialogData.data.status = constants_dict.DICT_M_ENTERPRISE_STATUS_TWO
       // this.popSettingsData.supplierDialogData.data.type_ids = [constants_dict.DICT_M_ENTERPRISE_TYPE_TWO]
     },
-    // 主体企业：关闭对话框：确定
+    // 销售方（主体企业）：关闭对话框：确定
     handleSellerCloseOk (val) {
       this.popSettingsData.sellerDialogData.selectedDataJson = val
       this.dataJson.tempJson.seller_id = val.id
@@ -878,7 +878,7 @@ export default {
       this.dataJson.tempJson.seller_name = val.name
       this.popSettingsData.sellerDialogData.visible = false
     },
-    // 主体企业：关闭对话框：取消
+    // 销售方（主体企业）：关闭对话框：取消
     handleSellerCloseCancel () {
       this.popSettingsData.sellerDialogData.visible = false
     },

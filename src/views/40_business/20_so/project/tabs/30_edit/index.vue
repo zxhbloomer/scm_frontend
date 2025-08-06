@@ -41,7 +41,7 @@
               slot="label"
               class="required-mark"
             >
-              上游供应商
+              上游供应商（主体企业）
             </div>
             <el-form-item
               prop="supplier_name"
@@ -95,17 +95,23 @@
             </el-form-item>
           </el-descriptions-item>
 
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" span="2">
             <el-input
               v-model.trim="dataJson.tempJson.delivery_location"
+              :maxlength="200"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" span="3">
             <el-input
               v-model.trim="dataJson.tempJson.remark"
+              type="textarea"
+              :rows="3"
+              :maxlength="500"
+              show-word-limit
               clearable
               placeholder="请输入"
             />
@@ -638,7 +644,7 @@ export default {
             { required: true, message: '请输入项目名称', trigger: 'change' }
           ],
           supplier_name: [
-            { required: true, message: '请选择上游供应商', trigger: 'change' }
+            { required: true, message: '请选择上游供应商（主体企业）', trigger: 'change' }
           ],
           purchaser_name: [
             { required: true, message: '请选择下游客户', trigger: 'change' }

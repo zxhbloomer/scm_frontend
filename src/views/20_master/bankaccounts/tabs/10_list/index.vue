@@ -375,12 +375,12 @@
       @closeMeCancel="handleNewCancel"
     />
 
-    <!--  修改弹窗-->
+    <!--  修改账户-->
     <edit_template
       v-if="popEditSettings.dialogVisible"
       :visible="popEditSettings.dialogVisible"
       :data="popEditSettings.data"
-      title="修改弹窗"
+      title="修改账户"
       @closeMeOk="handleEditCancel"
       @closeMeCancel="handleEditCancel"
     />
@@ -911,7 +911,7 @@ export default {
       this.popNewSettings.dialogVisible = false
     },
     /**
-     * 修改弹窗关闭
+     * 修改账户关闭
      */
     handleEditCancel () {
       this.popEditSettings.dialogVisible = false

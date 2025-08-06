@@ -80,7 +80,7 @@
             {{ dataJson.tempJson.supplier_name }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="下游客户">
+          <el-descriptions-item label="下游客户（主体企业）">
             {{ dataJson.tempJson.purchaser_name }}
           </el-descriptions-item>
 
@@ -92,11 +92,11 @@
             {{ dataJson.tempJson.delivery_type_name }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="交货地点">
+          <el-descriptions-item label="交货地点" :span="2">
             {{ dataJson.tempJson.delivery_location }}
           </el-descriptions-item>
 
-          <el-descriptions-item label="备注">
+          <el-descriptions-item label="备注" :span="3">
             {{ dataJson.tempJson.remark }}
           </el-descriptions-item>
 
