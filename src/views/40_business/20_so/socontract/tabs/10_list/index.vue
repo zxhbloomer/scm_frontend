@@ -71,7 +71,7 @@
         <el-form-item v-if="dataJson.tabs.active === '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_P_SO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_B_SO_CONTRACT_STATUS"
             init-placeholder="请选择单据状态"
           />
         </el-form-item>
@@ -79,7 +79,7 @@
         <el-form-item v-if="dataJson.tabs.active !== '0'">
           <select-dicts
             v-model="dataJson.searchForm.status_list"
-            :para="CONSTANTS.DICT_P_SO_CONTRACT_STATUS"
+            :para="CONSTANTS.DICT_B_SO_CONTRACT_STATUS"
             init-placeholder="请选择单据状态"
             disabled
           />
@@ -407,7 +407,7 @@
         :auto-fit="true"
         min-width="120"
         prop="purchaser_name"
-        label="主体企业"
+        label="销售方（主体企业）"
         align="left"
       />
       <el-table-column
@@ -1040,7 +1040,7 @@ import {
   exportApi,
   importDataApi,
   getListApi,
-  delApi, getApi, getFinishApi
+  delApi, getApi, completeApi
 } from '@/api/40_business/20_so/socontract/socontract'
 import constants_para from '@/common/constants/constants_para'
 import constants_type from '@/common/constants/constants_dict'
@@ -1495,45 +1495,45 @@ export default {
 
         // 推送按钮高亮（只有框架合同且状态为执行中时高亮）
         if (this.dataJson.currentJson.type === constants_dict.DICT_P_SO_CONTRACT_TYPE_ONE &&
-            this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
+            this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showPush = true
         } else {
           this.settings.btnStatus.showPush = false
         }
 
         // 审批中和驳回状态，修改按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ZERO ||
-          this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ZERO ||
+          this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_THREE) {
           this.settings.btnStatus.showUpdate = true
         } else {
           this.settings.btnStatus.showUpdate = false
         }
 
         // 待审批和驳回状态删除按钮高亮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ZERO ||
-            this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_THREE) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ZERO ||
+            this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_THREE) {
           this.settings.btnStatus.showDel = true
         } else {
           this.settings.btnStatus.showDel = false
         }
 
         // 作废
-        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showCancel = true
         } else {
           this.settings.btnStatus.showCancel = false
         }
 
         // 审批
-        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ONE ||
-          this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_FOUR) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ONE ||
+          this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_FOUR) {
           this.settings.btnStatus.showApprove = true
         } else {
           this.settings.btnStatus.showApprove = false
         }
 
         // 完成按钮
-        if (this.dataJson.currentJson.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_TWO) {
+        if (this.dataJson.currentJson.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_TWO) {
           this.settings.btnStatus.showFinish = true
         } else {
           this.settings.btnStatus.showFinish = false
@@ -1587,7 +1587,7 @@ export default {
     handleDel () {
       const _data = deepCopy(this.dataJson.currentJson)
       // 状态为待审批或驳回才可以删除
-      if (_data.status.toString() !== constants_type.DICT_P_SO_CONTRACT_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_P_SO_CONTRACT_STATUS_THREE) {
+      if (_data.status.toString() !== constants_type.DICT_B_SO_CONTRACT_STATUS_ZERO && _data.status.toString() !== constants_type.DICT_B_SO_CONTRACT_STATUS_THREE) {
         this.showErrorMsg('销售合同状态异常，只有待审批或驳回状态才可以删除')
         return
       }
@@ -1641,25 +1641,25 @@ export default {
 
       switch (tab.index) {
         case '1': // 待审批
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_ZERO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_ZERO]
           break
         case '2': // 审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_ONE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_ONE]
           break
         case '3': // 执行中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_TWO]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_TWO]
           break
         case '4': // 已完成
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_SIX]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_SIX]
           break
         case '5': // 驳回
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_THREE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_THREE]
           break
         case '6': // 作废审批中
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_FOUR]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_FOUR]
           break
         case '7': // 已作废
-          this.dataJson.searchForm.status_list = [constants_type.DICT_P_SO_CONTRACT_STATUS_FIVE]
+          this.dataJson.searchForm.status_list = [constants_type.DICT_B_SO_CONTRACT_STATUS_FIVE]
           break
         default: // 全部 - 恢复之前保存的状态数据
           // 如果缓存为空或者没有缓存，则使用空数组（表示显示所有状态）
@@ -1894,7 +1894,7 @@ export default {
       }
       this.$confirm('完成后不可在进行任何操作？', '确认信息', {
       }).then(() => {
-        getFinishApi(_data).then(response => {
+        completeApi(_data).then(response => {
           this.dataJson.listData = response.data.records
           this.dataJson.paging = response.data
           this.dataJson.paging.records = {}
@@ -1917,7 +1917,7 @@ export default {
       }
 
       // 状态为1或4时，显示"待用户"+next_approve_name+"审批"
-      if (row.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_ONE || row.status === constants_dict.DICT_P_SO_CONTRACT_STATUS_FOUR) {
+      if (row.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_ONE || row.status === constants_dict.DICT_B_SO_CONTRACT_STATUS_FOUR) {
         return `待用户${row.next_approve_name}审批`
       }
 

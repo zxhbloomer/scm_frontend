@@ -148,9 +148,9 @@ export function cancelApi (query) {
  * 完成
  * @param {*} data
  */
-export function getFinishApi (query) {
+export function completeApi (query) {
   return request({
-    url: '/api/v1/socontract/finish',
+    url: '/api/v1/socontract/complete',
     method: 'post',
     data: query
   })
