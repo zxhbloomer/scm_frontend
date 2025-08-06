@@ -415,10 +415,14 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="execution_progress"
+        prop="progress"
         label="执行进度"
-        align="left"
-      />
+        align="right"
+      >
+        <template v-slot="scope">
+          {{ scope.row.progress == null ? '0.00%' : (scope.row.progress * 100).toFixed(2) + '%' }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
