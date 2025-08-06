@@ -61,7 +61,7 @@
         <el-form-item label="">
           <select-se-customer
             v-model.trim="dataJson.searchForm.purchaser_name"
-            :placeholder="isPlaceholderShow('请选择主体企业')"
+            :placeholder="isPlaceholderShow('请选择采购方（主体企业）')"
             placement="left"
             @keyup.enter.native="handleSearch"
             @onReturnData="handleCustomerReturnDataName"
@@ -416,7 +416,7 @@
         :auto-fit="true"
         min-width="120"
         prop="purchaser_name"
-        label="主体企业"
+        label="采购方（主体企业）"
         align="left"
       />
       <el-table-column
@@ -436,7 +436,11 @@
         prop="sign_date"
         label="签约日期"
         align="left"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.sign_date == null ? '' : formatDate(scope.row.sign_date, 3) }}
+        </template>
+      </el-table-column>
 
       <el-table-column
         sortable="custom"
@@ -446,7 +450,11 @@
         prop="expiry_date"
         label="到期日期"
         align="left"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.expiry_date == null ? '' : formatDate(scope.row.expiry_date, 3) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -455,7 +463,11 @@
         prop="delivery_date"
         label="交货日期"
         align="left"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.delivery_date == null ? '' : formatDate(scope.row.delivery_date, 3) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -1050,7 +1062,7 @@ import {
   exportApi,
   importDataApi,
   getListApi,
-  delApi, getApi, getFinishApi
+  delApi, getApi, completeApi
 } from '@/api/40_business/10_po/pocontract/pocontract'
 import constants_para from '@/common/constants/constants_para'
 import constants_type from '@/common/constants/constants_dict'
@@ -1900,16 +1912,25 @@ export default {
       }
       this.$confirm('完成后不可在进行任何操作？', '确认信息', {
       }).then(() => {
-        getFinishApi(_data).then(response => {
-          this.dataJson.listData = response.data.records
-          this.dataJson.paging = response.data
-          this.dataJson.paging.records = {}
+        this.settings.loading = true
+        completeApi(_data).then(response => {
+          this.$notify({
+            title: '操作成功',
+            message: '采购合同完成成功',
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.getDataList() // 刷新列表数据
+        }).catch(error => {
+          this.$notify({
+            title: '操作失败',
+            message: error.response?.data?.message || '采购合同完成失败',
+            type: 'error',
+            duration: this.settings.duration
+          })
         }).finally(() => {
           this.settings.loading = false
         })
-      }).catch(action => {
-      }).finally(() => {
-        this.getDataList()
       })
     },
     // 关闭弹出窗口
