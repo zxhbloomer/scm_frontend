@@ -378,9 +378,22 @@
         :auto-fit="true"
         min-width="120"
         prop="order_count"
-        label="订单笔数"
         align="right"
-      />
+      >
+        <template slot="header">
+          <field-help field="order_count" page="pocontract-list" default-label="订单笔数" />
+        </template>
+        <template v-slot="scope">
+          <el-link
+            v-if="scope.row.order_count > 0"
+            type="primary"
+            @click="handleOrderCountClick(scope.row.contract_code)"
+          >
+            {{ scope.row.order_count }}
+          </el-link>
+          <span v-else>0</span>
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -425,9 +438,11 @@
         :auto-fit="true"
         min-width="120"
         prop="progress"
-        label="执行进度"
         align="right"
       >
+        <template slot="header">
+          <field-help field="progress" page="pocontract-list" default-label="执行进度" />
+        </template>
         <template v-slot="scope">
           {{ scope.row.progress == null ? '0.00%' : (scope.row.progress * 100).toFixed(2) + '%' }}
         </template>
@@ -529,7 +544,11 @@
         prop="contract_total"
         label="总采购数量（吨）"
         align="right"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.contract_total == null ? '' : formatNumber(scope.row.contract_total, true, 4) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -551,7 +570,11 @@
         prop="settled_qty"
         label="已结算数量（吨）"
         align="right"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.settled_qty == null ? '' : formatNumber(scope.row.settled_qty, true, 4) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -1083,8 +1106,9 @@ import print_template from '@/views/40_business/10_po/pocontract/tabs/60_print/i
 import push_order_template from '@/views/40_business/10_po/poorder/dialog/push/new/index.vue'
 import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
+import FieldHelp from '@/components/30_table/FieldHelp'
 export default {
-  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination },
+  components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -1366,6 +1390,16 @@ export default {
       if (this.meDialogStatus) {
         this.$emit('rowDbClick', _data)
       }
+    },
+    // 处理订单笔数点击事件
+    handleOrderCountClick (contractCode) {
+      // 跳转到采购订单页面，传递合同编号作为查询条件
+      this.$router.push({
+        path: '/po/order',
+        query: {
+          po_contract_code: contractCode
+        }
+      })
     },
     handleSearch () {
       // 查询

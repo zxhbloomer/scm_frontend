@@ -72,6 +72,10 @@ const DELETE_CHECK_TYPE = 'DELETE_CHECK_TYPE'
 const URL_PROJECT_LIST = '/po/project'
 /** 采购合同页面URL */
 const URL_PO_CONTRACT_LIST = '/po/contract'
+/** 采购订单页面URL */
+const URL_PO_ORDER_LIST = '/po/order'
+/** 销售订单页面URL */
+const URL_SO_ORDER_LIST = '/so/order'
 
 export default {
   /** 查看类型 */
@@ -123,5 +127,9 @@ export default {
   /** 项目管理页面URL */
   URL_PROJECT_LIST,
   /** 采购合同页面URL */
-  URL_PO_CONTRACT_LIST
+  URL_PO_CONTRACT_LIST,
+  /** 采购订单页面URL */
+  URL_PO_ORDER_LIST,
+  /** 销售订单页面URL */
+  URL_SO_ORDER_LIST
 }

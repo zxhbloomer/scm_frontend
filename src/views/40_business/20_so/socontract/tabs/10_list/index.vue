@@ -371,7 +371,18 @@
         prop="order_count"
         label="订单笔数"
         align="right"
-      />
+      >
+        <template v-slot="scope">
+          <el-link
+            v-if="scope.row.order_count > 0"
+            type="primary"
+            @click="handleOrderCountClick(scope.row.contract_code)"
+          >
+            {{ scope.row.order_count }}
+          </el-link>
+          <span v-else>0</span>
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -508,7 +519,11 @@
         prop="contract_total"
         label="总销售数量（吨）"
         align="right"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.contract_total == null ? '' : formatNumber(scope.row.contract_total, true, 4) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -530,7 +545,11 @@
         prop="settled_qty"
         label="已结算数量（吨）"
         align="right"
-      />
+      >
+        <template v-slot="scope">
+          {{ scope.row.settled_qty == null ? '' : formatNumber(scope.row.settled_qty, true, 4) }}
+        </template>
+      </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
@@ -1348,6 +1367,16 @@ export default {
       if (this.meDialogStatus) {
         this.$emit('rowDbClick', _data)
       }
+    },
+    // 处理订单笔数点击事件
+    handleOrderCountClick (contractCode) {
+      // 跳转到销售订单页面，传递合同编号作为查询条件
+      this.$router.push({
+        path: '/so/order',
+        query: {
+          so_contract_code: contractCode
+        }
+      })
     },
     handleSearch () {
       // 查询

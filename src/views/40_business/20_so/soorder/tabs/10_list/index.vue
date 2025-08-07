@@ -1276,6 +1276,11 @@ export default {
         this.settings.loading = false
       })
     })
+
+    // 接收穿透参数
+    if (this.$route.query.so_contract_code) {
+      this.dataJson.searchForm.so_contract_code = this.$route.query.so_contract_code
+    }
   },
   beforeUpdate () {
     // 重新布局表格
@@ -1286,6 +1291,13 @@ export default {
   mounted () {
     // 描绘完成
     this.init()
+    
+    // 如果有穿透参数，自动触发查询
+    if (this.$route.query.so_contract_code) {
+      this.$nextTick(() => {
+        this.handleSearch()
+      })
+    }
   },
   destroyed () {
   },
