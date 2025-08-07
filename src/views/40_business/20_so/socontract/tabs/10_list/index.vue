@@ -426,12 +426,12 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="progress"
+        prop="virtual_progress"
         label="执行进度"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.progress == null ? '0.00%' : (scope.row.progress * 100).toFixed(2) + '%' }}
+          {{ scope.row.virtual_progress == null ? '0.00%' : (scope.row.virtual_progress * 100).toFixed(2) + '%' }}
         </template>
       </el-table-column>
       <el-table-column
