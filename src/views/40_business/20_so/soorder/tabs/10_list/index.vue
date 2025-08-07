@@ -1291,7 +1291,7 @@ export default {
   mounted () {
     // 描绘完成
     this.init()
-    
+
     // 如果有穿透参数，自动触发查询
     if (this.$route.query.so_contract_code) {
       this.$nextTick(() => {

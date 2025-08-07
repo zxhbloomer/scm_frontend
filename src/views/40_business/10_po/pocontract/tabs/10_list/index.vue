@@ -567,12 +567,12 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="settled_qty"
+        prop="settled_qty_total"
         label="已结算数量（吨）"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.settled_qty == null ? '' : formatNumber(scope.row.settled_qty, true, 4) }}
+          {{ scope.row.settled_qty_total == null ? '' : formatNumber(scope.row.settled_qty_total, true, 4) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -580,12 +580,12 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="settled_price"
+        prop="settled_amount_total"
         label="结算金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.settled_price == null ? '' : formatNumber(scope.row.settled_price, true, 4) }}
+          {{ scope.row.settled_amount_total == null ? '' : formatCurrency(scope.row.settled_amount_total, true) }}
         </template>
       </el-table-column>
 
@@ -594,24 +594,24 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="advance_pay_price"
+        prop="advance_paid_total"
         label="预付款金额"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.advance_pay_price == null ? '' : formatCurrency(scope.row.advance_pay_price, true) }}
+          {{ scope.row.advance_paid_total == null ? '' : formatCurrency(scope.row.advance_paid_total, true) }}
         </template>
       </el-table-column>
       <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
         min-width="150"
-        prop="accumulated_act_price"
+        prop="virtual_total_paid_amount"
         label="累计实付"
         align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.accumulated_act_price == null ? '' : formatCurrency(scope.row.accumulated_act_price, true) }}
+          {{ scope.row.virtual_total_paid_amount == null ? '' : formatCurrency(scope.row.virtual_total_paid_amount, true) }}
         </template>
       </el-table-column>
 
@@ -619,12 +619,12 @@
         sortable="custom"
         :sort-orders="settings.sortOrders"
         min-width="150"
-        prop="unpaid_amount"
+        prop="virtual_unpaid_amount"
         label="未付"
-        align="left"
+        align="right"
       >
         <template v-slot="scope">
-          {{ scope.row.unpaid_amount == null ? '' : formatCurrency(scope.row.unpaid_amount, true) }}
+          {{ scope.row.virtual_unpaid_amount == null ? '' : formatCurrency(scope.row.virtual_unpaid_amount, true) }}
         </template>
       </el-table-column>
 

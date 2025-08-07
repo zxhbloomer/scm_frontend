@@ -136,71 +136,123 @@
               <el-divider />
               <div class="el-dialog-div">
 
-                <transition-group
-                  name="drag"
-                  class="list"
-                  tag="ul"
+                <div 
+                  ref="mainSortableContainer"
+                  class="hierarchical-column-list"
                 >
+                  <!-- 渲染所有项目，按resultList顺序显示 -->
+                  <template v-for="(item, index) in resultList">
+                    <!-- 普通列项 -->
+                    <div
+                      v-if="!item.group_name"
+                      :key="item.id"
+                      :data-id="item.id"
+                      :class="['draggable-item', 'normal-item', { 'is-fixed': item.fix }]"
+                    >
+                      <el-row :gutter="10" class="item-row">
+                        <el-col :span="1" class="tal">
+                          <i class="el-icon-rank drag-handle" />
+                        </el-col>
+                        <el-col :span="2" class="tar">
+                          {{ item.sort*1+1 }}
+                        </el-col>
+                        <el-col :span="6" class="tal">
+                          {{ item.label }}
+                        </el-col>
+                        <el-col :span="3" class="tal">
+                          <el-checkbox
+                            v-model="item.is_enable"
+                            :disabled="item.fix || item.is_delete !== false"
+                            @change="handleCheckedChange"
+                          />
+                        </el-col>
+                        <el-col :span="3" class="tal">
+                          {{ item.fix === true?'是':'否' }}
+                        </el-col>
+                        <el-col :span="4" class="tal">
+                          <i
+                            v-if="!item.fix && item.is_delete === false"
+                            class="el-icon-top"
+                            @click="top(item)"
+                          />
+                        </el-col>
+                      </el-row>
+                    </div>
 
-                  <li
-                    v-for="(item, index) in resultList"
-                    :key="item.id"
-                    :draggable="!item.fix"
-                    :class="['list-item', { 'is-dragover': index === newIndex }] "
-                    @dragstart="dragStart(item, index)"
-                    @dragover.prevent="dragOver(item, index)"
-                    @dragend="dragEnd()"
-                  >
-                    <el-row :gutter="10">
-                      <el-col
-                        :span="1"
-                        class="tal"
-                      >
-                        <i class="el-icon-rank" />
-                      </el-col>
-                      <el-col
-                        :span="2"
-                        class="tar"
-                      >
-                        {{ item.sort*1+1 }}
-                      </el-col>
-                      <el-col
-                        :span="6"
-                        class="tal"
-                      >
-                        {{ item.label }}
-                      </el-col>
-                      <el-col
-                        :span="3"
-                        class="tal"
-                      >
-                        <el-checkbox
-                          v-model="item.is_enable"
-                          :disabled="item.fix || item.is_delete !== false"
-                          @change="handleCheckedChange"
-                        />
-                      </el-col>
-                      <el-col
-                        :span="3"
-                        class="tal"
-                      >
-                        {{ item.fix === true?'是':'否' }}
-                      </el-col>
-                      <el-col
-                        :span="4"
-                        class="tal"
-                      >
-                        <i
-                          v-if="!item.fix && item.is_delete === false"
-                          class="el-icon-top"
-                          @click="top(item)"
-                        />
-                      </el-col>
-                      <!-- <span>{{ item.sort }}</span> -->
+                    <!-- 分组头 -->
+                    <div
+                      v-else-if="item.is_group_header === 1"
+                      :key="item.id"
+                      :data-id="item.id"
+                      :data-group-name="item.group_name"
+                      :class="['draggable-item', 'group-item']"
+                    >
+                      <!-- 分组头显示 -->
+                      <div class="group-header-content">
+                        <el-row :gutter="10" class="item-row">
+                          <el-col :span="1" class="tal">
+                            <i class="el-icon-rank drag-handle group-drag-handle" />
+                          </el-col>
+                          <el-col :span="2" class="tar">
+                            {{ item.sort*1+1 }}
+                          </el-col>
+                          <el-col :span="6" class="tal group-header-label">
+                            <strong>{{ item.label }}</strong>
+                            <span class="item-count">({{ getGroupChildren(item.group_name).length }}项)</span>
+                          </el-col>
+                          <el-col :span="3" class="tal">
+                            <el-checkbox
+                              v-model="item.is_enable"
+                              :disabled="item.fix || item.is_delete !== false"
+                              @change="handleGroupHeaderCheckedChange(item)"
+                            />
+                          </el-col>
+                          <el-col :span="7" class="tal">
+                            <!-- 组头不显示固定和置顶 -->
+                          </el-col>
+                        </el-row>
+                      </div>
 
-                    </el-row>
-                  </li>
-                </transition-group>
+                      <!-- 分组内子项 -->
+                      <div class="group-children-container">
+                        <ul
+                          :ref="`groupChildrenList_${item.group_name}`"
+                          class="group-children-list"
+                          :data-group-name="item.group_name"
+                        >
+                          <li
+                            v-for="(child, childIndex) in getGroupChildren(item.group_name)"
+                            :key="child.id"
+                            :data-id="child.id"
+                            :class="['group-child-item', { 'is-fixed': child.fix }]"
+                          >
+                            <el-row :gutter="10" class="item-row child-item-row">
+                              <el-col :span="1" class="tal">
+                                <i class="el-icon-rank child-drag-handle" />
+                              </el-col>
+                              <el-col :span="2" class="tar">
+                                {{ child.group_sort + 1 }}
+                              </el-col>
+                              <el-col :span="6" class="tal child-label">
+                                <span class="group-child-text">{{ child.label }}</span>
+                              </el-col>
+                              <el-col :span="3" class="tal">
+                                <el-checkbox
+                                  v-model="child.is_enable"
+                                  :disabled="child.fix || child.is_delete !== false"
+                                  @change="handleCheckedChange"
+                                />
+                              </el-col>
+                              <el-col :span="7" class="tal">
+                                <!-- 分组内不显示固定和置顶 -->
+                              </el-col>
+                            </el-row>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </template>
+                </div>
                 <div />
               </div>
             </el-row>
@@ -263,6 +315,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import bpmDialog from '@/components/60_bpm/designBpmDialog.vue'
 import bpmListDialog from '@/views/90_bpm/definition/00_dialog/list/dialog.vue'
 import constants_para from '@/common/constants/constants_para'
+import Sortable from 'sortablejs'
 
 import { getTableConfigApi, saveTableConfigApi, getTableConfigOriginalApi, resetTableConfigApi, checkTableConfigApi, getBpmDataByPageCodeApi } from '@/api/00_common/table_config'
 
@@ -296,12 +349,8 @@ export default {
       },
       resultList: [], // 表格列数据
       selected: [],
-      oldIndex: '',
-      oldData: '',
-      newIndex: '',
-      newData: '',
-      dragIndex: '',
-      enterIndex: '',
+      // SortableJS 实例存储
+      sortableInstances: {},
       bpmList: [], // 流程列表数据
       bpmTemplateData: {}, // 流程模板
       bpmTemplateDataList: {}, // 流程模板List
@@ -347,6 +396,49 @@ export default {
   computed: {
     constants_para () {
       return constants_para
+    },
+    // 将平铺数据转换为分层结构
+    normalColumns () {
+      return this.resultList.filter(item =>
+        !item.group_name && item.sort < 26
+      ).sort((a, b) => a.sort - b.sort)
+    },
+    laterColumns () {
+      return this.resultList.filter(item =>
+        !item.group_name && item.sort > 26
+      ).sort((a, b) => a.sort - b.sort)
+    },
+    groupedColumns () {
+      const groups = new Map()
+
+      this.resultList.forEach(item => {
+        if (item.is_group_header === 1) {
+          // 组头记录
+          if (!groups.has(item.group_name)) {
+            groups.set(item.group_name, {
+              header: item,
+              children: []
+            })
+          }
+          groups.get(item.group_name).header = item
+        } else if (item.group_name) {
+          // 组内子项
+          if (!groups.has(item.group_name)) {
+            groups.set(item.group_name, {
+              header: null,
+              children: []
+            })
+          }
+          groups.get(item.group_name).children.push(item)
+        }
+      })
+
+      // 对组内子项按group_sort排序
+      Array.from(groups.values()).forEach(group => {
+        group.children.sort((a, b) => a.group_sort - b.group_sort)
+      })
+
+      return Array.from(groups.values()).filter(group => group.header)
     }
   },
   // 监听器
@@ -393,7 +485,231 @@ export default {
       }
     })
   },
+
+  updated () {
+    // 当数据更新后重新初始化SortableJS实例
+    this.$nextTick(() => {
+      this.initSortableInstances()
+    })
+  },
+
+  beforeDestroy () {
+    // 组件销毁前清理SortableJS实例
+    this.destroySortableInstances()
+  },
   methods: {
+    // 获取分组的子项
+    getGroupChildren (groupName) {
+      return this.resultList
+        .filter(item => item.group_name === groupName && item.is_group_header !== 1)
+        .sort((a, b) => a.group_sort - b.group_sort)
+    },
+    
+    // 获取元素在resultList中的真实索引
+    getResultListIndex (item) {
+      return this.resultList.findIndex(listItem => listItem.id === item.id)
+    },
+
+    // 初始化SortableJS实例
+    initSortableInstances () {
+      // 销毁已存在的实例
+      this.destroySortableInstances()
+
+      // 为主容器创建统一的sortable，处理所有顶级元素
+      this.initMainContainerSortable()   
+      // 为组内子项创建独立的sortable
+      this.initGroupChildrenSortable()   
+    },
+
+    // 销毁所有SortableJS实例
+    destroySortableInstances () {
+      Object.values(this.sortableInstances).forEach(instance => {
+        if (instance && instance.destroy) {
+          instance.destroy()
+        }
+      })
+      this.sortableInstances = {}
+    },
+
+    // 为主容器创建统一的sortable实例
+    initMainContainerSortable () {
+      const container = this.$refs.mainSortableContainer
+      if (!container) return
+
+      this.sortableInstances.main = Sortable.create(container, {
+        animation: 150,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        
+        // 指定哪些元素可以被拖拽 - 现在都是主容器的直接子元素
+        draggable: '.draggable-item',
+        
+        filter: '.is-fixed',
+        
+        onMove: (evt) => {
+          return !evt.related.classList.contains('is-fixed')
+        },
+        
+        onEnd: (evt) => {
+          this.handleMainDragEnd(evt)
+        }
+      })
+    },
+
+    // 初始化组内子项拖拽
+    initGroupChildrenSortable () {
+      // 获取所有分组头项
+      const groupHeaders = this.resultList.filter(item => item.is_group_header === 1)
+      
+      groupHeaders.forEach((groupHeader) => {
+        const refName = `groupChildrenList_${groupHeader.group_name}`
+        const element = this.$refs[refName]
+        
+        if (element && element[0]) { // $refs可能返回数组
+          const listElement = Array.isArray(element) ? element[0] : element
+          
+          this.sortableInstances[refName] = Sortable.create(listElement, {
+            group: {
+              name: `group-${groupHeader.group_name}`,
+              pull: false,  // 不允许拖出组
+              put: false    // 不接受外部项目
+            },
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            filter: '.is-fixed',
+            onMove: (evt) => {
+              return !evt.related.classList.contains('is-fixed')
+            },
+            onEnd: (evt) => {
+              this.handleGroupChildDragEnd(evt, groupHeader.group_name)
+            }
+          })
+        }
+      })
+    },
+
+    // 处理主容器拖拽结束
+    handleMainDragEnd (evt) {
+      const { oldIndex, newIndex, item } = evt
+      
+      if (oldIndex === newIndex) return
+
+      console.log('主容器拖拽:', { 
+        oldIndex, 
+        newIndex, 
+        className: item.className,
+        dataId: item.dataset.id,
+        groupName: item.dataset.groupName
+      })
+
+      // 新的处理方式：直接操作resultList数组
+      const itemId = item.dataset.id
+      const actualOldIndex = this.resultList.findIndex(listItem => listItem.id === itemId)
+      
+      if (actualOldIndex === -1) return
+
+      // 根据拖拽元素类型选择处理方式
+      if (item.classList.contains('group-item')) {
+        // 分组项拖拽 - 整个分组作为单元移动
+        this.handleGroupItemDrag(item, actualOldIndex, newIndex)
+      } else if (item.classList.contains('normal-item')) {
+        // 普通列项拖拽 - 单个项目移动
+        this.handleNormalItemDragNew(actualOldIndex, newIndex)
+      }
+
+      // 根据PM要求：序号重排序是必要的
+      this.doReIndexSort()
+    },
+
+    // 处理分组项拖拽
+    handleGroupItemDrag (item, actualOldIndex, newIndex) {
+      const groupName = item.dataset.groupName
+      if (!groupName) return
+
+      console.log('分组项拖拽:', { groupName, actualOldIndex, newIndex })
+
+      // 收集分组的所有项目（分组头 + 所有子项）
+      const groupItems = []
+      const tempResultList = [...this.resultList]
+      
+      for (let i = tempResultList.length - 1; i >= 0; i--) {
+        const resultItem = tempResultList[i]
+        if ((resultItem.is_group_header === 1 && resultItem.group_name === groupName) ||
+            (resultItem.group_name === groupName && resultItem.is_group_header !== 1)) {
+          groupItems.unshift(tempResultList.splice(i, 1)[0])
+        }
+      }
+
+      if (groupItems.length === 0) return
+
+      console.log(`分组 "${groupName}" 包含 ${groupItems.length} 个项目`)
+
+      // 计算实际插入位置
+      let insertIndex = newIndex
+      if (newIndex >= tempResultList.length) {
+        insertIndex = tempResultList.length
+      }
+      
+      tempResultList.splice(insertIndex, 0, ...groupItems)
+      this.resultList = tempResultList
+      console.log('分组整体移动完成')
+    },
+
+    // 处理普通列项拖拽（新版本）
+    handleNormalItemDragNew (actualOldIndex, newIndex) {
+      console.log('普通列项拖拽:', { actualOldIndex, newIndex })
+
+      const tempResultList = [...this.resultList]
+      
+      // 移除并重新插入
+      const [removedItem] = tempResultList.splice(actualOldIndex, 1)
+      
+      // 计算实际插入位置
+      let insertIndex = newIndex
+      if (newIndex >= tempResultList.length) {
+        insertIndex = tempResultList.length
+      }
+      
+      tempResultList.splice(insertIndex, 0, removedItem)
+      this.resultList = tempResultList
+      console.log('普通列项移动完成')
+    },
+
+
+    // 处理组内子项拖拽结束
+    handleGroupChildDragEnd (evt, groupName) {
+      const { oldIndex, newIndex, item } = evt
+      
+      if (oldIndex === newIndex) return
+
+      console.log('组内子项拖拽:', { oldIndex, newIndex, groupName })
+
+      // 获取该分组的所有子项
+      const groupChildren = this.resultList.filter(item => 
+        item.group_name === groupName && item.is_group_header !== 1
+      )
+
+      // 重新排序组内子项的group_sort
+      const draggedItem = groupChildren.find(child => child.id === item.dataset.id)
+      if (draggedItem) {
+        // 移除被拖拽的项
+        groupChildren.splice(oldIndex, 1)
+        // 插入到新位置
+        groupChildren.splice(newIndex, 0, draggedItem)
+        
+        // 重新分配group_sort
+        groupChildren.forEach((child, index) => {
+          child.group_sort = index
+        })
+
+        console.log('组内排序完成')
+      }
+    },
+
+    
     closeMenuAndFloating () {
       // console.log('closeMenuAndFloating')
       this.popoverShow = false
@@ -590,12 +906,57 @@ export default {
       this.popSettings.one.visible = false
     },
 
-    // sort重新计算
+    // sort重新计算 - 基于在resultList中的实际位置
     doReIndexSort () {
-      this.resultList.forEach(function (item, index, arr) {
-        // 开始排序
-        item.sort = index
+      console.log('开始重新分配序号，resultList长度:', this.resultList.length)
+      
+      let sortIndex = 0
+      const groupSortMap = new Map() // 记录每个分组头的sort值
+
+      // 按照resultList的顺序重新分配序号
+      this.resultList.forEach((item, index) => {
+        if (item.is_group_header === 1) {
+          // 分组头：分配新的sort值
+          item.sort = sortIndex
+          groupSortMap.set(item.group_name, sortIndex)
+          sortIndex++
+          console.log(`分组头 "${item.label}" 分配序号: ${item.sort}`)
+        } else if (item.group_name && groupSortMap.has(item.group_name)) {
+          // 分组内子项：使用分组头的sort值，不占用新序号
+          item.sort = groupSortMap.get(item.group_name)
+          console.log(`分组内子项 "${item.label}" 使用分组序号: ${item.sort}, 组内序号: ${item.group_sort}`)
+        } else {
+          // 普通列：分配新的sort值
+          item.sort = sortIndex
+          sortIndex++
+          console.log(`普通列 "${item.label}" 分配序号: ${item.sort}`)
+        }
       })
+
+      console.log('重新分配序号完成，总共使用序号数:', sortIndex)
+      
+      // 验证序号连续性
+      this.validateSortOrder()
+    },
+
+    // 验证序号连续性
+    validateSortOrder () {
+      const uniqueItems = this.resultList.filter(item => {
+        // 只统计分组头和非分组项
+        return item.is_group_header === 1 || !item.group_name
+      })
+      
+      const sortValues = uniqueItems.map(item => item.sort).sort((a, b) => a - b)
+      
+      for (let i = 0; i < sortValues.length; i++) {
+        if (sortValues[i] !== i) {
+          console.error('序号不连续:', sortValues, '应该是:', Array.from({length: sortValues.length}, (_, i) => i))
+          return false
+        }
+      }
+      
+      console.log('序号连续性验证通过:', sortValues)
+      return true
     },
     // 更新逻辑
     doSortUpdate (listData) {
@@ -610,29 +971,6 @@ export default {
         // console.log(this.$route.path + '==================')
         EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_START, this.$route.path)
       })
-    },
-    dragStart (val, i) {
-      this.oldIndex = i
-      this.oldData = val
-    },
-    dragOver (val, i) {
-      this.newIndex = i
-      this.newData = val
-    },
-    dragEnd () {
-      // 属性fix为true的数据不能拖动
-      if (this.oldData.fix === true || this.newData.fix === true) {
-        return false
-      }
-      const newItems = [...this.resultList]
-      // 删除老的节点
-      newItems.splice(this.oldIndex, 1)
-      // 在列表中目标位置增加新的节点
-      newItems.splice(this.newIndex, 0, this.oldData)
-      this.resultList = [...newItems]
-      this.newIndex = ''
-
-      this.doReIndexSort()
     },
     // 检查表格配置数据
     checkTableConfigData (page_code, callback) {
@@ -756,6 +1094,57 @@ export default {
     handleBpmListDialogCancel () {
       this.bpmListVisible = false
       this.bpmTemplateDataList = {}
+    },
+
+    // === 新增的分层级功能方法 ===
+
+    /**
+     * 组头复选框状态变化
+     * 当组头取消选中时，组内所有子项也取消选中
+     * 当组头选中时，组内所有非固定子项都选中
+     */
+    handleGroupHeaderCheckedChange (groupHeader) {
+      const headerChecked = groupHeader.is_enable
+      const groupChildren = this.getGroupChildren(groupHeader.group_name)
+
+      groupChildren.forEach(child => {
+        if (!child.fix && child.is_delete !== true) {
+          child.is_enable = headerChecked
+        }
+      })
+
+      // 触发整体的选中状态更新
+      this.handleCheckedChange()
+    },
+
+    /**
+     * 组内置顶功能
+     * 将子项移动到组内第一位
+     */
+    topInGroup (item, group) {
+      // 在组内重新排序
+      const children = group.children
+      const currentIndex = children.findIndex(child => child.id === item.id)
+
+      if (currentIndex > 0) {
+        // 移除当前项
+        children.splice(currentIndex, 1)
+        // 插入到第一位
+        children.unshift(item)
+
+        // 重新计算group_sort
+        children.forEach((child, index) => {
+          child.group_sort = index
+        })
+
+        // 更新resultList中的数据
+        this.resultList.forEach(resultItem => {
+          const matchChild = children.find(child => child.id === resultItem.id)
+          if (matchChild) {
+            resultItem.group_sort = matchChild.group_sort
+          }
+        })
+      }
     }
 
   }
@@ -951,6 +1340,196 @@ export default {
   top: 0;
   right: 0;
 }
+
+/* === SortableJS 拖拽视觉反馈样式 === */
+.sortable-ghost {
+  opacity: 0.4;
+  background: #e6f7ff !important;
+  border: 2px dashed #1890ff !important;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.sortable-chosen {
+  opacity: 0.8;
+  background: #f6ffed !important;
+  border-left: 3px solid #52c41a;
+  transform: translateX(5px);
+  transition: all 0.2s ease;
+}
+
+.sortable-drag {
+  opacity: 0.6;
+  background: #fff7e6 !important;
+  border: 1px solid #ffa940;
+  box-shadow: 0 4px 12px rgba(255, 169, 64, 0.3);
+  transform: rotate(5deg);
+  transition: all 0.2s ease;
+}
+
+.is-fixed {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  
+  * {
+    cursor: not-allowed !important;
+  }
+}
+
+.sortable-list {
+  min-height: 20px; /* 确保空列表也能作为放置目标 */
+}
+
+/* 分组容器在拖拽时的样式 */
+.group-container:hover {
+  border-color: #d9d9d9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+.group-header.sortable-chosen {
+  background: #e6f7ff !important;
+  border-color: #1890ff !important;
+}
+
+.group-children-list.sortable-chosen {
+  background: #f6ffed !important;
+  border-left: 2px solid #52c41a;
+}
+
+/* === 分层级界面样式 === */
+.hierarchical-column-list {
+  .draggable-item {
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 2px 0;
+    
+    .item-row {
+      height: 31px;
+      line-height: 31px;
+      background: #ffffff;
+      
+      &:hover {
+        background: #f8f9fa;
+      }
+    }
+    
+    .drag-handle {
+      cursor: move;
+      color: #909399;
+      
+      &:hover {
+        color: #606266;
+      }
+    }
+  }
+
+  .group-item {
+    border: 1px solid #e4e7ed;
+    border-radius: 6px;
+    margin: 6px 0;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .group-header-content {
+      background: #f8f9fa;
+      cursor: pointer;
+      border-radius: 4px 4px 0 0;
+      min-height: 36px;
+      padding: 8px 0;
+      border-bottom: 1px solid #e8eaed;
+
+      &:hover {
+        background: #ecf5ff;
+      }
+      
+      .item-row {
+        margin: 0 !important;
+        background: transparent;
+        
+        &:hover {
+          background: transparent;
+        }
+      }
+
+      .group-header-label {
+        display: flex;
+        align-items: center;
+
+        strong {
+          color: #409eff;
+          font-weight: 600;
+        }
+
+        .item-count {
+          margin-left: 8px;
+          color: #606266;
+          font-size: 12px;
+          font-weight: normal;
+          background: #e1f3ff;
+          padding: 2px 6px;
+          border-radius: 10px;
+        }
+      }
+
+      .group-drag-handle {
+        color: #909399;
+        font-size: 14px;
+        
+        &:hover {
+          color: #606266;
+        }
+      }
+    }
+
+    .group-children-container {
+      padding: 0;
+
+      .group-children-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        .group-child-item {
+          .child-item-row {
+            background: #ffffff;
+            border-bottom: 1px solid #f0f0f0;
+
+            &:hover {
+              background: #f8f9fa;
+            }
+          }
+
+          &:last-child .child-item-row {
+            border-bottom: none;
+          }
+
+          .child-label {
+            .group-child-text {
+              margin-left: 16px;
+            }
+          }
+
+          .child-drag-handle {
+            margin-left: 8px;
+            color: #c0c4cc;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+
+  .normal-item {
+    .item-row {
+      background: #ffffff;
+
+      &:hover {
+        background: #f8f9fa;
+      }
+    }
+  }
+}
+
 </style>
 <style lang="scss" >
 .configDialog .el-dialog__body {
