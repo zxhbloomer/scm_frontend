@@ -135,13 +135,12 @@
             <el-row :gutter="10">
               <el-divider />
               <div class="el-dialog-div">
-
-                <div 
+                <div
                   ref="mainSortableContainer"
                   class="hierarchical-column-list"
                 >
                   <!-- 渲染所有项目，按resultList顺序显示 -->
-                  <template v-for="(item, index) in resultList">
+                  <template v-for="item in resultList">
                     <!-- 普通列项 -->
                     <div
                       v-if="!item.group_name"
@@ -221,7 +220,7 @@
                           :data-group-name="item.group_name"
                         >
                           <li
-                            v-for="(child, childIndex) in getGroupChildren(item.group_name)"
+                            v-for="child in getGroupChildren(item.group_name)"
                             :key="child.id"
                             :data-id="child.id"
                             :class="['group-child-item', { 'is-fixed': child.fix }]"
@@ -231,7 +230,7 @@
                                 <i class="el-icon-rank child-drag-handle" />
                               </el-col>
                               <el-col :span="2" class="tar">
-                                {{ child.group_sort + 1 }}
+                                {{ child.group_sort }}
                               </el-col>
                               <el-col :span="6" class="tal child-label">
                                 <span class="group-child-text">{{ child.label }}</span>
@@ -504,7 +503,7 @@ export default {
         .filter(item => item.group_name === groupName && item.is_group_header !== 1)
         .sort((a, b) => a.group_sort - b.group_sort)
     },
-    
+
     // 获取元素在resultList中的真实索引
     getResultListIndex (item) {
       return this.resultList.findIndex(listItem => listItem.id === item.id)
@@ -516,9 +515,9 @@ export default {
       this.destroySortableInstances()
 
       // 为主容器创建统一的sortable，处理所有顶级元素
-      this.initMainContainerSortable()   
+      this.initMainContainerSortable()
       // 为组内子项创建独立的sortable
-      this.initGroupChildrenSortable()   
+      this.initGroupChildrenSortable()
     },
 
     // 销毁所有SortableJS实例
@@ -541,16 +540,16 @@ export default {
         ghostClass: 'sortable-ghost',
         chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
-        
+
         // 指定哪些元素可以被拖拽 - 现在都是主容器的直接子元素
         draggable: '.draggable-item',
-        
+
         filter: '.is-fixed',
-        
+
         onMove: (evt) => {
           return !evt.related.classList.contains('is-fixed')
         },
-        
+
         onEnd: (evt) => {
           this.handleMainDragEnd(evt)
         }
@@ -561,19 +560,19 @@ export default {
     initGroupChildrenSortable () {
       // 获取所有分组头项
       const groupHeaders = this.resultList.filter(item => item.is_group_header === 1)
-      
+
       groupHeaders.forEach((groupHeader) => {
         const refName = `groupChildrenList_${groupHeader.group_name}`
         const element = this.$refs[refName]
-        
+
         if (element && element[0]) { // $refs可能返回数组
           const listElement = Array.isArray(element) ? element[0] : element
-          
+
           this.sortableInstances[refName] = Sortable.create(listElement, {
             group: {
               name: `group-${groupHeader.group_name}`,
-              pull: false,  // 不允许拖出组
-              put: false    // 不接受外部项目
+              pull: false, // 不允许拖出组
+              put: false // 不接受外部项目
             },
             animation: 150,
             ghostClass: 'sortable-ghost',
@@ -594,22 +593,18 @@ export default {
     // 处理主容器拖拽结束
     handleMainDragEnd (evt) {
       const { oldIndex, newIndex, item } = evt
-      
-      if (oldIndex === newIndex) return
 
-      console.log('主容器拖拽:', { 
-        oldIndex, 
-        newIndex, 
-        className: item.className,
-        dataId: item.dataset.id,
-        groupName: item.dataset.groupName
-      })
+      if (oldIndex === newIndex) return
 
       // 新的处理方式：直接操作resultList数组
       const itemId = item.dataset.id
-      const actualOldIndex = this.resultList.findIndex(listItem => listItem.id === itemId)
-      
-      if (actualOldIndex === -1) return
+
+      // 修复类型不匹配：DOM dataset.id是字符串，resultList.id是数字，显式转换类型比较
+      const actualOldIndex = this.resultList.findIndex(listItem => listItem.id === Number(itemId))
+
+      if (actualOldIndex === -1) {
+        return
+      }
 
       // 根据拖拽元素类型选择处理方式
       if (item.classList.contains('group-item')) {
@@ -620,8 +615,8 @@ export default {
         this.handleNormalItemDragNew(actualOldIndex, newIndex)
       }
 
-      // 根据PM要求：序号重排序是必要的
-      this.doReIndexSort()
+      // 强制触发Vue响应式更新
+      this.$forceUpdate()
     },
 
     // 处理分组项拖拽
@@ -629,12 +624,10 @@ export default {
       const groupName = item.dataset.groupName
       if (!groupName) return
 
-      console.log('分组项拖拽:', { groupName, actualOldIndex, newIndex })
-
       // 收集分组的所有项目（分组头 + 所有子项）
       const groupItems = []
       const tempResultList = [...this.resultList]
-      
+
       for (let i = tempResultList.length - 1; i >= 0; i--) {
         const resultItem = tempResultList[i]
         if ((resultItem.is_group_header === 1 && resultItem.group_name === groupName) ||
@@ -645,50 +638,41 @@ export default {
 
       if (groupItems.length === 0) return
 
-      console.log(`分组 "${groupName}" 包含 ${groupItems.length} 个项目`)
-
       // 计算实际插入位置
       let insertIndex = newIndex
       if (newIndex >= tempResultList.length) {
         insertIndex = tempResultList.length
       }
-      
+
       tempResultList.splice(insertIndex, 0, ...groupItems)
       this.resultList = tempResultList
-      console.log('分组整体移动完成')
     },
 
     // 处理普通列项拖拽（新版本）
     handleNormalItemDragNew (actualOldIndex, newIndex) {
-      console.log('普通列项拖拽:', { actualOldIndex, newIndex })
-
       const tempResultList = [...this.resultList]
-      
+
       // 移除并重新插入
       const [removedItem] = tempResultList.splice(actualOldIndex, 1)
-      
+
       // 计算实际插入位置
       let insertIndex = newIndex
       if (newIndex >= tempResultList.length) {
         insertIndex = tempResultList.length
       }
-      
+
       tempResultList.splice(insertIndex, 0, removedItem)
       this.resultList = tempResultList
-      console.log('普通列项移动完成')
     },
-
 
     // 处理组内子项拖拽结束
     handleGroupChildDragEnd (evt, groupName) {
       const { oldIndex, newIndex, item } = evt
-      
+
       if (oldIndex === newIndex) return
 
-      console.log('组内子项拖拽:', { oldIndex, newIndex, groupName })
-
       // 获取该分组的所有子项
-      const groupChildren = this.resultList.filter(item => 
+      const groupChildren = this.resultList.filter(item =>
         item.group_name === groupName && item.is_group_header !== 1
       )
 
@@ -699,17 +683,14 @@ export default {
         groupChildren.splice(oldIndex, 1)
         // 插入到新位置
         groupChildren.splice(newIndex, 0, draggedItem)
-        
-        // 重新分配group_sort
-        groupChildren.forEach((child, index) => {
-          child.group_sort = index
-        })
 
-        console.log('组内排序完成')
+        // 重新分配group_sort（从1开始，不是从0开始）
+        groupChildren.forEach((child, index) => {
+          child.group_sort = index + 1
+        })
       }
     },
 
-    
     closeMenuAndFloating () {
       // console.log('closeMenuAndFloating')
       this.popoverShow = false
@@ -873,6 +854,8 @@ export default {
       // 获取数据
       getTableConfigApi({ page_code: page_code }).then(response => {
         this.resultList = response.data
+        // 确保组内序号从1开始
+        this.reIndexGroupSort()
         this.selected = this.resultList.filter(item => {
           return item.is_enable === true
         })
@@ -906,37 +889,59 @@ export default {
       this.popSettings.one.visible = false
     },
 
-    // sort重新计算 - 基于在resultList中的实际位置
+    // sort重新计算 - 基于在resultList中的实际位置（保留原始逻辑）
     doReIndexSort () {
-      console.log('开始重新分配序号，resultList长度:', this.resultList.length)
-      
       let sortIndex = 0
-      const groupSortMap = new Map() // 记录每个分组头的sort值
+      const groupSortMap = new Map()
+      const groupChildrenMap = new Map()
 
-      // 按照resultList的顺序重新分配序号
       this.resultList.forEach((item, index) => {
         if (item.is_group_header === 1) {
-          // 分组头：分配新的sort值
           item.sort = sortIndex
+          item.group_sort = 0
           groupSortMap.set(item.group_name, sortIndex)
+          groupChildrenMap.set(item.group_name, [])
           sortIndex++
-          console.log(`分组头 "${item.label}" 分配序号: ${item.sort}`)
         } else if (item.group_name && groupSortMap.has(item.group_name)) {
-          // 分组内子项：使用分组头的sort值，不占用新序号
           item.sort = groupSortMap.get(item.group_name)
-          console.log(`分组内子项 "${item.label}" 使用分组序号: ${item.sort}, 组内序号: ${item.group_sort}`)
+          const children = groupChildrenMap.get(item.group_name)
+          children.push(item)
         } else {
-          // 普通列：分配新的sort值
           item.sort = sortIndex
+          item.group_sort = 0
           sortIndex++
-          console.log(`普通列 "${item.label}" 分配序号: ${item.sort}`)
         }
       })
 
-      console.log('重新分配序号完成，总共使用序号数:', sortIndex)
-      
-      // 验证序号连续性
+      groupChildrenMap.forEach((children, groupName) => {
+        children.forEach((child, index) => {
+          child.group_sort = index + 1
+        })
+      })
+
       this.validateSortOrder()
+    },
+
+    // 重新计算分组内序号
+    reIndexGroupSort () {
+      const groupChildrenMap = new Map()
+
+      // 收集分组内的子项
+      this.resultList.forEach(item => {
+        if (item.group_name && item.is_group_header !== 1) {
+          if (!groupChildrenMap.has(item.group_name)) {
+            groupChildrenMap.set(item.group_name, [])
+          }
+          groupChildrenMap.get(item.group_name).push(item)
+        }
+      })
+
+      // 重新分配每个分组内子项的group_sort
+      groupChildrenMap.forEach((children) => {
+        children.forEach((child, index) => {
+          child.group_sort = index + 1
+        })
+      })
     },
 
     // 验证序号连续性
@@ -945,17 +950,15 @@ export default {
         // 只统计分组头和非分组项
         return item.is_group_header === 1 || !item.group_name
       })
-      
+
       const sortValues = uniqueItems.map(item => item.sort).sort((a, b) => a - b)
-      
+
       for (let i = 0; i < sortValues.length; i++) {
         if (sortValues[i] !== i) {
-          console.error('序号不连续:', sortValues, '应该是:', Array.from({length: sortValues.length}, (_, i) => i))
           return false
         }
       }
-      
-      console.log('序号连续性验证通过:', sortValues)
+
       return true
     },
     // 更新逻辑
@@ -1020,6 +1023,8 @@ export default {
         // 获取数据
         getTableConfigOriginalApi({ page_code: page_code }).then(response => {
           this.resultList = response.data
+          // 确保组内序号从1开始
+          this.reIndexGroupSort()
           this.selected = this.resultList.filter(item => {
             return item.is_enable === true
           })
@@ -1134,7 +1139,7 @@ export default {
 
         // 重新计算group_sort
         children.forEach((child, index) => {
-          child.group_sort = index
+          child.group_sort = index + 1
         })
 
         // 更新resultList中的数据
@@ -1370,7 +1375,7 @@ export default {
 .is-fixed {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
-  
+
   * {
     cursor: not-allowed !important;
   }
@@ -1402,21 +1407,21 @@ export default {
     cursor: pointer;
     border-radius: 4px;
     margin: 2px 0;
-    
+
     .item-row {
       height: 31px;
       line-height: 31px;
       background: #ffffff;
-      
+
       &:hover {
         background: #f8f9fa;
       }
     }
-    
+
     .drag-handle {
       cursor: move;
       color: #909399;
-      
+
       &:hover {
         color: #606266;
       }
@@ -1441,11 +1446,11 @@ export default {
       &:hover {
         background: #ecf5ff;
       }
-      
+
       .item-row {
         margin: 0 !important;
         background: transparent;
-        
+
         &:hover {
           background: transparent;
         }
@@ -1474,7 +1479,7 @@ export default {
       .group-drag-handle {
         color: #909399;
         font-size: 14px;
-        
+
         &:hover {
           color: #606266;
         }
