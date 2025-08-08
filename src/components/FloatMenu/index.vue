@@ -143,7 +143,7 @@
                   <template v-for="item in resultList">
                     <!-- 普通列项 -->
                     <div
-                      v-if="!item.group_name"
+                      v-if="item.is_group !== 1"
                       :key="item.id"
                       :data-id="item.id"
                       :class="['draggable-item', 'normal-item', { 'is-fixed': item.fix }]"
@@ -180,10 +180,10 @@
 
                     <!-- 分组头 -->
                     <div
-                      v-else-if="item.is_group_header === 1"
+                      v-else-if="item.is_group === 1"
                       :key="item.id"
                       :data-id="item.id"
-                      :data-group-name="item.group_name"
+                      :data-group-name="item.name"
                       :class="['draggable-item', 'group-item']"
                     >
                       <!-- 分组头显示 -->
@@ -197,7 +197,7 @@
                           </el-col>
                           <el-col :span="6" class="tal group-header-label">
                             <strong>{{ item.label }}</strong>
-                            <span class="item-count">({{ getGroupChildren(item.group_name).length }}项)</span>
+                            <span class="item-count">({{ (item.groupChildren || []).length }}项)</span>
                           </el-col>
                           <el-col :span="3" class="tal">
                             <el-checkbox
@@ -215,12 +215,12 @@
                       <!-- 分组内子项 -->
                       <div class="group-children-container">
                         <ul
-                          :ref="`groupChildrenList_${item.group_name}`"
+                          :ref="`groupChildrenList_${item.name}`"
                           class="group-children-list"
-                          :data-group-name="item.group_name"
+                          :data-group-name="item.name"
                         >
                           <li
-                            v-for="child in getGroupChildren(item.group_name)"
+                            v-for="(child, childIndex) in item.groupChildren || []"
                             :key="child.id"
                             :data-id="child.id"
                             :class="['group-child-item', { 'is-fixed': child.fix }]"
@@ -230,7 +230,7 @@
                                 <i class="el-icon-rank child-drag-handle" />
                               </el-col>
                               <el-col :span="2" class="tar">
-                                {{ child.group_sort }}
+                                {{ child.displayIndex || (childIndex + 1) }}
                               </el-col>
                               <el-col :span="6" class="tal child-label">
                                 <span class="group-child-text">{{ child.label }}</span>
@@ -278,16 +278,16 @@
         >重置列宽度</el-button>
 
         <el-button
+          plain
+          type="primary"
+          :disabled="settings.loading || !confirmButtonEnabled"
+          @click="handleOk"
+        >确定</el-button>
+
+        <el-button
           :disabled="settings.loading"
           @click="handleCancel"
         >取消</el-button>
-
-        <el-button
-          plain
-          type="primary"
-          :disabled="settings.loading"
-          @click="handleOk"
-        >确定</el-button>
       </div>
     </el-dialog>
 
@@ -389,55 +389,16 @@ export default {
           visible: false,
           page_code: ''
         }
-      }
+      },
+      // 确定按钮是否可用
+      confirmButtonEnabled: false,
+      // 用于跟踪是否为初始数据加载
+      isInitialLoad: true
     }
   },
   computed: {
     constants_para () {
       return constants_para
-    },
-    // 将平铺数据转换为分层结构
-    normalColumns () {
-      return this.resultList.filter(item =>
-        !item.group_name && item.sort < 26
-      ).sort((a, b) => a.sort - b.sort)
-    },
-    laterColumns () {
-      return this.resultList.filter(item =>
-        !item.group_name && item.sort > 26
-      ).sort((a, b) => a.sort - b.sort)
-    },
-    groupedColumns () {
-      const groups = new Map()
-
-      this.resultList.forEach(item => {
-        if (item.is_group_header === 1) {
-          // 组头记录
-          if (!groups.has(item.group_name)) {
-            groups.set(item.group_name, {
-              header: item,
-              children: []
-            })
-          }
-          groups.get(item.group_name).header = item
-        } else if (item.group_name) {
-          // 组内子项
-          if (!groups.has(item.group_name)) {
-            groups.set(item.group_name, {
-              header: null,
-              children: []
-            })
-          }
-          groups.get(item.group_name).children.push(item)
-        }
-      })
-
-      // 对组内子项按group_sort排序
-      Array.from(groups.values()).forEach(group => {
-        group.children.sort((a, b) => a.group_sort - b.group_sort)
-      })
-
-      return Array.from(groups.values()).filter(group => group.header)
     }
   },
   // 监听器
@@ -448,7 +409,13 @@ export default {
           return item.is_enable === true
         })
         console.log(this.selected.length)
-      }
+
+        // 监听数据变化，启用确定按钮（但不包括初始数据加载）
+        if (!this.isInitialLoad) {
+          this.confirmButtonEnabled = true
+        }
+      },
+      deep: true // 深度监听，监听数组内对象的变化
     }
   },
   created () {
@@ -497,12 +464,6 @@ export default {
     this.destroySortableInstances()
   },
   methods: {
-    // 获取分组的子项
-    getGroupChildren (groupName) {
-      return this.resultList
-        .filter(item => item.group_name === groupName && item.is_group_header !== 1)
-        .sort((a, b) => a.group_sort - b.group_sort)
-    },
 
     // 获取元素在resultList中的真实索引
     getResultListIndex (item) {
@@ -559,10 +520,10 @@ export default {
     // 初始化组内子项拖拽
     initGroupChildrenSortable () {
       // 获取所有分组头项
-      const groupHeaders = this.resultList.filter(item => item.is_group_header === 1)
+      const groupHeaders = this.resultList.filter(item => item.is_group === 1)
 
       groupHeaders.forEach((groupHeader) => {
-        const refName = `groupChildrenList_${groupHeader.group_name}`
+        const refName = `groupChildrenList_${groupHeader.name}`
         const element = this.$refs[refName]
 
         if (element && element[0]) { // $refs可能返回数组
@@ -570,7 +531,7 @@ export default {
 
           this.sortableInstances[refName] = Sortable.create(listElement, {
             group: {
-              name: `group-${groupHeader.group_name}`,
+              name: `group-${groupHeader.name}`,
               pull: false, // 不允许拖出组
               put: false // 不接受外部项目
             },
@@ -583,7 +544,7 @@ export default {
               return !evt.related.classList.contains('is-fixed')
             },
             onEnd: (evt) => {
-              this.handleGroupChildDragEnd(evt, groupHeader.group_name)
+              this.handleGroupChildDragEnd(evt, groupHeader.name)
             }
           })
         }
@@ -624,19 +585,12 @@ export default {
       const groupName = item.dataset.groupName
       if (!groupName) return
 
-      // 收集分组的所有项目（分组头 + 所有子项）
-      const groupItems = []
+      // 在新结构中，分组是单个项目，不需要收集多个项目
+      // 直接移动分组项（包含其所有子项数据）
       const tempResultList = [...this.resultList]
 
-      for (let i = tempResultList.length - 1; i >= 0; i--) {
-        const resultItem = tempResultList[i]
-        if ((resultItem.is_group_header === 1 && resultItem.group_name === groupName) ||
-            (resultItem.group_name === groupName && resultItem.is_group_header !== 1)) {
-          groupItems.unshift(tempResultList.splice(i, 1)[0])
-        }
-      }
-
-      if (groupItems.length === 0) return
+      // 移除被拖拽的分组项
+      const [removedGroupItem] = tempResultList.splice(actualOldIndex, 1)
 
       // 计算实际插入位置
       let insertIndex = newIndex
@@ -644,7 +598,8 @@ export default {
         insertIndex = tempResultList.length
       }
 
-      tempResultList.splice(insertIndex, 0, ...groupItems)
+      // 重新插入分组项
+      tempResultList.splice(insertIndex, 0, removedGroupItem)
       this.resultList = tempResultList
     },
 
@@ -667,27 +622,27 @@ export default {
 
     // 处理组内子项拖拽结束
     handleGroupChildDragEnd (evt, groupName) {
-      const { oldIndex, newIndex, item } = evt
+      const { oldIndex, newIndex } = evt
 
       if (oldIndex === newIndex) return
 
-      // 获取该分组的所有子项
-      const groupChildren = this.resultList.filter(item =>
-        item.group_name === groupName && item.is_group_header !== 1
+      // 找到对应的分组项
+      const groupItem = this.resultList.find(item =>
+        item.is_group === 1 && item.name === groupName
       )
 
-      // 重新排序组内子项的group_sort
-      const draggedItem = groupChildren.find(child => child.id === item.dataset.id)
+      if (!groupItem || !groupItem.groupChildren) return
+
+      // 直接操作 groupChildren 数组重新排序
+      const draggedItem = groupItem.groupChildren[oldIndex]
       if (draggedItem) {
         // 移除被拖拽的项
-        groupChildren.splice(oldIndex, 1)
+        groupItem.groupChildren.splice(oldIndex, 1)
         // 插入到新位置
-        groupChildren.splice(newIndex, 0, draggedItem)
+        groupItem.groupChildren.splice(newIndex, 0, draggedItem)
 
-        // 重新分配group_sort（从1开始，不是从0开始）
-        groupChildren.forEach((child, index) => {
-          child.group_sort = index + 1
-        })
+        // 注意：拖拽后不重新计算displayIndex，保持原有序号显示
+        // 等待后端处理完成后，重新加载数据时会获得正确的序号
       }
     },
 
@@ -834,6 +789,10 @@ export default {
     },
     // 设置列属性
     handleTableColumnsSetting () {
+      // 重置按钮状态和初始加载标记
+      this.confirmButtonEnabled = false
+      this.isInitialLoad = true
+
       this.popSettings.one.visible = true
       var _this = this
       this.checkTableConfigData(this.$route.meta.page_code, function (page_code, response) {
@@ -854,6 +813,17 @@ export default {
       // 获取数据
       getTableConfigApi({ page_code: page_code }).then(response => {
         this.resultList = response.data
+
+        // 为分组子项设置稳定的显示序号，拖拽后不会自动重排
+        this.resultList.forEach(item => {
+          if (item.is_group === 1 && item.groupChildren && Array.isArray(item.groupChildren)) {
+            item.groupChildren.forEach((child, index) => {
+              // 设置初始显示序号，后续拖拽不会改变这个值，等后端更新
+              child.displayIndex = index + 1
+            })
+          }
+        })
+
         // 确保组内序号从1开始
         this.reIndexGroupSort()
         this.selected = this.resultList.filter(item => {
@@ -867,6 +837,11 @@ export default {
         } else {
           this.checkAll = false
         }
+
+        // 初始数据加载完成，后续的数据变化将启用确定按钮
+        this.$nextTick(() => {
+          this.isInitialLoad = false
+        })
       }).finally(() => {
         this.settings.loading = false
       })
@@ -882,76 +857,63 @@ export default {
       this.resetTableConfig(this.$route.meta.page_code)
     },
     handleOk () {
-      this.popSettings.one.visible = false
-      this.doSortUpdate(this.resultList)
+      // 确认对话框
+      this.$confirm('确定本次修改吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.popSettings.one.visible = false
+        this.doSortUpdate(this.resultList)
+        // 重置按钮状态和初始加载标记
+        this.confirmButtonEnabled = false
+        this.isInitialLoad = true
+      }).catch(() => {
+        // 用户取消，不做任何操作
+      })
     },
     handleCancel () {
       this.popSettings.one.visible = false
+      // 重置按钮状态和初始加载标记
+      this.confirmButtonEnabled = false
+      this.isInitialLoad = true
     },
 
-    // sort重新计算 - 基于在resultList中的实际位置（保留原始逻辑）
+    // sort重新计算 - 适配新数据结构（基于resultList中的实际位置）
     doReIndexSort () {
-      let sortIndex = 0
-      const groupSortMap = new Map()
-      const groupChildrenMap = new Map()
-
+      // 新结构简化：只需要给resultList中的每个项目分配sort值
+      // 分组子项(groupChildren)的顺序由数组索引决定，不需要单独的sort字段
       this.resultList.forEach((item, index) => {
-        if (item.is_group_header === 1) {
-          item.sort = sortIndex
-          item.group_sort = 0
-          groupSortMap.set(item.group_name, sortIndex)
-          groupChildrenMap.set(item.group_name, [])
-          sortIndex++
-        } else if (item.group_name && groupSortMap.has(item.group_name)) {
-          item.sort = groupSortMap.get(item.group_name)
-          const children = groupChildrenMap.get(item.group_name)
-          children.push(item)
-        } else {
-          item.sort = sortIndex
-          item.group_sort = 0
-          sortIndex++
-        }
-      })
+        item.sort = index
 
-      groupChildrenMap.forEach((children, groupName) => {
-        children.forEach((child, index) => {
-          child.group_sort = index + 1
-        })
+        // 如果是分组项且有子项，确保子项顺序正确
+        if (item.is_group === 1 && item.groupChildren && Array.isArray(item.groupChildren)) {
+          // 子项排序由数组索引决定，不需要额外处理
+          // 只确保子项存在必要的字段
+          item.groupChildren.forEach((child, childIndex) => {
+            // 子项不需要sort字段，位置由数组索引决定
+            if (!child.hasOwnProperty('is_enable')) {
+              child.is_enable = true // 默认启用
+            }
+          })
+        }
       })
 
       this.validateSortOrder()
     },
 
-    // 重新计算分组内序号
+    // 重新计算分组内序号（新结构中不需要此方法，但保留避免调用出错）
     reIndexGroupSort () {
-      const groupChildrenMap = new Map()
-
-      // 收集分组内的子项
-      this.resultList.forEach(item => {
-        if (item.group_name && item.is_group_header !== 1) {
-          if (!groupChildrenMap.has(item.group_name)) {
-            groupChildrenMap.set(item.group_name, [])
-          }
-          groupChildrenMap.get(item.group_name).push(item)
-        }
-      })
-
-      // 重新分配每个分组内子项的group_sort
-      groupChildrenMap.forEach((children) => {
-        children.forEach((child, index) => {
-          child.group_sort = index + 1
-        })
-      })
+      // 在新的数据结构中，分组内子项顺序由 groupChildren 数组索引决定
+      // 不需要维护 group_sort 字段，这个方法保留为空函数避免调用出错
+      console.log('reIndexGroupSort: 新结构中使用数组索引，不需要重新计算group_sort')
     },
 
     // 验证序号连续性
     validateSortOrder () {
-      const uniqueItems = this.resultList.filter(item => {
-        // 只统计分组头和非分组项
-        return item.is_group_header === 1 || !item.group_name
-      })
-
-      const sortValues = uniqueItems.map(item => item.sort).sort((a, b) => a - b)
+      // 在新结构中，每个 resultList 中的项都是独立的（分组项和普通项）
+      // 验证主列表中每个项目的 sort 值是否连续
+      const sortValues = this.resultList.map(item => item.sort).sort((a, b) => a - b)
 
       for (let i = 0; i < sortValues.length; i++) {
         if (sortValues[i] !== i) {
@@ -1018,6 +980,9 @@ export default {
     },
 
     resetTableConfigData (page_code) {
+      // 重置时也设置为初始加载状态
+      this.isInitialLoad = true
+
       // 重置
       resetTableConfigApi({ page_code: page_code }).then(response => {
         // 获取数据
@@ -1036,6 +1001,11 @@ export default {
           } else {
             this.checkAll = false
           }
+
+          // 重置数据加载完成，后续的数据变化将启用确定按钮
+          this.$nextTick(() => {
+            this.isInitialLoad = false
+          })
         }).finally(() => {
           this.settings.loading = false
         })
@@ -1066,12 +1036,49 @@ export default {
     },
     // 复选框change事件
     handleCheckedChange () {
+      // 更新子项勾选状态后，同步更新对应分组的勾选状态
+      this.syncGroupCheckboxStates()
+      
+      // 更新全局选中状态
       this.selected = this.resultList.filter(item => {
         return item.is_enable === true
       })
 
       this.isIndeterminate = this.selected.length > 0 && this.selected.length < this.resultList.length
     },
+
+    /**
+     * 同步分组勾选框状态 - 简单关联模式
+     * 子项→分组头的同步逻辑：
+     * 1. 任何子项被勾选 → 分组头自动勾选
+     * 2. 所有子项都取消 → 分组头自动取消勾选
+     */
+    syncGroupCheckboxStates () {
+      this.resultList.forEach(item => {
+        // 只处理分组项
+        if (item.is_group === 1 && item.groupChildren && item.groupChildren.length > 0) {
+          // 获取所有可勾选的子项（排除固定项和已删除项）
+          const selectableChildren = item.groupChildren.filter(child => 
+            !child.fix && child.is_delete !== true
+          )
+          
+          if (selectableChildren.length > 0) {
+            // 统计勾选状态
+            const checkedCount = selectableChildren.filter(child => child.is_enable === true).length
+            
+            // 简单关联逻辑：有子项勾选就勾选分组头，没有子项勾选就取消分组头
+            if (checkedCount > 0) {
+              // 有子项被勾选 → 分组头自动勾选
+              item.is_enable = true
+            } else {
+              // 所有子项都取消 → 分组头自动取消勾选
+              item.is_enable = false
+            }
+          }
+        }
+      })
+    },
+
     // 置顶
     top (item) {
       // 属性fix为true的数据不能拖动
@@ -1110,7 +1117,7 @@ export default {
      */
     handleGroupHeaderCheckedChange (groupHeader) {
       const headerChecked = groupHeader.is_enable
-      const groupChildren = this.getGroupChildren(groupHeader.group_name)
+      const groupChildren = groupHeader.groupChildren || []
 
       groupChildren.forEach(child => {
         if (!child.fix && child.is_delete !== true) {
@@ -1123,32 +1130,28 @@ export default {
     },
 
     /**
-     * 组内置顶功能
+     * 组内置顶功能 - 适配新数据结构
      * 将子项移动到组内第一位
      */
     topInGroup (item, group) {
-      // 在组内重新排序
-      const children = group.children
-      const currentIndex = children.findIndex(child => child.id === item.id)
+      // 在新结构中，使用 groupChildren 数组
+      const groupChildren = group.groupChildren || []
+      const currentIndex = groupChildren.findIndex(child => child.id === item.id)
 
       if (currentIndex > 0) {
         // 移除当前项
-        children.splice(currentIndex, 1)
+        groupChildren.splice(currentIndex, 1)
         // 插入到第一位
-        children.unshift(item)
+        groupChildren.unshift(item)
 
-        // 重新计算group_sort
-        children.forEach((child, index) => {
-          child.group_sort = index + 1
-        })
+        // 新结构中不需要维护 group_sort 字段
+        // 子项的顺序由 groupChildren 数组索引决定
 
-        // 更新resultList中的数据
-        this.resultList.forEach(resultItem => {
-          const matchChild = children.find(child => child.id === resultItem.id)
-          if (matchChild) {
-            resultItem.group_sort = matchChild.group_sort
-          }
-        })
+        // 更新组对象的 groupChildren 引用
+        group.groupChildren = groupChildren
+
+        // 触发数据更新，让前端界面重新渲染
+        this.$forceUpdate()
       }
     }
 
