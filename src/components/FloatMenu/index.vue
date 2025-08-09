@@ -931,10 +931,13 @@ export default {
 
       }).finally(() => {
         this.settings.loading = false
-        // EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_START)
-        // console.log(this.$route.fullPath + '==================')
-        // console.log(this.$route.path + '==================')
-        EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_START, this.$route.path)
+        // 发送新的配置更新事件，传递page_code和配置数据
+        EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, {
+          page_code: this.$route.meta.page_code,
+          config: listData
+        })
+        // 注释掉原有的事件，避免触发页面刷新和业务查询
+        // EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_START, this.$route.path)
       })
     },
     // 检查表格配置数据

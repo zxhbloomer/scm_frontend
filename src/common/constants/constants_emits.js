@@ -92,6 +92,7 @@ const EMIT_RELATION_LOADING_OK = 'global:relation:getDataList_loading_ok'
 const EMIT_TABLE_COLUMNS_CONFIG_START = 'global:table:config:start'
 const EMIT_TABLE_COLUMNS_CONFIG_LOADING = 'global:table:config:loading'
 const EMIT_TABLE_COLUMNS_CONFIG_LOADING_OK = 'global:table:config:loading_ok'
+const EMIT_TABLE_COLUMNS_CONFIG_UPDATED = 'global:table:config:updated'
 
 /**
  * 组织机构弹窗页面之间，进行通讯，兄弟通讯，
@@ -312,6 +313,7 @@ export default {
   EMIT_TABLE_COLUMNS_CONFIG_START,
   EMIT_TABLE_COLUMNS_CONFIG_LOADING,
   EMIT_TABLE_COLUMNS_CONFIG_LOADING_OK,
+  EMIT_TABLE_COLUMNS_CONFIG_UPDATED,
   EMIT_ORG_DIALOG_CHANGE,
   EMIT_ORG_DIALOG_STAFF_SELECT,
 

@@ -5,6 +5,7 @@ import { getTableConfigApi } from '@/api/00_common/table_config'
 
 import { isNotEmpty } from '@/utils/index.js'
 // import deepCopy from 'deep-copy'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   name: 'ElTable',
@@ -24,6 +25,13 @@ export default {
       default: undefined
     }
   },
+  data() {
+    return {
+      configLoading: true,  // 配置加载中状态
+      configLoaded: false,  // 配置加载完成状态
+      tableKey: 0          // 用于强制重新渲染表格
+    }
+  },
   created () {
     if (this.setColumnSize) {
       // 设置拖动列宽的事件
@@ -31,8 +39,17 @@ export default {
         this.saveColumnsSize(this, this.$parent.$options.name, column)
       })
     }
+    
+    // 监听配置更新事件
+    EventBus.$on(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, this.handleConfigUpdate)
   },
   mounted () {
+    // 如果启用了列配置，先隐藏表格，添加过渡效果
+    if (this.$attrs.columns_index_key === 'true') {
+      this.$el.style.transition = 'opacity 0.3s ease-in-out'
+      this.$el.style.opacity = '0'
+    }
+    
     // 描绘完成
     const { componentInstance: $table } = this.$vnode
     if (!$table) { return }
@@ -276,10 +293,14 @@ export default {
 
         // 检查是否启用列配置功能
         if (table_object.$attrs.columns_index_key !== 'true') {
+          this.configLoading = false
+          this.$el.style.opacity = '1'
           return
         }
 
         if (!page_code || page_code === 'ElMain') {
+          this.configLoading = false
+          this.$el.style.opacity = '1'
           return
         }
 
@@ -288,17 +309,33 @@ export default {
           try {
             if (!response.data || !Array.isArray(response.data)) {
               console.warn('ExTable: 获取列配置数据为空或格式错误')
+              this.configLoading = false
+              this.$el.style.opacity = '1'  // 没有配置数据也要显示表格
               return
             }
 
             this.applyColumnConfiguration($table, response.data)
+            
+            // 配置应用完成，更新状态
+            this.$nextTick(() => {
+              this.configLoading = false
+              this.configLoaded = true
+              // 显示表格
+              this.$el.style.opacity = '1'
+            })
           } catch (error) {
+            this.configLoading = false  // 错误时也要更新状态
+            this.$el.style.opacity = '1'  // 错误时也要显示表格
             console.error('ExTable: 应用列配置失败', error)
           }
         }).catch(error => {
+          this.configLoading = false  // 错误时也要更新状态
+          this.$el.style.opacity = '1'  // 错误时也要显示表格
           console.error('ExTable: 获取列配置数据失败', error)
         })
       } catch (error) {
+        this.configLoading = false
+        this.$el.style.opacity = '1'  // 错误时也要显示表格
         console.error('ExTable: getTableConfig执行失败', error)
       }
     },
@@ -437,8 +474,38 @@ export default {
         window.dispatchEvent(new Event('resize'))
       })
     },
+    
+    // 处理配置更新事件
+    handleConfigUpdate(data) {
+      const { componentInstance: $table } = this.$vnode
+      if (!$table) return
+      
+      const page_code = $table.$parent.$options.name
+      
+      if (data.page_code === page_code) {
+        console.log('ExTable: 收到配置更新事件，通知父组件刷新')
+        
+        // 通知父组件需要刷新表格
+        // 父组件可以通过改变表格的key属性来强制重新渲染
+        if (this.$parent && this.$parent.handleTableConfigUpdate) {
+          this.$parent.handleTableConfigUpdate()
+        } else {
+          // 如果父组件没有处理方法，则发送事件
+          this.$emit('config-updated')
+          
+          // 同时尝试重新加载配置
+          this.getTableConfig()
+        }
+      }
+    },
+    
     compare (obj1, obj2) {
       return obj1.sort - obj2.sort
     }
+  },
+  
+  destroyed() {
+    // 清理事件监听
+    EventBus.$off(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, this.handleConfigUpdate)
   }
 }
