@@ -983,31 +983,40 @@ export default {
       // 重置时也设置为初始加载状态
       this.isInitialLoad = true
 
-      // 重置
+      // 重置 - 直接使用reset API返回的原始数据，不需要再调用其他API
       resetTableConfigApi({ page_code: page_code }).then(response => {
-        // 获取数据
-        getTableConfigOriginalApi({ page_code: page_code }).then(response => {
-          this.resultList = response.data
-          // 确保组内序号从1开始
-          this.reIndexGroupSort()
-          this.selected = this.resultList.filter(item => {
-            return item.is_enable === true
-          })
-          if (this.selected.length === this.resultList.length) {
-            this.checkAll = true
-          } else if (this.selected.length > 0 && this.selected.length < this.resultList.length) {
-            this.checkAll = true
-            this.isIndeterminate = true
-          } else {
-            this.checkAll = false
-          }
+        console.log('=== 重置API返回的数据:', response.data)
+        this.resultList = response.data
 
-          // 重置数据加载完成，后续的数据变化将启用确定按钮
-          this.$nextTick(() => {
-            this.isInitialLoad = false
-          })
-        }).finally(() => {
-          this.settings.loading = false
+        // 为分组子项设置稳定的显示序号，拖拽后不会自动重排
+        this.resultList.forEach(item => {
+          if (item.is_group === 1 && item.groupChildren && Array.isArray(item.groupChildren)) {
+            item.groupChildren.forEach((child, index) => {
+              // 设置初始显示序号，后续拖拽不会改变这个值，等后端更新
+              child.displayIndex = index + 1
+            })
+          }
+        })
+
+        // 确保组内序号从1开始
+        this.reIndexGroupSort()
+        this.selected = this.resultList.filter(item => {
+          return item.is_enable === true
+        })
+        if (this.selected.length === this.resultList.length) {
+          this.checkAll = true
+        } else if (this.selected.length > 0 && this.selected.length < this.resultList.length) {
+          this.checkAll = true
+          this.isIndeterminate = true
+        } else {
+          this.checkAll = false
+        }
+
+        // 重置数据加载完成，后续的数据变化将启用确定按钮
+        this.$nextTick(() => {
+          this.isInitialLoad = false
+          // 重置操作本身就是用户操作，应该立即启用确定按钮
+          this.confirmButtonEnabled = true
         })
       }).finally(() => {
         this.settings.loading = false
