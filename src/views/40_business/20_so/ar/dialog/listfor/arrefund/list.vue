@@ -108,7 +108,7 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="false"
+      columns_index_key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"

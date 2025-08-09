@@ -305,7 +305,7 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="false"
+      columns_index_key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
@@ -658,11 +658,13 @@
         label="商品"
         align="center"
         :merge-group="true"
+        prop="goods_group"
       >
         <el-table-column
           :merge-cells="true"
           min-width="120"
           label="商品编码"
+          prop="sku_code"
         >
           <template v-slot="scope">
             <div
@@ -679,6 +681,7 @@
           min-width="100"
           label="商品名称"
           align="left"
+          prop="goods_name"
         >
           <template v-slot="scope">
             <div
@@ -695,6 +698,7 @@
           min-width="100"
           label="规格"
           align="left"
+          prop="sku_name"
         >
           <template v-slot="scope">
             <div
@@ -711,6 +715,7 @@
           min-width="100"
           label="产地"
           align="left"
+          prop="origin"
         >
           <template v-slot="scope">
             <div
@@ -727,6 +732,7 @@
           min-width="100"
           label="数量"
           align="right"
+          prop="qty"
         >
           <template v-slot="scope">
             <div
@@ -743,6 +749,7 @@
           min-width="100"
           label="单价"
           align="right"
+          prop="price"
         >
           <template v-slot="scope">
             <div
@@ -759,6 +766,7 @@
           min-width="100"
           label="税率"
           align="right"
+          prop="tax_rate"
         >
           <template v-slot="scope">
             <div
