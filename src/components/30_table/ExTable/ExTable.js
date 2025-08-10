@@ -4,7 +4,7 @@ import { getColumnsSizeApi, saveColumnsSizeApi, deleteColumnsSizeApi } from '@/a
 import { getTableConfigApi } from '@/api/00_common/table_config'
 
 import { isNotEmpty } from '@/utils/index.js'
-// import deepCopy from 'deep-copy'
+import deepCopy from 'deep-copy'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
@@ -29,7 +29,8 @@ export default {
     return {
       configLoading: true,  // 配置加载中状态
       configLoaded: false,  // 配置加载完成状态
-      tableKey: 0          // 用于强制重新渲染表格
+      tableKey: 0,          // 用于强制重新渲染表格
+      originalColumns: null // 🔑 保存原始完整的列定义
     }
   },
   created () {
@@ -53,6 +54,22 @@ export default {
     // 描绘完成
     const { componentInstance: $table } = this.$vnode
     if (!$table) { return }
+    
+    // 🔑 关键修复：立即保存原始完整的列定义，在任何配置应用之前
+    if ($table.store && $table.store.states && this.originalColumns === null) {
+      // 使用浅拷贝保存原始列定义，保持对象完整性
+      this.originalColumns = [...$table.store.states._columns]
+      console.log('🚀 立即保存原始完整列定义，数量:', this.originalColumns.length)
+      
+      // 检查分组列的children - 应该包含所有原始子列
+      this.originalColumns.forEach(col => {
+        if (col.children && col.children.length > 0) {
+          console.log(`🚀 原始分组列 ${col.property} 子列数: ${col.children.length}`, 
+                     col.children.map(c => c.property))
+        }
+      })
+    }
+    
     // 设置参数
     const page_code = $table.$parent.$options.name
     let table_type
@@ -60,14 +77,18 @@ export default {
       table_type = this.type
     }
 
-    // 设置列属性，顺序、隐藏正式使用，读取数据库配置文件
-    this.getTableConfig()
-    // 设置列属性，顺序、隐藏 测试使用
-    // this.tableColumnsConfig()
-
     // 调用调整列宽方法
     this.setColumnsSize($table, page_code, table_type)
 
+    // 检查是否需要应用列配置
+    if ($table.$attrs.columns_index_key === 'true' && page_code && page_code !== 'ElMain') {
+      // 设置列属性，顺序、隐藏正式使用，读取数据库配置文件
+      this.getTableConfig()
+    } else {
+      this.configLoading = false
+      this.$el.style.opacity = '1'
+    }
+    
     $table.doLayout()
   },
   activated () {
@@ -355,6 +376,21 @@ export default {
 
         console.log('ExTable: 开始应用列配置（原生API方案）')
         console.log('ExTable: 配置数据条数:', configData.length)
+        
+        // 🔍 检查原始列定义是否已保存
+        if (this.originalColumns === null) {
+          console.warn('⚠️ 原始列定义未保存，这不应该发生')
+          return
+        }
+        console.log('✅ 使用已保存的原始列定义，数量:', this.originalColumns.length)
+        
+        // 🔍 调试：显示具体的配置数据
+        const hiddenConfigs = configData.filter(item => item.is_enable === false)
+        console.log('🔍 隐藏状态的配置:', hiddenConfigs.length > 0 ? hiddenConfigs : '无隐藏列')
+        
+        // 🎯 专门跟踪"税额"列
+        const taxConfig = configData.find(item => item.name === 'tax_amount_sum' || item.label === '税额')
+        console.log('🎯 税额列配置:', taxConfig)
 
         // 构建配置映射
         const configMap = new Map()
@@ -384,16 +420,66 @@ export default {
         })
 
         console.log('ExTable: 配置映射构建完成，configMap:', configMap.size, 'groupConfigMap:', groupConfigMap.size)
-
-        // 获取当前列副本
-        const currentColumns = [...store.states._columns]
-        console.log('ExTable: 当前列数量:', currentColumns.length)
         
-        // 先分离系统列和业务列
+        // 🔍 调试：显示groupConfigMap中的所有项
+        console.log('🔍 groupConfigMap详细内容:')
+        for (const [key, value] of groupConfigMap.entries()) {
+          console.log(`  ${key}: is_enable=${value.is_enable}, sort=${value.sort}`)
+          if (key === 'sku_name') {
+            console.log(`  🎯 规格列配置: ${key} -> is_enable=${value.is_enable}`)
+          }
+        }
+
+        // 🔑 关键修复：预处理分组列，然后使用原始列定义重建
+        console.log('ExTable: 开始预处理分组列')
+        
+        // 🔑 预处理阶段：处理所有分组列的children，创建新对象而不修改原对象
+        const preprocessedColumns = this.originalColumns.map(column => {
+          if (column.children && configMap.get(column.property)?.is_group === 1) {
+            console.log(`🔧 预处理分组列: ${column.property}`)
+            
+            // 根据groupConfigMap过滤并排序子列
+            const visibleChildren = column.children
+              .filter(child => {
+                const config = groupConfigMap.get(child.property)
+                let isVisible = true // 默认显示
+                if (config !== undefined) {
+                  isVisible = config.is_enable === true
+                }
+                
+                // 🎯 特别跟踪"规格"列
+                if (child.property === 'sku_name') {
+                  console.log(`🎯 预处理规格列: isVisible=${isVisible}, config=${JSON.stringify(config)}`)
+                }
+                
+                return isVisible
+              })
+              .sort((a, b) => {
+                // 🔧 根据API配置的sort字段排序
+                const configA = groupConfigMap.get(a.property)
+                const configB = groupConfigMap.get(b.property)
+                const sortA = configA?.sort || 0
+                const sortB = configB?.sort || 0
+                
+                console.log(`🔧 排序比较: ${a.property}(sort:${sortA}) vs ${b.property}(sort:${sortB})`)
+                return sortA - sortB
+              })
+            
+            console.log(`🔧 分组列 ${column.property}: ${column.children.length} -> ${visibleChildren.length} 子列`)
+            
+            // 🔑 关键：创建新对象，不修改原对象
+            return { ...column, children: visibleChildren }
+          }
+          return column
+        })
+        
+        console.log('ExTable: 预处理完成，开始按非组列成功模式处理')
+        
+        // 🔑 从预处理后的列分离系统列和业务列（完全按照非组列模式）
         const systemColumns = []
         const businessColumns = []
         
-        currentColumns.forEach(column => {
+        preprocessedColumns.forEach(column => {
           if (column.type && ['selection', 'index'].includes(column.type)) {
             // 系统列直接保留，不参与任何配置判断
             systemColumns.push(column)
@@ -404,14 +490,39 @@ export default {
         
         console.log(`ExTable: 系统列数量: ${systemColumns.length}, 业务列数量: ${businessColumns.length}`)
         
+        // 🎯 专门检查"税额"列是否存在于原始业务列中
+        const taxColumn = businessColumns.find(col => col.property === 'tax_amount_sum')
+        console.log('🎯 税额列在原始业务列中:', taxColumn ? `存在 (${taxColumn.property})` : '不存在')
+        
         // 只对业务列进行过滤和排序
         const visibleBusinessColumns = businessColumns
           .filter(column => {
-            // 根据配置决定是否显示
+            // 根据配置决定是否显示 - 修复原始逻辑bug
             const config = configMap.get(column.property) || groupConfigMap.get(column.property)
-            const isVisible = config && config.is_enable === true
+            
+            // 🎯 专门跟踪"税额"列的处理过程
+            if (column.property === 'tax_amount_sum') {
+              console.log('🎯 处理税额列:', {
+                property: column.property,
+                label: column.label,
+                config: config,
+                configExists: config !== undefined,
+                isEnable: config?.is_enable
+              })
+            }
+            
+            // 正确逻辑：如果有配置，按配置显示；如果没有配置，默认显示
+            let isVisible = true // 默认显示
+            if (config !== undefined) {
+              isVisible = config.is_enable === true
+            }
+            
             if (!isVisible) {
-              console.log(`ExTable: 隐藏列 ${column.property}`)
+              console.log(`🚫 隐藏列: ${column.property} (is_enable: ${config.is_enable})`)
+            } else if (config) {
+              console.log(`✅ 显示列: ${column.property} (is_enable: ${config.is_enable})`)
+            } else {
+              console.log(`✅ 显示列: ${column.property} (无配置，默认显示)`)
             }
             return isVisible
           })
@@ -431,22 +542,19 @@ export default {
         const visibleColumns = [...systemColumns, ...visibleBusinessColumns]
 
         console.log('ExTable: 过滤后可见列数量:', visibleColumns.length)
+        console.log('🔍 实际显示的列:', visibleColumns.map(col => col.property || col.type))
+        
+        // 🎯 最终检查"税额"列是否在可见列中
+        const taxInVisible = visibleColumns.find(col => col.property === 'tax_amount_sum')
+        console.log('🎯 税额列最终状态:', taxInVisible ? '✅ 包含在可见列中' : '❌ 不在可见列中')
 
-        // 处理分组列的子列
-        visibleColumns.forEach(column => {
-          if (column.children && configMap.get(column.property)?.is_group === 1) {
-            console.log(`ExTable: 处理分组列 ${column.property}，原始子列数: ${column.children.length}`)
-            column.children = column.children.filter(child => {
-              const config = groupConfigMap.get(child.property)
-              return config && config.is_enable === true
-            }).sort((a, b) => {
-              const configA = groupConfigMap.get(a.property)
-              const configB = groupConfigMap.get(b.property)
-              return (configA?.sort || 0) - (configB?.sort || 0)
-            })
-            console.log(`ExTable: 分组列 ${column.property}，过滤后子列数: ${column.children.length}`)
-          }
-        })
+        // 🎯 检查预处理后的分组列状态
+        const processedGroupColumn = visibleColumns.find(col => col.property === 'goods_group')
+        if (processedGroupColumn && processedGroupColumn.children) {
+          console.log(`🎯 预处理后的商品分组列子列数: ${processedGroupColumn.children.length}`)
+          const skuColumn = processedGroupColumn.children.find(c => c.property === 'sku_name')
+          console.log('🎯 规格列在预处理后的状态:', skuColumn ? `✅ 存在 (${skuColumn.property})` : '❌ 不存在')
+        }
 
         // 使用Element UI原生方法更新
         store.states._columns = visibleColumns
@@ -454,11 +562,24 @@ export default {
         
         console.log('ExTable: Element UI列更新完成')
         
-        // 更新布局
+        // 🔑 强制触发Vue响应式更新和Element UI重渲染
         this.$nextTick(() => {
-          store.scheduleLayout()
+          // 1. 强制重新布局
+          store.scheduleLayout(true) // 传入true强制更新列
           $table.doLayout()
-          console.log('ExTable: 布局更新完成')
+          
+          // 2. 强制触发表格重渲染
+          this.$forceUpdate()
+          
+          // 3. 触发父组件更新
+          if (this.$parent && this.$parent.$forceUpdate) {
+            this.$parent.$forceUpdate()
+          }
+          
+          // 4. 触发resize事件让Element UI重新计算
+          this.triggerResize()
+          
+          console.log('ExTable: 强制刷新完成')
         })
         
       } catch (error) {
