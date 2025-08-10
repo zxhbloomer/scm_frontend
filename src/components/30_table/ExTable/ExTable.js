@@ -595,6 +595,9 @@ export default {
           return
         }
 
+        let animationCount = 0
+        let totalAnimations = 0
+
         // 处理每一行的表头
         headerRows.forEach((row, rowIndex) => {
           const cells = row.querySelectorAll('th')
@@ -637,6 +640,9 @@ export default {
                     easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }).onfinish = () => {
                     animationCount++
+                    if (animationCount === totalAnimations) {
+                      console.log('ExTable: 所有列动画执行完成')
+                    }
                   }
                 } else {
                   // CSS Transition fallback - 移动动画
@@ -655,6 +661,9 @@ export default {
                       currentCell.style.transform = ''
                       currentCell.style.opacity = ''
                       animationCount++
+                      if (animationCount === totalAnimations) {
+                        console.log('ExTable: 所有列动画执行完成')
+                      }
                     }, 350)
                   }, 16)
                 }
@@ -673,6 +682,9 @@ export default {
                   easing: 'cubic-bezier(0.2, 0.0, 0.2, 1)'
                 }).onfinish = () => {
                   animationCount++
+                  if (animationCount === totalAnimations) {
+                    console.log('ExTable: 所有列动画执行完成')
+                  }
                 }
               } else {
                 // CSS Transition fallback - 淡入动画
@@ -694,12 +706,19 @@ export default {
                     currentCell.style.transform = ''
                     currentCell.style.filter = ''
                     animationCount++
+                    if (animationCount === totalAnimations) {
+                      console.log('ExTable: 所有列动画执行完成')
+                    }
                   }, 400)
                 }, 16)
               }
             }
           })
         })
+
+        if (totalAnimations === 0) {
+          console.log('ExTable: 没有需要动画的列位置变化')
+        }
 
         // 清理记录
         this.columnsBeforeAnimation = null
