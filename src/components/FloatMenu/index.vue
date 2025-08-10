@@ -1185,7 +1185,7 @@ export default {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 80vh;
+  height: 82vh;
   overflow: hidden;
   pointer-events: none;
   .floatBtn {
@@ -1201,13 +1201,18 @@ export default {
     &__trigger {
       width: 50px;
       height: 50px;
+      min-width: 50px;
+      min-height: 50px;
       background: #2196f3;
-      display: -webkit-box;
+      display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 40px;
+      border-radius: 50%;
       box-shadow: 0px 16px 34px 0px rgba(0, 49, 128, 0.2);
       pointer-events: auto;
+      border: none;
+      outline: none;
+      box-sizing: border-box;
     }
   }
 }

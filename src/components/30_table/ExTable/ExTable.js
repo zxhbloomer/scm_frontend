@@ -30,7 +30,7 @@ export default {
     },
     canvasBottomReserve: {
       type: Number,
-      default: 1 // 默认0，精确计算最大高度
+      default: 10 // 默认0，精确计算最大高度
     }
   },
 
@@ -96,18 +96,8 @@ export default {
       // 保存配置供resize时使用
       this.canvasHeightConfig = { bottomReserve }
 
-      // 延迟计算，确保DOM完全渲染
-      this.$nextTick(() => {
-        // 等待一个额外的事件循环，确保所有元素都已渲染
-        setTimeout(() => {
-          const calculatedHeight = this.calculateCanvasTableHeight(bottomReserve)
-
-          if (calculatedHeight > 0) {
-            // 重要改进：将高度存储到data中，而不是直接设置DOM样式
-            this.canvasCalculatedHeight = calculatedHeight
-          }
-        }, 100) // 100ms延迟
-      })
+      // 使用Element UI风格的DOM检测机制
+      this.initCanvasHeight(bottomReserve)
 
       // 添加窗口resize事件监听，实现动态高度调整
       this.setupWindowResizeListener()
@@ -1095,6 +1085,27 @@ export default {
       } catch (error) {
         console.error('Canvas批量测量列标题失败:', error)
         return new Map()
+      }
+    },
+
+    /**
+     * 初始化Canvas高度计算（Element UI风格的DOM检测）
+     * 直接借鉴Element UI table-layout.js的优雅检测机制
+     * @param {number} bottomReserve 底部预留空间
+     */
+    initCanvasHeight (bottomReserve) {
+      const tableEl = this.$el
+
+      // 直接借鉴Element UI table-layout.js:63的检测逻辑
+      if (!tableEl || tableEl.offsetWidth === 0) {
+        return this.$nextTick(() => this.initCanvasHeight(bottomReserve))
+      }
+
+      // DOM已准备好，直接执行高度计算
+      const calculatedHeight = this.calculateCanvasTableHeight(bottomReserve)
+      if (calculatedHeight > 0) {
+        // 重要改进：将高度存储到data中，而不是直接设置DOM样式
+        this.canvasCalculatedHeight = calculatedHeight
       }
     },
 
