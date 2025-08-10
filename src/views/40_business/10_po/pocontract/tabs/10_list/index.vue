@@ -380,10 +380,10 @@
         prop="order_count"
         align="right"
       >
-        <template slot="header">
+        <template v-slot:header>
           <field-help field="order_count" page="pocontract-list" default-label="订单笔数" />
         </template>
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           <el-link
             v-if="scope.row.order_count > 0"
             type="primary"
@@ -410,7 +410,7 @@
         label="审批情况"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ getApprovalStatusText(scope.row) }}
         </template>
       </el-table-column>
@@ -440,10 +440,10 @@
         prop="virtual_progress"
         align="right"
       >
-        <template slot="header">
+        <template v-slot:header>
           <field-help field="virtual_progress" page="pocontract-list" default-label="执行进度" />
         </template>
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.virtual_progress == null ? '0.00%' : (scope.row.virtual_progress * 100).toFixed(2) + '%' }}
         </template>
       </el-table-column>
@@ -456,7 +456,7 @@
         label="签约日期"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.sign_date == null ? '' : formatDate(scope.row.sign_date, 3) }}
         </template>
       </el-table-column>
@@ -470,7 +470,7 @@
         label="到期日期"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.expiry_date == null ? '' : formatDate(scope.row.expiry_date, 3) }}
         </template>
       </el-table-column>
@@ -483,7 +483,7 @@
         label="交货日期"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.delivery_date == null ? '' : formatDate(scope.row.delivery_date, 3) }}
         </template>
       </el-table-column>
@@ -532,7 +532,7 @@
         label="合同总金额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.contract_amount_sum == null ? '' : formatCurrency(scope.row.contract_amount_sum, true) }}
         </template>
       </el-table-column>
@@ -545,7 +545,7 @@
         label="总采购数量（吨）"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.contract_total == null ? '' : formatNumber(scope.row.contract_total, true, 4) }}
         </template>
       </el-table-column>
@@ -558,7 +558,7 @@
         label="税额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.tax_amount_sum == null ? '' : formatCurrency(scope.row.tax_amount_sum, true) }}
         </template>
       </el-table-column>
@@ -571,7 +571,7 @@
         label="已结算数量（吨）"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.settled_qty_total == null ? '' : formatNumber(scope.row.settled_qty_total, true, 4) }}
         </template>
       </el-table-column>
@@ -584,7 +584,7 @@
         label="结算金额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.settled_amount_total == null ? '' : formatCurrency(scope.row.settled_amount_total, true) }}
         </template>
       </el-table-column>
@@ -598,7 +598,7 @@
         label="预付款金额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.advance_paid_total == null ? '' : formatCurrency(scope.row.advance_paid_total, true) }}
         </template>
       </el-table-column>
@@ -610,7 +610,7 @@
         label="累计实付"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.virtual_total_paid_amount == null ? '' : formatCurrency(scope.row.virtual_total_paid_amount, true) }}
         </template>
       </el-table-column>
@@ -623,7 +623,7 @@
         label="未付"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.virtual_unpaid_amount == null ? '' : formatCurrency(scope.row.virtual_unpaid_amount, true) }}
         </template>
       </el-table-column>
@@ -636,7 +636,7 @@
         label="预付款可退金额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
         <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
         </template>
       </el-table-column>
@@ -649,7 +649,7 @@
         label="已开票金额"
         align="right"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
         </template>
       </el-table-column>
@@ -666,7 +666,7 @@
           label="商品编码"
           prop="sku_code"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -683,7 +683,7 @@
           align="left"
           prop="goods_name"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -700,7 +700,7 @@
           align="left"
           prop="sku_name"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -717,7 +717,7 @@
           align="left"
           prop="origin"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -734,7 +734,7 @@
           align="right"
           prop="qty"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -751,7 +751,7 @@
           align="right"
           prop="price"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -768,7 +768,7 @@
           align="right"
           prop="tax_rate"
         >
-          <template v-slot="scope">
+          <template v-slot:default="scope">
             <div
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
@@ -798,7 +798,7 @@
         label="创建时间"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.c_time == null?'':formatDateTime(scope.row.c_time) }}
         </template>
       </el-table-column>
@@ -820,7 +820,7 @@
         label="更新时间"
         align="left"
       >
-        <template v-slot="scope">
+        <template v-slot:default="scope">
           {{ scope.row.u_time == null?'':formatDateTime(scope.row.u_time) }}
         </template>
       </el-table-column>
