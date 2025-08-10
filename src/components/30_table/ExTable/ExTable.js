@@ -29,7 +29,8 @@ export default {
       configLoading: true, // 配置加载中状态
       configLoaded: false, // 配置加载完成状态
       tableKey: 0, // 用于强制重新渲染表格
-      originalColumns: null // 🔑 保存原始完整的列定义
+      originalColumns: null, // 🔑 保存原始完整的列定义
+      columnsBeforeAnimation: null // 🎬 动画用：记录列变化前的位置
     }
   },
   created () {
@@ -358,6 +359,9 @@ export default {
      */
     applyColumnConfiguration ($table, configData) {
       try {
+        // 🎬 动画：记录变化前的列位置
+        this.recordColumnPositionsForAnimation()
+
         const store = $table.store
         if (!store || !store.states) {
           console.error('ExTable: 无法获取表格store')
@@ -487,6 +491,11 @@ export default {
 
           // 4. 触发resize事件让Element UI重新计算
           this.triggerResize()
+
+          // 🎬 动画：布局完成后执行列变化动画
+          this.$nextTick(() => {
+            this.executeColumnAnimation()
+          })
         })
       } catch (error) {
         console.error('ExTable: 应用列配置失败', error)
@@ -525,6 +534,286 @@ export default {
 
     compare (obj1, obj2) {
       return obj1.sort - obj2.sort
+    },
+
+    // 🎬 动画：记录列变化前的位置
+    recordColumnPositionsForAnimation () {
+      try {
+        // 查找表头所有行
+        const headerRows = this.$el.querySelectorAll('.el-table__header-wrapper tr')
+        if (headerRows.length === 0) {
+          return
+        }
+
+        this.columnsBeforeAnimation = []
+
+        // 处理每一行的表头
+        headerRows.forEach((row, rowIndex) => {
+          const cells = row.querySelectorAll('th')
+
+          cells.forEach((cell, cellIndex) => {
+            const rect = cell.getBoundingClientRect()
+            const cellText = cell.textContent.trim()
+
+            // 获取列的属性标识，优先使用data-属性
+            const columnKey = cell.getAttribute('data-column-key') ||
+                           cell.getAttribute('data-property') ||
+                           cellText
+
+            // 对于分组表头，添加行级别信息
+            const uniqueKey = `${rowIndex}-${columnKey}-${cellIndex}`
+
+            this.columnsBeforeAnimation.push({
+              text: cellText,
+              left: rect.left,
+              top: rect.top,
+              rowIndex: rowIndex,
+              cellIndex: cellIndex,
+              columnKey: columnKey,
+              uniqueKey: uniqueKey,
+              element: cell,
+              colspan: parseInt(cell.getAttribute('colspan')) || 1,
+              rowspan: parseInt(cell.getAttribute('rowspan')) || 1
+            })
+          })
+        })
+      } catch (error) {
+        console.error('ExTable: 记录列位置失败', error)
+      }
+    },
+
+    // 🎬 动画：执行列变化动画
+    executeColumnAnimation () {
+      try {
+        if (!this.columnsBeforeAnimation || this.columnsBeforeAnimation.length === 0) {
+          return
+        }
+
+        // 查找表头所有行
+        const headerRows = this.$el.querySelectorAll('.el-table__header-wrapper tr')
+        if (headerRows.length === 0) {
+          return
+        }
+
+        // 处理每一行的表头
+        headerRows.forEach((row, rowIndex) => {
+          const cells = row.querySelectorAll('th')
+
+          cells.forEach((currentCell, cellIndex) => {
+            const currentRect = currentCell.getBoundingClientRect()
+            const currentText = currentCell.textContent.trim()
+
+            // 获取当前单元格的标识信息
+            const currentColumnKey = currentCell.getAttribute('data-column-key') ||
+                                  currentCell.getAttribute('data-property') ||
+                                  currentText
+
+            const currentUniqueKey = `${rowIndex}-${currentColumnKey}-${cellIndex}`
+
+            // 查找这个单元格在变化前的位置
+            const beforeInfo = this.columnsBeforeAnimation.find(item => {
+              // 优先通过uniqueKey匹配，再尝试其他方式
+              return item.uniqueKey === currentUniqueKey ||
+                     (item.rowIndex === rowIndex && item.cellIndex === cellIndex) ||
+                     (item.rowIndex === rowIndex && item.columnKey === currentColumnKey) ||
+                     (item.rowIndex === rowIndex && item.text === currentText)
+            })
+
+            if (beforeInfo) {
+              const deltaX = beforeInfo.left - currentRect.left
+              const deltaY = beforeInfo.top - currentRect.top
+
+              // 如果位置有明显变化，执行移动动画
+              if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+                totalAnimations++
+
+                if (currentCell.animate) {
+                  // Web Animations API - 移动动画
+                  currentCell.animate([
+                    { transform: `translate(${deltaX}px, ${deltaY}px)`, opacity: '0.85' },
+                    { transform: 'translate(0px, 0px)', opacity: '1' }
+                  ], {
+                    duration: 350,
+                    easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  }).onfinish = () => {
+                    animationCount++
+                  }
+                } else {
+                  // CSS Transition fallback - 移动动画
+                  currentCell.style.transition = 'all 0.35s cubic-bezier(0.4, 0.0, 0.2, 1)'
+                  currentCell.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+                  currentCell.style.opacity = '0.85'
+
+                  // 启动动画
+                  setTimeout(() => {
+                    currentCell.style.transform = 'translate(0px, 0px)'
+                    currentCell.style.opacity = '1'
+
+                    // 清理样式
+                    setTimeout(() => {
+                      currentCell.style.transition = ''
+                      currentCell.style.transform = ''
+                      currentCell.style.opacity = ''
+                      animationCount++
+                    }, 350)
+                  }, 16)
+                }
+              }
+            } else {
+              // 新出现的列（之前隐藏，现在显示），执行淡入动画
+              totalAnimations++
+
+              if (currentCell.animate) {
+                // Web Animations API - 淡入动画
+                currentCell.animate([
+                  { opacity: '0', transform: 'scale(0.95)', filter: 'blur(1px)' },
+                  { opacity: '1', transform: 'scale(1)', filter: 'blur(0px)' }
+                ], {
+                  duration: 400,
+                  easing: 'cubic-bezier(0.2, 0.0, 0.2, 1)'
+                }).onfinish = () => {
+                  animationCount++
+                }
+              } else {
+                // CSS Transition fallback - 淡入动画
+                currentCell.style.opacity = '0'
+                currentCell.style.transform = 'scale(0.95)'
+                currentCell.style.filter = 'blur(1px)'
+                currentCell.style.transition = 'all 0.4s cubic-bezier(0.2, 0.0, 0.2, 1)'
+
+                // 启动淡入动画
+                setTimeout(() => {
+                  currentCell.style.opacity = '1'
+                  currentCell.style.transform = 'scale(1)'
+                  currentCell.style.filter = 'blur(0px)'
+
+                  // 清理样式
+                  setTimeout(() => {
+                    currentCell.style.transition = ''
+                    currentCell.style.opacity = ''
+                    currentCell.style.transform = ''
+                    currentCell.style.filter = ''
+                    animationCount++
+                  }, 400)
+                }, 16)
+              }
+            }
+          })
+        })
+
+        // 清理记录
+        this.columnsBeforeAnimation = null
+      } catch (error) {
+        console.error('ExTable: 执行列动画失败', error)
+        this.columnsBeforeAnimation = null
+      }
+    },
+
+    // 🧪 测试：简单动画测试
+    testSimpleAnimation () {
+      try {
+        const tableEl = this.$el
+        if (!tableEl) {
+          return
+        }
+
+        // 表格整体动画
+        tableEl.style.transition = 'all 0.3s ease'
+        tableEl.style.border = '2px solid #409EFF'
+
+        // 添加列头动画测试
+        this.testColumnHeaderAnimation()
+
+        setTimeout(() => {
+          tableEl.style.border = ''
+          setTimeout(() => {
+            tableEl.style.transition = ''
+          }, 300)
+        }, 300)
+      } catch (error) {
+        console.error('ExTable: 简单动画测试失败', error)
+      }
+    },
+
+    // 🧪 测试：列头动画
+    testColumnHeaderAnimation () {
+      try {
+        // 找到所有列头
+        const headerCells = this.$el.querySelectorAll('.el-table__header-wrapper th')
+
+        if (headerCells.length === 0) {
+          return
+        }
+
+        // 给每个列头添加动画
+        headerCells.forEach((cell, index) => {
+          setTimeout(() => {
+            if (cell.animate) {
+              // 使用Web Animations API
+              cell.animate([
+                { backgroundColor: 'transparent', transform: 'translateY(0px)' },
+                { backgroundColor: '#E6F7FF', transform: 'translateY(-2px)' },
+                { backgroundColor: 'transparent', transform: 'translateY(0px)' }
+              ], {
+                duration: 400,
+                easing: 'ease-out'
+              })
+            } else {
+              // CSS fallback
+              cell.style.transition = 'all 0.4s ease-out'
+              cell.style.backgroundColor = '#E6F7FF'
+              cell.style.transform = 'translateY(-2px)'
+
+              setTimeout(() => {
+                cell.style.backgroundColor = ''
+                cell.style.transform = ''
+                setTimeout(() => {
+                  cell.style.transition = ''
+                }, 400)
+              }, 200)
+            }
+          }, index * 50) // 依次执行，每个延迟50ms
+        })
+      } catch (error) {
+        console.error('ExTable: 列头动画测试失败', error)
+      }
+    },
+
+    // 🧪 测试：手动测试列动画效果
+    testColumnAnimation () {
+      try {
+        const headerRows = this.$el.querySelectorAll('.el-table__header-wrapper tr')
+        if (headerRows.length === 0) {
+          return
+        }
+
+        // 模拟记录初始位置
+        this.recordColumnPositionsForAnimation()
+
+        // 人为修改一些单元格的记录位置，模拟不同类型的动画
+        if (this.columnsBeforeAnimation && this.columnsBeforeAnimation.length > 0) {
+          // 1. 模拟列移动动画：修改第一个单元格位置
+          this.columnsBeforeAnimation[0].left += 80
+
+          // 2. 模拟新列淡入动画：删除一个记录，让对应列无法找到匹配
+          if (this.columnsBeforeAnimation.length > 1) {
+            this.columnsBeforeAnimation.splice(1, 1)
+          }
+
+          // 3. 如果有多行表头，也测试第二行
+          const secondRowCells = this.columnsBeforeAnimation.filter(item => item.rowIndex === 1)
+          if (secondRowCells.length > 0) {
+            secondRowCells[0].left += 60
+          }
+
+          // 执行动画
+          this.$nextTick(() => {
+            this.executeColumnAnimation()
+          })
+        }
+      } catch (error) {
+        console.error('ExTable: 测试列动画失败', error)
+      }
     }
   },
 
