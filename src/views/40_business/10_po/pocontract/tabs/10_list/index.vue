@@ -306,10 +306,10 @@
       ref="multipleTable"
       v-loading="settings.loading"
       columns_index_key="true"
+      :canvas-auto-height="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
       stripe
       border
       fit
@@ -1105,7 +1105,6 @@ import { getPageApi } from '@/api/10_system/pages/page'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -1118,7 +1117,6 @@ import FieldHelp from '@/components/30_table/FieldHelp'
 export default {
   components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, push_order_template, print_template, SimpleUpload, Pagination, FieldHelp },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -1216,7 +1214,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -1298,6 +1295,9 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_POCONTRACT_BPM_OK)
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
+
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_POCONTRACT_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_POCONTRACT_NEW_OK', _data)
