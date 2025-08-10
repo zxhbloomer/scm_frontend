@@ -520,6 +520,12 @@ export default {
 
             // 🎯 配置应用完成后，触发表头自适应（重要：解决FieldHelp组件换行）
             this.triggerHeaderAutoResize()
+
+            // 🚀 新增：列顺序变化后强制重新计算宽度（等待动画完成）
+            setTimeout(() => {
+              this.autoResizeOrMergeCell() // 重用现有方法
+              this.doLayout()
+            }, 400) // 等待动画完成
           })
         })
       } catch (error) {
