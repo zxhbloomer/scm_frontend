@@ -1,7 +1,7 @@
 <template>
   <span class="field-help-container">
     <!-- 显示字段标签 -->
-    <span class="field-label">{{ displayLabel }}</span>
+    <span>{{ displayLabel }}</span>
 
     <!-- 帮助图标 - 仅在有帮助文字时显示 -->
     <el-tooltip
@@ -81,10 +81,6 @@ export default {
 .field-help-container {
   display: inline-flex;
   align-items: center;
-}
-
-.field-label {
-  margin-right: 4px;
 }
 
 .field-help-icon {

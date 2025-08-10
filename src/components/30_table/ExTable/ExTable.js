@@ -81,6 +81,25 @@ export default {
     }
 
     $table.doLayout()
+
+    // 🎯 表头自适应：初始化时触发表头宽度计算（解决FieldHelp组件换行）
+    this.$nextTick(() => {
+      this.triggerHeaderAutoResize()
+    })
+
+    // 🎯 第3步：添加数据变化深度监听，主动触发自适应
+    this.$watch('data', () => {
+      if (isNotEmpty(this.data)) {
+        this.$nextTick(() => {
+          // 数据变化时主动触发内容自适应
+          this.autoResizeOrMergeCell()
+          this.doLayout() // Element UI 原生布局更新
+        })
+      }
+    }, {
+      deep: true, // 深度监听数组内容变化
+      immediate: false // 不立即执行，避免重复
+    })
   },
   activated () {
     // 解决切换tab页签，表格列宽度不正确问题
@@ -101,8 +120,11 @@ export default {
       handler (newVal, oldVal) {
         if (isNotEmpty(this.data)) {
           this.$nextTick(() => {
-            // 宽度自适应 和 一单元格多行数据处理
+            // 🎯 第2步：先执行自定义的内容自适应
             this.autoResizeOrMergeCell()
+
+            // 🎯 再调用继承的Element UI布局更新
+            this.doLayout() // 继承自 Table，触发Element UI原生布局计算
           })
         }
       }
@@ -495,6 +517,9 @@ export default {
           // 🎬 动画：布局完成后执行列变化动画
           this.$nextTick(() => {
             this.executeColumnAnimation()
+
+            // 🎯 配置应用完成后，触发表头自适应（重要：解决FieldHelp组件换行）
+            this.triggerHeaderAutoResize()
           })
         })
       } catch (error) {
@@ -640,9 +665,7 @@ export default {
                     easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)'
                   }).onfinish = () => {
                     animationCount++
-                    if (animationCount === totalAnimations) {
-                      console.log('ExTable: 所有列动画执行完成')
-                    }
+                    // Animation completed
                   }
                 } else {
                   // CSS Transition fallback - 移动动画
@@ -682,9 +705,7 @@ export default {
                   easing: 'cubic-bezier(0.2, 0.0, 0.2, 1)'
                 }).onfinish = () => {
                   animationCount++
-                  if (animationCount === totalAnimations) {
-                    console.log('ExTable: 所有列动画执行完成')
-                  }
+                  // Animation completed
                 }
               } else {
                 // CSS Transition fallback - 淡入动画
@@ -706,9 +727,7 @@ export default {
                     currentCell.style.transform = ''
                     currentCell.style.filter = ''
                     animationCount++
-                    if (animationCount === totalAnimations) {
-                      console.log('ExTable: 所有列动画执行完成')
-                    }
+                    // Animation completed
                   }, 400)
                 }, 16)
               }
@@ -716,9 +735,7 @@ export default {
           })
         })
 
-        if (totalAnimations === 0) {
-          console.log('ExTable: 没有需要动画的列位置变化')
-        }
+        // Animation system ready
 
         // 清理记录
         this.columnsBeforeAnimation = null
@@ -832,6 +849,47 @@ export default {
         }
       } catch (error) {
         console.error('ExTable: 测试列动画失败', error)
+      }
+    },
+
+    // 🎯 新增：表头自适应触发方法（解决FieldHelp组件换行）
+    triggerHeaderAutoResize () {
+      try {
+        console.log('开始表头自适应计算...')
+
+        // 遍历所有列组件，触发表头宽度重新计算
+        for (let i = 0, j = this.$children.length; i < j; i++) {
+          const columnComponent = this.$children[i]
+
+          // 跳过非列组件
+          if (!columnComponent.columnConfig || !columnComponent.autoFit) {
+            continue
+          }
+
+          // 特别处理FieldHelp组件列
+          const isFieldHelpColumn = columnComponent.columnConfig.property &&
+                                   ['order_count', 'virtual_progress'].includes(columnComponent.columnConfig.property)
+
+          if (isFieldHelpColumn) {
+            console.log(`检测到FieldHelp列: ${columnComponent.columnConfig.property}，开始重新计算表头宽度`)
+
+            // 强制重新计算该列的宽度（包含表头）
+            const result = columnComponent.updateAutoWidth(columnComponent)
+
+            if (result && !result.nothing && !result.donothing) {
+              console.log(`FieldHelp列 ${columnComponent.columnConfig.property} 宽度更新为: ${result.width}px`)
+            }
+          }
+        }
+
+        // 触发表格重新布局
+        this.$nextTick(() => {
+          this.doLayout()
+        })
+
+        console.log('表头自适应计算完成')
+      } catch (error) {
+        console.error('表头自适应触发失败:', error)
       }
     }
   },
