@@ -316,7 +316,7 @@ import bpmListDialog from '@/views/90_bpm/definition/00_dialog/list/dialog.vue'
 import constants_para from '@/common/constants/constants_para'
 import Sortable from 'sortablejs'
 
-import { getTableConfigApi, saveTableConfigApi, getTableConfigOriginalApi, resetTableConfigApi, checkTableConfigApi, getBpmDataByPageCodeApi } from '@/api/00_common/table_config'
+import { getTableConfigApi, saveTableConfigApi, resetTableConfigApi, checkTableConfigApi, getBpmDataByPageCodeApi } from '@/api/00_common/table_config'
 
 export default {
   name: 'FloatMenu',
@@ -1050,7 +1050,7 @@ export default {
     handleCheckedChange () {
       // 更新子项勾选状态后，同步更新对应分组的勾选状态
       this.syncGroupCheckboxStates()
-      
+
       // 更新全局选中状态
       this.selected = this.resultList.filter(item => {
         return item.is_enable === true
@@ -1070,14 +1070,12 @@ export default {
         // 只处理分组项
         if (item.is_group === 1 && item.groupChildren && item.groupChildren.length > 0) {
           // 获取所有可勾选的子项（排除固定项和已删除项）
-          const selectableChildren = item.groupChildren.filter(child => 
+          const selectableChildren = item.groupChildren.filter(child =>
             !child.fix && child.is_delete !== true
           )
-          
           if (selectableChildren.length > 0) {
             // 统计勾选状态
             const checkedCount = selectableChildren.filter(child => child.is_enable === true).length
-            
             // 简单关联逻辑：有子项勾选就勾选分组头，没有子项勾选就取消分组头
             if (checkedCount > 0) {
               // 有子项被勾选 → 分组头自动勾选
