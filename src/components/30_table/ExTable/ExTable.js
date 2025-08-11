@@ -174,19 +174,19 @@ export default {
 
       // 否则使用原始的height属性（如果有的话）
       return this.$attrs.height || this.internalHeight || null
-    },
+    }
 
     // 覆盖Element UI Table的height计算属性（带setter避免警告）
-    height: {
-      get () {
-        return this.computedHeight
-      },
-      set (val) {
-        // 存储Element UI内部设置的高度值
-        // 但优先使用Canvas计算的高度
-        this.internalHeight = val
-      }
-    }
+    // height: {
+    //   get () {
+    //     return this.computedHeight
+    //   },
+    //   set (val) {
+    //     // 存储Element UI内部设置的高度值
+    //     // 但优先使用Canvas计算的高度
+    //     this.internalHeight = val
+    //   }
+    // }
   },
   watch: {
     values: {
@@ -1090,8 +1090,8 @@ export default {
           this.layout.updateElsHeight() // 更新表格内部元素高度
         }
 
-        // 方法2：直接设置height属性
-        this.$set(this, 'height', height)
+        // 方法2：直接设置height属性（已移除 - 违反Vue单向数据流原则）
+        // this.$set(this, 'height', height) // ❌ 移除：避免直接变异继承的prop
 
         // 方法3：强制设置DOM样式（确保生效）
         if (this.$el) {
