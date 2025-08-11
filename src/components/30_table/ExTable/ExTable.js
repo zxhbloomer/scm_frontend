@@ -45,7 +45,22 @@ export default {
       canvasAutoHeightEnabled: false, // Canvas自动高度是否启用
       canvasCalculatedHeight: null, // Canvas计算的表格高度
       internalHeight: null, // Element UI内部设置的高度（避免setter警告）
-      canvasHeightConfig: null // Canvas高度计算配置参数
+      canvasHeightConfig: null, // Canvas高度计算配置参数
+
+      // 智能复制系统相关状态
+      copyMenuVisible: false, // 复制菜单是否显示
+      copyMenuPosition: { x: 0, y: 0 }, // 复制菜单位置
+      lastMousePosition: { x: 0, y: 0 }, // 最后的鼠标位置
+      pendingCopyData: null, // 待复制的数据
+      copyMenuElement: null, // 复制菜单DOM元素
+      handleGlobalClick: null, // 全局点击事件处理器
+
+      // 原生文本选择系统状态
+      currentSelection: null, // 当前的文本选择对象
+      selectionInTable: false, // 选择是否在表格内
+      selectionAnalysis: null, // 选择内容分析结果
+      selectionChangeHandler: null, // 选择变化事件处理器
+      copyEventHandler: null // 复制事件处理器
     }
   },
   created () {
@@ -111,6 +126,9 @@ export default {
       this.configLoading = false
       this.$el.style.opacity = '1'
     }
+
+    // 初始化智能复制系统
+    this.initSmartCopySystem()
 
     $table.doLayout()
 
@@ -387,7 +405,6 @@ export default {
         // 获取table实例和基础参数
         const { componentInstance: $table } = this.$vnode
         if (!$table) {
-          console.error('ExTable: 无法获取表格实例')
           return
         }
 
@@ -411,7 +428,6 @@ export default {
         getTableConfigApi({ page_code: page_code }).then(response => {
           try {
             if (!response.data || !Array.isArray(response.data)) {
-              console.warn('ExTable: 获取列配置数据为空或格式错误')
               this.configLoading = false
               this.$el.style.opacity = '1' // 没有配置数据也要显示表格
               return
@@ -429,17 +445,16 @@ export default {
           } catch (error) {
             this.configLoading = false // 错误时也要更新状态
             this.$el.style.opacity = '1' // 错误时也要显示表格
-            console.error('ExTable: 应用列配置失败', error)
           }
         }).catch(error => {
+          // 处理配置加载错误，确保表格仍然可以正常显示
+          console.warn('表格配置加载失败:', error)
           this.configLoading = false // 错误时也要更新状态
           this.$el.style.opacity = '1' // 错误时也要显示表格
-          console.error('ExTable: 获取列配置数据失败', error)
         })
       } catch (error) {
         this.configLoading = false
         this.$el.style.opacity = '1' // 错误时也要显示表格
-        console.error('ExTable: getTableConfig执行失败', error)
       }
     },
 
@@ -455,7 +470,6 @@ export default {
 
         const store = $table.store
         if (!store || !store.states) {
-          console.error('ExTable: 无法获取表格store')
           return
         }
 
@@ -598,7 +612,7 @@ export default {
           })
         })
       } catch (error) {
-        console.error('ExTable: 应用列配置失败', error)
+        // 静默处理配置应用错误，不影响表格基本功能
       }
     },
 
@@ -678,7 +692,7 @@ export default {
           })
         })
       } catch (error) {
-        console.error('ExTable: 记录列位置失败', error)
+        // 静默处理列位置记录错误，不影响主要功能
       }
     },
 
@@ -795,115 +809,7 @@ export default {
         // 清理记录
         this.columnsBeforeAnimation = null
       } catch (error) {
-        console.error('ExTable: 执行列动画失败', error)
         this.columnsBeforeAnimation = null
-      }
-    },
-
-    // 🧪 测试：简单动画测试
-    testSimpleAnimation () {
-      try {
-        const tableEl = this.$el
-        if (!tableEl) {
-          return
-        }
-
-        // 表格整体动画
-        tableEl.style.transition = 'all 0.3s ease'
-        tableEl.style.border = '2px solid #409EFF'
-
-        // 添加列头动画测试
-        this.testColumnHeaderAnimation()
-
-        setTimeout(() => {
-          tableEl.style.border = ''
-          setTimeout(() => {
-            tableEl.style.transition = ''
-          }, 300)
-        }, 300)
-      } catch (error) {
-        console.error('ExTable: 简单动画测试失败', error)
-      }
-    },
-
-    // 🧪 测试：列头动画
-    testColumnHeaderAnimation () {
-      try {
-        // 找到所有列头
-        const headerCells = this.$el.querySelectorAll('.el-table__header-wrapper th')
-
-        if (headerCells.length === 0) {
-          return
-        }
-
-        // 给每个列头添加动画
-        headerCells.forEach((cell, index) => {
-          setTimeout(() => {
-            if (cell.animate) {
-              // 使用Web Animations API
-              cell.animate([
-                { backgroundColor: 'transparent', transform: 'translateY(0px)' },
-                { backgroundColor: '#E6F7FF', transform: 'translateY(-2px)' },
-                { backgroundColor: 'transparent', transform: 'translateY(0px)' }
-              ], {
-                duration: 400,
-                easing: 'ease-out'
-              })
-            } else {
-              // CSS fallback
-              cell.style.transition = 'all 0.4s ease-out'
-              cell.style.backgroundColor = '#E6F7FF'
-              cell.style.transform = 'translateY(-2px)'
-
-              setTimeout(() => {
-                cell.style.backgroundColor = ''
-                cell.style.transform = ''
-                setTimeout(() => {
-                  cell.style.transition = ''
-                }, 400)
-              }, 200)
-            }
-          }, index * 50) // 依次执行，每个延迟50ms
-        })
-      } catch (error) {
-        console.error('ExTable: 列头动画测试失败', error)
-      }
-    },
-
-    // 🧪 测试：手动测试列动画效果
-    testColumnAnimation () {
-      try {
-        const headerRows = this.$el.querySelectorAll('.el-table__header-wrapper tr')
-        if (headerRows.length === 0) {
-          return
-        }
-
-        // 模拟记录初始位置
-        this.recordColumnPositionsForAnimation()
-
-        // 人为修改一些单元格的记录位置，模拟不同类型的动画
-        if (this.columnsBeforeAnimation && this.columnsBeforeAnimation.length > 0) {
-          // 1. 模拟列移动动画：修改第一个单元格位置
-          this.columnsBeforeAnimation[0].left += 80
-
-          // 2. 模拟新列淡入动画：删除一个记录，让对应列无法找到匹配
-          if (this.columnsBeforeAnimation.length > 1) {
-            this.columnsBeforeAnimation.splice(1, 1)
-          }
-
-          // 3. 如果有多行表头，也测试第二行
-          const secondRowCells = this.columnsBeforeAnimation.filter(item => item.rowIndex === 1)
-          if (secondRowCells.length > 0) {
-            secondRowCells[0].left += 60
-          }
-
-          // 执行动画
-          this.$nextTick(() => {
-            this.executeColumnAnimation()
-          })
-        }
-      } catch (error) {
-        console.error('ExTable: 测试列动画失败', error)
       }
     },
 
@@ -934,7 +840,7 @@ export default {
           this.doLayout()
         })
       } catch (error) {
-        console.error('表头自适应触发失败:', error)
+        // 静默处理表头自适应错误，不影响表格正常显示
       }
     },
 
@@ -1022,7 +928,6 @@ export default {
 
         return finalHeight
       } catch (error) {
-        console.error('Canvas高度计算失败:', error)
         return 400 // 错误时返回最小值
       }
     },
@@ -1077,13 +982,12 @@ export default {
               originalText: cellText
             })
           } catch (cellError) {
-            console.warn(`Canvas测量列 ${cell.textContent} 失败:`, cellError)
+            // 静默处理单个表头单元格测量错误
           }
         })
 
         return measurements
       } catch (error) {
-        console.error('Canvas批量测量列标题失败:', error)
         return new Map()
       }
     },
@@ -1121,7 +1025,7 @@ export default {
         // 添加resize事件监听
         window.addEventListener('resize', this.boundResizeHandler)
       } catch (error) {
-        console.error('设置resize监听失败:', error)
+        // 静默处理窗口监听器设置错误
       }
     },
 
@@ -1143,7 +1047,7 @@ export default {
           }
         }, 300)
       } catch (error) {
-        console.error('处理resize事件失败:', error)
+        // 静默处理窗口resize事件错误
       }
     },
 
@@ -1165,7 +1069,7 @@ export default {
           this.canvasCalculatedHeight = newHeight
         }
       } catch (error) {
-        console.error('更新表格高度失败:', error)
+        // 静默处理表格高度更新错误
       }
     },
 
@@ -1207,8 +1111,6 @@ export default {
           this.doLayout()
         })
       } catch (error) {
-        console.error('更新Element UI Table高度失败:', error)
-
         // 降级处理：最基础的DOM样式设置
         try {
           if (this.$el) {
@@ -1216,9 +1118,662 @@ export default {
             this.$el.style.minHeight = height + 'px'
           }
         } catch (domError) {
-          console.error('DOM样式降级也失败:', domError)
+          // 静默处理DOM高度设置错误
         }
       }
+    },
+
+    /**
+     * 初始化智能复制系统
+     * 基于浏览器原生文本选择功能的智能复制
+     */
+    initSmartCopySystem () {
+      try {
+        // 初始化原生文本选择监听
+        this.initNativeTextSelection()
+
+        // 初始化鼠标位置追踪
+        this.initMouseTracker()
+
+        // 初始化复制拦截器
+        this.initCopyInterceptor()
+
+        // 初始化复制菜单DOM元素
+        this.initCopyMenu()
+      } catch (error) {
+        // 静默处理智能复制系统初始化错误，不影响表格基本功能
+      }
+    },
+
+    /**
+     * 初始化原生文本选择监听
+     * 监听浏览器原生的文本选择变化事件
+     */
+    initNativeTextSelection () {
+      try {
+        // 创建选择变化处理器
+        this.selectionChangeHandler = this.handleSelectionChange.bind(this)
+
+        // 监听全局的选择变化事件
+        document.addEventListener('selectionchange', this.selectionChangeHandler)
+      } catch (error) {
+        // 静默处理原生文本选择监听初始化错误
+      }
+    },
+
+    /**
+     * 处理选择变化事件
+     * 当用户选择文本时触发
+     */
+    handleSelectionChange () {
+      try {
+        // 获取当前选择
+        const selection = window.getSelection()
+
+        if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
+          // 没有选择或选择为空
+          this.currentSelection = null
+          this.selectionInTable = false
+          this.selectionAnalysis = null
+          this.hideSelectionHint()
+          return
+        }
+
+        // 分析选择内容
+        const analysis = this.analyzeCurrentSelection()
+
+        // 如果选择在表格内，显示提示
+        if (this.selectionInTable && analysis) {
+          this.showSelectionHint()
+        } else {
+          this.hideSelectionHint()
+        }
+      } catch (error) {
+        // 静默处理选择变化事件错误，不影响表格正常使用
+      }
+    },
+
+    /**
+     * 显示选择提示
+     * 提醒用户可以使用智能复制功能
+     */
+    showSelectionHint () {
+      // 如果已经有提示，不重复创建
+      if (this.selectionHintElement) {
+        return
+      }
+
+      // 创建提示元素
+      const hint = document.createElement('div')
+      hint.className = 'extable-selection-hint'
+      hint.innerHTML = `
+        <span style="color: #67C23A;">✓ 已选择表格数据</span>
+        <span style="margin-left: 10px; color: #909399;">
+          右键菜单或按 Alt+C 智能复制
+        </span>
+      `
+      hint.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #fff;
+        border: 1px solid #DCDFE6;
+        border-radius: 4px;
+        padding: 12px 20px;
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+        z-index: 2000;
+        font-size: 14px;
+        animation: slideInUp 0.3s ease;
+      `
+
+      // 添加动画样式
+      if (!document.getElementById('extable-hint-styles')) {
+        const style = document.createElement('style')
+        style.id = 'extable-hint-styles'
+        style.textContent = `
+          @keyframes slideInUp {
+            from {
+              transform: translateY(20px);
+              opacity: 0;
+            }
+            to {
+              transform: translateY(0);
+              opacity: 1;
+            }
+          }
+        `
+        document.head.appendChild(style)
+      }
+
+      document.body.appendChild(hint)
+      this.selectionHintElement = hint
+
+      // 3秒后自动隐藏
+      this.selectionHintTimer = setTimeout(() => {
+        this.hideSelectionHint()
+      }, 3000)
+    },
+
+    /**
+     * 隐藏选择提示
+     */
+    hideSelectionHint () {
+      if (this.selectionHintElement) {
+        document.body.removeChild(this.selectionHintElement)
+        this.selectionHintElement = null
+      }
+
+      if (this.selectionHintTimer) {
+        clearTimeout(this.selectionHintTimer)
+        this.selectionHintTimer = null
+      }
+    },
+
+    /**
+     * 分析当前文本选择
+     * 判断选择是否在表格内，涉及多少单元格/行
+     */
+    analyzeCurrentSelection () {
+      try {
+        const selection = window.getSelection()
+
+        if (!selection || selection.rangeCount === 0) {
+          this.currentSelection = null
+          this.selectionInTable = false
+          this.selectionAnalysis = null
+          return null
+        }
+
+        // 获取选择的第一个范围
+        const range = selection.getRangeAt(0)
+        const selectedText = selection.toString().trim()
+
+        // 检查选择是否在当前表格内
+        const isInTable = this.isSelectionInCurrentTable(range)
+
+        if (!isInTable) {
+          this.currentSelection = null
+          this.selectionInTable = false
+          this.selectionAnalysis = null
+          return null
+        }
+
+        // 分析选择涉及的单元格和行
+        const analysis = this.analyzeSelectionRange(range, selectedText)
+
+        // 保存分析结果
+        this.currentSelection = selection
+        this.selectionInTable = true
+        this.selectionAnalysis = analysis
+
+        return analysis
+      } catch (error) {
+        // 静默处理选择内容分析错误，返回空结果
+        return null
+      }
+    },
+
+    /**
+     * 检查选择范围是否在当前表格内
+     */
+    isSelectionInCurrentTable (range) {
+      try {
+        // 获取选择的开始和结束节点
+        const startContainer = range.startContainer
+        const endContainer = range.endContainer
+
+        // 检查开始节点是否在表格内
+        const startInTable = this.isNodeInCurrentTable(startContainer)
+        // 检查结束节点是否在表格内
+        const endInTable = this.isNodeInCurrentTable(endContainer)
+
+        // 只有当选择的开始和结束都在表格内时才认为选择在表格内
+        return startInTable && endInTable
+      } catch (error) {
+        // 静默处理选择范围检查错误，默认不在表格内
+        return false
+      }
+    },
+
+    /**
+     * 检查节点是否在当前表格内
+     */
+    isNodeInCurrentTable (node) {
+      try {
+        // 从节点向上遍历DOM树，查找是否包含在当前表格元素中
+        let current = node
+
+        // 如果是文本节点，先获取其父元素
+        if (current.nodeType === Node.TEXT_NODE) {
+          current = current.parentElement
+        }
+
+        while (current && current !== document.body) {
+          // 如果找到当前表格元素，说明节点在表格内
+          if (current === this.$el) {
+            return true
+          }
+          current = current.parentElement
+        }
+
+        return false
+      } catch (error) {
+        // 静默处理节点查找错误，默认不在表格内
+        return false
+      }
+    },
+
+    /**
+     * 分析选择范围涉及的单元格和行
+     */
+    analyzeSelectionRange (range, selectedText) {
+      try {
+        // Element UI的DOM结构可能有多种情况
+        let tableBody = null
+
+        // 尝试标准结构：.el-table__body-wrapper tbody (不需要中间的table选择器)
+        tableBody = this.$el.querySelector('.el-table__body-wrapper tbody')
+
+        // 如果失败，尝试带table选择器
+        if (!tableBody) {
+          tableBody = this.$el.querySelector('.el-table__body-wrapper table tbody')
+        }
+
+        // 固定列的情况
+        if (!tableBody) {
+          tableBody = this.$el.querySelector('.el-table__fixed-body-wrapper tbody')
+        }
+
+        // 直接查找tbody
+        if (!tableBody) {
+          tableBody = this.$el.querySelector('tbody')
+        }
+
+        if (!tableBody) {
+          return { type: 'unknown', count: 0, cells: [], rows: [], data: [] }
+        }
+
+        const allRows = Array.from(tableBody.querySelectorAll('tr'))
+        const affectedCells = []
+        const affectedRows = new Set()
+
+        // 遍历所有行和单元格，检查哪些与选择范围有交集
+        allRows.forEach((row, rowIndex) => {
+          const cells = Array.from(row.querySelectorAll('td'))
+
+          cells.forEach((cell, cellIndex) => {
+            // 检查单元格是否与选择范围有交集
+            if (this.doesRangeIntersectElement(range, cell)) {
+              const cellText = cell.textContent?.trim() || ''
+
+              affectedCells.push({
+                rowIndex,
+                cellIndex,
+                element: cell,
+                text: cellText
+              })
+              affectedRows.add(rowIndex)
+            }
+          })
+        })
+
+        // 获取受影响行的数据
+        const tableData = this.store?.states?.data || this.data || []
+        const affectedRowData = []
+
+        affectedRows.forEach(rowIndex => {
+          if (tableData[rowIndex]) {
+            affectedRowData.push(tableData[rowIndex])
+          }
+        })
+
+        // 确定选择类型 - 修复：优先判断单元格数量
+        let selectionType = 'unknown'
+        let selectionCount = 0
+
+        if (affectedCells.length === 1) {
+          selectionType = 'cell'
+          selectionCount = 1
+        } else if (affectedCells.length > 1) {
+          // 多个单元格：优先按单元格数量计算
+          selectionType = 'cell'
+          selectionCount = affectedCells.length
+        } else if (affectedRows.size === 1) {
+          selectionType = 'row'
+          selectionCount = 1
+        } else if (affectedRows.size > 1) {
+          selectionType = 'row'
+          selectionCount = affectedRows.size
+        }
+
+        return {
+          type: selectionType,
+          count: selectionCount,
+          cells: affectedCells,
+          rows: Array.from(affectedRows),
+          data: affectedRowData,
+          selectedText: selectedText,
+          columns: this.getVisibleColumns()
+        }
+      } catch (error) {
+        return { type: 'unknown', count: 0, cells: [], rows: [], data: [] }
+      }
+    },
+
+    /**
+     * 检查Range是否与指定元素有交集 - 原生API简单版本
+     */
+    doesRangeIntersectElement (range, element) {
+      try {
+        // 使用浏览器原生的 intersectsNode API - 最简单直接
+        return range.intersectsNode(element)
+      } catch (error) {
+        // 如果原生API不支持，回退到简单的contain检查
+        try {
+          const startContainer = range.startContainer
+          const endContainer = range.endContainer
+
+          return element.contains(startContainer) ||
+                 element.contains(endContainer) ||
+                 startContainer === element ||
+                 endContainer === element
+        } catch (e) {
+          return false
+        }
+      }
+    },
+
+    /**
+     * 初始化复制拦截器
+     * 监听Ctrl+C、右键菜单和复制操作
+     */
+    initCopyInterceptor () {
+      try {
+        // 1. 使表格可聚焦
+        this.$el.setAttribute('tabindex', '-1')
+        this.$el.style.outline = 'none' // 移除焦点边框
+
+        // 2. 监听document级别的键盘事件（更可靠）
+        this.keydownHandler = this.handleKeyDown.bind(this)
+        document.addEventListener('keydown', this.keydownHandler, true)
+
+        // 3. 监听表格的右键菜单事件（最可靠的方案）
+        this.contextmenuHandler = this.handleContextMenu.bind(this)
+        this.$el.addEventListener('contextmenu', this.contextmenuHandler)
+
+        // 4. 监听copy事件作为备用
+        this.copyEventHandler = this.handleCopyEvent.bind(this)
+        document.addEventListener('copy', this.copyEventHandler, true)
+
+        // 5. 监听表格点击，自动获取焦点
+        this.$el.addEventListener('click', () => {
+          this.$el.focus()
+        })
+      } catch (error) {
+        // 静默处理复制拦截器初始化错误
+      }
+    },
+
+    /**
+     * 处理右键菜单事件
+     * 提供更可靠的复制入口
+     */
+    handleContextMenu (event) {
+      // 检查是否有文本选择
+      if (!this.selectionInTable || !this.selectionAnalysis) {
+        return // 没有选择，显示默认右键菜单
+      }
+
+      // 阻止默认右键菜单
+      event.preventDefault()
+
+      // 记录鼠标位置
+      this.lastMousePosition = { x: event.clientX, y: event.clientY }
+
+      // 显示自定义复制菜单
+      this.showSmartCopyMenu(event)
+    },
+
+    /**
+     * 显示智能复制菜单
+     */
+    showSmartCopyMenu (event) {
+      const selectionInfo = this.getSelectionInfo()
+
+      if (selectionInfo.count === 0) {
+        return // 没有选择
+      }
+
+      if (selectionInfo.count === 1) {
+        // 单选，直接复制
+        this.directCopy(selectionInfo)
+        this.$message.success('已复制到剪贴板')
+      } else {
+        // 多选，显示格式菜单
+        this.showCopyFormatMenu(selectionInfo)
+      }
+    },
+
+    /**
+     * 初始化鼠标位置追踪
+     * 用于菜单定位
+     */
+    initMouseTracker () {
+      this.$el.addEventListener('mousemove', (e) => {
+        this.lastMousePosition = { x: e.clientX, y: e.clientY }
+      })
+    },
+
+    /**
+     * 处理键盘事件
+     * 主要捕获Ctrl+C组合键
+     */
+    handleKeyDown (event) {
+      // 检测Ctrl+C组合键
+      if (event.ctrlKey && event.key === 'c') {
+        // 检查是否有表格内的文本选择
+        if (this.selectionInTable && this.selectionAnalysis) {
+          // 尝试处理智能复制
+          const handled = this.handleSmartCopy()
+
+          if (handled) {
+            event.preventDefault()
+            event.stopPropagation()
+            event.stopImmediatePropagation()
+            return false
+          }
+        }
+      }
+
+      // 添加Alt+C作为备用快捷键（更可靠）
+      if (event.altKey && event.key === 'c') {
+        if (this.selectionInTable && this.selectionAnalysis) {
+          this.handleSmartCopy()
+          event.preventDefault()
+        }
+      }
+    },
+
+    /**
+     * 处理copy事件
+     * 捕获右键复制操作
+     */
+    handleCopyEvent (event) {
+      // 检查是否在表格内触发
+      if (this.$el && this.$el.contains(event.target)) {
+        if (this.handleSmartCopy()) {
+          event.preventDefault()
+        }
+      }
+    },
+
+    /**
+     * 智能复制处理核心逻辑
+     * 根据选择状态决定直接复制还是显示菜单
+     */
+    handleSmartCopy () {
+      const selectionInfo = this.getSelectionInfo()
+
+      if (selectionInfo.count === 0) {
+        return false // 没有选择，不处理
+      }
+
+      if (selectionInfo.count === 1) {
+        // 单个选择 - 直接复制
+        this.directCopy(selectionInfo)
+        return true
+      } else {
+        // 多个选择 - 显示格式菜单
+        this.showCopyFormatMenu(selectionInfo)
+        return true
+      }
+    },
+
+    /**
+     * 获取当前选择信息 - 基于原生文本选择
+     * 返回选择类型、数量和数据
+     */
+    getSelectionInfo () {
+      // 检查是否有原生文本选择分析结果
+      if (!this.selectionAnalysis || !this.selectionInTable) {
+        return { type: null, count: 0, rows: null, columns: null }
+      }
+
+      const analysis = this.selectionAnalysis
+
+      // 构建符合复制系统期望格式的选择信息
+      if (analysis.type === 'row') {
+        return {
+          type: 'row',
+          count: analysis.count,
+          rows: analysis.data, // 已经是行数据数组
+          columns: analysis.columns
+        }
+      } else if (analysis.type === 'cell') {
+        return {
+          type: 'cell',
+          count: analysis.count,
+          cells: analysis.cells,
+          rows: analysis.data, // 涉及的行数据
+          columns: analysis.columns
+        }
+      }
+
+      return { type: null, count: 0, rows: null, columns: null }
+    },
+
+    /**
+     * 获取可见的列配置
+     * 排除系统列（selection、index等）
+     */
+    getVisibleColumns () {
+      if (!this.store || !this.store.states) return []
+
+      return this.store.states.columns.filter(col =>
+        col.type !== 'selection' &&
+        col.type !== 'index' &&
+        col.property &&
+        !col.hidden
+      )
+    },
+
+    /**
+     * 获取所有可见列配置（包含行号列）
+     * 用于整行复制，包含行号列但排除选择框列
+     */
+    getAllVisibleColumnsWithIndex () {
+      if (!this.store || !this.store.states) return []
+
+      return this.store.states.columns.filter(col =>
+        col.type !== 'selection' && // 只排除选择框列
+        !col.hidden
+      )
+    },
+
+    /**
+     * 直接复制（单行或单个单元格）
+     * 单个单元格：纯文本，无格式
+     * 单行数据：TSV格式带表头
+     */
+    async directCopy (selectionInfo) {
+      try {
+        let copyText = ''
+
+        if (selectionInfo.type === 'cell' && selectionInfo.count === 1) {
+          // 单个单元格：直接复制纯文本内容，无任何格式
+          const cell = selectionInfo.cells[0]
+          copyText = cell.text || ''
+        } else if (selectionInfo.type === 'row') {
+          // 复制单行数据 - 保持TSV格式
+          const row = selectionInfo.rows[0]
+          const columns = selectionInfo.columns
+
+          // 生成表头
+          const headers = columns.map(col => col.label || col.property || '').join('\t')
+          // 生成数据行
+          const values = columns.map(col => this.getCellValue(row, col)).join('\t')
+
+          copyText = headers + '\n' + values
+        }
+
+        // 使用现代Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(copyText)
+          // 根据类型显示不同的提示信息
+          if (selectionInfo.type === 'cell' && selectionInfo.count === 1) {
+            this.$message.success('已复制到剪贴板')
+          } else {
+            this.$message.success('已复制到剪贴板 (Excel格式)')
+          }
+        } else {
+          // 降级方案
+          this.copyTextFallback(copyText)
+          if (selectionInfo.type === 'cell' && selectionInfo.count === 1) {
+            this.$message.success('已复制到剪贴板')
+          } else {
+            this.$message.success('已复制到剪贴板 (Excel格式)')
+          }
+        }
+      } catch (error) {
+        this.$message.error('复制失败，请重试')
+      }
+    },
+
+    /**
+     * 显示复制格式选择菜单
+     * 在鼠标位置显示格式选项
+     */
+    showCopyFormatMenu (selectionInfo) {
+      // 保存待复制数据
+      this.pendingCopyData = selectionInfo
+
+      // 设置菜单位置
+      const position = {
+        x: this.lastMousePosition.x,
+        y: this.lastMousePosition.y
+      }
+
+      // 显示菜单
+      this.showCopyMenu(position)
+      this.copyMenuVisible = true
+    },
+
+    /**
+     * 获取单元格的值
+     * 支持formatter和原始值
+     */
+    getCellValue (row, column) {
+      if (!row || !column) return ''
+
+      const rawValue = row[column.property]
+
+      // 如果有formatter，使用formatter处理
+      if (column.formatter && typeof column.formatter === 'function') {
+        return column.formatter(row, column, rawValue) || ''
+      }
+
+      // 返回原始值
+      return rawValue == null ? '' : String(rawValue)
     },
 
     /**
@@ -1237,9 +1792,635 @@ export default {
           this.resizeTimer = null
         }
       } catch (error) {
-        console.error('清理resize监听失败:', error)
+        // 静默处理resize事件清理错误
+      }
+    },
+
+    /**
+     * 初始化复制菜单DOM元素
+     * 创建悬浮菜单用于格式选择
+     */
+    initCopyMenu () {
+      // 创建菜单容器
+      const menuContainer = document.createElement('div')
+      menuContainer.className = 'extable-copy-menu'
+      menuContainer.style.cssText = `
+        position: fixed;
+        z-index: 9999;
+        background: #fff;
+        border: 1px solid #e4e7ed;
+        border-radius: 4px;
+        box-shadow: 0 2px 12px 0 rgba(0,0,0,.1);
+        padding: 6px 0;
+        font-size: 14px;
+        color: #606266;
+        display: none;
+        min-width: 160px;
+      `
+
+      // 创建菜单头部
+      const menuHeader = document.createElement('div')
+      menuHeader.className = 'extable-copy-menu-header'
+      menuHeader.innerHTML = '复制选中数据'
+      menuHeader.style.cssText = `
+        padding: 8px 16px;
+        border-bottom: 1px solid #e4e7ed;
+        font-size: 13px;
+        font-weight: bold;
+        text-align: center;
+      `
+      menuContainer.appendChild(menuHeader)
+
+      // 创建菜单选项（移除HTML和JSON格式）
+      const menuItems = [
+        { key: 'tsv', label: 'Tab分隔符格式 (Excel)', icon: '📊' },
+        { key: 'tsv-header', label: 'Tab分隔符格式 (Excel)含表头', icon: '📊' },
+        { key: 'tsv-fullrow-header', label: 'Tab分隔符格式 (Excel)整行复制含表头', icon: '📋' },
+        { key: 'csv', label: 'CSV格式', icon: '📄' },
+        { key: 'text', label: '纯文本格式', icon: '📝' }
+      ]
+
+      menuItems.forEach(item => {
+        const menuItem = document.createElement('div')
+        menuItem.className = 'extable-copy-menu-item'
+        menuItem.dataset.copyFormat = item.key
+        menuItem.innerHTML = `<span class="icon">${item.icon}</span><span class="label">${item.label}</span>`
+        menuItem.style.cssText = `
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+          display: flex;
+          align-items: center;
+        `
+
+        // 添加悬停效果
+        menuItem.addEventListener('mouseenter', () => {
+          menuItem.style.backgroundColor = '#f5f7fa'
+        })
+        menuItem.addEventListener('mouseleave', () => {
+          menuItem.style.backgroundColor = 'transparent'
+        })
+
+        // 添加点击事件
+        menuItem.addEventListener('click', (e) => {
+          e.stopPropagation()
+          this.handleCopyFormatSelect(item.key)
+        })
+
+        menuContainer.appendChild(menuItem)
+      })
+
+      // 添加到页面
+      document.body.appendChild(menuContainer)
+      this.copyMenuElement = menuContainer
+
+      // 添加全局点击事件，点击外部关闭菜单
+      this.handleGlobalClick = (e) => {
+        if (!menuContainer.contains(e.target)) {
+          this.hideCopyMenu()
+        }
+      }
+
+      document.addEventListener('click', this.handleGlobalClick)
+    },
+
+    /**
+     * 显示复制菜单
+     */
+    showCopyMenu (position) {
+      if (!this.copyMenuElement) return
+
+      // 设置菜单位置
+      this.copyMenuElement.style.left = position.x + 'px'
+      this.copyMenuElement.style.top = position.y + 'px'
+      this.copyMenuElement.style.display = 'block'
+
+      // 确保菜单不会超出视窗
+      this.$nextTick(() => {
+        const rect = this.copyMenuElement.getBoundingClientRect()
+        const windowWidth = window.innerWidth
+        const windowHeight = window.innerHeight
+
+        if (rect.right > windowWidth) {
+          this.copyMenuElement.style.left = (windowWidth - rect.width - 10) + 'px'
+        }
+        if (rect.bottom > windowHeight) {
+          this.copyMenuElement.style.top = (windowHeight - rect.height - 10) + 'px'
+        }
+      })
+    },
+
+    /**
+     * 隐藏复制菜单
+     */
+    hideCopyMenu () {
+      if (this.copyMenuElement) {
+        this.copyMenuElement.style.display = 'none'
+      }
+      this.copyMenuVisible = false
+    },
+
+    /**
+     * 处理复制格式选择
+     */
+    handleCopyFormatSelect (format) {
+      if (!this.pendingCopyData) {
+        return
+      }
+
+      // 隐藏菜单
+      this.hideCopyMenu()
+
+      // 根据格式复制数据
+      this.copyDataInFormat(this.pendingCopyData, format)
+
+      // 清除待复制数据
+      this.pendingCopyData = null
+    },
+
+    /**
+     * 根据指定格式复制数据
+     */
+    copyDataInFormat (selectionInfo, format) {
+      try {
+        let copyText = ''
+
+        switch (format) {
+          case 'tsv':
+            copyText = this.formatAsTSV(selectionInfo)
+            break
+          case 'tsv-header':
+            copyText = this.formatAsTSVWithHeader(selectionInfo)
+            break
+          case 'tsv-fullrow-header':
+            copyText = this.formatAsTSVFullRowWithHeader(selectionInfo)
+            break
+          case 'csv':
+            copyText = this.formatAsCSV(selectionInfo)
+            break
+          case 'html':
+            copyText = this.formatAsHTML(selectionInfo)
+            break
+          case 'json':
+            copyText = this.formatAsJSON(selectionInfo)
+            break
+          case 'text':
+            copyText = this.formatAsPlainText(selectionInfo)
+            break
+          default:
+            copyText = this.formatAsTSV(selectionInfo) // 默认TSV格式
+        }
+
+        // 格式名称映射
+        const formatNames = {
+          'tsv': 'Excel格式',
+          'tsv-header': 'Excel格式(含表头)',
+          'tsv-fullrow-header': 'Excel格式(整行复制含表头)',
+          'csv': 'CSV格式',
+          'text': '纯文本格式'
+        }
+        const formatName = formatNames[format] || `${format.toUpperCase()}格式`
+
+        // 使用现代 Clipboard API
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(copyText).then(() => {
+            // 整行复制格式使用简化消息
+            if (format === 'tsv-fullrow-header') {
+              this.$message.success(`已复制到剪贴板 (${formatName})`)
+            } else {
+              this.$message.success(`已复制${selectionInfo.count}个${selectionInfo.type} (${formatName})`)
+            }
+          }).catch(error => {
+            console.warn('复制操作失败:', error)
+            this.$message.error('复制失败，请重试')
+          })
+        } else {
+          // 降级方案 - 使用传统方法
+          this.copyTextFallback(copyText)
+          // 整行复制格式使用简化消息
+          if (format === 'tsv-fullrow-header') {
+            this.$message.success(`已复制到剪贴板 (${formatName})`)
+          } else {
+            this.$message.success(`已复制${selectionInfo.count}个${selectionInfo.type} (${formatName})`)
+          }
+        }
+      } catch (error) {
+        this.$message.error('复制失败，请重试')
+      }
+    },
+
+    /**
+     * 传统复制方法 - 降级方案
+     */
+    copyTextFallback (text) {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    },
+
+    /**
+     * 构建基于选中单元格的表格数据
+     * @param {Array} cells - 选中的单元格数组
+     * @param {string} separator - 分隔符
+     * @returns {string} 格式化的表格文本
+     */
+    buildCellBasedTable (cells, separator) {
+      if (!cells || cells.length === 0) return ''
+
+      // 1. 分析行列范围
+      const rowIndices = [...new Set(cells.map(cell => cell.rowIndex))].sort((a, b) => a - b)
+      const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
+
+      // 2. 创建单元格映射表
+      const cellMap = new Map()
+      cells.forEach(cell => {
+        const key = `${cell.rowIndex}-${cell.cellIndex}`
+        cellMap.set(key, cell.text || '')
+      })
+
+      // 3. 构建表格
+      const lines = []
+
+      rowIndices.forEach(rowIndex => {
+        const rowData = []
+        colIndices.forEach(colIndex => {
+          const key = `${rowIndex}-${colIndex}`
+          const cellValue = cellMap.get(key) || ''
+          rowData.push(cellValue)
+        })
+        lines.push(rowData.join(separator))
+      })
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 构建基于选中单元格的表格数据（含表头）
+     * @param {Object} selectionInfo - 选择信息
+     * @param {string} separator - 分隔符
+     * @returns {string} 格式化的表格文本（含表头）
+     */
+    buildCellBasedTableWithHeader (selectionInfo, separator) {
+      if (!selectionInfo.cells || selectionInfo.cells.length === 0) return ''
+
+      const cells = selectionInfo.cells
+
+      // 1. 分析列范围，确定需要哪些列的表头
+      const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
+
+      // 2. 构建表头
+      const headers = []
+      colIndices.forEach(colIndex => {
+        // 从列配置中获取表头标签
+        const column = selectionInfo.columns && selectionInfo.columns[colIndex]
+        const headerText = column ? (column.label || column.property || '') : ''
+        headers.push(headerText)
+      })
+
+      // 3. 构建数据部分（重用现有逻辑）
+      const dataContent = this.buildCellBasedTable(cells, separator)
+
+      // 4. 合并表头和数据
+      const lines = [headers.join(separator)]
+      if (dataContent) {
+        lines.push(dataContent)
+      }
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 格式化为TSV (Tab分隔符) - Excel兼容
+     * 支持基于选中单元格的精确复制
+     */
+    formatAsTSV (selectionInfo) {
+      // 如果是单元格选择，使用基于单元格的复制
+      if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
+        return this.buildCellBasedTable(selectionInfo.cells, '\t')
+      }
+
+      // 否则使用原有的整行复制逻辑（向后兼容）
+      const lines = []
+
+      // 添加表头
+      if (selectionInfo.columns && selectionInfo.columns.length > 0) {
+        lines.push(selectionInfo.columns.map(col => col.label || col.property || '').join('\t'))
+      }
+
+      // 添加数据行
+      selectionInfo.rows.forEach(row => {
+        const rowData = selectionInfo.columns.map(column => {
+          return this.getCellValue(row, column)
+        })
+        lines.push(rowData.join('\t'))
+      })
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 格式化为TSV (Tab分隔符) - Excel兼容 含表头
+     * 单元格选择时也包含表头
+     */
+    formatAsTSVWithHeader (selectionInfo) {
+      if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
+        // 单元格选择时，构建包含表头的表格
+        return this.buildCellBasedTableWithHeader(selectionInfo, '\t')
+      }
+
+      // 整行选择时，使用原有逻辑（已包含表头）
+      return this.formatAsTSV(selectionInfo)
+    },
+
+    /**
+     * 格式化为TSV (Tab分隔符) - Excel兼容 整行复制含表头
+     * 始终使用整行复制模式并包含表头，包含行号列
+     */
+    formatAsTSVFullRowWithHeader (selectionInfo) {
+      // 强制使用整行模式，忽略单元格选择
+      const lines = []
+
+      // 获取包含行号列的完整列配置
+      const allColumns = this.getAllVisibleColumnsWithIndex()
+
+      // 添加表头（包含行号列）
+      if (allColumns && allColumns.length > 0) {
+        const headers = allColumns.map(col => {
+          // 处理行号列的表头
+          if (col.type === 'index') {
+            return col.label || 'No' // 行号列默认标题
+          }
+          return col.label || col.property || ''
+        })
+        lines.push(headers.join('\t'))
+      }
+
+      // 添加数据行（包含行号列）
+      if (selectionInfo.rows && selectionInfo.rows.length > 0) {
+        selectionInfo.rows.forEach((row, index) => {
+          const rowData = allColumns.map(column => {
+            // 处理行号列的值
+            if (column.type === 'index') {
+              // 尝试从行数据中获取真实行号，否则使用顺序编号
+              const actualIndex = this.getActualRowIndex(row, index)
+              return actualIndex.toString()
+            }
+            return this.getCellValue(row, column)
+          })
+          lines.push(rowData.join('\t'))
+        })
+      }
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 获取行的实际索引（用于行号列）
+     * @param {Object} row - 行数据
+     * @param {number} fallbackIndex - 备用索引
+     * @returns {number} 实际行号（从1开始）
+     */
+    getActualRowIndex (row, fallbackIndex) {
+      try {
+        // 尝试从表格数据中找到行的真实位置
+        if (this.data && Array.isArray(this.data)) {
+          const actualIndex = this.data.findIndex(dataRow => dataRow === row)
+          if (actualIndex !== -1) {
+            return actualIndex + 1 // 行号从1开始
+          }
+        }
+
+        // 如果找不到，尝试从store状态中查找
+        if (this.store && this.store.states && this.store.states.data) {
+          const actualIndex = this.store.states.data.findIndex(dataRow => dataRow === row)
+          if (actualIndex !== -1) {
+            return actualIndex + 1 // 行号从1开始
+          }
+        }
+
+        // 回退方案：使用传入的索引
+        return fallbackIndex + 1
+      } catch (error) {
+        // 出错时使用备用索引
+        return fallbackIndex + 1
+      }
+    },
+
+    /**
+     * 构建基于选中单元格的CSV表格数据
+     */
+    buildCellBasedCSV (cells) {
+      if (!cells || cells.length === 0) return ''
+
+      // CSV转义函数
+      const csvEscape = (value) => {
+        const str = String(value || '')
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"'
+        }
+        return str
+      }
+
+      // 分析行列范围
+      const rowIndices = [...new Set(cells.map(cell => cell.rowIndex))].sort((a, b) => a - b)
+      const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
+
+      // 创建单元格映射表
+      const cellMap = new Map()
+      cells.forEach(cell => {
+        const key = `${cell.rowIndex}-${cell.cellIndex}`
+        cellMap.set(key, csvEscape(cell.text || ''))
+      })
+
+      // 构建表格
+      const lines = []
+      rowIndices.forEach(rowIndex => {
+        const rowData = []
+        colIndices.forEach(colIndex => {
+          const key = `${rowIndex}-${colIndex}`
+          const cellValue = cellMap.get(key) || ''
+          rowData.push(cellValue)
+        })
+        lines.push(rowData.join(','))
+      })
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 格式化为CSV
+     * 支持基于选中单元格的精确复制
+     */
+    formatAsCSV (selectionInfo) {
+      // 如果是单元格选择，使用基于单元格的复制
+      if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
+        return this.buildCellBasedCSV(selectionInfo.cells)
+      }
+
+      // 否则使用原有的整行复制逻辑（向后兼容）
+      const lines = []
+
+      // CSV转义函数
+      const csvEscape = (value) => {
+        const str = String(value || '')
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"'
+        }
+        return str
+      }
+
+      // 添加表头
+      if (selectionInfo.columns && selectionInfo.columns.length > 0) {
+        lines.push(selectionInfo.columns.map(col => csvEscape(col.label || col.property || '')).join(','))
+      }
+
+      // 添加数据行
+      selectionInfo.rows.forEach(row => {
+        const rowData = selectionInfo.columns.map(column => {
+          return csvEscape(this.getCellValue(row, column))
+        })
+        lines.push(rowData.join(','))
+      })
+
+      return lines.join('\n')
+    },
+
+    /**
+     * 格式化为HTML表格
+     */
+    formatAsHTML (selectionInfo) {
+      let html = '<table border="1" style="border-collapse: collapse;">\n'
+
+      // 添加表头
+      if (selectionInfo.columns && selectionInfo.columns.length > 0) {
+        html += '  <thead>\n    <tr>\n'
+        selectionInfo.columns.forEach(column => {
+          const label = column.label || column.property || ''
+          html += `      <th>${this.htmlEscape(label)}</th>\n`
+        })
+        html += '    </tr>\n  </thead>\n'
+      }
+
+      // 添加数据行
+      html += '  <tbody>\n'
+      selectionInfo.rows.forEach(row => {
+        html += '    <tr>\n'
+        selectionInfo.columns.forEach(column => {
+          const value = this.getCellValue(row, column)
+          html += `      <td>${this.htmlEscape(value)}</td>\n`
+        })
+        html += '    </tr>\n'
+      })
+      html += '  </tbody>\n</table>'
+
+      return html
+    },
+
+    /**
+     * 格式化为JSON
+     */
+    formatAsJSON (selectionInfo) {
+      const data = selectionInfo.rows.map(row => {
+        const rowObj = {}
+        selectionInfo.columns.forEach(column => {
+          const key = column.label || column.property || 'field'
+          rowObj[key] = this.getCellValue(row, column)
+        })
+        return rowObj
+      })
+
+      return JSON.stringify(data, null, 2)
+    },
+
+    /**
+     * 格式化为纯文本
+     * 支持基于选中单元格的精确复制
+     */
+    formatAsPlainText (selectionInfo) {
+      // 如果是单元格选择，使用基于单元格的复制
+      if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
+        return this.buildCellBasedTable(selectionInfo.cells, ' | ')
+      }
+
+      // 否则使用原有的整行复制逻辑（向后兼容）
+      const lines = []
+
+      selectionInfo.rows.forEach(row => {
+        const rowData = selectionInfo.columns.map(column => {
+          return this.getCellValue(row, column)
+        })
+        lines.push(rowData.join(' | '))
+      })
+
+      return lines.join('\n')
+    },
+
+    /**
+     * HTML转义
+     */
+    htmlEscape (str) {
+      const div = document.createElement('div')
+      div.textContent = str
+      return div.innerHTML
+    },
+
+    /**
+     * 清理复制菜单资源
+     */
+    cleanupCopyMenu () {
+      if (this.copyMenuElement) {
+        document.body.removeChild(this.copyMenuElement)
+        this.copyMenuElement = null
+      }
+
+      if (this.handleGlobalClick) {
+        document.removeEventListener('click', this.handleGlobalClick)
+        this.handleGlobalClick = null
+      }
+    },
+
+    /**
+     * 清理原生文本选择系统
+     */
+    cleanupNativeTextSelection () {
+      // 清除选择状态
+      this.currentSelection = null
+      this.selectionInTable = false
+      this.selectionAnalysis = null
+
+      // 隐藏提示
+      this.hideSelectionHint()
+
+      // 移除选择变化事件监听
+      if (this.selectionChangeHandler) {
+        document.removeEventListener('selectionchange', this.selectionChangeHandler)
+        this.selectionChangeHandler = null
+      }
+
+      // 移除键盘事件监听
+      if (this.keydownHandler) {
+        document.removeEventListener('keydown', this.keydownHandler, true)
+        this.keydownHandler = null
+      }
+
+      // 移除右键菜单事件监听
+      if (this.contextmenuHandler && this.$el) {
+        this.$el.removeEventListener('contextmenu', this.contextmenuHandler)
+        this.contextmenuHandler = null
+      }
+
+      // 移除复制事件监听
+      if (this.copyEventHandler) {
+        document.removeEventListener('copy', this.copyEventHandler, true)
+        this.copyEventHandler = null
       }
     }
+
   },
 
   destroyed () {
@@ -1250,5 +2431,10 @@ export default {
     if (this.canvasAutoHeightEnabled) {
       this.cleanupWindowResizeListener()
     }
+
+    // 清理智能复制系统
+    this.cleanupCopyMenu()
+    this.cleanupNativeTextSelection()
   }
 }
+
