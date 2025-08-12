@@ -1111,7 +1111,7 @@ export default {
         }
 
         // 方法2：直接设置height属性（已移除 - 违反Vue单向数据流原则）
-        // this.$set(this, 'height', height) // ❌ 移除：避免直接变异继承的prop
+        // this.$set(this, 'height', height) // 移除：避免直接变异继承的prop
 
         // 方法3：强制设置DOM样式（确保生效）
         if (this.$el) {
@@ -1413,6 +1413,9 @@ export default {
           return { type: 'unknown', count: 0, cells: [], rows: [], data: [] }
         }
 
+        // 新增：分析合并单元格
+        const mergedCellsMap = this.analyzeMergedCells(this.$el)
+
         const allRows = Array.from(tableBody.querySelectorAll('tr'))
         const affectedCells = []
         const affectedRows = new Set()
@@ -1426,11 +1429,15 @@ export default {
             if (this.doesRangeIntersectElement(range, cell)) {
               const cellText = cell.textContent?.trim() || ''
 
+              // 检查是否是合并单元格
+              const mergedInfo = mergedCellsMap.get(`${rowIndex}-${cellIndex}`)
+
               affectedCells.push({
                 rowIndex,
                 cellIndex,
                 element: cell,
-                text: cellText
+                text: cellText,
+                mergedInfo: mergedInfo || null // 添加合并信息
               })
               affectedRows.add(rowIndex)
             }
@@ -1473,11 +1480,121 @@ export default {
           rows: Array.from(affectedRows),
           data: affectedRowData,
           selectedText: selectedText,
-          columns: this.getVisibleColumns()
+          columns: this.getVisibleColumns(),
+          mergedCellsMap: mergedCellsMap //  传递合并单元格信息
         }
       } catch (error) {
         return { type: 'unknown', count: 0, cells: [], rows: [], data: [] }
       }
+    },
+
+    /**
+     * 检测和记录合并单元格信息
+     * @param {Element} tableElement 表格元素
+     * @returns {Map} 合并单元格映射表
+     */
+    analyzeMergedCells (tableElement) {
+      const mergedCellsMap = new Map()
+
+      try {
+        // 1. 检测传统HTML合并单元格 (rowspan/colspan)
+        const htmlMergedCells = tableElement.querySelectorAll('td[colspan], td[rowspan], th[colspan], th[rowspan]')
+
+        htmlMergedCells.forEach(cell => {
+          const row = cell.parentElement
+          const rowIndex = row.rowIndex
+          const cellIndex = cell.cellIndex
+          const colspan = parseInt(cell.getAttribute('colspan')) || 1
+          const rowspan = parseInt(cell.getAttribute('rowspan')) || 1
+          const cellValue = cell.textContent?.trim() || ''
+
+          // 记录这个合并单元格影响的所有逻辑位置
+          for (let r = rowIndex; r < rowIndex + rowspan; r++) {
+            for (let c = cellIndex; c < cellIndex + colspan; c++) {
+              const key = `${r}-${c}`
+              mergedCellsMap.set(key, {
+                value: cellValue,
+                originalRow: rowIndex,
+                originalCol: cellIndex,
+                colspan: colspan,
+                rowspan: rowspan,
+                isMerged: true,
+                type: 'html'
+              })
+            }
+          }
+        })
+
+        // 2.  检测Element UI的merge-cells合并单元格 (通过多个div实现)
+        const elementUiMergedCells = tableElement.querySelectorAll('td')
+
+        elementUiMergedCells.forEach(cell => {
+          // 检查是否包含多个div子元素（Element UI合并单元格的特征）
+          const divChildren = cell.querySelectorAll('div')
+          if (divChildren.length > 1) {
+            const row = cell.parentElement
+            const rowIndex = row.rowIndex
+            const cellIndex = cell.cellIndex
+
+            //  改进的文本提取逻辑 - 深度获取所有文本内容
+            const divTexts = Array.from(divChildren).map(div => {
+              // 优先使用textContent，如果为空则尝试获取所有子元素的文本
+              let text = div.textContent?.trim() || ''
+
+              // 如果textContent为空，尝试深度获取文本
+              if (!text) {
+                // 获取所有文本节点和元素的textContent
+                const allTextNodes = []
+                const walker = document.createTreeWalker(
+                  div,
+                  NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+                  null,
+                  false
+                )
+
+                let node
+                while ((node = walker.nextNode())) {
+                  if (node.nodeType === Node.TEXT_NODE) {
+                    const nodeText = node.textContent?.trim()
+                    if (nodeText) allTextNodes.push(nodeText)
+                  } else if (node.nodeType === Node.ELEMENT_NODE && node.textContent) {
+                    const elemText = node.textContent?.trim()
+                    if (elemText && !allTextNodes.includes(elemText)) {
+                      allTextNodes.push(elemText)
+                    }
+                  }
+                }
+                text = allTextNodes.join(' ').trim()
+              }
+
+              return text
+            })
+
+            // 过滤掉空字符串
+            const nonEmptyTexts = divTexts.filter(text => text.length > 0)
+            const allText = nonEmptyTexts.join('\n') // 多行数据用换行符连接
+
+            // 将这个单元格标记为Element UI合并单元格 (只有当有实际内容时才记录)
+            if (nonEmptyTexts.length > 0) {
+              const key = `${rowIndex}-${cellIndex}`
+              mergedCellsMap.set(key, {
+                value: allText,
+                originalRow: rowIndex,
+                originalCol: cellIndex,
+                colspan: 1,
+                rowspan: 1,
+                isMerged: true,
+                type: 'element-ui',
+                divTexts: nonEmptyTexts //  保存过滤后的非空数据
+              })
+            }
+          }
+        })
+      } catch (error) {
+        // 静默处理合并单元格检测错误，不影响正常功能
+      }
+
+      return mergedCellsMap
     },
 
     /**
@@ -1854,7 +1971,7 @@ export default {
       // 创建菜单选项（移除HTML和JSON格式）
       const menuItems = [
         { key: 'tsv', label: 'Tab分隔符格式 (Excel)', icon: '📊' },
-        { key: 'tsv-header', label: 'Tab分隔符格式 (Excel)含表头', icon: '📊' },
+        { key: 'tsv-header', label: 'Tab分隔符格式 (Excel)含表头', icon: '📈' },
         { key: 'tsv-fullrow-header', label: 'Tab分隔符格式 (Excel)整行复制含表头', icon: '📋' },
         { key: 'csv', label: 'CSV格式', icon: '📄' },
         { key: 'text', label: '纯文本格式', icon: '📝' }
@@ -2011,7 +2128,7 @@ export default {
               this.$message.success(`已复制${selectionInfo.count}个${selectionInfo.type} (${formatName})`)
             }
           }).catch(error => {
-            console.warn('复制操作失败:', error)
+            console.warn('复制失败:', error)
             this.$message.error('复制失败，请重试')
           })
         } else {
@@ -2044,39 +2161,113 @@ export default {
     },
 
     /**
-     * 构建基于选中单元格的表格数据
+     * 构建基于选中单元格的表格数据 - 支持合并单元格
      * @param {Array} cells - 选中的单元格数组
      * @param {string} separator - 分隔符
+     * @param {Map} mergedCellsMap - 合并单元格映射表
      * @returns {string} 格式化的表格文本
      */
-    buildCellBasedTable (cells, separator) {
+    buildCellBasedTableWithMerged (cells, separator, mergedCellsMap) {
       if (!cells || cells.length === 0) return ''
 
       // 1. 分析行列范围
       const rowIndices = [...new Set(cells.map(cell => cell.rowIndex))].sort((a, b) => a - b)
       const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
 
-      // 2. 创建单元格映射表
-      const cellMap = new Map()
-      cells.forEach(cell => {
-        const key = `${cell.rowIndex}-${cell.cellIndex}`
-        cellMap.set(key, cell.text || '')
-      })
+      //  如果映射表为空，重新分析合并单元格
+      if (!mergedCellsMap || mergedCellsMap.size === 0) {
+        mergedCellsMap = this.analyzeMergedCells(this.$el)
+      }
 
-      // 3. 构建表格
-      const lines = []
+      //  第一步：分析每一行的列信息，检测明细数据
+      const rowDataList = []
 
-      rowIndices.forEach(rowIndex => {
-        const rowData = []
-        colIndices.forEach(colIndex => {
+      rowIndices.forEach((rowIndex, rIdx) => {
+        // 收集该行所有列的信息
+        const columnInfoList = colIndices.map((colIndex, cIdx) => {
           const key = `${rowIndex}-${colIndex}`
-          const cellValue = cellMap.get(key) || ''
-          rowData.push(cellValue)
+
+          if (mergedCellsMap && mergedCellsMap.has(key)) {
+            const mergedInfo = mergedCellsMap.get(key)
+
+            // 如果是Element UI合并单元格且包含多个明细数据
+            if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+              // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+              const actualDetails = mergedInfo.divTexts.length > 2
+                ? mergedInfo.divTexts.slice(1)
+                : mergedInfo.divTexts
+
+              return {
+                type: 'detail',
+                value: actualDetails.join(' | '),
+                detailValues: actualDetails
+              }
+            } else {
+              // 单值合并单元格，作为基本信息
+              return {
+                type: 'basic',
+                value: mergedInfo.value,
+                detailValues: [mergedInfo.value]
+              }
+            }
+          } else {
+            // 从原始选择中查找对应的单元格
+            const matchedCell = cells.find(cell =>
+              cell.rowIndex === rowIndex && cell.cellIndex === colIndex
+            )
+            const cellValue = matchedCell ? matchedCell.text : ''
+
+            return {
+              type: 'basic',
+              value: cellValue,
+              detailValues: [cellValue]
+            }
+          }
         })
-        lines.push(rowData.join(separator))
+
+        // 找出明细列（包含多个值的列）
+        const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+
+        if (detailColumns.length > 0) {
+          // 找出最大明细数量
+          const maxDetailCount = Math.max(...detailColumns.map(info => info.detailValues.length))
+
+          // 为每个明细行生成数据
+          for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+            const detailRowData = columnInfoList.map((columnInfo, colIdx) => {
+              if (columnInfo.type === 'detail') {
+                // 明细列：使用对应索引的明细值，如果不够就用空字符串
+                return columnInfo.detailValues[detailIdx] || ''
+              } else {
+                // 基本信息列：在每个明细行中重复显示
+                return columnInfo.value
+              }
+            })
+
+            rowDataList.push(detailRowData)
+          }
+        } else {
+          // 没有明细数据，使用传统单行模式
+          const rowData = columnInfoList.map(info => info.value)
+          rowDataList.push(rowData)
+        }
       })
 
-      return lines.join('\n')
+      // 3. 构建最终输出
+      const result = rowDataList.map(row => row.join(separator)).join('\n')
+      return result
+    },
+
+    /**
+     * 构建基于选中单元格的表格数据 - 兼容接口
+     * @param {Array} cells - 选中的单元格数组
+     * @param {string} separator - 分隔符
+     * @returns {string} 格式化的表格文本
+     */
+    buildCellBasedTable (cells, separator) {
+      //  获取合并单元格信息
+      const mergedCellsMap = this.analyzeMergedCells(this.$el)
+      return this.buildCellBasedTableWithMerged(cells, separator, mergedCellsMap)
     },
 
     /**
@@ -2115,30 +2306,145 @@ export default {
     },
 
     /**
+     * 构建基于选中单元格的表格数据（含表头）- 支持合并单元格
+     * @param {Object} selectionInfo - 选择信息
+     * @param {string} separator - 分隔符
+     * @returns {string} 格式化的表格文本（含表头）
+     */
+    buildCellBasedTableWithHeaderAndMerged (selectionInfo, separator) {
+      if (!selectionInfo.cells || selectionInfo.cells.length === 0) return ''
+
+      const cells = selectionInfo.cells
+
+      // 1. 分析列范围，确定需要哪些列的表头
+      const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
+
+      // 2. 构建表头
+      const headers = []
+      colIndices.forEach(colIndex => {
+        // 从列配置中获取表头标签
+        const column = selectionInfo.columns && selectionInfo.columns[colIndex]
+        const headerText = column ? (column.label || column.property || '') : ''
+        headers.push(headerText)
+      })
+
+      // 3.  构建数据部分（使用支持合并单元格的方法）
+      const dataContent = this.buildCellBasedTableWithMerged(
+        cells,
+        separator,
+        selectionInfo.mergedCellsMap
+      )
+
+      // 4. 合并表头和数据
+      const lines = [headers.join(separator)]
+      if (dataContent) {
+        lines.push(dataContent)
+      }
+
+      return lines.join('\n')
+    },
+
+    /**
      * 格式化为TSV (Tab分隔符) - Excel兼容
      * 支持基于选中单元格的精确复制
      */
     formatAsTSV (selectionInfo) {
-      // 如果是单元格选择，使用基于单元格的复制
+      // 如果是单元格选择，使用改进后的合并单元格支持
       if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
-        return this.buildCellBasedTable(selectionInfo.cells, '\t')
+        //  使用包含合并单元格信息的方法
+        return this.buildCellBasedTableWithMerged(
+          selectionInfo.cells,
+          '\t',
+          selectionInfo.mergedCellsMap
+        )
       }
 
       // 否则使用原有的整行复制逻辑（向后兼容）
       const lines = []
+
+      //  获取合并单元格映射表以支持Element UI合并单元格
+      const mergedCellsMap = this.analyzeMergedCells(this.$el)
+
+      //  显示映射表中的一些key样例
+      // if (mergedCellsMap && mergedCellsMap.size > 0) {
+      //   // 保留：用于调试合并单元格映射表的代码块
+      // }
 
       // 添加表头
       if (selectionInfo.columns && selectionInfo.columns.length > 0) {
         lines.push(selectionInfo.columns.map(col => col.label || col.property || '').join('\t'))
       }
 
-      // 添加数据行
-      selectionInfo.rows.forEach(row => {
-        const rowData = selectionInfo.columns.map(column => {
-          return this.getCellValue(row, column)
+      //  添加数据行 - 支持明细数据展开
+      if (selectionInfo.rows && selectionInfo.rows.length > 0) {
+        selectionInfo.rows.forEach((row, rowIdx) => {
+          // 收集该行所有列的信息，区分基本信息和明细信息
+          const columnInfoList = selectionInfo.columns.map((column, colIdx) => {
+            // 尝试从合并单元格映射表获取实际显示的内容
+            const key = `${rowIdx}-${colIdx}`
+
+            if (mergedCellsMap && mergedCellsMap.has(key)) {
+              const mergedInfo = mergedCellsMap.get(key)
+
+              // 如果是Element UI合并单元格且包含多个明细数据
+              if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+                // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+                const actualDetails = mergedInfo.divTexts.length > 2
+                  ? mergedInfo.divTexts.slice(1)
+                  : mergedInfo.divTexts
+
+                return {
+                  type: 'detail',
+                  value: actualDetails.join(' | '),
+                  detailValues: actualDetails
+                }
+              } else {
+                // 单值合并单元格，作为基本信息
+                return {
+                  type: 'basic',
+                  value: mergedInfo.value,
+                  detailValues: [mergedInfo.value]
+                }
+              }
+            } else {
+              // 使用原有的getCellValue方法
+              const value = this.getCellValue(row, column)
+              return {
+                type: 'basic',
+                value: value,
+                detailValues: [value]
+              }
+            }
+          })
+
+          // 找出明细列（包含多个值的列）
+          const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+
+          if (detailColumns.length > 0) {
+            // 找出最大明细数量
+            const maxDetailCount = Math.max(...detailColumns.map(info => info.detailValues.length))
+
+            // 为每个明细行生成数据
+            for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+              const detailRowData = columnInfoList.map((columnInfo, colIdx) => {
+                if (columnInfo.type === 'detail') {
+                  // 明细列：使用对应索引的明细值，如果不够就用空字符串
+                  return columnInfo.detailValues[detailIdx] || ''
+                } else {
+                  // 基本信息列：在每个明细行中重复显示
+                  return columnInfo.value
+                }
+              })
+
+              lines.push(detailRowData.join('\t'))
+            }
+          } else {
+            // 没有明细数据，使用传统单行模式
+            const rowData = columnInfoList.map(info => info.value)
+            lines.push(rowData.join('\t'))
+          }
         })
-        lines.push(rowData.join('\t'))
-      })
+      }
 
       return lines.join('\n')
     },
@@ -2149,8 +2455,8 @@ export default {
      */
     formatAsTSVWithHeader (selectionInfo) {
       if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
-        // 单元格选择时，构建包含表头的表格
-        return this.buildCellBasedTableWithHeader(selectionInfo, '\t')
+        //  单元格选择时，使用支持合并单元格的表头构建
+        return this.buildCellBasedTableWithHeaderAndMerged(selectionInfo, '\t')
       }
 
       // 整行选择时，使用原有逻辑（已包含表头）
@@ -2181,18 +2487,81 @@ export default {
       }
 
       // 添加数据行（包含行号列）
+
+      //  获取合并单元格映射表以支持Element UI合并单元格
+      const mergedCellsMap = this.analyzeMergedCells(this.$el)
+
       if (selectionInfo.rows && selectionInfo.rows.length > 0) {
-        selectionInfo.rows.forEach((row, index) => {
-          const rowData = allColumns.map(column => {
+        selectionInfo.rows.forEach((row, rowIdx) => {
+          // 收集该行所有列的信息，区分基本信息和明细信息
+          const columnInfoList = allColumns.map((column, colIdx) => {
             // 处理行号列的值
             if (column.type === 'index') {
-              // 尝试从行数据中获取真实行号，否则使用顺序编号
-              const actualIndex = this.getActualRowIndex(row, index)
-              return actualIndex.toString()
+              const actualIndex = this.getActualRowIndex(row, rowIdx)
+              return {
+                type: 'basic',
+                value: actualIndex.toString(),
+                detailValues: [actualIndex.toString()]
+              }
             }
-            return this.getCellValue(row, column)
+
+            // 尝试从合并单元格映射表获取实际显示的内容
+            const key = `${rowIdx}-${colIdx}`
+
+            if (mergedCellsMap && mergedCellsMap.has(key)) {
+              const mergedInfo = mergedCellsMap.get(key)
+
+              // 如果是Element UI合并单元格且包含多个明细数据
+              if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+                // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+                const actualDetails = mergedInfo.divTexts.length > 2
+                  ? mergedInfo.divTexts.slice(1)
+                  : mergedInfo.divTexts
+
+                return {
+                  type: 'detail',
+                  value: actualDetails.join(' | '), // 用于显示的合并值
+                  detailValues: actualDetails // 实际明细值数组
+                }
+              } else {
+                // 单值合并单元格，作为基本信息处理
+                return {
+                  type: 'basic',
+                  value: mergedInfo.value,
+                  detailValues: [mergedInfo.value]
+                }
+              }
+            } else {
+              // 使用原有的getCellValue方法
+              const value = this.getCellValue(row, column)
+              return {
+                type: 'basic',
+                value: value,
+                detailValues: [value]
+              }
+            }
           })
-          lines.push(rowData.join('\t'))
+
+          //  第二步：确定需要展开的行数（最大明细数量）
+          const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+          const maxDetailCount = detailColumns.length > 0
+            ? Math.max(...detailColumns.map(info => info.detailValues.length))
+            : 1
+
+          //  第三步：生成多行输出
+          for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+            const outputRowData = columnInfoList.map(columnInfo => {
+              if (columnInfo.type === 'basic') {
+                // 基本信息在所有展开行中保持相同
+                return columnInfo.value
+              } else {
+                // 明细信息按索引分配，如果索引超出范围则返回空值
+                return columnInfo.detailValues[detailIdx] || ''
+              }
+            })
+
+            lines.push(outputRowData.join('\t'))
+          }
         })
       }
 
@@ -2273,17 +2642,130 @@ export default {
     },
 
     /**
+     * 构建基于单元格的CSV表格 - 支持合并单元格
+     * @param {Array} cells - 选中的单元格数组
+     * @param {Map} mergedCellsMap - 合并单元格映射表
+     * @returns {String} CSV格式的字符串
+     */
+    buildCellBasedCSVWithMerged (cells, mergedCellsMap) {
+      if (!cells || cells.length === 0) return ''
+
+      // CSV转义函数
+      const csvEscape = (value) => {
+        const str = String(value || '')
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return '"' + str.replace(/"/g, '""') + '"'
+        }
+        return str
+      }
+
+      // 1. 分析行列范围
+      const rowIndices = [...new Set(cells.map(cell => cell.rowIndex))].sort((a, b) => a - b)
+      const colIndices = [...new Set(cells.map(cell => cell.cellIndex))].sort((a, b) => a - b)
+
+      //  如果映射表为空，重新分析合并单元格
+      if (!mergedCellsMap || mergedCellsMap.size === 0) {
+        mergedCellsMap = this.analyzeMergedCells(this.$el)
+      }
+
+      //  第一步：分析每一行的列信息，检测明细数据
+      const rowDataList = []
+
+      rowIndices.forEach((rowIndex, rIdx) => {
+        // 收集该行所有列的信息
+        const columnInfoList = colIndices.map((colIndex, cIdx) => {
+          const key = `${rowIndex}-${colIndex}`
+
+          if (mergedCellsMap && mergedCellsMap.has(key)) {
+            const mergedInfo = mergedCellsMap.get(key)
+
+            // 如果是Element UI合并单元格且包含多个明细数据
+            if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+              // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+              const actualDetails = mergedInfo.divTexts.length > 2
+                ? mergedInfo.divTexts.slice(1)
+                : mergedInfo.divTexts
+
+              return {
+                type: 'detail',
+                value: actualDetails.join(' | '),
+                detailValues: actualDetails
+              }
+            } else {
+              // 单值合并单元格，作为基本信息
+              return {
+                type: 'basic',
+                value: mergedInfo.value,
+                detailValues: [mergedInfo.value]
+              }
+            }
+          } else {
+            // 从原始选择中查找对应的单元格
+            const matchedCell = cells.find(cell =>
+              cell.rowIndex === rowIndex && cell.cellIndex === colIndex
+            )
+            const cellValue = matchedCell ? matchedCell.text : ''
+
+            return {
+              type: 'basic',
+              value: cellValue,
+              detailValues: [cellValue]
+            }
+          }
+        })
+
+        // 找出明细列（包含多个值的列）
+        const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+
+        if (detailColumns.length > 0) {
+          // 找出最大明细数量
+          const maxDetailCount = Math.max(...detailColumns.map(info => info.detailValues.length))
+
+          // 为每个明细行生成数据
+          for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+            const detailRowData = columnInfoList.map((columnInfo, colIdx) => {
+              let value
+              if (columnInfo.type === 'detail') {
+                // 明细列：使用对应索引的明细值，如果不够就用空字符串
+                value = columnInfo.detailValues[detailIdx] || ''
+              } else {
+                // 基本信息列：在每个明细行中重复显示
+                value = columnInfo.value
+              }
+              return csvEscape(value)
+            })
+
+            rowDataList.push(detailRowData)
+          }
+        } else {
+          // 没有明细数据，使用传统单行模式
+          const rowData = columnInfoList.map(info => csvEscape(info.value))
+          rowDataList.push(rowData)
+        }
+      })
+
+      // 3. 构建最终输出
+      const result = rowDataList.map(row => row.join(',')).join('\n')
+      return result
+    },
+
+    /**
      * 格式化为CSV
      * 支持基于选中单元格的精确复制
      */
     formatAsCSV (selectionInfo) {
       // 如果是单元格选择，使用基于单元格的复制
       if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
-        return this.buildCellBasedCSV(selectionInfo.cells)
+        // 检测合并单元格
+        const mergedCellsMap = this.analyzeMergedCells(this.$el)
+        return this.buildCellBasedCSVWithMerged(selectionInfo.cells, mergedCellsMap)
       }
 
       // 否则使用原有的整行复制逻辑（向后兼容）
       const lines = []
+
+      //  获取合并单元格映射表以支持Element UI合并单元格
+      const mergedCellsMap = this.analyzeMergedCells(this.$el)
 
       // CSV转义函数
       const csvEscape = (value) => {
@@ -2299,13 +2781,78 @@ export default {
         lines.push(selectionInfo.columns.map(col => csvEscape(col.label || col.property || '')).join(','))
       }
 
-      // 添加数据行
-      selectionInfo.rows.forEach(row => {
-        const rowData = selectionInfo.columns.map(column => {
-          return csvEscape(this.getCellValue(row, column))
+      //  添加数据行 - 支持明细数据展开
+      if (selectionInfo.rows && selectionInfo.rows.length > 0) {
+        selectionInfo.rows.forEach((row, rowIdx) => {
+          // 收集该行所有列的信息，区分基本信息和明细信息
+          const columnInfoList = selectionInfo.columns.map((column, colIdx) => {
+            // 尝试从合并单元格映射表获取实际显示的内容
+            const key = `${rowIdx}-${colIdx}`
+
+            if (mergedCellsMap && mergedCellsMap.has(key)) {
+              const mergedInfo = mergedCellsMap.get(key)
+
+              // 如果是Element UI合并单元格且包含多个明细数据
+              if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+                // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+                const actualDetails = mergedInfo.divTexts.length > 2
+                  ? mergedInfo.divTexts.slice(1)
+                  : mergedInfo.divTexts
+
+                return {
+                  type: 'detail',
+                  value: actualDetails.join(' | '),
+                  detailValues: actualDetails
+                }
+              } else {
+                // 单值合并单元格，作为基本信息
+                return {
+                  type: 'basic',
+                  value: mergedInfo.value,
+                  detailValues: [mergedInfo.value]
+                }
+              }
+            } else {
+              // 使用原有的getCellValue方法
+              const value = this.getCellValue(row, column)
+              return {
+                type: 'basic',
+                value: value,
+                detailValues: [value]
+              }
+            }
+          })
+
+          // 找出明细列（包含多个值的列）
+          const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+
+          if (detailColumns.length > 0) {
+            // 找出最大明细数量
+            const maxDetailCount = Math.max(...detailColumns.map(info => info.detailValues.length))
+
+            // 为每个明细行生成数据
+            for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+              const detailRowData = columnInfoList.map((columnInfo, colIdx) => {
+                let value
+                if (columnInfo.type === 'detail') {
+                  // 明细列：使用对应索引的明细值，如果不够就用空字符串
+                  value = columnInfo.detailValues[detailIdx] || ''
+                } else {
+                  // 基本信息列：在每个明细行中重复显示
+                  value = columnInfo.value
+                }
+                return csvEscape(value)
+              })
+
+              lines.push(detailRowData.join(','))
+            }
+          } else {
+            // 没有明细数据，使用传统单行模式
+            const rowData = columnInfoList.map(info => csvEscape(info.value))
+            lines.push(rowData.join(','))
+          }
         })
-        lines.push(rowData.join(','))
-      })
+      }
 
       return lines.join('\n')
     },
@@ -2364,18 +2911,86 @@ export default {
     formatAsPlainText (selectionInfo) {
       // 如果是单元格选择，使用基于单元格的复制
       if (selectionInfo.type === 'cell' && selectionInfo.cells && selectionInfo.cells.length > 0) {
-        return this.buildCellBasedTable(selectionInfo.cells, ' | ')
+        // 检测合并单元格
+        const mergedCellsMap = this.analyzeMergedCells(this.$el)
+        return this.buildCellBasedTableWithMerged(selectionInfo.cells, ' | ', mergedCellsMap)
       }
 
       // 否则使用原有的整行复制逻辑（向后兼容）
       const lines = []
 
-      selectionInfo.rows.forEach(row => {
-        const rowData = selectionInfo.columns.map(column => {
-          return this.getCellValue(row, column)
+      //  获取合并单元格映射表以支持Element UI合并单元格
+      const mergedCellsMap = this.analyzeMergedCells(this.$el)
+
+      if (selectionInfo.rows && selectionInfo.rows.length > 0) {
+        selectionInfo.rows.forEach((row, rowIdx) => {
+          // 收集该行所有列的信息，区分基本信息和明细信息
+          const columnInfoList = selectionInfo.columns.map((column, colIdx) => {
+            // 尝试从合并单元格映射表获取实际显示的内容
+            const key = `${rowIdx}-${colIdx}`
+
+            if (mergedCellsMap && mergedCellsMap.has(key)) {
+              const mergedInfo = mergedCellsMap.get(key)
+
+              // 如果是Element UI合并单元格且包含多个明细数据
+              if (mergedInfo.type === 'element-ui' && mergedInfo.divTexts && mergedInfo.divTexts.length > 1) {
+                // 过滤掉第一个元素（合并显示的完整文本），只保留实际的明细数据
+                const actualDetails = mergedInfo.divTexts.length > 2
+                  ? mergedInfo.divTexts.slice(1)
+                  : mergedInfo.divTexts
+
+                return {
+                  type: 'detail',
+                  value: actualDetails.join(' | '),
+                  detailValues: actualDetails
+                }
+              } else {
+                // 单值合并单元格，作为基本信息
+                return {
+                  type: 'basic',
+                  value: mergedInfo.value,
+                  detailValues: [mergedInfo.value]
+                }
+              }
+            } else {
+              // 使用原有的getCellValue方法
+              const value = this.getCellValue(row, column)
+              return {
+                type: 'basic',
+                value: value,
+                detailValues: [value]
+              }
+            }
+          })
+
+          // 找出明细列（包含多个值的列）
+          const detailColumns = columnInfoList.filter(info => info.type === 'detail')
+
+          if (detailColumns.length > 0) {
+            // 找出最大明细数量
+            const maxDetailCount = Math.max(...detailColumns.map(info => info.detailValues.length))
+
+            // 为每个明细行生成数据
+            for (let detailIdx = 0; detailIdx < maxDetailCount; detailIdx++) {
+              const detailRowData = columnInfoList.map((columnInfo, colIdx) => {
+                if (columnInfo.type === 'detail') {
+                  // 明细列：使用对应索引的明细值，如果不够就用空字符串
+                  return columnInfo.detailValues[detailIdx] || ''
+                } else {
+                  // 基本信息列：在每个明细行中重复显示
+                  return columnInfo.value
+                }
+              })
+
+              lines.push(detailRowData.join(' | '))
+            }
+          } else {
+            // 没有明细数据，使用传统单行模式
+            const rowData = columnInfoList.map(info => info.value)
+            lines.push(rowData.join(' | '))
+          }
         })
-        lines.push(rowData.join(' | '))
-      })
+      }
 
       return lines.join('\n')
     },
