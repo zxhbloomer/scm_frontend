@@ -290,7 +290,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height
+      :canvas-bottom-reserve="10"
       columns_index_key="true"
       stripe
       border
@@ -378,11 +379,13 @@
         label="商品"
         align="center"
         :merge-group="true"
+        prop="goods_group"
       >
         <el-table-column
           :merge-cells="true"
           min-width="120"
           label="商品编码"
+          prop="sku_code"
         >
           <template v-slot="scope">
             <div
@@ -399,6 +402,7 @@
           min-width="100"
           label="商品名称"
           align="left"
+          prop="goods_name"
         >
           <template v-slot="scope">
             <div
@@ -415,6 +419,7 @@
           min-width="100"
           label="规格"
           align="left"
+          prop="sku_name"
         >
           <template v-slot="scope">
             <div
@@ -431,6 +436,7 @@
           min-width="100"
           label="产地"
           align="left"
+          prop="origin"
         >
           <template v-slot="scope">
             <div
@@ -447,6 +453,7 @@
           min-width="100"
           label="数量"
           align="right"
+          prop="qty"
         >
           <template v-slot="scope">
             <div
@@ -463,6 +470,7 @@
           min-width="100"
           label="单价"
           align="right"
+          prop="price"
         >
           <template v-slot="scope">
             <div
@@ -479,6 +487,7 @@
           min-width="90"
           label="税率（%）"
           align="left"
+          prop="tax_rate"
         >
           <template v-slot="scope">
             <div
@@ -803,7 +812,6 @@ import { getPageApi } from '@/api/10_system/pages/page'
 import constants_type from '@/common/constants/constants_dict'
 import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
-import mixin from './mixin'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -819,7 +827,6 @@ import SoContractPushNew from '@/views/40_business/20_so/socontract/dialog/push/
 export default {
   components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog, SoContractPushNew },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
   },
   data () {
@@ -916,7 +923,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // 作废弹窗配置
@@ -1055,6 +1061,8 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
     // 新增提交数据时监听

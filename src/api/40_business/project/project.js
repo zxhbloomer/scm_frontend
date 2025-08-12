@@ -181,12 +181,25 @@ export function importBInApi (data) {
 }
 
 /**
- * 导出逻辑
+ * 导出逻辑（选中导出）
  * @param {*} data
  */
 export function exportApi (data) {
   return request({
     url: '/api/v1/project/export',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
+/**
+ * 导出逻辑（全部导出）
+ * @param {*} data
+ */
+export function exportAllApi (data) {
+  return request({
+    url: '/api/v1/project/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'

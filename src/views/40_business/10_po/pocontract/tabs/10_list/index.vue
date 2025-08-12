@@ -1,6 +1,10 @@
 <template>
   <div class="app-container">
-    <FloatMenu />
+    <!-- 某些页面不需要流程管理 -->
+    <!--    <FloatMenu :show-bmp-manage="false" />-->
+    <FloatMenu
+      bpm-manage-permission="P_PO_CONTRACT:BPM_MANAGE"
+    />
     <el-tabs
       ref="minusTabs"
       v-model="dataJson.tabs.active"

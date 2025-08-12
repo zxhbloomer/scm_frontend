@@ -156,6 +156,14 @@ export default {
     this.$nextTick(() => {
       this.autoResizeOrMergeCell()
       this.doLayout()
+
+      // 修复：页签切换时重新计算Canvas自动高度
+      if (this.canvasAutoHeightEnabled) {
+        // 延迟确保DOM完全渲染和可见
+        setTimeout(() => {
+          this.updateCanvasTableHeight()
+        }, 100)
+      }
     })
   },
   computed: {
@@ -1057,6 +1065,18 @@ export default {
      */
     updateCanvasTableHeight () {
       try {
+        // 页签切换场景：确保DOM完全可见和稳定
+        const tableEl = this.$el
+        if (!tableEl || tableEl.offsetWidth === 0 || !tableEl.offsetParent) {
+          // DOM还未完全可见，延迟重试
+          setTimeout(() => {
+            if (this.canvasAutoHeightEnabled) {
+              this.updateCanvasTableHeight()
+            }
+          }, 50)
+          return
+        }
+
         // 记录当前高度用于对比
         const oldHeight = this.canvasCalculatedHeight
 

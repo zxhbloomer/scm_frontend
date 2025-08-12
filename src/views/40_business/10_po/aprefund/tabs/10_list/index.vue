@@ -276,7 +276,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height="true"
       stripe
       border
       fit
@@ -510,7 +510,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -745,7 +745,6 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -759,7 +758,6 @@ import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 export default {
   components: { cancelConfirmDialog, push_template, print_template, Pagination, SelectDict, SelectCpSupplier, SelectSeCustomer },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -875,7 +873,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -958,6 +955,7 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_B_AP_REFUND_BPM_OK)
   },
   created () {
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
 

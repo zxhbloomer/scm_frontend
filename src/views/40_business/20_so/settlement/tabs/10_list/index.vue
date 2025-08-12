@@ -360,7 +360,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height
+      :canvas-bottom-reserve="10"
       stripe
       border
       fit
@@ -508,6 +509,7 @@
           min-width="140"
           label="合同编号"
           align="left"
+          prop="so_contract_code"
         >
           <template v-slot="scope">
             <div
@@ -524,6 +526,7 @@
           min-width="140"
           label="订单编号"
           align="left"
+          prop="so_order_code"
         >
           <template v-slot="scope">
             <div
@@ -540,6 +543,7 @@
           min-width="140"
           label="商品名称"
           align="left"
+          prop="goods_name"
         >
           <template v-slot="scope">
             <div
@@ -556,6 +560,7 @@
           min-width="120"
           label="规格"
           align="left"
+          prop="sku_name"
         >
           <template v-slot="scope">
             <div
@@ -572,6 +577,7 @@
           min-width="120"
           label="结算数量"
           align="right"
+          prop="settled_qty"
         >
           <template v-slot="scope">
             <div
@@ -587,6 +593,7 @@
           min-width="120"
           label="结算金额"
           align="right"
+          prop="settled_amount"
         >
           <template v-slot="scope">
             <div
@@ -910,7 +917,6 @@ import { getPageApi } from '@/api/10_system/pages/page'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
@@ -931,7 +937,6 @@ export default {
     Pagination
   },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -1033,7 +1038,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -1118,6 +1122,8 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_SO_SETTLEMENT_BPM_OK)
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_SO_SETTLEMENT_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_SO_SETTLEMENT_NEW_OK', _data)

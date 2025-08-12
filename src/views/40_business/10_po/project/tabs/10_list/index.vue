@@ -290,7 +290,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       columns_index_key="true"
       stripe
       border
@@ -378,11 +378,13 @@
         label="商品"
         align="center"
         :merge-group="true"
+        prop="goods_group"
       >
         <el-table-column
           :merge-cells="true"
           min-width="120"
           label="商品编码"
+          prop="sku_code"
         >
           <template v-slot="scope">
             <div
@@ -399,6 +401,7 @@
           min-width="100"
           label="商品名称"
           align="left"
+          prop="goods_name"
         >
           <template v-slot="scope">
             <div
@@ -415,6 +418,7 @@
           min-width="100"
           label="规格"
           align="left"
+          prop="sku_name"
         >
           <template v-slot="scope">
             <div
@@ -431,6 +435,7 @@
           min-width="100"
           label="产地"
           align="left"
+          prop="origin"
         >
           <template v-slot="scope">
             <div
@@ -447,6 +452,7 @@
           min-width="100"
           label="数量"
           align="right"
+          prop="qty"
         >
           <template v-slot="scope">
             <div
@@ -463,6 +469,7 @@
           min-width="100"
           label="单价"
           align="right"
+          prop="price"
         >
           <template v-slot="scope">
             <div
@@ -479,6 +486,7 @@
           min-width="90"
           label="税率（%）"
           align="left"
+          prop="tax_rate"
         >
           <template v-slot="scope">
             <div
@@ -797,12 +805,11 @@ import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/cou
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 
 import FloatMenu from '@/components/FloatMenu/index.vue'
-import { exportApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi, completeApi } from '@/api/40_business/project/project'
+import { exportApi, exportAllApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi, completeApi } from '@/api/40_business/project/project'
 import constants_para from '@/common/constants/constants_para'
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_type from '@/common/constants/constants_dict'
 import constants_dict from '@/common/constants/constants_dict'
-import mixin from './mixin'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -818,7 +825,6 @@ import PoContractPushNew from '@/views/40_business/10_po/pocontract/dialog/push/
 export default {
   components: { Pagination, SelectDicts, SelectDict, SelectCpSupplier, SelectSeCustomer, cancelConfirmDialog, FloatMenu, print_template, pushDialog, PoContractPushNew },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
   },
   data () {
@@ -915,7 +921,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // 作废弹窗配置
@@ -1054,6 +1059,8 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
     // 新增提交数据时监听
@@ -1125,7 +1132,6 @@ export default {
   mounted () {
   },
   activated () {
-    this.doResize()
     this.handleUrlParams()
   },
   destroyed () {
@@ -1694,11 +1700,23 @@ export default {
       this.settings.loading = true
       const selectionJson = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
+        // 只传递ID，与部门导出保持一致
+        selectionJson.push({ 'id': value.id })
       })
-      const searchData = { ids: selectionJson }
       // 开始导出
-      exportApi(searchData).then(response => {
+      exportApi(selectionJson).then(response => {
+        // 导出成功处理
+      }).catch(error => {
+        // 导出失败处理
+        console.error('导出失败:', error)
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: 4000
+        })
+      }).finally(() => {
+        // 无论成功还是失败都要关闭loading
         this.settings.loading = false
       })
     },
@@ -1706,10 +1724,20 @@ export default {
     handleExportAllData () {
       // loading
       this.settings.loading = true
-      // 开始导出
-      exportApi(this.dataJson.searchForm).then(response => {
-        this.settings.loading = false
+      // 开始导出 - 使用专门的全部导出API
+      exportAllApi(this.dataJson.searchForm).then(response => {
+        // 导出成功处理
+      }).catch(error => {
+        // 导出失败处理
+        console.error('导出失败:', error)
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: 4000
+        })
       }).finally(() => {
+        // 无论成功还是失败都要关闭loading
         this.settings.loading = false
       })
     },

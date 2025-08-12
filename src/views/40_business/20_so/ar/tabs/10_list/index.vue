@@ -281,7 +281,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height
+      :canvas-bottom-reserve="10"
       stripe
       border
       fit
@@ -373,6 +374,7 @@
           :merge-cells="true"
           min-width="120"
           label="合同号"
+          prop="so_contract_code"
         >
           <template v-slot="scope">
             <div
@@ -389,6 +391,7 @@
           min-width="100"
           label="订单号"
           align="left"
+          prop="so_order_code"
         >
           <template v-slot="scope">
             <div
@@ -411,6 +414,7 @@
           :merge-cells="true"
           min-width="120"
           label="收款账户"
+          prop="account_number"
         >
           <template v-slot="scope">
             <div
@@ -427,6 +431,7 @@
           min-width="100"
           label="收款类型"
           align="left"
+          prop="accounts_purpose_type_name"
         >
           <template v-slot="scope">
             <div
@@ -443,6 +448,7 @@
           min-width="100"
           label="收款金额"
           align="right"
+          prop="receivable_amount"
         >
           <template v-slot="scope">
             <div
@@ -459,6 +465,7 @@
           min-width="100"
           label="备注"
           align="left"
+          prop="remark"
         >
           <template v-slot="scope">
             <div
@@ -588,7 +595,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -821,7 +828,6 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import constants_bpm from '@/common/constants/constants_bpm'
@@ -838,7 +844,6 @@ import stopConfirmDialog from '../../dialog/stop/index.vue'
 export default {
   components: { stopConfirmDialog, cancelConfirmDialog, push_arreceive_template, print_template, Pagination, SelectDict, SelectDicts, SelectCpCustomer, SelectSeCustomer },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -947,7 +952,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -1018,6 +1022,9 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_B_AR_BPM_OK)
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
+
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_B_AR_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_AR_NEW_OK', _data)

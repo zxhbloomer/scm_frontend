@@ -44,13 +44,15 @@
               </div>
               <el-divider /> -->
                 <div
+                  v-if="shouldShowColumnConfig"
                   class="popover-content__item el-button"
                   @click.stop.prevent="handleTableColumnsSetting"
                 >
                   <i class="el-icon-data-analysis icon" />列属性管理
                 </div>
-                <el-divider />
+                <el-divider v-if="shouldShowColumnConfig && shouldShowBpmManage" />
                 <div
+                  v-if="shouldShowBpmManage"
                   class="popover-content__item el-button"
                   @click.stop.prevent="handleBpmSetting"
                 >
@@ -82,8 +84,8 @@
       custom-class="configDialog"
       :append-to-body="true"
       :modal-append-to-body="true"
-      width="600px"
-      height="300px"
+      width="900px"
+      height="500px"
       destroy-on-close
     >
       <div>
@@ -311,6 +313,7 @@
 
 import { EventBus } from '@/common/eventbus/eventbus'
 import elDragDialog from '@/directive/el-drag-dialog'
+import permission from '@/directive/permission' // 权限判断指令
 import bpmDialog from '@/components/60_bpm/designBpmDialog.vue'
 import bpmListDialog from '@/views/90_bpm/definition/00_dialog/list/dialog.vue'
 import constants_para from '@/common/constants/constants_para'
@@ -321,7 +324,7 @@ import { getTableConfigApi, saveTableConfigApi, resetTableConfigApi, checkTableC
 export default {
   name: 'FloatMenu',
   components: { bpmDialog, bpmListDialog },
-  directives: { elDragDialog },
+  directives: { elDragDialog, permission },
   mixins: [],
   props: {
     form: {
@@ -331,6 +334,21 @@ export default {
           fontSize: 28
         }
       }
+    },
+    // 是否显示列属性管理按钮
+    showColumnConfig: {
+      type: Boolean,
+      default: true
+    },
+    // 是否显示流程管理按钮
+    showBpmManage: {
+      type: Boolean,
+      default: true
+    },
+    // 流程管理权限（仅当showBpmManage为true时生效）
+    bpmManagePermission: {
+      type: String,
+      default: ''
     }
   },
   data () {
@@ -371,6 +389,8 @@ export default {
       xPum: '',
       yPum: '',
       popoverShow: false,
+      // 显示菜单的定时器
+      showMenuTimer: null,
 
       // 浮窗的位置
       transform: {
@@ -399,6 +419,17 @@ export default {
   computed: {
     constants_para () {
       return constants_para
+    },
+    // 是否显示列属性管理按钮（所有人都可以使用，只控制显示/隐藏）
+    shouldShowColumnConfig () {
+      return this.showColumnConfig
+    },
+    // 是否显示流程管理按钮（需要权限验证 + 显示控制）
+    shouldShowBpmManage () {
+      if (!this.showBpmManage) return false
+      if (!this.bpmManagePermission) return false
+      const userPermissionDataOperations = this.$store.getters.userPermissionData.permission_operation
+      return userPermissionDataOperations.find(item => item.operation_perms === this.bpmManagePermission)
     }
   },
   // 监听器
@@ -462,6 +493,11 @@ export default {
   beforeDestroy () {
     // 组件销毁前清理SortableJS实例
     this.destroySortableInstances()
+    // 清理定时器
+    if (this.showMenuTimer) {
+      clearTimeout(this.showMenuTimer)
+      this.showMenuTimer = null
+    }
   },
   methods: {
 
@@ -648,6 +684,12 @@ export default {
 
     closeMenuAndFloating () {
       // console.log('closeMenuAndFloating')
+      // 清除显示菜单的定时器
+      if (this.showMenuTimer) {
+        clearTimeout(this.showMenuTimer)
+        this.showMenuTimer = null
+      }
+
       this.popoverShow = false
       this.hoverFlag = false
       this.moveFlags = false
@@ -680,6 +722,12 @@ export default {
     },
     hideButton () {
       console.log('mouse-leave')
+      // 清除显示菜单的定时器
+      if (this.showMenuTimer) {
+        clearTimeout(this.showMenuTimer)
+        this.showMenuTimer = null
+      }
+
       if (this.popoverShow) return
       this.hoverFlag = false
       // 移动过程中不复位 按钮；
@@ -692,13 +740,56 @@ export default {
       this.hoverFlag = true
       const { left, top } = this.transform
       if (left > 0 && left < -25) return
+
+      // 清除之前的定时器
+      if (this.showMenuTimer) {
+        clearTimeout(this.showMenuTimer)
+        this.showMenuTimer = null
+      }
+
+      // 先展开按钮到可见位置
       const bodyWidth = document.body.clientWidth - window.document.querySelector('.sidebar-container').offsetWidth
       if (left < bodyWidth / 2) {
         this.generateTransform({ top: top, left: 20 })
       } else {
         this.generateTransform({ top: top, left: bodyWidth - 70 })
       }
+
+      // 500ms后自动显示菜单
+      this.showMenuTimer = setTimeout(() => {
+        if (this.hoverFlag && !this.popoverShow && !this.moveFlags) {
+          this.popoverShow = true
+          // 计算菜单位置
+          this.$nextTick(() => {
+            this.updateMenuPosition()
+          })
+        }
+        this.showMenuTimer = null
+      }, 500)
     },
+
+    // 计算菜单位置
+    updateMenuPosition () {
+      if (!this.$refs.popoverContent) return
+
+      const { top, left } = this.transform
+      // 垂直位置：根据按钮位置决定菜单显示在上方还是下方
+      if (top >= 60) {
+        this.menuPosition.top = `-${this.$refs.popoverContent.offsetHeight + 10}px`
+      } else {
+        this.menuPosition.top = '60px'
+      }
+
+      // 水平位置：根据按钮位置决定菜单显示在左侧还是右侧
+      if (left > 200) {
+        this.menuPosition.left = '-132px'
+      } else {
+        this.menuPosition.left = 0
+      }
+
+      console.log(`updateMenuPosition: top:${top}, left:${left}, menuTop:${this.menuPosition.top}, menuLeft:${this.menuPosition.left}`)
+    },
+
     moveStart (e) {
       console.log('moveStart')
       if (e.button === 2) return

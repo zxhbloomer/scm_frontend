@@ -437,7 +437,7 @@ export default {
         // 🎯 特殊处理：FieldHelp组件（订单笔数等使用该组件的列）
         const fieldHelpContainer = headerCell.querySelector('.field-help-container')
         if (fieldHelpContainer) {
-            const helpIcon = fieldHelpContainer.querySelector('.field-help-icon')
+          const helpIcon = fieldHelpContainer.querySelector('.field-help-icon')
           if (helpIcon) {
             extraWidth += 18 // 图标宽度 + 边距
           }
@@ -460,7 +460,7 @@ export default {
         // 其他图标
         const otherIcons = headerCell.querySelectorAll('i, .el-icon')
         let iconCount = otherIcons.length
-        
+
         if (fieldHelpContainer) {
           const fieldHelpIcons = fieldHelpContainer.querySelectorAll('i, .el-icon')
           iconCount -= fieldHelpIcons.length
@@ -487,7 +487,7 @@ export default {
         let extraSpace = 0
         extraSpace += 20 // 排序图标
         extraSpace += 24 // padding
-        
+
         if (this.columnConfig.filterable !== false) {
           extraSpace += 16 // 筛选按钮
         }

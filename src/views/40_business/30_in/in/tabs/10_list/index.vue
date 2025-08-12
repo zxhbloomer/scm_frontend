@@ -354,7 +354,8 @@
       stripe
       fit
       highlight-current-row
-      :height="settings.tableHeight"
+      canvas-auto-height
+      :canvas-bottom-reserve="10"
       :default-sort="{ prop: 'u_time', order: 'descending' }"
       @row-click="handleRowClick"
       @current-change="handleCurrentChange"
@@ -708,7 +709,6 @@ import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouse
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
 import CancelDialog from '../../dialog/cancel/index.vue'
 import { getListApi, getListSumApi, delApi, getApi, exportApi } from '@/api/40_business/30_in/in/in.js'
-import mixin from './mixin'
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
 import constants_para from '@/common/constants/constants_para'
@@ -725,7 +725,6 @@ export default {
     SelectCpSupplier,
     CancelDialog
   },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -788,7 +787,6 @@ export default {
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
         // 导出模式
         exportModel: false,
-        tableHeight: this.setUIheight(),
         duration: 4000,
         // 按钮状态
         btnStatus: {
@@ -885,6 +883,9 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
+
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_B_IN_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_B_IN_NEW_OK', _data)

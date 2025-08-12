@@ -309,7 +309,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height="true"
       columns_index_key="true"
       stripe
       border
@@ -638,11 +638,13 @@
         label="商品"
         align="center"
         :merge-group="true"
+        prop="goods_group"
       >
         <el-table-column
           :merge-cells="true"
           min-width="120"
           label="商品编码"
+          prop="sku_code"
         >
           <template v-slot="scope">
             <div
@@ -659,6 +661,7 @@
           min-width="100"
           label="商品名称"
           align="left"
+          prop="goods_name"
         >
           <template v-slot="scope">
             <div
@@ -675,6 +678,7 @@
           min-width="100"
           label="规格"
           align="left"
+          prop="sku_name"
         >
           <template v-slot="scope">
             <div
@@ -691,6 +695,7 @@
           min-width="100"
           label="产地"
           align="left"
+          prop="origin"
         >
           <template v-slot="scope">
             <div
@@ -707,6 +712,7 @@
           min-width="100"
           label="数量"
           align="right"
+          prop="qty"
         >
           <template v-slot="scope">
             <div
@@ -723,6 +729,7 @@
           min-width="100"
           label="单价"
           align="right"
+          prop="price"
         >
           <template v-slot="scope">
             <div
@@ -739,6 +746,7 @@
           min-width="100"
           label="税率"
           align="right"
+          prop="tax_rate"
         >
           <template v-slot="scope">
             <div
@@ -1018,7 +1026,6 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -1030,7 +1037,6 @@ import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 export default {
   components: { SelectDicts, SelectCpSupplier, SelectSeCustomer, pushConfirmDialog, cancelConfirmDialog, print_template, Pagination },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -1120,7 +1126,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -1225,6 +1230,7 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_POORDER_BPM_OK)
   },
   created () {
+    this.$options.name = this.$route.meta.page_code
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_POORDER_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_POORDER_NEW_OK', _data)

@@ -345,7 +345,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height
+      :canvas-bottom-reserve="10"
       stripe
       border
       fit
@@ -438,6 +439,7 @@
         label="出库计划明细"
         align="center"
         :merge-group="true"
+        prop="detailListData"
       >
         <el-table-column
           :merge-cells="true"
@@ -733,7 +735,6 @@
 import { getListApi, getListSumApi, getApi, delApi, finishApi, exportApi } from '@/api/40_business/40_out/outplan/outplan'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import pagination_for_list from '@/components/Pagination/index.vue'
-import mixin from './mixin'
 import CancelDialog from '../../dialog/cancel'
 import SelectGoodsDialog from '../../dialog/select_goods/index.vue'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
@@ -758,7 +759,6 @@ export default {
     SelectDicts
   },
   directives: { permission },
-  mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -833,7 +833,6 @@ export default {
       settings: {
         loading: false,
         duration: 4000, // 消息提示持续时间
-        tableHeight: this.setUIheight(),
         // 表格排序规则
         sortOrders: ['ascending', 'descending'],
         // 导出模式
@@ -913,6 +912,9 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
+
     // 新增提交数据时监听
     EventBus.$on(this.EMITS.EMIT_MST_OUTPLAN_NEW_OK, _data => {
       console.log('来自兄弟组件的消息：this.EMITS.EMIT_MST_OUTPLAN_NEW_OK', _data)

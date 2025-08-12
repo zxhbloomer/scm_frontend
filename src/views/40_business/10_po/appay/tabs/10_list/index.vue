@@ -165,7 +165,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      canvas-auto-height="true"
       stripe
       border
       fit
@@ -251,7 +251,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="160"
-        prop="pay_amount"
+        prop="payable_amount_total"
         label="付款指令金额"
         align="right"
       >
@@ -308,7 +308,7 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="150"
-        prop="c_name"
+        prop="u_name"
         label="更新人"
         align="left"
       />
@@ -546,7 +546,6 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
@@ -559,7 +558,6 @@ import cancelConfirmDialog from '../../dialog/cancel/index.vue'
 export default {
   components: { SelectDicts, SelectCpSupplier, Pagination, viewDialog, SelectSeCustomer, voucherDialog, cancelConfirmDialog },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -644,7 +642,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // vue-tour组件
@@ -721,6 +718,8 @@ export default {
   beforeDestroy () {
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
   },

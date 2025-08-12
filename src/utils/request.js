@@ -25,13 +25,27 @@ service.interceptors.request.use(
       // please modify it according to the actual situation
       // config.headers['X-Token'] = getToken()
     }
-
+    config.headers['X-Tenant-ID'] = 'scm_tenant_20250519_001'
     // 处理多租户设置
-    // 如果多租户开关为false，则设置固定的租户ID
-    if (process.env.VUE_APP_Tenant === 'false') {
+    // 获取多租户配置，默认为 'false'（使用固定租户ID）
+    const tenantMode = process.env.VUE_APP_Tenant || 'false'
+
+    // 调试信息：输出环境变量值
+    console.log('🔍 多租户环境变量检查:', {
+      VUE_APP_Tenant: process.env.VUE_APP_Tenant,
+      tenantMode: tenantMode,
+      type: typeof tenantMode,
+      willSetTenantId: tenantMode !== 'true'
+    })
+
+    // 只有在明确启用多租户模式('true')时才不设置租户ID
+    // 其他情况（'false'、undefined、空字符串等）都设置固定租户ID
+    if (tenantMode !== 'true') {
       config.headers['X-Tenant-ID'] = 'scm_tenant_20250519_001'
+      console.log('✅ 已设置租户ID请求头:', config.headers['X-Tenant-ID'])
+    } else {
+      console.log('ℹ️ 多租户模式已启用，不设置固定租户ID')
     }
-    // 如果多租户开关为true，则不设置租户ID头部
 
     return config
   },
