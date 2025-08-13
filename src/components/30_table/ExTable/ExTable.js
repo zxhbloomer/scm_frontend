@@ -666,12 +666,10 @@ export default {
       }
 
       const page_code = $table.$parent.$options.name
-      console.log('=== handleGetColumnConfig: page_code=', page_code, ', data.page_code=', data.page_code)
 
       if (data.page_code === page_code && data.callback && typeof data.callback === 'function') {
         // 获取当前表格的列配置
         const tableColumns = this.getTableColumnSort()
-        console.log('=== handleGetColumnConfig: 返回列配置数据', tableColumns)
 
         // 调用回调函数，返回配置数据
         data.callback(tableColumns)
@@ -1954,12 +1952,10 @@ export default {
         return columns
       }
 
-      // 关键发现：使用$table.$refs.hiddenColumns.children获取Vue模板中定义的真实DOM顺序
+      // 使用$table.$refs.hiddenColumns.children获取Vue模板中定义的真实DOM顺序
       // 这是Element UI在table-column.js中用来确定列初始顺序的方法
       const hiddenColumns = $table.$refs.hiddenColumns
       const columnElements = Array.from(hiddenColumns.children)
-      
-      console.log('=== Vue模板DOM列顺序 hiddenColumns.children.length:', columnElements.length)
 
       // 从DOM元素获取对应的列配置信息
       columnElements.forEach((columnEl, domIndex) => {
@@ -1978,8 +1974,6 @@ export default {
         if (!columnKey) {
           return
         }
-
-        console.log(`=== DOM顺序 ${domIndex}: label="${columnComponent.label}", prop="${columnKey}", type="${columnComponent.type}"`)
 
         // 检查是否是分组列（有子列元素）
         const hasChildren = columnEl.children && columnEl.children.length > 0
@@ -2007,7 +2001,6 @@ export default {
 
             const childKey = childComponent.prop || childComponent.property
             if (childKey) {
-              console.log(`=== DOM子列顺序 ${childSortIndex}: label="${childComponent.label}", prop="${childKey}"`)
               groupColumn.groupChildren.push({
                 is_group: null,
                 label: childComponent.label || '',
@@ -2032,7 +2025,6 @@ export default {
         }
       })
 
-      console.log('=== 基于Vue模板DOM顺序的列配置（用于reset）:', JSON.stringify(columns, null, 2))
       return columns
     },
 
