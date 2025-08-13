@@ -73,6 +73,9 @@ export default {
 
     // 监听配置更新事件
     EventBus.$on(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, this.handleConfigUpdate)
+
+    // 监听获取列配置事件（用于重置功能）
+    EventBus.$on('TABLE_COLUMNS_GET_CONFIG', this.handleGetColumnConfig)
   },
   mounted () {
     // 如果启用了列配置，先隐藏表格，添加过渡效果
@@ -651,6 +654,27 @@ export default {
           // 同时尝试重新加载配置
           this.getTableConfig()
         }
+      }
+    },
+
+    // 处理获取列配置事件（用于重置功能）
+    handleGetColumnConfig (data) {
+      const { componentInstance: $table } = this.$vnode
+      if (!$table) {
+        console.warn('ExTable: 无法获取表格实例')
+        return
+      }
+
+      const page_code = $table.$parent.$options.name
+      console.log('=== handleGetColumnConfig: page_code=', page_code, ', data.page_code=', data.page_code)
+
+      if (data.page_code === page_code && data.callback && typeof data.callback === 'function') {
+        // 获取当前表格的列配置
+        const tableColumns = this.getTableColumnSort()
+        console.log('=== handleGetColumnConfig: 返回列配置数据', tableColumns)
+
+        // 调用回调函数，返回配置数据
+        data.callback(tableColumns)
       }
     },
 
@@ -1914,6 +1938,105 @@ export default {
     },
 
     /**
+     * 获取表格列排序配置
+     * 使用 store.states._columns 获取Vue模板中定义的原始列配置
+     * 这样reset操作可以恢复到模板的初始状态
+     * @returns {Array} 列配置数组，符合后端要求的JSON格式
+     */
+    getTableColumnSort () {
+      const columns = []
+      let sortIndex = 0
+
+      // 获取表格实例
+      const { componentInstance: $table } = this.$vnode
+      if (!$table || !$table.$refs || !$table.$refs.hiddenColumns) {
+        console.warn('ExTable: 无法获取表格实例或hiddenColumns')
+        return columns
+      }
+
+      // 关键发现：使用$table.$refs.hiddenColumns.children获取Vue模板中定义的真实DOM顺序
+      // 这是Element UI在table-column.js中用来确定列初始顺序的方法
+      const hiddenColumns = $table.$refs.hiddenColumns
+      const columnElements = Array.from(hiddenColumns.children)
+      
+      console.log('=== Vue模板DOM列顺序 hiddenColumns.children.length:', columnElements.length)
+
+      // 从DOM元素获取对应的列配置信息
+      columnElements.forEach((columnEl, domIndex) => {
+        // 获取每个DOM元素对应的Vue组件实例
+        const columnComponent = columnEl.__vue__
+        if (!columnComponent) {
+          return
+        }
+
+        // 跳过系统列
+        if (columnComponent.type === 'selection' || columnComponent.type === 'index' || columnComponent.type === 'expand') {
+          return
+        }
+
+        const columnKey = columnComponent.prop || columnComponent.property
+        if (!columnKey) {
+          return
+        }
+
+        console.log(`=== DOM顺序 ${domIndex}: label="${columnComponent.label}", prop="${columnKey}", type="${columnComponent.type}"`)
+
+        // 检查是否是分组列（有子列元素）
+        const hasChildren = columnEl.children && columnEl.children.length > 0
+        if (hasChildren) {
+          const groupColumn = {
+            is_group: 1,
+            label: columnComponent.label || '',
+            name: columnKey,
+            sort: sortIndex++,
+            groupChildren: []
+          }
+
+          // 处理分组的子列（按DOM顺序）
+          let childSortIndex = 0
+          Array.from(columnEl.children).forEach(childEl => {
+            const childComponent = childEl.__vue__
+            if (!childComponent) {
+              return
+            }
+
+            // 跳过系统列
+            if (childComponent.type === 'selection' || childComponent.type === 'index' || childComponent.type === 'expand') {
+              return
+            }
+
+            const childKey = childComponent.prop || childComponent.property
+            if (childKey) {
+              console.log(`=== DOM子列顺序 ${childSortIndex}: label="${childComponent.label}", prop="${childKey}"`)
+              groupColumn.groupChildren.push({
+                is_group: null,
+                label: childComponent.label || '',
+                name: childKey,
+                sort: childSortIndex++
+              })
+            }
+          })
+
+          // 只有当分组有有效子列时才添加
+          if (groupColumn.groupChildren.length > 0) {
+            columns.push(groupColumn)
+          }
+        } else {
+          // 普通列（非分组列）
+          columns.push({
+            is_group: 0,
+            label: columnComponent.label || '',
+            name: columnKey,
+            sort: sortIndex++
+          })
+        }
+      })
+
+      console.log('=== 基于Vue模板DOM顺序的列配置（用于reset）:', JSON.stringify(columns, null, 2))
+      return columns
+    },
+
+    /**
      * 清理resize事件监听
      * 组件销毁时清理事件监听器
      */
@@ -3061,6 +3184,7 @@ export default {
   destroyed () {
     // 清理事件监听
     EventBus.$off(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, this.handleConfigUpdate)
+    EventBus.$off('TABLE_COLUMNS_GET_CONFIG', this.handleGetColumnConfig)
 
     // 清理窗口resize监听器
     if (this.canvasAutoHeightEnabled) {
