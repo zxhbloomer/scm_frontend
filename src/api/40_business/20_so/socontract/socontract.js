@@ -91,7 +91,7 @@ export function exportApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/socontract/export_all',
+    url: '/api/v1/socontract/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'

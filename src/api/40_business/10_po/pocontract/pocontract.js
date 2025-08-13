@@ -86,12 +86,12 @@ export function exportApi (data) {
 }
 
 /**
- * 导出逻辑
+ * 全部导出逻辑
  * @param {*} data
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/pocontract/export_all',
+    url: '/api/v1/pocontract/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'

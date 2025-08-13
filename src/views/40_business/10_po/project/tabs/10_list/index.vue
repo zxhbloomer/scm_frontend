@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <FloatMenu />
+    <FloatMenu bpm-manage-permission="P_PO_PROJECT:BPM_MANAGE" />
     <el-tabs
       ref="minusTabs"
       v-model="dataJson.tabs.active"
@@ -955,7 +955,7 @@ export default {
           target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
           content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
           params: {
-            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
             highlight: false, // 当前项激活时是否高亮显示
             enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
           },
@@ -1122,12 +1122,37 @@ export default {
         this.settings.loading = false
       })
     })
+
+    // 监听列配置重置事件
+    EventBus.$on('TABLE_COLUMNS_RESET', (data) => {
+      console.log('=== 收到TABLE_COLUMNS_RESET事件:', data)
+
+      // 检查page_code是否匹配
+      if (data.page_code === this.$route.meta.page_code && data.action === 'getTableColumnSort') {
+        // 延迟执行，确保表格已经重新渲染完成
+        this.$nextTick(() => {
+          if (this.$refs.multipleTable && this.$refs.multipleTable.getTableColumnSort) {
+            const columnsConfig = this.$refs.multipleTable.getTableColumnSort()
+            console.log('=== 获取到的表格列配置:', columnsConfig)
+
+            // 这里可以将配置发送到后端或进行其他处理
+            // 例如：saveColumnsConfig(columnsConfig)
+
+            // 显示成功提示
+            this.$message.success('已获取重置后的列配置')
+          } else {
+            console.warn('=== 无法获取表格实例或getTableColumnSort方法')
+          }
+        })
+      }
+    })
   },
   beforeDestroy () {
     // 清理EventBus监听器
     EventBus.$off(this.EMITS.EMIT_BUS_PROJECT_NEW_OK)
     EventBus.$off(this.EMITS.EMIT_BUS_PROJECT_UPDATE_OK)
     EventBus.$off(this.EMITS.EMIT_BUS_PROJECT_BPM_OK)
+    EventBus.$off('TABLE_COLUMNS_RESET')
   },
   mounted () {
   },
@@ -1137,6 +1162,7 @@ export default {
   destroyed () {
     // 清理EventBus监听器
     EventBus.$off(this.EMITS.EMIT_BUS_PROJECT_NEW_OK)
+    EventBus.$off('TABLE_COLUMNS_RESET')
   },
   methods: {
     // 初始化页面

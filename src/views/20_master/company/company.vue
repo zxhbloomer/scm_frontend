@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <FloatMenu />
     <el-form
       ref="minusForm"
       :inline="true"
@@ -71,13 +72,14 @@
       </el-form-item>
     </el-form>
     <el-button-group>
-      <el-button
+      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
+      <!-- <el-button
         v-permission="'P_COMPANY:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
         @click="handleInsert"
-      >新增</el-button>
+      >新增</el-button> -->
       <el-button
         v-permission="'P_COMPANY:UPDATE'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -86,14 +88,15 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
-      <el-button
+      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
+      <!-- <el-button
         v-permission="'P_COMPANY:COPY_INSERT'"
         :disabled="!settings.btnShowStatus.showCopyInsert"
         type="primary"
         icon="el-icon-camera-solid"
         :loading="settings.loading"
         @click="handleCopyInsert"
-      >复制新增</el-button>
+      >复制新增</el-button> -->
       <el-button
         v-permission="'P_COMPANY:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
@@ -117,7 +120,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -377,19 +380,18 @@
 <script>
 import constants_program from '@/common/constants/constants_program'
 import { getListApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/20_master/company/company'
-import resizeMixin from './mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import SelectDict from '@/components/00_dict/select/SelectDict'
 import editDialog from '@/views/20_master/company/dialog/edit'
+import FloatMenu from '@/components/FloatMenu/index.vue'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   name: constants_program.P_COMPANY, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination, DeleteTypeNormal, SelectDict, editDialog },
+  components: { Pagination, DeleteTypeNormal, SelectDict, editDialog, FloatMenu },
   directives: { permission },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -438,7 +440,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       popSettings: {
@@ -479,6 +480,8 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {
@@ -562,14 +565,15 @@ export default {
         row.is_del = !row.is_del
       })
     },
+    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
     // 点击按钮 新增
-    handleInsert () {
-      // 新增
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
-      this.popSettings.one.visible = true
-    },
+    // handleInsert () {
+    //   // 新增
+    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
+    //   this.popSettings.one.visible = true
+    // },
     // 点击按钮 更新
-    async handleUpdate () {
+    handleUpdate () {
       this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
       if (this.popSettings.one.props.data.id === undefined) {
         this.showErrorMsg('请选择一条数据')
@@ -579,13 +583,14 @@ export default {
       this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
       this.popSettings.one.visible = true
     },
+    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
     // 点击按钮 复制新增
-    handleCopyInsert () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      // 复制新增
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
-      this.popSettings.one.visible = true
-    },
+    // handleCopyInsert () {
+    //   this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
+    //   // 复制新增
+    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
+    //   this.popSettings.one.visible = true
+    // },
     // 查看
     handleView () {
       this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
@@ -707,15 +712,17 @@ export default {
     // ------------------编辑弹出框 start--------------------
     handleCloseDialogOneOk (val) {
       switch (this.popSettings.one.props.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.doInsertModelCallBack(val)
-          break
+        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
+        // case this.PARAMETERS.STATUS_INSERT:
+        //   this.doInsertModelCallBack(val)
+        //   break
         case this.PARAMETERS.STATUS_UPDATE:
           this.doUpdateModelCallBack(val)
           break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          this.doCopyInsertModelCallBack(val)
-          break
+        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
+        // case this.PARAMETERS.STATUS_COPY_INSERT:
+        //   this.doCopyInsertModelCallBack(val)
+        //   break
         case this.PARAMETERS.STATUS_VIEW:
           break
       }
@@ -723,51 +730,53 @@ export default {
     handleCloseDialogOneCancel () {
       this.popSettings.one.visible = false
     },
+    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
     // 处理插入回调
-    doInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
+    // doInsertModelCallBack (val) {
+    //   if (val.return_flag) {
+    //     this.popSettings.one.visible = false
 
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        this.$notify({
-          title: '新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
+    //     // 设置到table中绑定的json数据源
+    //     this.dataJson.listData.unshift(val.data.data)
+    //     this.$notify({
+    //       title: '新增处理成功',
+    //       message: val.data.message,
+    //       type: 'success',
+    //       duration: this.settings.duration
+    //     })
+    //   } else {
+    //     this.$notify({
+    //       title: '新增处理失败',
+    //       message: val.error.message,
+    //       type: 'error',
+    //       duration: this.settings.duration
+    //     })
+    //   }
+    // },
+    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
     // 处理复制新增回调
-    doCopyInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '复制新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '复制新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
+    // doCopyInsertModelCallBack (val) {
+    //   if (val.return_flag) {
+    //     this.popSettings.one.visible = false
+    //     // 设置到table中绑定的json数据源
+    //     this.dataJson.listData.unshift(val.data.data)
+    //     // 设置到currentjson中
+    //     this.dataJson.currentJson = Object.assign({}, val.data.data)
+    //     this.$notify({
+    //       title: '复制新增处理成功',
+    //       message: val.data.message,
+    //       type: 'success',
+    //       duration: this.settings.duration
+    //     })
+    //   } else {
+    //     this.$notify({
+    //       title: '复制新增处理失败',
+    //       message: val.error.message,
+    //       type: 'error',
+    //       duration: this.settings.duration
+    //     })
+    //   }
+    // },
     // 处理更新回调
     doUpdateModelCallBack (val) {
       if (val.return_flag) {
@@ -792,7 +801,6 @@ export default {
         })
       }
     }
-    // ------------------编辑弹出框 end--------------------
   }
 }
 </script>

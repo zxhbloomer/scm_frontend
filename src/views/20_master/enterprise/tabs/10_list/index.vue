@@ -172,7 +172,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -538,7 +538,7 @@ import {
   getListApi, deleteApi, exportApi, exportAllApi, importApi, getDetailApi
 } from '@/api/20_master/enterprise/enterprise.js'
 import constants_para from '@/common/constants/constants_para'
-import mixin from './mixin'
+// import mixin from './mixin' - 已移除，使用ExTable的canvas-auto-height功能
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -553,7 +553,7 @@ import { MessageBox } from 'element-ui'
 export default {
   components: { SimpleUpload, Pagination, SelectDicts, SelectDict, version_list_template, print_template },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
+  // mixins: [mixin], - 已移除，使用ExTable的canvas-auto-height功能
   props: {
   },
   data () {
@@ -658,7 +658,7 @@ export default {
         sumLoading: false,
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
+        // tableHeight: this.setUIheight(), - 已移除，使用ExTable的canvas-auto-height功能
         duration: 4000
       },
       // vue-tour组件
@@ -674,7 +674,7 @@ export default {
           target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
           content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
           params: {
-            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
             highlight: false, // 当前项激活时是否高亮显示
             enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
           },
@@ -694,6 +694,8 @@ export default {
   watch: {
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
 

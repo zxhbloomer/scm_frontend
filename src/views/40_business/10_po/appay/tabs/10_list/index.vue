@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <FloatMenu />
+    <FloatMenu bpm-manage-permission="P_AP_PAY:BPM_MANAGE" />
     <!-- 顶部tabs页签 -->
     <el-tabs
       ref="minusTabs"
@@ -165,7 +165,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      canvas-auto-height="true"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -657,7 +657,7 @@ export default {
           target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
           content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
           params: {
-            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
             highlight: false, // 当前项激活时是否高亮显示
             enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
           },

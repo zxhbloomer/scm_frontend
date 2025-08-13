@@ -31,6 +31,7 @@
     <el-footer>
       <FooterSelected
         ref="footer"
+        :data="data"
         @emitButtonDisabledStatus="handleButtonDisabledStatus"
       />
     </el-footer>
@@ -144,8 +145,8 @@ export default {
           // 组装已选用户数据
           listData.forEach(k => {
             formData.push({
-              id: k.id,
-              code: k.code,
+              id: k.id || k.staff_id || k.user_id,
+              code: k.login_name || k.code,
               name: k.name,
               avatar: k.avatar,
               type: 'user'
@@ -155,7 +156,7 @@ export default {
         case 'post':
           listData.forEach(k => {
             formData.push({
-              id: k.id,
+              id: k.id || k.staff_id || k.user_id,
               code: k.code,
               name: k.name,
               avatar: k.avatar,

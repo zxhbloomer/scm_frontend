@@ -382,6 +382,7 @@
         :auto-fit="true"
         min-width="120"
         prop="order_count"
+        label="订单笔数"
         align="right"
       >
         <template v-slot:header>
@@ -442,6 +443,7 @@
         :auto-fit="true"
         min-width="120"
         prop="virtual_progress"
+        label="执行进度"
         align="right"
       >
         <template v-slot:header>
@@ -631,33 +633,6 @@
           {{ scope.row.virtual_unpaid_amount == null ? '' : formatCurrency(scope.row.virtual_unpaid_amount, true) }}
         </template>
       </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="advance_refund_amount_total"
-        label="预付款可退金额"
-        align="right"
-      >
-        <template v-slot:default="scope">
-        <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        min-width="150"
-        prop="already_invoice_price"
-        label="已开票金额"
-        align="right"
-      >
-        <template v-slot:default="scope">
-          <!--{{ scope.row.advance_pay_amoun == null ? '' : formatNumber(scope.row.advance_pay_amoun, true, 4) }}-->
-        </template>
-      </el-table-column>
-
       <el-table-column
         label="商品"
         align="center"
@@ -743,7 +718,7 @@
               v-for="(item, index) in scope.row.detailListData"
               :key="index"
               :class="getClass(index, scope.row.detailListData.length)"
-            > {{ item.qty }}
+            > {{ item.qty == null ? '' : formatNumber(item.qty, true, 4) }}
             </div>
           </template>
         </el-table-column>
@@ -1099,6 +1074,7 @@ import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/sys
 import {
   getListSumApi,
   exportApi,
+  exportAllApi,
   importDataApi,
   getListApi,
   delApi, getApi, completeApi
@@ -1233,7 +1209,7 @@ export default {
           target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
           content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
           params: {
-            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
             highlight: false, // 当前项激活时是否高亮显示
             enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
           },
@@ -1877,7 +1853,7 @@ export default {
       this.settings.loading = true
       const selectionJson = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
+        selectionJson.push({ 'id': value.id })
       })
       const searchData = { ids: selectionJson }
       // 开始导出
@@ -1890,7 +1866,7 @@ export default {
       // loading
       this.settings.loading = true
       // 开始导出
-      exportApi(this.dataJson.searchForm).then(response => {
+      exportAllApi(this.dataJson.searchForm).then(response => {
         this.settings.loading = false
       }).finally(() => {
         this.settings.loading = false

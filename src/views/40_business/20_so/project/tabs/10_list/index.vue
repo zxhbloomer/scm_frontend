@@ -806,7 +806,7 @@ import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/sys
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/customer/index.vue'
 
 import FloatMenu from '@/components/FloatMenu/index.vue'
-import { exportApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi, completeApi } from '@/api/40_business/project/project'
+import { exportApi, exportAllApi, importBInApi, getListApi, getApi, delApi, getProjectSumApi, completeApi } from '@/api/40_business/project/project'
 import constants_para from '@/common/constants/constants_para'
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_type from '@/common/constants/constants_dict'
@@ -957,7 +957,7 @@ export default {
           target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
           content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
           params: {
-            placement: 'right', // 指引在target的位置，支持上、下、左、右
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
             highlight: false, // 当前项激活时是否高亮显示
             enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
           },
@@ -1707,11 +1707,23 @@ export default {
       this.settings.loading = true
       const selectionJson = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
+        // 只传递ID，与PO项目导出保持一致
+        selectionJson.push({ 'id': value.id })
       })
-      const searchData = { ids: selectionJson }
       // 开始导出
-      exportApi(searchData).then(response => {
+      exportApi(selectionJson).then(response => {
+        // 导出成功处理
+      }).catch(error => {
+        // 导出失败处理
+        console.error('导出失败:', error)
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: 4000
+        })
+      }).finally(() => {
+        // 无论成功还是失败都要关闭loading
         this.settings.loading = false
       })
     },
@@ -1719,10 +1731,20 @@ export default {
     handleExportAllData () {
       // loading
       this.settings.loading = true
-      // 开始导出
-      exportApi(this.dataJson.searchForm).then(response => {
-        this.settings.loading = false
+      // 开始导出 - 使用专门的全部导出API
+      exportAllApi(this.dataJson.searchForm).then(response => {
+        // 导出成功处理
+      }).catch(error => {
+        // 导出失败处理
+        console.error('导出失败:', error)
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: 4000
+        })
       }).finally(() => {
+        // 无论成功还是失败都要关闭loading
         this.settings.loading = false
       })
     },

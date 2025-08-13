@@ -208,7 +208,6 @@
       </el-table-column>
       <el-table-column
         min-width="160"
-        :auto-fit="true"
         :sort-orders="settings.sortOrders"
         label="数据权限"
         prop="is_admin"

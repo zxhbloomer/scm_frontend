@@ -955,6 +955,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.popSettings.one.visible = false
+        // 普通修改操作：保存数据并应用列展示
         this.doSortUpdate(this.resultList)
         // 重置按钮状态和初始加载标记
         this.confirmButtonEnabled = false
@@ -1074,47 +1075,118 @@ export default {
     },
 
     resetTableConfigData (page_code) {
+      console.log('=== 开始重置表格列配置，页面代码:', page_code)
+
       // 重置时也设置为初始加载状态
       this.isInitialLoad = true
+      this.settings.loading = true
 
-      // 重置 - 直接使用reset API返回的原始数据，不需要再调用其他API
-      resetTableConfigApi({ page_code: page_code }).then(response => {
-        console.log('=== 重置API返回的数据:', response.data)
-        this.resultList = response.data
+      // 步骤1：通过EventBus获取当前表格的列配置
+      EventBus.$emit('TABLE_COLUMNS_GET_CONFIG', {
+        page_code: page_code,
+        callback: (tableColumns) => {
+          console.log('=== 从ExTable获取到的列配置:', tableColumns)
 
-        // 为分组子项设置稳定的显示序号，拖拽后不会自动重排
-        this.resultList.forEach(item => {
-          if (item.is_group === 1 && item.groupChildren && Array.isArray(item.groupChildren)) {
-            item.groupChildren.forEach((child, index) => {
-              // 设置初始显示序号，后续拖拽不会改变这个值，等后端更新
-              child.displayIndex = index + 1
-            })
+          if (!tableColumns || tableColumns.length === 0) {
+            this.$message.error('无法获取表格列配置数据')
+            this.settings.loading = false
+            return
           }
-        })
 
-        // 确保组内序号从1开始
-        this.reIndexGroupSort()
-        this.selected = this.resultList.filter(item => {
-          return item.is_enable === true
-        })
-        if (this.selected.length === this.resultList.length) {
-          this.checkAll = true
-        } else if (this.selected.length > 0 && this.selected.length < this.resultList.length) {
-          this.checkAll = true
-          this.isIndeterminate = true
-        } else {
-          this.checkAll = false
+          // 步骤2：调用新的reset API，传递configs和pageCode
+          const requestData = {
+            configs: tableColumns,
+            pageCode: page_code
+          }
+
+          console.log('=== 调用reset API，参数:', requestData)
+
+          resetTableConfigApi(requestData).then(response => {
+            console.log('=== 重置API调用成功:', response.data)
+
+            // 步骤3：直接使用reset API返回的最新配置数据，无需再次调用API
+            if (response.data && Array.isArray(response.data)) {
+              this.resultList = response.data
+              this.processResultList()
+
+              // 重置操作完成，立即应用新配置并保持确定按钮禁用状态
+              this.$nextTick(() => {
+                this.isInitialLoad = false
+                // 重置操作是完整操作，确定按钮应该保持禁用状态
+                this.confirmButtonEnabled = false
+
+                // 立即发送事件通知ExTable应用新的列配置
+                EventBus.$emit(this.EMITS.EMIT_TABLE_COLUMNS_CONFIG_UPDATED, {
+                  page_code: page_code,
+                  config: this.resultList
+                })
+                console.log('=== reset完成，已发送CONFIG_UPDATED事件通知ExTable应用新配置')
+              })
+
+              this.settings.loading = false
+            } else {
+              this.$message.error('重置响应数据格式错误')
+              this.settings.loading = false
+            }
+          }).catch(error => {
+            console.error('=== 重置失败:', error)
+            this.$message.error('重置失败: ' + (error.response?.data?.message || error.message))
+          }).finally(() => {
+            this.settings.loading = false
+          })
+        }
+      })
+    },
+
+    // 获取表格配置数据的通用方法
+    getTableConfigData (page_code, callback) {
+      getTableConfigApi({ page_code: page_code }).then(response => {
+        console.log('=== 获取表格配置数据:', response.data)
+
+        // 检测如果没有配置数据，就自动调用reset方法初始化
+        if (!response.data || !Array.isArray(response.data) || response.data.length === 0) {
+          console.log('=== 检测到配置数据为空，自动调用reset方法初始化')
+          this.resetTableConfigData(page_code)
+          if (callback) callback()
+          return
         }
 
-        // 重置数据加载完成，后续的数据变化将启用确定按钮
-        this.$nextTick(() => {
-          this.isInitialLoad = false
-          // 重置操作本身就是用户操作，应该立即启用确定按钮
-          this.confirmButtonEnabled = true
-        })
-      }).finally(() => {
-        this.settings.loading = false
+        this.resultList = response.data
+        this.processResultList()
+
+        if (callback) callback()
+      }).catch(error => {
+        console.error('=== 获取表格配置失败:', error)
+        this.$message.error('获取配置失败')
+        if (callback) callback()
       })
+    },
+
+    // 处理获取到的配置列表数据
+    processResultList () {
+      // 为分组子项设置稳定的显示序号，拖拽后不会自动重排
+      this.resultList.forEach(item => {
+        if (item.is_group === 1 && item.groupChildren && Array.isArray(item.groupChildren)) {
+          item.groupChildren.forEach((child, index) => {
+            // 设置初始显示序号，后续拖拽不会改变这个值，等后端更新
+            child.displayIndex = index + 1
+          })
+        }
+      })
+
+      // 确保组内序号从1开始
+      this.reIndexGroupSort()
+      this.selected = this.resultList.filter(item => {
+        return item.is_enable === true
+      })
+      if (this.selected.length === this.resultList.length) {
+        this.checkAll = true
+      } else if (this.selected.length > 0 && this.selected.length < this.resultList.length) {
+        this.checkAll = true
+        this.isIndeterminate = true
+      } else {
+        this.checkAll = false
+      }
     },
     // 全选change事件
     handleCheckAllChange (val) {
