@@ -4,6 +4,7 @@
     :loading="dataJson.settings.loading"
     loading-text="拼命加载..."
     clearable
+    :disabled="disabled"
     :value="value"
     @input="$emit('input', $event)"
   >
@@ -26,6 +27,11 @@ export default {
     value: {
       type: [Number, String],
       default: null
+    },
+    // 是否禁用
+    disabled: {
+      type: Boolean,
+      default: false
     }
   },
   data () {

@@ -235,7 +235,7 @@
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getDeptListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
-import editDialog from '@/views/20_master/dept/dialog/edit'
+import editDialog from '@/views/20_master/dept/dialog/30_edit/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {

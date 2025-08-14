@@ -119,16 +119,6 @@
             :disabled="isViewModel"
           />
         </el-form-item>
-        <el-form-item
-          label="是否自动审核："
-          prop="enable"
-        >
-          <el-switch
-            v-model="dataJson.tempJson.auto_audit"
-            active-color="#ff4949"
-            inactive-color="#dcdfe6"
-          />
-        </el-form-item>
         <el-row />
         <el-form-item
           label="说明："

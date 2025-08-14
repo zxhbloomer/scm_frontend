@@ -39,7 +39,7 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import currentDialog from '@/views/20_master/position/position'
+import currentDialog from '@/views/20_master/position/page/10_list/index.vue'
 
 export default {
   components: { currentDialog },

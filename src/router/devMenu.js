@@ -253,25 +253,25 @@ export const router_five = [
       },
       {
         path: '/org/group',
-        component: () => import('@/views/20_master/group/group'),
+        component: () => import('@/views/20_master/group/index'),
         name: 'P00000019', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
         meta: { title: '集团信息维护', icon: 'group' }
       },
       {
         path: '/org/company',
-        component: () => import('@/views/20_master/company/company'),
+        component: () => import('@/views/20_master/company/index'),
         name: 'P00000020', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
         meta: { title: '企业信息维护', icon: 'company' }
       },
       {
         path: '/org/dept',
-        component: () => import('@/views/20_master/dept/dept'),
+        component: () => import('@/views/20_master/dept/index'),
         name: 'P00000021', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
         meta: { title: '部门信息维护', icon: 'dept' }
       },
       {
         path: '/org/position',
-        component: () => import('@/views/20_master/position/position'),
+        component: () => import('@/views/20_master/position/index'),
         name: 'P00000022', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
         meta: { title: '岗位信息维护', icon: 'position' }
       },

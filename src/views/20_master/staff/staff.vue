@@ -132,22 +132,6 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >设置角色</el-button>
-      <el-button
-        v-permission="'P_STAFF:WAREHOUSE_ACCESS_SETTING'"
-        :disabled="!settings.btnShowStatus.showUpdate"
-        type="primary"
-        icon="el-icon-user"
-        :loading="settings.loading"
-        @click="handleWarehousePermission"
-      >仓库授权设置</el-button>
-      <el-button
-        v-permission="'P_STAFF:WAREHOUSE_ACCESS_VIEW'"
-        :disabled="!settings.btnShowStatus.showUpdate"
-        type="primary"
-        icon="el-icon-user"
-        :loading="settings.loading"
-        @click="handleWarehousePermissionView"
-      >仓库授权查看</el-button>
     </el-button-group>
     <el-table
       ref="multipleTable"
@@ -272,22 +256,6 @@
             @click.stop="handlePositionClick(item.position_name)"
           >
             {{ item.position_name }}
-          </el-tag>
-        </template>
-      </el-table-column>
-
-      <el-table-column
-        header-align="center"
-        label="仓库组"
-        min-width="150"
-      >
-        <template v-slot="column_lists">
-          <el-tag
-            v-for="item in column_lists.row.warehouseGroupList"
-            :key="item.id"
-            class="position_tag"
-          >
-            {{ item.name }}
           </el-tag>
         </template>
       </el-table-column>
@@ -713,28 +681,6 @@ export default {
     },
     handleView () {
       this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
-      this.popSettings.one.visible = true
-    },
-    // 点击按钮 设置仓库权限
-    handleWarehousePermission () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      this.popSettings.one.props.tabName = 'tab6'
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsgAlert('请选择一条数据')
-        return
-      }
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.one.visible = true
-    },
-    handleWarehousePermissionView () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      this.popSettings.one.props.tabName = 'tab6'
       if (this.popSettings.one.props.data.id === undefined) {
         this.showErrorMsg('请选择一条数据')
         return

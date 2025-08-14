@@ -815,164 +815,6 @@
             </div>
 
           </el-tab-pane>
-          <el-tab-pane label="仓库数据权限授权" name="tab6">
-            <el-tabs tab-position="right">
-
-              <el-tab-pane label="授权操作">
-                <el-alert
-                  title="授权操作"
-                  type="info"
-                  :closable="false"
-                />
-                <br>
-                <el-descriptions
-                  title=""
-                  :column="1"
-                  direction="horizontal"
-                  :content-style="contentStyle"
-                  :label-style="labelStyle"
-                  border
-                  style="padding-right: 10px;padding-left: 10px;"
-                >
-                  <el-descriptions-item label="按仓库组授权：">
-                    <el-checkbox-group v-model="dataJson.tempJson.warehouseGroupIds">
-                      <el-checkbox-button
-                        v-for="item in dataJson.warehouseGroupListData"
-                        :key="item.id"
-                        :disabled="isViewModel"
-                        :label="item.id"
-                        :checked="item.checked"
-                        @change="changeWarehouseGroup(item)"
-                      >{{ item.name }}</el-checkbox-button>
-                    </el-checkbox-group>
-                  </el-descriptions-item>
-
-                  <el-descriptions-item label="按仓库授权：">
-                    <el-button
-                      :disabled="isViewModel"
-                      type="primary"
-                      icon="el-icon-edit-outline"
-                      :loading="settings.loading"
-                      @click="handleEditWarehouseMember"
-                    >授权</el-button>
-                  </el-descriptions-item>
-                </el-descriptions>
-                <br>
-                <el-alert
-                  title="已授权仓库"
-                  type="info"
-                  :closable="false"
-                />
-                <br>
-                <el-table
-                  ref="multipleTable"
-                  v-loading="settings.loading"
-                  type="org_group"
-                  :data="dataJson.warehouseListData"
-                  :element-loading-text="'正在拼命加载中...'"
-                  element-loading-background="rgba(255, 255, 255, 0.5)"
-                  height="300px"
-                  stripe
-                  border
-                  fit
-                  highlight-current-row
-                  :default-sort="{prop: 'u_time', order: 'descending'}"
-                  style="width: 100%"
-                >
-                  <!-- <el-table-column type="selection" width="45" prop="id" /> -->
-                  <el-table-column
-                    type="index"
-                    width="45"
-                    label="No"
-                  />
-
-                  <el-table-column
-                    show-overflow-tooltip
-                    min-width="160"
-                    prop="name"
-                    label="仓库名称"
-                    :auto-fit="true"
-                  />
-                  <el-table-column
-                    show-overflow-tooltip
-                    min-width="180"
-                    prop="short_name"
-                    label="仓库简称"
-                    :auto-fit="true"
-                  />
-                  <el-table-column
-                    show-overflow-tooltip
-                    min-width="150"
-                    prop="code"
-                    label="仓库编码"
-                    :auto-fit="true"
-                  />
-                  <el-table-column
-                    show-overflow-tooltip
-                    min-width="250"
-                    prop="type"
-                    label="授权类型"
-                    :auto-fit="true"
-                  >
-                    <template v-slot="scope">
-                      <span
-                        v-for="(item, index) in scope.row.types"
-                        :key="index"
-                      >
-                        {{ scope.row.types.length == (index+1)? item == 1 ? '按员工仓库组授权':'按员工仓库授权':item == 1 ? '按员工仓库组授权，':'按员工仓库授权，' }}
-                      </span>
-                    </template>
-                  </el-table-column>
-                </el-table>
-              </el-tab-pane>
-              <el-tab-pane label="授权信息">
-                <div style="margin-left:30px;">
-                  <el-row :gutter="20">
-                    <el-col :span="5">
-                      <el-switch
-                        v-model="horizontal2"
-                        :width="50"
-                        active-text="横排"
-                        inactive-text="竖排"
-                        style="margin-top:8px;"
-                      />
-                    </el-col>
-                    <el-col :span="5">
-                      <el-switch
-                        v-model="expandAll2"
-                        :width="50"
-                        active-text="全部展开"
-                        inactive-text="全部折叠"
-                        style="margin-top:8px;"
-                        @change="expandChange"
-                      />
-                    </el-col>
-
-                  </el-row>
-                </div>
-
-                <div style="font-size:12px;margin-top:30px;text-align:center">
-                  <el-scrollbar
-                    :style="scrollTreeStyle2"
-                    class="el-org-tree"
-                  >
-                    <org-tree
-                      v-if="dataJson.tempJson.warehouseTreeData"
-                      name="permission-tree"
-                      :props="{label: 'label', children: 'children', expand: 'expand'}"
-                      :data="dataJson.tempJson.warehouseTreeData"
-                      :horizontal="horizontal2"
-                      :collapsable="collapsable2"
-                      :render-content="renderContent2"
-                      @on-expand="onExpand2"
-                      @on-node-click="onNodeClick2"
-                    />
-                  </el-scrollbar>
-                </div>
-              </el-tab-pane>
-            </el-tabs>
-
-          </el-tab-pane>
         </el-tabs>
       </el-form>
       <div
@@ -1022,15 +864,6 @@
       @closeMeCancel="handlePsdDialogCloseCancel"
     />
 
-    <set-warehouse-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
-      :visible="popSettings.one.visible"
-      :model="popSettings.one.props.model"
-      @closeMeOk="handleCloseDialogOneOk"
-      @closeMeCancel="handleCloseDialogOneCancel"
-    />
   </div>
 </template>
 
@@ -1097,14 +930,11 @@ import psdDialog from '@/views/20_master/staff/dialog/setPsdDialog'
 import deepCopy from 'deep-copy'
 import { isNotEmpty } from '@/utils/index.js'
 import previewCard from '@/components/50_preview_card/preview_card_new'
-import { getListApi as getWarehouseGroupList } from '@/api/40_business/warehouse/warehousegroup'
-import { getWarehouseAllListApi as getWarehouseListApi } from '@/api/20_master/relation/relation'
-import setWarehouseDialog from '@/views/20_master/staff/dialog/setWarehouse'
 import OrgTree from '@/components/OrgTree/index.js'
 
 export default {
   // name: '', // 页面id，和router中的name需要一致，作为缓存
-  components: { previewCard, RadioDict, SelectDict, psdDialog, SelectCompanyDept, setWarehouseDialog, OrgTree },
+  components: { previewCard, RadioDict, SelectDict, psdDialog, SelectCompanyDept, OrgTree },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -1161,9 +991,6 @@ export default {
       file_twos: [],
       file_two_file: [],
       dataJson: {
-        warehouseGroupListData: [],
-        warehouseListData: [],
-        warehouseListData1: [],
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           one_fileVo: {},
@@ -1186,8 +1013,6 @@ export default {
         },
         // 单条数据 json
         tempJson: {
-          warehouseGroupIds: [],
-          warehouseIds: [],
           one_fileVo: {},
           two_fileVo: {},
           id: undefined,
@@ -1366,8 +1191,6 @@ export default {
   methods: {
     // 初始化处理
     async init () {
-      this.getWarehouseGroupData()
-
       this.initButtonShowStatus()
       this.initButtonDisabledStatus()
       switch (this.dialogStatus) {
@@ -1489,27 +1312,6 @@ export default {
         // 增加对象属性，columnTypeShowIcon，columnNameShowIcon
         this.dataJson.tempJson = response.data
 
-        this.dataJson.tempJson.warehouseGroupIds = []
-        this.dataJson.tempJson.warehouseGroupList.forEach((item) => {
-          if (item != null) {
-            this.dataJson.tempJson.warehouseGroupIds.push(item.id)
-          }
-        })
-
-        this.dataJson.warehouseGroupListData.forEach(item1 => {
-          this.dataJson.tempJson.warehouseGroupIds.forEach(item2 => {
-            if (item1.id === item2) {
-              item1.checked = true
-            }
-          })
-        })
-
-        if (this.dataJson.tempJson.warehouseGroupIds.length + 1 === this.dataJson.warehouseGroupListData.length) {
-          this.dataJson.tempJson.warehouseGroupIds.push(0)
-        }
-
-        this.getWarehouseList()
-
         // 默认全部展开
         this.toggleExpand(this.dataJson.tempJson.permissionTreeData, true)
 
@@ -1528,24 +1330,6 @@ export default {
           // const tempData = Object.assign({}, this.dataJson.tempJson)
           const tempData = deepCopy(this.dataJson.tempJson)
           this.settings.loading = true
-
-          tempData.warehouseGroupList = []
-          tempData.warehouseStaffList = []
-          // 员工仓库
-          if (this.dataJson.tempJson.warehouseStaffList !== null && this.dataJson.tempJson.warehouseStaffList !== undefined) {
-            this.dataJson.tempJson.warehouseStaffList.forEach((item) => {
-              tempData.warehouseStaffList.push(item)
-            })
-          }
-
-          // 员工仓库组
-          if (this.dataJson.tempJson.warehouseGroupIds !== null && this.dataJson.tempJson.warehouseGroupIds !== undefined) {
-            this.dataJson.tempJson.warehouseGroupIds.forEach((item) => {
-              if (item !== null && item !== 0) {
-                tempData.warehouseGroupList.push({ id: item })
-              }
-            })
-          }
 
           insertApi(tempData).then((_data) => {
             this.$emit('closeMeOk', { return_flag: true, data: _data })
@@ -1566,24 +1350,6 @@ export default {
           // const tempData = Object.assign({}, this.dataJson.tempJson)
           const tempData = deepCopy(this.dataJson.tempJson)
           this.settings.loading = true
-
-          tempData.warehouseGroupList = []
-          tempData.warehouseStaffList = []
-          // 员工仓库
-          if (this.dataJson.tempJson.warehouseStaffList !== null && this.dataJson.tempJson.warehouseStaffList !== undefined) {
-            this.dataJson.tempJson.warehouseStaffList.forEach((item) => {
-              tempData.warehouseStaffList.push(item)
-            })
-          }
-
-          // 员工仓库组
-          if (this.dataJson.tempJson.warehouseGroupIds !== null && this.dataJson.tempJson.warehouseGroupIds !== undefined) {
-            this.dataJson.tempJson.warehouseGroupIds.forEach((item) => {
-              if (item !== null && item !== 0) {
-                tempData.warehouseGroupList.push({ id: item })
-              }
-            })
-          }
 
           updateApi(tempData).then((_data) => {
             // this.dataJson.tempJson = Object.assign({}, _data.data)
@@ -1769,125 +1535,6 @@ export default {
     uploadSuccessTwo (res) {
       this.dataJson.tempJson.two_fileVo = res.response.data
       this.dataJson.tempJson.two_fileVo.time = res.response.timestamp
-    },
-
-    // 获取所有仓库组数据
-    getWarehouseGroupData () {
-      getWarehouseGroupList().then(response => {
-        this.dataJson.warehouseGroupListData = this.dataJson.warehouseGroupListData.concat(response.data)
-        this.dataJson.warehouseGroupListData.forEach(item => {
-          item.checked = false
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-    // 仓库组选中事件
-    changeWarehouseGroup (val) {
-      if (val.id === null) {
-        if (val.checked === true) {
-          this.dataJson.warehouseGroupListData.forEach(item => {
-            item.checked = false
-          })
-        } else {
-          this.dataJson.warehouseGroupListData.forEach(item => {
-            item.checked = true
-          })
-        }
-      } else {
-        this.dataJson.warehouseGroupListData.forEach(item => {
-          if (item.id === val.id) {
-            if (item.checked === true) {
-              item.checked = false
-            } else {
-              item.checked = true
-            }
-          }
-        })
-      }
-
-      this.dataJson.tempJson.warehouseGroupIds = []
-      this.dataJson.warehouseGroupListData.forEach(item => {
-        if (item.checked === true && item.id !== 0 && item.id !== null) {
-          this.dataJson.tempJson.warehouseGroupIds.push(item.id)
-        }
-      })
-
-      if (this.dataJson.tempJson.warehouseGroupIds.length + 1 === this.dataJson.warehouseGroupListData.length) {
-        this.dataJson.tempJson.warehouseGroupIds.push(0)
-      }
-
-      this.getWarehouseList()
-    },
-    getWarehouseList () {
-      var codes = ['']
-      this.checkboxGroup = []
-      this.dataJson.warehouseGroupListData.forEach(item => {
-        if (item.checked === true) {
-          item.checked = true
-          this.checkboxGroup.push(item.id)
-          codes.push(item.code)
-        }
-      })
-
-      getWarehouseListApi({ codes: codes }).then(response => {
-        this.dataJson.warehouseListData1 = response.data
-        this.concatWarehouseData()
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-
-    handleEditWarehouseMember () {
-      this.popSettings.one.props.id = this.dataJson.tempJson.id
-
-      const tempWarehouses = []
-      if (this.dataJson.tempJson.warehouseStaffList !== null && this.dataJson.tempJson.warehouseStaffList !== undefined) {
-        this.dataJson.tempJson.warehouseStaffList.forEach(item => {
-          tempWarehouses.push(item.id)
-        })
-      }
-
-      this.dataJson.tempJson.warehouses = tempWarehouses
-      this.popSettings.one.props.data = this.dataJson.tempJson
-      this.popSettings.one.props.model = constants_para.MODEL_EDIT
-      this.popSettings.one.visible = true
-    },
-    handleCloseDialogOneOk (val) {
-      this.popSettings.one.visible = false
-      this.dataJson.tempJson.warehouseStaffList = val
-
-      this.concatWarehouseData()
-    },
-    handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
-    },
-    // 合并仓库信息并分类
-    concatWarehouseData () {
-      this.dataJson.warehouseListData = []
-      this.dataJson.tempJson.warehouseIds = []
-      this.dataJson.warehouseListData1.forEach(item => {
-        item.type = 1
-      })
-      this.dataJson.tempJson.warehouseStaffList.forEach(item => {
-        item.type = 2
-        this.dataJson.tempJson.warehouseIds.push(item.id)
-      })
-      this.dataJson.warehouseListData = this.dataJson.warehouseListData1.concat(this.dataJson.tempJson.warehouseStaffList)
-
-      this.dataJson.warehouseListData = Object.values(this.dataJson.warehouseListData.reduce((acc, curr) => {
-        // console.log(JSON.stringify(acc))
-        // console.log(JSON.stringify(curr))
-        const { name, short_name, code, type } = curr
-
-        const key = `${code}`
-        if (!acc[key]) {
-          acc[key] = { name, short_name, code, types: [type] }
-        } else {
-          acc[key].types.push(type)
-        }
-        return acc
-      }, {}))
     },
 
     renderContent (h, data) {

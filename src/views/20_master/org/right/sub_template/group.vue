@@ -152,13 +152,20 @@
       @pagination="getDataList"
     />
 
+    <!-- 编辑弹窗 -->
     <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
+      v-if="popSettings.one.visible && popSettings.one.props.dialogStatus === PARAMETERS.STATUS_UPDATE"
       :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
+      :data="popSettings.one.props.data"
       @closeMeOk="handleCloseDialogOneOk"
+      @closeMeCancel="handleCloseDialogOneCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="popSettings.one.visible && popSettings.one.props.dialogStatus === PARAMETERS.STATUS_VIEW"
+      :visible="popSettings.one.visible"
+      :data="popSettings.one.props.data"
       @closeMeCancel="handleCloseDialogOneCancel"
     />
 
@@ -182,11 +189,12 @@ import { EventBus } from '@/common/eventbus/eventbus'
 import { getGroupsListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
-import editDialog from '@/views/20_master/group/dialog/edit'
+import EditDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
+import ViewDialog from '@/views/20_master/group/dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {
-  components: { Pagination, editDialog },
+  components: { Pagination, EditDialog, ViewDialog },
   directives: { elDragDialog },
   mixins: [],
   props: {

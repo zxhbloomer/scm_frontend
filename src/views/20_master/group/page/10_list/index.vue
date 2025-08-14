@@ -1,57 +1,31 @@
 <template>
-  <div class="app-container">
+  <div>
     <FloatMenu />
+    <!-- 查询表单 -->
     <el-form
       ref="minusForm"
       :inline="true"
       :model="dataJson.searchForm"
-      label-position="getLabelPosition()"
+      label-position="right"
     >
+      <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.code"
+          clearable
+          placeholder="集团编号"
+          @keyup.enter.native="handleSearch"
+        />
+      </el-form-item>
       <el-form-item label="">
         <el-input
           v-model.trim="dataJson.searchForm.name"
           clearable
-          placeholder="企业名称"
+          placeholder="集团名称"
           @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item label="">
         <delete-type-normal v-model="dataJson.searchForm.is_del" />
-      </el-form-item>
-      <el-form-item
-        v-show="meDialogStatus"
-        label=""
-      >
-        <select-dict
-          v-model="dataJson.searchForm.dataModel"
-          :para="CONSTANTS.DICT_ORG_USED_TYPE"
-          init-placeholder="请选择"
-        />
-      </el-form-item>
-      <el-form-item
-        v-show="false"
-        label=""
-      >
-        <el-input
-          v-show="false"
-          v-model.trim="dataJson.searchForm.name"
-          clearable
-          placeholder="企业名称"
-        />
-      </el-form-item>
-      <el-form-item label="">
-        <el-input
-          v-model.trim="dataJson.searchForm.name"
-          clearable
-          placeholder="法定代表人"
-        />
-      </el-form-item>
-      <el-form-item label="">
-        <el-input
-          v-model.trim="dataJson.searchForm.company_no"
-          clearable
-          placeholder="社会信用代码"
-        />
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
@@ -71,34 +45,35 @@
         >查询</el-button>
       </el-form-item>
     </el-form>
+
+    <!-- 操作按钮 -->
     <el-button-group>
-      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
+      <!-- 列表页面不可新增，需要在组织机构管理页面中进行新增 -->
       <!-- <el-button
-        v-permission="'P_COMPANY:ADD'"
+        v-permission="'P_GROUP:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
         @click="handleInsert"
       >新增</el-button> -->
       <el-button
-        v-permission="'P_COMPANY:UPDATE'"
+        v-permission="'P_GROUP:UPDATE'"
         :disabled="!settings.btnShowStatus.showUpdate"
         type="primary"
         icon="el-icon-edit-outline"
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
-      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
-      <!-- <el-button
-        v-permission="'P_COMPANY:COPY_INSERT'"
+      <el-button
+        v-permission="'P_GROUP:COPY_INSERT'"
         :disabled="!settings.btnShowStatus.showCopyInsert"
         type="primary"
         icon="el-icon-camera-solid"
         :loading="settings.loading"
         @click="handleCopyInsert"
-      >复制新增</el-button> -->
+      >复制新增</el-button>
       <el-button
-        v-permission="'P_COMPANY:EXPORT'"
+        v-permission="'P_GROUP:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
         type="primary"
         icon="el-icon-s-management"
@@ -106,7 +81,7 @@
         @click="handleExport"
       >导出</el-button>
       <el-button
-        v-permission="'P_COMPANY:INFO'"
+        v-permission="'P_GROUP:INFO'"
         :disabled="!settings.btnShowStatus.showUpdate"
         type="primary"
         icon="el-icon-info"
@@ -114,6 +89,8 @@
         @click="handleView"
       >查看</el-button>
     </el-button-group>
+
+    <!-- 数据表格 -->
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
@@ -128,91 +105,23 @@
       :default-sort="{prop: 'u_time', order: 'descending'}"
       style="width: 100%"
       @row-click="handleRowClick"
-      @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
     >
       <el-table-column
-        v-if="!meDialogStatus"
-        header-align="center"
         type="selection"
         width="45"
         prop="id"
       />
       <el-table-column
-        header-align="center"
-        type="index"
-        width="45"
         label="No"
-      />
-      <el-table-column
-        v-if="!meDialogStatus"
-        header-align="center"
-        :auto-fit="true"
-        sortable="custom"
-        min-width="180"
-        :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
-        label="集团信息"
-      />
-      <el-table-column
-        header-align="center"
-        :auto-fit="true"
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="code"
-        label="企业编号"
-      />
-      <el-table-column
-        header-align="center"
-        :auto-fit="true"
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="company_no"
-        label="社会信用代码"
-      />
-      <el-table-column
-        header-align="center"
-        :auto-fit="true"
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="name"
-        label="企业名称"
-      />
-      <el-table-column
-        header-align="center"
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="企业简称"
-        :auto-fit="true"
-      />
-      <el-table-column
-        header-align="center"
-        :auto-fit="true"
-        sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
-        prop="juridical_name"
-        label="法定代表人"
-      />
-      <el-table-column
-        header-align="center"
-        align="right"
-        show-overflow-tooltip
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="register_capital"
-        label="注册资本（万）"
+        type="index"
+        width="50"
+        align="center"
       >
         <template v-slot="scope">
-          {{ formatCurrency(scope.row.register_capital,'true',4) }}
+          <span>{{ (dataJson.searchForm.pageCondition.current - 1) * dataJson.searchForm.pageCondition.size + scope.$index + 1 }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -221,8 +130,17 @@
         sortable="custom"
         min-width="130"
         :sort-orders="settings.sortOrders"
-        prop="type_name"
-        label="企业类型"
+        prop="parent_group_simple_name"
+        label="上级集团"
+      />
+      <el-table-column
+        header-align="center"
+        :auto-fit="true"
+        sortable="custom"
+        min-width="130"
+        :sort-orders="settings.sortOrders"
+        prop="code"
+        label="集团编号"
       />
       <el-table-column
         header-align="center"
@@ -230,23 +148,22 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="setup_date"
-        label="成立日期"
-      >
-        <template v-slot="scope">
-          {{ formatDate(scope.row.setup_date) }}
-        </template>
-      </el-table-column>
+        prop="name"
+        label="集团名称"
+      />
       <el-table-column
         header-align="center"
-        show-overflow-tooltip
-        min-width="150"
-        prop="descr"
-        label="说明"
+        :auto-fit="true"
+        sortable="custom"
+        min-width="140"
+        :sort-orders="settings.sortOrders"
+        prop="simple_name"
+        label="集团简称"
       />
       <el-table-column
         header-align="center"
         min-width="80"
+        :auto-fit="true"
         :sort-orders="settings.sortOrders"
         label="删除"
       >
@@ -283,21 +200,22 @@
               :active-value="true"
               :inactive-value="false"
               :width="30"
-              :disabled="meDialogStatus"
               @change="handleDel(scope.row)"
             />
           </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column
+        header-align="center"
         :auto-fit="true"
         sortable="custom"
-        min-width="100"
+        min-width="90"
         :sort-orders="settings.sortOrders"
         prop="u_name"
         label="更新人"
       />
       <el-table-column
+        header-align="center"
         :auto-fit="true"
         sortable="custom"
         min-width="180"
@@ -310,6 +228,8 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 分页 -->
     <pagination
       ref="minusPaging"
       :total="dataJson.paging.total"
@@ -318,14 +238,30 @@
       @pagination="getDataList"
     />
 
+    <!-- 新增弹窗 -->
+    <new-dialog
+      v-if="dialogs.new"
+      ref="newDialog"
+      :visible="dialogs.new"
+      @closeMeOk="handleNewDialogOk"
+      @closeMeCancel="handleNewDialogCancel"
+    />
+
+    <!-- 编辑弹窗 -->
     <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
-      :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
-      @closeMeCancel="handleCloseDialogOneCancel"
+      v-if="dialogs.edit"
+      :visible="dialogs.edit"
+      :data="dataJson.currentJson"
+      @closeMeOk="handleEditDialogOk"
+      @closeMeCancel="handleEditDialogCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="dialogs.view"
+      :visible="dialogs.view"
+      :data="dataJson.currentJson"
+      @closeMeCancel="handleViewDialogCancel"
     />
 
     <iframe
@@ -343,11 +279,6 @@
 .el-button-group {
   margin-bottom: 10px;
 }
-.el-table ::v-deep.cell {
-  white-space: nowrap;
-  width: fit-content;
-}
-
 .floatRight {
   float: right;
 }
@@ -360,49 +291,33 @@
 .perfect_popper .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
-</style>
-<style >
-.el-input-group__append_select {
-  color: #ffffff;
-  background-color: #1890ff;
-  border-color: #1890ff;
-}
-.el-input-group__append_reset {
-  color: #ffffff;
-  background-color: #f56c6c;
-  border-color: #f56c6c;
-}
 .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
 </style>
 
 <script>
-import constants_program from '@/common/constants/constants_program'
-import { getListApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/20_master/company/company'
+import permission from '@/directive/permission/index.js' // 权限判断指令
+import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/20_master/group/group'
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
-import SelectDict from '@/components/00_dict/select/SelectDict'
-import editDialog from '@/views/20_master/company/dialog/edit'
 import FloatMenu from '@/components/FloatMenu/index.vue'
+import NewDialog from '../../dialog/20_new/index.vue'
+import EditDialog from '../../dialog/30_edit/index.vue'
+import ViewDialog from '../../dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
-  name: constants_program.P_COMPANY, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination, DeleteTypeNormal, SelectDict, editDialog, FloatMenu },
-  directives: { permission },
-  props: {
-    // 自己作为弹出框时的参数
-    meDialogStatus: {
-      type: Boolean,
-      default: false
-    },
-    dataModel: {
-      type: String,
-      default: ''
-    }
+  name: 'GroupList',
+  components: {
+    Pagination,
+    DeleteTypeNormal,
+    FloatMenu,
+    NewDialog,
+    EditDialog,
+    ViewDialog
   },
+  directives: { permission },
   data () {
     return {
       dataJson: {
@@ -413,9 +328,7 @@ export default {
           // 查询条件
           name: '',
           code: '',
-          is_del: '0', // 未删除
-          id: this.id,
-          dataModel: this.dataModel // 弹出框模式
+          is_del: '0' // 未删除
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -442,21 +355,15 @@ export default {
         loading: true,
         duration: 4000
       },
-      popSettings: {
-        // 弹出编辑页面
-        one: {
-          visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
-          }
-        }
+      // 弹窗控制
+      dialogs: {
+        new: false,
+        edit: false,
+        view: false
       }
     }
   },
-  computed: {
-  },
+  computed: {},
   // 监听器
   watch: {
     // 选中的数据，使得导出按钮可用，否则就不可使用
@@ -468,20 +375,9 @@ export default {
           this.settings.btnShowStatus.showExport = false
         }
       }
-    },
-    'popSettings.two.selectedDataJson': {
-      handler (newVal, oldVal) {
-        if (newVal !== {}) {
-          this.dataJson.tempJson.address_id = this.popSettings.two.selectedDataJson.id
-        } else {
-          this.popSettings.two.selectedDataJson.id = undefined
-        }
-      }
     }
   },
   created () {
-    // 作为独立页面，通过route路由打开时
-    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {
@@ -492,12 +388,6 @@ export default {
       // 初始化查询
       this.getDataList()
     },
-    // 弹出框设置初始化
-    initDialogStatus () {
-    },
-    // 下拉选项控件事件
-    handleSelectChange (val) {
-    },
     // 获取行索引
     getRowIndex (row) {
       const _index = this.dataJson.listData.lastIndexOf(row)
@@ -507,14 +397,6 @@ export default {
     handleRowClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
     },
-    // 行双点击，仅在dialog中有效
-    handleRowDbClick (row) {
-      this.dataJson.rowIndex = this.getRowIndex(row)
-      var _data = deepCopy(row)
-      if (this.meDialogStatus) {
-        this.$emit('rowDbClick', _data)
-      }
-    },
     handleSearch () {
       // 查询
       this.dataJson.searchForm.pageCondition.current = 1
@@ -523,83 +405,6 @@ export default {
       // 清空选择
       this.dataJson.multipleSelection = []
       this.$refs.multipleTable.clearSelection()
-    },
-    // 删除操作
-    handleDel (row) {
-      let _message = ''
-      const _value = row.is_del
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (_value === true) {
-        _message = '是否要删除选择的数据？'
-      } else {
-        _message = '是否要复原该条数据？'
-      }
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        deleteApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.is_del = !row.is_del
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.is_del = !row.is_del
-      })
-    },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 点击按钮 新增
-    // handleInsert () {
-    //   // 新增
-    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
-    //   this.popSettings.one.visible = true
-    // },
-    // 点击按钮 更新
-    handleUpdate () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.one.visible = true
-    },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 点击按钮 复制新增
-    // handleCopyInsert () {
-    //   this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-    //   // 复制新增
-    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
-    //   this.popSettings.one.visible = true
-    // },
-    // 查看
-    handleView () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
-      this.popSettings.one.visible = true
     },
     // 导出按钮
     handleExport () {
@@ -651,6 +456,7 @@ export default {
       })
       // 开始导出
       exportSelectionApi(selectionJson).then(response => {
+      }).finally(() => {
         this.settings.loading = false
       })
     },
@@ -659,16 +465,12 @@ export default {
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
-        // this.settings.btnShowStatus.doInsert = true
         this.settings.btnShowStatus.showUpdate = true
         this.settings.btnShowStatus.showCopyInsert = true
       } else {
-        // this.settings.btnShowStatus.doInsert = false
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showCopyInsert = false
       }
-      // 设置dialog的返回
-      this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
     },
     handleSortChange (column) {
       // 服务器端排序
@@ -686,11 +488,7 @@ export default {
       this.settings.loading = true
       getListApi(this.dataJson.searchForm).then(response => {
         // 增加对象属性，columnTypeShowIcon，columnNameShowIcon
-        const recorders = response.data.records
-        const newRecorders = recorders.map(v => {
-          return { ...v, columnTypeShowIcon: false, columnNameShowIcon: false }
-        })
-        this.dataJson.listData = newRecorders
+        this.dataJson.listData = response.data.records
         this.dataJson.paging = response.data
         this.dataJson.paging.records = {}
       }).finally(() => {
@@ -709,79 +507,66 @@ export default {
     handleSelectionChange (val) {
       this.dataJson.multipleSelection = val
     },
-    // ------------------编辑弹出框 start--------------------
-    handleCloseDialogOneOk (val) {
-      switch (this.popSettings.one.props.dialogStatus) {
-        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-        // case this.PARAMETERS.STATUS_INSERT:
-        //   this.doInsertModelCallBack(val)
-        //   break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-        // case this.PARAMETERS.STATUS_COPY_INSERT:
-        //   this.doCopyInsertModelCallBack(val)
-        //   break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
+    // 点击按钮 新增
+    handleInsert () {
+      this.dialogs.new = true
+    },
+    // 点击按钮 复制新增
+    handleCopyInsert () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.new = true
+      // 复制新增时，将当前数据传递给新增弹窗
+      this.$nextTick(() => {
+        this.$refs.newDialog && this.$refs.newDialog.setCopyData(this.dataJson.currentJson)
+      })
+    },
+    // 点击按钮 更新
+    handleUpdate () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.edit = true
+    },
+    // 查看
+    handleView () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.view = true
+    },
+    // 新增弹窗回调
+    handleNewDialogOk (val) {
+      if (val.return_flag) {
+        this.dialogs.new = false
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.unshift(val.data.data)
+        this.$notify({
+          title: '新增处理成功',
+          message: val.data.message,
+          type: 'success',
+          duration: this.settings.duration
+        })
+      } else {
+        this.$notify({
+          title: '新增处理失败',
+          message: val.error.message,
+          type: 'error',
+          duration: this.settings.duration
+        })
       }
     },
-    handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
+    handleNewDialogCancel () {
+      this.dialogs.new = false
     },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 处理插入回调
-    // doInsertModelCallBack (val) {
-    //   if (val.return_flag) {
-    //     this.popSettings.one.visible = false
-
-    //     // 设置到table中绑定的json数据源
-    //     this.dataJson.listData.unshift(val.data.data)
-    //     this.$notify({
-    //       title: '新增处理成功',
-    //       message: val.data.message,
-    //       type: 'success',
-    //       duration: this.settings.duration
-    //     })
-    //   } else {
-    //     this.$notify({
-    //       title: '新增处理失败',
-    //       message: val.error.message,
-    //       type: 'error',
-    //       duration: this.settings.duration
-    //     })
-    //   }
-    // },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 处理复制新增回调
-    // doCopyInsertModelCallBack (val) {
-    //   if (val.return_flag) {
-    //     this.popSettings.one.visible = false
-    //     // 设置到table中绑定的json数据源
-    //     this.dataJson.listData.unshift(val.data.data)
-    //     // 设置到currentjson中
-    //     this.dataJson.currentJson = Object.assign({}, val.data.data)
-    //     this.$notify({
-    //       title: '复制新增处理成功',
-    //       message: val.data.message,
-    //       type: 'success',
-    //       duration: this.settings.duration
-    //     })
-    //   } else {
-    //     this.$notify({
-    //       title: '复制新增处理失败',
-    //       message: val.error.message,
-    //       type: 'error',
-    //       duration: this.settings.duration
-    //     })
-    //   }
-    // },
-    // 处理更新回调
-    doUpdateModelCallBack (val) {
+    // 编辑弹窗回调
+    handleEditDialogOk (val) {
       if (val.return_flag) {
-        this.popSettings.one.visible = false
-
+        this.dialogs.edit = false
         // 设置到table中绑定的json数据源
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
         // 设置到currentjson中
@@ -800,6 +585,52 @@ export default {
           duration: this.settings.duration
         })
       }
+    },
+    handleEditDialogCancel () {
+      this.dialogs.edit = false
+    },
+    // 查看弹窗回调
+    handleViewDialogCancel () {
+      this.dialogs.view = false
+    },
+    // 删除操作
+    handleDel (row) {
+      let _message = ''
+      const _value = row.is_del
+      if (_value === true) {
+        _message = '是否要删除选择的数据？'
+      } else {
+        _message = '是否要复原该条数据？'
+      }
+      // 选择全部的时候
+      this.$confirm(_message, '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        // loading
+        this.settings.loading = true
+        deleteApi(row).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          row.is_del = !row.is_del
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(action => {
+        row.is_del = !row.is_del
+      })
     }
   }
 }

@@ -214,7 +214,7 @@
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getCompanyListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
-import editDialog from '@/views/20_master/company/dialog/edit'
+import editDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {

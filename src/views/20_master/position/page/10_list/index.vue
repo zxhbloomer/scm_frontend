@@ -55,14 +55,13 @@
       </el-form-item>
     </el-form>
     <el-button-group>
-      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
-      <!-- <el-button
+      <el-button
         v-permission="'P_POSITION:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
         @click="handleInsert"
-      >新增</el-button> -->
+      >新增</el-button>
       <el-button
         v-permission="'P_POSITION:UPDATE'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -71,15 +70,14 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
-      <!-- 注释：不可在页面中新增，需要在组织机构管理页面中来新增 -->
-      <!-- <el-button
+      <el-button
         v-permission="'P_POSITION:COPY_INSERT'"
         :disabled="!settings.btnShowStatus.showCopyInsert"
         type="primary"
         icon="el-icon-camera-solid"
         :loading="settings.loading"
         @click="handleCopyInsert"
-      >复制新增</el-button> -->
+      >复制新增</el-button>
       <el-button
         v-permission="'P_POSITION:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
@@ -253,32 +251,6 @@
         :auto-fit="true"
         min-width="130"
         sortable="custom"
-        prop="warehouse_count1"
-        label="岗位设置仓库"
-      >
-        <template v-slot="scope">
-          <el-link
-            type="primary"
-            @click="handleEditWarehouseMember(scope.row.id, scope.row)"
-          >
-            添加仓库
-          </el-link>
-          <span>
-            (
-            <el-link
-              type="primary"
-              @click="handleEditWarehouseMember(scope.row.id, scope.row)"
-            >
-              {{ scope.row.warehouse_count1 }}
-            </el-link>
-            )
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :auto-fit="true"
-        min-width="130"
-        sortable="custom"
         prop="role_count"
         label="岗位设置角色"
       >
@@ -374,24 +346,41 @@
       @pagination="getDataList"
     />
 
-    <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
-      :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
-      @closeMeCancel="handleCloseDialogOneCancel"
+    <!-- 新增弹窗 -->
+    <new-dialog
+      v-if="popSettings.new.visible"
+      :visible="popSettings.new.visible"
+      :copy-data="popSettings.new.copyData"
+      @closeMeOk="handleNewDialogOk"
+      @closeMeCancel="handleNewDialogCancel"
     />
 
-    <set-position-dialog
-      v-if="popSettings.two.visible"
-      :id="popSettings.two.props.id"
-      :data="popSettings.two.props.data"
-      :visible="popSettings.two.visible"
-      :model="popSettings.two.props.model"
-      @closeMeOk="handleCloseDialogTwoOk"
-      @closeMeCancel="handleCloseDialogTwoCancel"
+    <!-- 编辑弹窗 -->
+    <edit-dialog
+      v-if="popSettings.edit.visible"
+      :visible="popSettings.edit.visible"
+      :data="popSettings.edit.data"
+      @closeMeOk="handleEditDialogOk"
+      @closeMeCancel="handleEditDialogCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="popSettings.view.visible"
+      :visible="popSettings.view.visible"
+      :data="popSettings.view.data"
+      @closeMeCancel="handleViewDialogCancel"
+    />
+
+    <!-- 岗位成员维护弹窗 -->
+    <transfer-dialog
+      v-if="popSettings.transfer.visible"
+      :id="popSettings.transfer.id"
+      :data="popSettings.transfer.data"
+      :visible="popSettings.transfer.visible"
+      :model="popSettings.transfer.model"
+      @closeMeOk="handleTransferDialogOk"
+      @closeMeCancel="handleTransferDialogCancel"
     />
     <set-warehouse-group-dialog
       v-if="popSettings.three.visible"
@@ -403,7 +392,7 @@
       @closeMeOk="handleCloseDialogThreeOk"
       @closeMeCancel="handleCloseDialogThreeCancel"
     />
-    <set-warehouse-dialog
+    <set-role-dialog
       v-if="popSettings.four.visible"
       :id="popSettings.four.props.id"
       :data="popSettings.four.props.data"
@@ -411,15 +400,6 @@
       :model="popSettings.four.props.model"
       @closeMeOk="handleCloseDialogFourOk"
       @closeMeCancel="handleCloseDialogFourCancel"
-    />
-    <set-role-dialog
-      v-if="popSettings.five.visible"
-      :id="popSettings.five.props.id"
-      :data="popSettings.five.props.data"
-      :visible="popSettings.five.visible"
-      :model="popSettings.five.props.model"
-      @closeMeOk="handleCloseDialogFiveOk"
-      @closeMeCancel="handleCloseDialogFiveCancel"
     />
     <iframe
       id="refIframe"
@@ -460,19 +440,21 @@ import { getListApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/2
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import SelectDict from '@/components/00_dict/select/SelectDict'
-import setPositionDialog from '@/views/20_master/position/dialog/setPosistion'
-import editDialog from '@/views/20_master/position/dialog/edit'
+// 弹窗组件
+import NewDialog from '../../dialog/20_new/index.vue'
+import EditDialog from '../../dialog/30_edit/index.vue'
+import ViewDialog from '../../dialog/40_view/index.vue'
+import TransferDialog from '../../dialog/50_transfer/index.vue'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import setWarehouseGroupDialog from '@/views/20_master/relation/dialog/dialog'
-import setWarehouseDialog from '@/views/20_master/position/dialog/setWarehouse'
 import setRoleDialog from '@/views/20_master/authorize/dialog/setRole.vue'
 
 export default {
   name: constants_program.P_POSITION, // 页面id，和router中的name需要一致，作为缓存
-  components: { setRoleDialog, Pagination, DeleteTypeNormal, SelectDict, setPositionDialog, editDialog, setWarehouseGroupDialog, setWarehouseDialog, FloatMenu },
+  components: { setRoleDialog, Pagination, DeleteTypeNormal, SelectDict, NewDialog, EditDialog, ViewDialog, TransferDialog, setWarehouseGroupDialog, FloatMenu },
   directives: { permission },
   props: {
     // 自己作为弹出框时的参数
@@ -525,23 +507,27 @@ export default {
         duration: 4000
       },
       popSettings: {
-        // 弹出编辑页面
-        one: {
+        // 新增弹窗
+        new: {
           visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
-          }
+          copyData: null
         },
-        // 设置数据页面
-        two: {
+        // 编辑弹窗
+        edit: {
           visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            model: ''
-          }
+          data: null
+        },
+        // 查看弹窗
+        view: {
+          visible: false,
+          data: null
+        },
+        // 岗位成员维护弹窗
+        transfer: {
+          visible: false,
+          id: null,
+          data: null,
+          model: ''
         },
         // 设置数据页面:仓库分组
         three: {
@@ -553,18 +539,8 @@ export default {
             model: ''
           }
         },
-        // 设置数据页面:仓库
-        four: {
-          visible: false,
-          props: {
-            serialData: undefined,
-            id: undefined,
-            data: {},
-            model: ''
-          }
-        },
         // 设置角色页面
-        five: {
+        four: {
           visible: false,
           props: {
             serialData: undefined,
@@ -792,77 +768,74 @@ export default {
       this.popSettings.one.visible = false
     },
     // ------------------编辑弹出框 start--------------------
-    handleCloseDialogOneOk (val) {
-      switch (this.popSettings.one.props.dialogStatus) {
-        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-        // case this.PARAMETERS.STATUS_INSERT:
-        //   this.doInsertModelCallBack(val)
-        //   break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-        // case this.PARAMETERS.STATUS_COPY_INSERT:
-        //   this.doCopyInsertModelCallBack(val)
-        //   break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
+    // 新增弹窗回调
+    handleNewDialogOk (val) {
+      this.doInsertModelCallBack(val)
+    },
+    handleNewDialogCancel () {
+      this.popSettings.new.visible = false
+      this.popSettings.new.copyData = null
+    },
+    // 编辑弹窗回调
+    handleEditDialogOk (val) {
+      this.doUpdateModelCallBack(val)
+    },
+    handleEditDialogCancel () {
+      this.popSettings.edit.visible = false
+    },
+    // 查看弹窗回调
+    handleViewDialogCancel () {
+      this.popSettings.view.visible = false
+    },
+    // 处理插入回调
+    doInsertModelCallBack (val) {
+      if (val.return_flag) {
+        this.popSettings.new.visible = false
+
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.unshift(val.data.data)
+        this.$notify({
+          title: '新增处理成功',
+          message: val.data.message,
+          type: 'success',
+          duration: this.settings.duration
+        })
+      } else {
+        this.$notify({
+          title: '新增处理失败',
+          message: val.error.message,
+          type: 'error',
+          duration: this.settings.duration
+        })
       }
     },
-    handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
-    },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 处理插入回调
-    // doInsertModelCallBack (val) {
-    //   if (val.return_flag) {
-    //     this.popSettings.one.visible = false
-
-    //     // 设置到table中绑定的json数据源
-    //     this.dataJson.listData.unshift(val.data.data)
-    //     this.$notify({
-    //       title: '新增处理成功',
-    //       message: val.data.message,
-    //       type: 'success',
-    //       duration: this.settings.duration
-    //     })
-    //   } else {
-    //     this.$notify({
-    //       title: '新增处理失败',
-    //       message: val.error.message,
-    //       type: 'error',
-    //       duration: this.settings.duration
-    //     })
-    //   }
-    // },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
     // 处理复制新增回调
-    // doCopyInsertModelCallBack (val) {
-    //   if (val.return_flag) {
-    //     this.popSettings.one.visible = false
-    //     // 设置到table中绑定的json数据源
-    //     this.dataJson.listData.unshift(val.data.data)
-    //     // 设置到currentjson中
-    //     this.dataJson.currentJson = Object.assign({}, val.data.data)
-    //     this.$notify({
-    //       title: '复制新增处理成功',
-    //       message: val.data.message,
-    //       type: 'success',
-    //       duration: this.settings.duration
-    //     })
-    //   } else {
-    //     this.$notify({
-    //       title: '复制新增处理失败',
-    //       message: val.error.message,
-    //       type: 'error',
-    //       duration: this.settings.duration
-    //     })
-    //   }
-    // },
+    doCopyInsertModelCallBack (val) {
+      if (val.return_flag) {
+        this.popSettings.new.visible = false
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.unshift(val.data.data)
+        // 设置到currentjson中
+        this.dataJson.currentJson = Object.assign({}, val.data.data)
+        this.$notify({
+          title: '复制新增处理成功',
+          message: val.data.message,
+          type: 'success',
+          duration: this.settings.duration
+        })
+      } else {
+        this.$notify({
+          title: '复制新增处理失败',
+          message: val.error.message,
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
+    },
     // 处理更新回调
     doUpdateModelCallBack (val) {
       if (val.return_flag) {
-        this.popSettings.one.visible = false
+        this.popSettings.edit.visible = false
 
         // 设置到table中绑定的json数据源
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
@@ -886,22 +859,23 @@ export default {
     // ------------------编辑弹出框 end--------------------
     // ------------------岗位设置员工弹出框 start--------------------
     handleViewStaffMember (val, row) {
-      this.popSettings.two.props.id = val
-      this.popSettings.two.props.data = row
-      this.popSettings.two.props.model = constants_para.MODEL_VIEW
-      this.popSettings.two.visible = true
+      this.popSettings.transfer.id = val
+      this.popSettings.transfer.data = row
+      this.popSettings.transfer.model = constants_para.MODEL_VIEW
+      this.popSettings.transfer.visible = true
     },
     handleEditStaffMember (val, row) {
-      this.popSettings.two.props.id = val
-      this.popSettings.two.props.data = row
-      this.popSettings.two.props.model = constants_para.MODEL_EDIT
-      this.popSettings.two.visible = true
+      this.popSettings.transfer.id = val
+      this.popSettings.transfer.data = row
+      this.popSettings.transfer.model = constants_para.MODEL_EDIT
+      this.popSettings.transfer.visible = true
     },
-    handleCloseDialogTwoOk (val) {
-      this.popSettings.two.visible = false
+    // 岗位成员维护弹窗回调
+    handleTransferDialogOk (val) {
+      this.popSettings.transfer.visible = false
     },
-    handleCloseDialogTwoCancel () {
-      this.popSettings.two.visible = false
+    handleTransferDialogCancel () {
+      this.popSettings.transfer.visible = false
     },
 
     // ------------------岗位仓库分组出框 start--------------------
@@ -922,15 +896,47 @@ export default {
       this.popSettings.three.visible = false
     },
     // ------------------岗位设置员工弹出框 end--------------------
-
-    // ------------------岗位设置仓库弹出框 start--------------------
-    handleViewWarehouseMember (val, row) {
+    // 点击按钮 新增
+    handleInsert () {
+      this.popSettings.new.copyData = null
+      this.popSettings.new.visible = true
+    },
+    // 点击按钮 复制新增
+    handleCopyInsert () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      // 传递复制数据给新增弹窗
+      this.popSettings.new.copyData = Object.assign({}, this.dataJson.currentJson)
+      this.popSettings.new.visible = true
+    },
+    // 点击按钮 更新
+    handleUpdate () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.popSettings.edit.data = Object.assign({}, this.dataJson.currentJson)
+      this.popSettings.edit.visible = true
+    },
+    // 查看
+    handleView () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.popSettings.view.data = Object.assign({}, this.dataJson.currentJson)
+      this.popSettings.view.visible = true
+    },
+    // 岗位设置角色
+    handleViewRoleMember (val, row) {
       this.popSettings.four.props.id = val
       this.popSettings.four.props.data = row
       this.popSettings.four.props.model = constants_para.MODEL_VIEW
       this.popSettings.four.visible = true
     },
-    handleEditWarehouseMember (val, row) {
+    handleEditRoleMember (val, row) {
       this.popSettings.four.props.id = val
       this.popSettings.four.props.data = row
       this.popSettings.four.props.model = constants_para.MODEL_EDIT
@@ -941,62 +947,6 @@ export default {
     },
     handleCloseDialogFourCancel () {
       this.popSettings.four.visible = false
-    },
-    // ------------------编辑弹出框 end--------------------
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 点击按钮 新增
-    // handleInsert () {
-    //   // 新增
-    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
-    //   this.popSettings.one.visible = true
-    // },
-    // 注释：不可在页面中新增，需要在组织机构管理页面中来新增
-    // 点击按钮 复制新增
-    // handleCopyInsert () {
-    //   this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-    //   // 复制新增
-    //   this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
-    //   this.popSettings.one.visible = true
-    // },
-    // 点击按钮 更新
-    handleUpdate () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.one.visible = true
-    },
-    // 查看
-    handleView () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
-      this.popSettings.one.visible = true
-    },
-    // 岗位设置角色
-    handleViewRoleMember (val, row) {
-      this.popSettings.five.props.id = val
-      this.popSettings.five.props.data = row
-      this.popSettings.five.props.model = constants_para.MODEL_VIEW
-      this.popSettings.five.visible = true
-    },
-    handleEditRoleMember (val, row) {
-      this.popSettings.five.props.id = val
-      this.popSettings.five.props.data = row
-      this.popSettings.five.props.model = constants_para.MODEL_EDIT
-      this.popSettings.five.visible = true
-    },
-    handleCloseDialogFiveOk (val) {
-      this.popSettings.five.visible = false
-    },
-    handleCloseDialogFiveCancel () {
-      this.popSettings.five.visible = false
     },
     handleRoleClick (val) {
       if (this.meDialogStatus) {

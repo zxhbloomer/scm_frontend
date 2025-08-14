@@ -101,31 +101,6 @@
         </template>
       </el-table-column>
       <el-table-column
-        :auto-fit="true"
-        min-width="130"
-        prop=""
-        label="岗位设置仓库"
-      >
-        <template v-slot="scope">
-          <el-link
-            type="primary"
-            @click="handleEditWarehouseMember(scope.row.id, scope.row)"
-          >
-            添加仓库
-          </el-link>
-          <span>
-            (
-            <el-link
-              type="primary"
-              @click="handleViewWarehouseMember(scope.row.id, scope.row)"
-            >
-              {{ scope.row.warehouse_count }}
-            </el-link>
-            )
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column
         show-overflow-tooltip
         sortable="custom"
         min-width="230"
@@ -237,15 +212,6 @@
       @closeMeOk="handleCloseDialogTwoOk"
       @closeMeCancel="handleCloseDialogTwoOk"
     />
-    <set-warehouse-dialog
-      v-if="popSettings.four.visible"
-      :id="popSettings.four.props.id"
-      :data="popSettings.four.props.data"
-      :visible="popSettings.four.visible"
-      :model="popSettings.four.props.model"
-      @closeMeOk="handleCloseDialogFourOk"
-      @closeMeCancel="handleCloseDialogFourCancel"
-    />
   </div>
 </template>
 
@@ -269,15 +235,14 @@
 import { EventBus } from '@/common/eventbus/eventbus'
 // import { getPositionListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
-import setPositionDialog from '@/views/20_master/position/dialog/setPosistion'
+import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/index.vue'
 import constants_para from '@/common/constants/constants_para'
-import editDialog from '@/views/20_master/position/dialog/edit'
+import editDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
 import deepCopy from 'deep-copy'
-import setWarehouseDialog from '@/views/20_master/position/dialog/setWarehouse'
 import { getPositionListApi } from '@/api/20_master/org/org'
 
 export default {
-  components: { Pagination, setPositionDialog, editDialog, setWarehouseDialog },
+  components: { Pagination, setPositionDialog, editDialog },
   directives: {},
   mixins: [],
   props: {
@@ -334,16 +299,6 @@ export default {
         two: {
           visible: false,
           props: {
-            id: undefined,
-            data: {},
-            model: ''
-          }
-        },
-        // 设置数据页面:仓库
-        four: {
-          visible: false,
-          props: {
-            serialData: undefined,
             id: undefined,
             data: {},
             model: ''
@@ -589,26 +544,8 @@ export default {
     },
     handleCloseDialogTwoCancel () {
       this.popSettings.two.visible = false
-    },
-    // ------------------岗位设置仓库弹出框 start--------------------
-    handleViewWarehouseMember (val, row) {
-      this.popSettings.four.props.id = val
-      this.popSettings.four.props.data = row
-      this.popSettings.four.props.model = constants_para.MODEL_VIEW
-      this.popSettings.four.visible = true
-    },
-    handleEditWarehouseMember (val, row) {
-      this.popSettings.four.props.id = val
-      this.popSettings.four.props.data = row
-      this.popSettings.four.props.model = constants_para.MODEL_EDIT
-      this.popSettings.four.visible = true
-    },
-    handleCloseDialogFourOk (val) {
-      this.popSettings.four.visible = false
-    },
-    handleCloseDialogFourCancel () {
-      this.popSettings.four.visible = false
     }
+    // ------------------岗位设置仓库弹出框 start--------------------
     // ------------------编辑弹出框 end--------------------
   }
 }
