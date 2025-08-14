@@ -31,6 +31,20 @@ export default {
     canvasBottomReserve: {
       type: Number,
       default: 10 // 默认0，精确计算最大高度
+    },
+    // 弹窗模式配置（扩展功能，向后兼容）
+    canvasDialogMode: {
+      type: Boolean,
+      default: null // null表示自动检测，true强制弹窗模式，false强制全屏模式
+    },
+    canvasDialogSelector: {
+      type: String,
+      default: '.el-dialog__body' // 弹窗内容区选择器
+    },
+    canvasDialogHeightRatio: {
+      type: Number,
+      default: 0.8, // 弹窗没有设置高度时，使用视口高度的比例（0.8 = 80%）
+      validator: (value) => value > 0 && value <= 1 // 限制在0-1之间
     }
   },
 
@@ -46,6 +60,8 @@ export default {
       canvasCalculatedHeight: null, // Canvas计算的表格高度
       internalHeight: null, // Element UI内部设置的高度（避免setter警告）
       canvasHeightConfig: null, // Canvas高度计算配置参数
+      canvasDialogContext: null, // 弹窗上下文信息
+      canvasResizeObserver: null, // ResizeObserver实例
 
       // 智能复制系统相关状态
       copyMenuVisible: false, // 复制菜单是否显示
@@ -105,19 +121,22 @@ export default {
     this.setColumnsSize($table, page_code, table_type)
 
     // Canvas自动高度计算（使用props）
+    // 智能支持全屏和弹窗两种场景，自动检测并适配
     if (this.canvasAutoHeight) {
       this.canvasAutoHeightEnabled = true
 
-      // 获取底部预留空间（使用props，默认为0）
+      // 获取底部预留空间（使用props，弹窗场景默认增加10px）
       const bottomReserve = this.canvasBottomReserve
 
       // 保存配置供resize时使用
       this.canvasHeightConfig = { bottomReserve }
 
       // 使用Element UI风格的DOM检测机制
+      // 内部会自动检测是否在弹窗内并切换计算方式
       this.initCanvasHeight(bottomReserve)
 
-      // 添加窗口resize事件监听，实现动态高度调整
+      // 添加resize事件监听，实现动态高度调整
+      // 弹窗场景使用ResizeObserver，全屏场景使用window resize
       this.setupWindowResizeListener()
     }
 
@@ -187,17 +206,6 @@ export default {
       return this.$attrs.height || this.internalHeight || null
     }
 
-    // 覆盖Element UI Table的height计算属性（带setter避免警告）
-    // height: {
-    //   get () {
-    //     return this.computedHeight
-    //   },
-    //   set (val) {
-    //     // 存储Element UI内部设置的高度值
-    //     // 但优先使用Canvas计算的高度
-    //     this.internalHeight = val
-    //   }
-    // }
   },
   watch: {
     values: {
@@ -233,36 +241,6 @@ export default {
     }
   },
   methods: {
-    // tableColumnsConfig () {
-    //   const { componentInstance: $table } = this.$vnode
-    //   /**
-    //  * 关于列的排序：显示、隐藏、顺序
-    //  * 在页面上el-table，增加属性：columns_index_key="columns_index_key"
-    //  * 在这里判断属性：$table.$attrs.columns_index_key="columns_index_key"
-    //  * $table.columns.splice(2 - 1, 0, $table.columns.splice(2, 1)[0]);
-    //  *
-    //  * $table.store.states.originColumns.splice(2 - 1, 0, $table.store.states.originColumns.splice(2, 1)[0]);
-    //  */
-    //   if ($table.$attrs.columns_index_key === 'true') {
-    //     /**
-    //    * 隐藏列，只能删除列的数组了
-    //    * 先循环删除不需要显示的列
-    //    * 再排序
-    //    */
-
-    //     // 具体明细数据
-    //     var _colums = deepCopy($table.columns)
-    //     _colums.splice(1, 1)
-    //     $table.columns.splice(0, $table.columns.length)
-    //     $table.columns.splice(0, 0, ..._colums)
-
-    //     // 头部
-    //     var originColumns = deepCopy($table.store.states.originColumns)
-    //     originColumns.splice(1, 1)
-    //     $table.store.states.originColumns.splice(0, $table.store.states.originColumns.length)
-    //     $table.store.states.originColumns.splice(0, 0, ...originColumns)
-    //   }
-    // },
 
     autoResizeOrMergeCell () {
       // 表格自适应
@@ -321,7 +299,6 @@ export default {
 
     // 删除列宽度
     deleteColumnsSize (page_code) {
-      // this.showLoading('正在重置...')
       // 获取数据
       deleteColumnsSizeApi({
         page_code: page_code
@@ -333,7 +310,6 @@ export default {
           $table.doLayout()
           // 需要触发resize事件
           this.$parent.$forceUpdate()
-          // this.closeLoading()
         })
       })
     },
@@ -361,7 +337,6 @@ export default {
         min_width: column.minWidth,
         real_width: column.realWidth
       }).then(response => {
-      }).finally(() => {
       })
     },
     // 调整列宽方法
@@ -370,37 +345,12 @@ export default {
         // 获取数据
         getColumnsSizeApi({ page_code: page_code, type: table_type }).then(response => {
           for (const item of response.data) {
-            // for (const column of table_object.columns) {
-            //   if (item.column_id === column.id) {
-            //     column.width = item.real_width
-            //   }
-            // }
             table_object.columns[item.column_index].width = item.real_width
             table_object.columns[item.column_index].realWidth = item.real_width
           }
-        }).finally(() => {
-          // table_object.doLayout()
         })
       }
-    }, // // 设置列宽
-    // setColgroupWidth () {
-    //   const cols = this.$el.querySelectorAll('colgroup > col')
-    //   if (!cols.length) return
-    //   // const flattenColumns = deepCopy(_colums)
-    //   const flattenColumns = this.layout.getFlattenColumns()
-    //   const columnsMap = {}
-    //   flattenColumns.forEach((column) => {
-    //     columnsMap[column.id] = column
-    //   })
-    //   for (let i = 0, j = cols.length; i < j; i++) {
-    //     const col = cols[i]
-    //     const name = col.getAttribute('name')
-    //     const column = columnsMap[name]
-    //     if (column) {
-    //       col.setAttribute('width', column.realWidth || column.width)
-    //     }
-    //   }
-    // }
+    },
     /**
      * 获取并应用表格列配置 - 使用Element UI原生API优化版本
      *
@@ -457,9 +407,8 @@ export default {
             this.configLoading = false // 错误时也要更新状态
             this.$el.style.opacity = '1' // 错误时也要显示表格
           }
-        }).catch(error => {
+        }).catch(_error => {
           // 处理配置加载错误，确保表格仍然可以正常显示
-          console.warn('表格配置加载失败:', error)
           this.configLoading = false // 错误时也要更新状态
           this.$el.style.opacity = '1' // 错误时也要显示表格
         })
@@ -661,7 +610,6 @@ export default {
     handleGetColumnConfig (data) {
       const { componentInstance: $table } = this.$vnode
       if (!$table) {
-        console.warn('ExTable: 无法获取表格实例')
         return
       }
 
@@ -875,8 +823,151 @@ export default {
     },
 
     /**
-     * Canvas精确高度计算（Element UI优化版）
+     * 智能检测当前表格是否在弹窗内（新增方法）
+     * @returns {Object|null} 返回弹窗上下文信息或null
+     */
+    detectDialogContext () {
+      try {
+        const tableElement = this.$el
+        if (!tableElement) return null
+
+        // 如果强制指定了模式
+        if (this.canvasDialogMode === false) {
+          return null // 强制全屏模式
+        }
+
+        // 检测多种弹窗类型
+        const dialogSelectors = [
+          '.el-dialog__wrapper', // Element UI Dialog
+          '.el-drawer__wrapper', // Element UI Drawer
+          '.modal-content', // Bootstrap Modal
+          '.ant-modal-content', // Ant Design Modal
+          '[role="dialog"]' // 通用 ARIA dialog
+        ]
+
+        for (const selector of dialogSelectors) {
+          const dialogWrapper = tableElement.closest(selector)
+
+          if (dialogWrapper) {
+            // 找到弹窗内容区
+            const contentSelectors = [
+              this.canvasDialogSelector || '.el-dialog__body',
+              '.el-drawer__body',
+              '.modal-body',
+              '.ant-modal-body'
+            ]
+
+            for (const contentSelector of contentSelectors) {
+              const dialogBody = dialogWrapper.querySelector(contentSelector)
+
+              if (dialogBody && dialogBody.contains(tableElement)) {
+                return {
+                  wrapper: dialogWrapper,
+                  body: dialogBody,
+                  type: selector.replace(/[.\[\]]/g, '')
+                }
+              }
+            }
+
+            // 如果找到wrapper但没找到body，使用wrapper作为容器
+            if (dialogWrapper.contains(tableElement)) {
+              return {
+                wrapper: dialogWrapper,
+                body: dialogWrapper,
+                type: selector.replace(/[.\[\]]/g, '')
+              }
+            }
+          }
+        }
+        return null
+      } catch (error) {
+        return null
+      }
+    },
+
+    /**
+     * 计算弹窗内表格高度（新增方法）
+     * @param {Object} dialogContext - 弹窗上下文信息
+     * @param {number} bottomReserve - 底部预留空间
+     * @returns {number} 计算的高度
+     */
+    calculateDialogTableHeight (dialogContext, bottomReserve = 20) {
+      try {
+        const { body: dialogBody } = dialogContext
+        const tableElement = this.$el
+
+        // 临时重置高度以获取真实位置（借鉴现有逻辑）
+        const originalHeight = tableElement.style.height
+        tableElement.style.height = 'auto'
+
+        // 获取弹窗内容区信息
+        const dialogRect = dialogBody.getBoundingClientRect()
+        const dialogStyle = window.getComputedStyle(dialogBody)
+        const dialogPaddingTop = parseInt(dialogStyle.paddingTop) || 0
+        const dialogPaddingBottom = parseInt(dialogStyle.paddingBottom) || 0
+
+        // 计算弹窗内容区实际可用高度
+        let dialogContentHeight
+
+        // 弹窗高度优先使用视口比例，而不是固定高度
+        // 这样可以让弹窗自动撑开，表格获得更多空间
+        const viewportHeight = window.innerHeight
+        const dialogHeaderFooterSpace = 120 // 弹窗头部+底部预估空间
+        dialogContentHeight = (viewportHeight * this.canvasDialogHeightRatio) - dialogHeaderFooterSpace - dialogPaddingTop - dialogPaddingBottom
+
+        // 如果计算出的高度太小，fallback到固定高度
+        if (dialogContentHeight < 300 && dialogStyle.height && dialogStyle.height !== 'auto') {
+          const fixedHeight = parseInt(dialogStyle.height) - dialogPaddingTop - dialogPaddingBottom
+          if (fixedHeight > dialogContentHeight) {
+            dialogContentHeight = fixedHeight
+          }
+        }
+
+        // 获取表格相对于弹窗内容区的位置
+        const tableRect = tableElement.getBoundingClientRect()
+        const tableTopInDialog = tableRect.top - dialogRect.top - dialogPaddingTop
+
+        // 恢复原始高度
+        tableElement.style.height = originalHeight
+
+        // 计算表格后面兄弟元素占用的空间（使用现有逻辑）
+        let siblingSpace = 0
+
+        // 查找分页组件（保持原有的自动检测逻辑）
+        let nextElement = tableElement.nextElementSibling
+        while (nextElement && dialogBody.contains(nextElement)) {
+          if (nextElement.classList.contains('el-pagination') ||
+              nextElement.querySelector('.el-pagination')) {
+            // 使用offsetHeight获取完整高度
+            siblingSpace = nextElement.offsetHeight
+            const style = window.getComputedStyle(nextElement)
+            const marginTop = parseInt(style.marginTop) || 0
+            const marginBottom = parseInt(style.marginBottom) || 0
+            siblingSpace += marginTop + marginBottom
+            break
+          }
+          nextElement = nextElement.nextElementSibling
+        }
+
+        // 计算最终可用高度
+        const availableHeight = dialogContentHeight - tableTopInDialog - siblingSpace - bottomReserve
+
+        // 设置合理的最小和最大高度
+        const minHeight = 200 // 最小高度
+        const maxHeight = window.innerHeight * 0.7 // 不超过视口的70%
+
+        const finalHeight = Math.min(Math.max(availableHeight, minHeight), maxHeight)
+
+        return finalHeight
+      } catch (error) {
+        return 300 // 错误时的默认高度
+      }
+    },
+
+    /**
+     * Canvas精确高度计算（Element UI优化版 + 智能弹窗支持）
      * 借鉴Element UI源码，使用clientHeight和offsetHeight简化计算
+     * 自动检测并适配弹窗场景，向后兼容
      * @param {number} bottomReserve - 额外的底部预留空间（默认为0）
      * @returns {number} 计算得出的表格最大可用高度
      */
@@ -887,6 +978,14 @@ export default {
           return 400 // 最小默认值
         }
 
+        // 智能检测是否在弹窗内（新增功能）
+        const dialogContext = this.detectDialogContext()
+        if (dialogContext) {
+          // 弹窗场景：使用专门的弹窗高度计算
+          return this.calculateDialogTableHeight(dialogContext, bottomReserve)
+        }
+
+        // 全屏场景：使用原有逻辑（保持不变）
         // 关键修复：临时重置高度为auto，获取真实的表格位置
         // 避免已设置的高度影响位置计算
         const originalHeight = tableElement.style.height
@@ -1040,22 +1139,61 @@ export default {
       if (calculatedHeight > 0) {
         // 重要改进：将高度存储到data中，而不是直接设置DOM样式
         this.canvasCalculatedHeight = calculatedHeight
+
+        // 关键修复：立即应用计算出的高度到表格
+        this.updateTableHeight(calculatedHeight)
       }
     },
 
     /**
-     * 设置窗口resize事件监听
-     * 实现窗口大小变化时的动态高度调整
+     * 设置窗口resize事件监听（增强版：支持弹窗场景）
+     * 实现窗口/弹窗大小变化时的动态高度调整
      */
     setupWindowResizeListener () {
       try {
-        // 绑定this上下文的resize处理函数
-        this.boundResizeHandler = this.handleWindowResize.bind(this)
+        // 检测是否在弹窗内
+        const dialogContext = this.detectDialogContext()
 
-        // 添加resize事件监听
-        window.addEventListener('resize', this.boundResizeHandler)
+        if (dialogContext && window.ResizeObserver) {
+          // 弹窗场景：使用ResizeObserver监听弹窗容器
+          this.canvasResizeObserver = new ResizeObserver(() => {
+            // 防抖处理
+            if (this.resizeTimer) {
+              clearTimeout(this.resizeTimer)
+            }
+            this.resizeTimer = setTimeout(() => {
+              if (this.canvasAutoHeightEnabled) {
+                this.updateCanvasTableHeight()
+              }
+            }, 300)
+          })
+
+          // 监听弹窗内容区
+          this.canvasResizeObserver.observe(dialogContext.body)
+
+          // 如果弹窗可能会改变大小，也监听wrapper
+          if (dialogContext.wrapper !== dialogContext.body) {
+            this.canvasResizeObserver.observe(dialogContext.wrapper)
+          }
+
+          // 保存弹窗上下文以便后续使用
+          this.canvasDialogContext = dialogContext
+        } else {
+          // 全屏场景：使用原有的window resize监听
+          // 绑定this上下文的resize处理函数
+          this.boundResizeHandler = this.handleWindowResize.bind(this)
+
+          // 添加resize事件监听
+          window.addEventListener('resize', this.boundResizeHandler)
+        }
       } catch (error) {
-        // 静默处理窗口监听器设置错误
+        // 静默处理监听器设置错误，降级到基础window resize
+        try {
+          this.boundResizeHandler = this.handleWindowResize.bind(this)
+          window.addEventListener('resize', this.boundResizeHandler)
+        } catch (e) {
+          // 完全静默处理
+        }
       }
     },
 
@@ -1109,6 +1247,9 @@ export default {
         if (newHeight > 0 && newHeight !== oldHeight) {
           // 重要改进：更新data中的高度，而不是直接操作DOM
           this.canvasCalculatedHeight = newHeight
+
+          // 关键修复：立即应用新计算出的高度到表格
+          this.updateTableHeight(newHeight)
         }
       } catch (error) {
         // 静默处理表格高度更新错误
@@ -1948,7 +2089,6 @@ export default {
       // 获取表格实例
       const { componentInstance: $table } = this.$vnode
       if (!$table || !$table.$refs || !$table.$refs.hiddenColumns) {
-        console.warn('ExTable: 无法获取表格实例或hiddenColumns')
         return columns
       }
 
@@ -2029,20 +2169,31 @@ export default {
     },
 
     /**
-     * 清理resize事件监听
+     * 清理resize事件监听（增强版：支持ResizeObserver）
      * 组件销毁时清理事件监听器
      */
     cleanupWindowResizeListener () {
       try {
+        // 清理window resize监听
         if (this.boundResizeHandler) {
           window.removeEventListener('resize', this.boundResizeHandler)
           this.boundResizeHandler = null
         }
 
+        // 清理ResizeObserver（弹窗场景）
+        if (this.canvasResizeObserver) {
+          this.canvasResizeObserver.disconnect()
+          this.canvasResizeObserver = null
+        }
+
+        // 清理定时器
         if (this.resizeTimer) {
           clearTimeout(this.resizeTimer)
           this.resizeTimer = null
         }
+
+        // 清理弹窗上下文
+        this.canvasDialogContext = null
       } catch (error) {
         // 静默处理resize事件清理错误
       }
@@ -2242,8 +2393,7 @@ export default {
             } else {
               this.$message.success(`已复制${selectionInfo.count}个${selectionInfo.type} (${formatName})`)
             }
-          }).catch(error => {
-            console.warn('复制失败:', error)
+          }).catch(_error => {
             this.$message.error('复制失败，请重试')
           })
         } else {
