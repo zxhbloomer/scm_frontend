@@ -150,7 +150,7 @@
         </el-col>
       </el-row>
       <el-form-item
-        label="说明："
+        label="备注："
         prop="descr"
       >
         <el-input
@@ -195,13 +195,13 @@
     >
       <el-divider />
       <el-button
-        @click="handleDialogCancel"
-      >取消</el-button>
-      <el-button
         type="primary"
         :loading="settings.loading"
         @click="handleDialogSubmit"
       >确定</el-button>
+      <el-button
+        @click="handleDialogCancel"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>

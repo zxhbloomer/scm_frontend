@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div>
     <FloatMenu />
     <el-form
       ref="minusForm"

@@ -86,6 +86,18 @@
               class="el-icon--right"
             />
             {{ data.simple_name }}
+            <!-- 集团类型显示子节点数量 -->
+            <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="color: #E6A23C; font-size: 12px;">
+              ({{ data.sub_count || 0 }})
+            </span>
+            <!-- 企业类型显示子节点数量 -->
+            <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" style="color: #409EFF; font-size: 12px;">
+              ({{ data.sub_count || 0 }})
+            </span>
+            <!-- 部门类型显示子节点数量 -->
+            <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="color: #67C23A; font-size: 12px;">
+              ({{ data.sub_count || 0 }})
+            </span>
             <el-link
               v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
               type="danger"
@@ -100,28 +112,14 @@
             </el-link>
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
-          <span class="org_png">
-            <em
-              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
-              class="tenant"
-            >租户</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP"
-              class="group"
-            >集团</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY"
-              class="company"
-            >企业</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
-              class="dept"
-            >部门</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION"
-              class="position"
-            >岗位</em>
-          </span>
+          <el-tag
+            :type="getOrgTagType(data.type)"
+            size="mini"
+            effect="dark"
+            style="margin-left: 8px;"
+          >
+            {{ getOrgTagText(data.type) }}
+          </el-tag>
         </span>
       </el-tree>
     </div>
@@ -292,8 +290,9 @@
 
 <script>
 import { getTreeListApi } from '@/api/20_master/permission/org/org'
+import { getSubCountApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 import perfectOverLay from '@/components/99_util/overlay'
 
 export default {
@@ -444,6 +443,8 @@ export default {
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.treeData = response.data
+        // 为集团类型节点异步加载子节点数量
+        this.loadSubCount(this.dataJson.treeData)
         this.getListAfterProcess()
         this.settings.loading = false
         this.$nextTick(() => {
@@ -501,6 +502,64 @@ export default {
         type: 'error'
       }).then(() => {
 
+      })
+    },
+    // 获取组织类型标签颜色
+    getOrgTagType (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return 'warning' // 橙色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '' // 蓝色（默认）
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return 'success' // 绿色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return 'info' // 灰色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+          return 'primary' // 蓝色
+        default:
+          return 'info'
+      }
+    },
+    // 获取组织类型标签文本
+    getOrgTagText (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return '集团'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '企业'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return '部门'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return '岗位'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+          return '租户'
+        default:
+          return ''
+      }
+    },
+    // 为集团、企业、部门类型节点异步加载子节点数量
+    loadSubCount (treeNodes) {
+      if (!treeNodes || !Array.isArray(treeNodes)) return
+
+      treeNodes.forEach(node => {
+        // 如果是集团、企业或部门类型，异步获取子节点数量
+        if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ||
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY ||
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
+          getSubCountApi(node.id).then(response => {
+            // 使用this.$set确保响应式更新
+            this.$set(node, 'sub_count', response.data)
+          }).catch(error => {
+            console.error('获取子节点数量失败:', error)
+            this.$set(node, 'sub_count', 0)
+          })
+        }
+
+        // 递归处理子节点
+        if (node.children && node.children.length > 0) {
+          this.loadSubCount(node.children)
+        }
       })
     }
   }

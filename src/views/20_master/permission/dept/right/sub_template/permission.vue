@@ -316,7 +316,7 @@
 </style>
 
 <script>
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 import elDragDialog from '@/directive/el-drag-dialog'
 import { getListApi, deleteApi, enableApi } from '@/api/20_master/permission/dept/permission'
 // import { setSystemMenuData2PermissionDataApi } from '@/api/20_master/permission/operation/operation'

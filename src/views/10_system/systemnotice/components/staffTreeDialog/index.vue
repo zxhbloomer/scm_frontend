@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 import LeftTree from '@/views/10_system/systemnotice/components/staffTreeDialog/components/leftTree.vue'
 import RightStaff from '@/views/10_system/systemnotice/components/staffTreeDialog/components/rightStaff.vue'
 import FooterSelected from '@/views/10_system/systemnotice/components/staffTreeDialog/components/footerSelected.vue'

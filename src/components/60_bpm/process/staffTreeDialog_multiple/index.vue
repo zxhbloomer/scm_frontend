@@ -61,7 +61,7 @@
 </template>
 
 <script>
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 import elDragDialog from '@/directive/el-drag-dialog'
 import LeftTree from '@/components/60_bpm/process/staffTreeDialog/left/leftTree.vue'
 import RightUserStaff from '@/components/60_bpm/process/staffTreeDialog/right/rightUserStaff.vue'

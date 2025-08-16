@@ -333,7 +333,7 @@ import editDialog from '@/views/20_master/relation/left/dialog/edit'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js'
 // import Pagination from '@/components/Pagination'
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 import { EventBus } from '@/common/eventbus/eventbus'
 // import { MessageBox } from 'element-ui'
 // import deepCopy from 'deep-copy'

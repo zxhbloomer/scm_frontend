@@ -6,7 +6,7 @@
     v-loading="settings.loading"
     element-loading-text="拼命加载中，请稍后..."
     element-loading-background="rgba(255, 255, 255, 0.7)"
-    title="新增"
+    title="岗位新增"
     :visible="visible"
     :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
     :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
@@ -38,12 +38,11 @@
             prop="code"
           >
             <el-input
-              ref="refFocusOne"
               v-model.trim="dataJson.tempJson.code"
               clearable
               show-word-limit
               :maxlength="dataJson.inputSettings.maxLength.code"
-              placeholder="请输入"
+              placeholder="请输入（可选）"
             />
           </el-form-item>
         </el-col>
@@ -53,6 +52,7 @@
             prop="name"
           >
             <el-input
+              ref="refFocusOne"
               v-model.trim="dataJson.tempJson.name"
               clearable
               show-word-limit
@@ -81,7 +81,7 @@
       </el-row>
 
       <el-form-item
-        label="说明："
+        label="备注："
         prop="descr"
       >
         <el-input
@@ -99,35 +99,22 @@
       class="dialog-footer"
     >
       <el-divider />
-      <div class="floatLeft">
-        <el-button
-          type="danger"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-          @click="doReset()"
-        >重置</el-button>
-      </div>
-      <el-button
-        plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
       <el-button
         plain
         type="primary"
         :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert"
         @click="doInsert()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>
 
 <style scoped>
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
-}
 .el-form-item .el-select {
   width: 100%;
 }
@@ -174,17 +161,19 @@ export default {
           showInsert: true
         },
         btnDisabledStatus: {
-          disabledReset: false,
           disabledInsert: false
         },
         rules: {
           code: [
-            { required: true, message: '请输入岗位编号', trigger: 'blur' },
             { max: 20, message: '岗位编号不能超过20个字符', trigger: 'blur' }
           ],
           name: [
             { required: true, message: '请输入岗位名称', trigger: 'blur' },
             { max: 100, message: '岗位名称不能超过100个字符', trigger: 'blur' }
+          ],
+          simple_name: [
+            { required: true, message: '请输入岗位简称', trigger: 'blur' },
+            { max: 100, message: '岗位简称不能超过100个字符', trigger: 'blur' }
           ]
         }
       }
@@ -249,10 +238,6 @@ export default {
           })
         }
       })
-    },
-    doReset () {
-      this.dataJson.tempJson = deepcopy(this.$options.data.call(this).dataJson.tempJson)
-      this.$refs.dataSubmitForm.clearValidate()
     },
     handleCancel () {
       this.$emit('closeMeCancel')

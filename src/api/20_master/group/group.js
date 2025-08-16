@@ -13,6 +13,18 @@ export function getListApi (query) {
 }
 
 /**
+ * 根据ID获取单个集团信息
+ * @param {*} data
+ */
+export function getByIdApi (data) {
+  return request({
+    url: '/api/v1/org/group/id',
+    method: 'post',
+    data
+  })
+}
+
+/**
  * 更新api
  * @param {*} data
  */

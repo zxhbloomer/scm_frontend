@@ -203,3 +203,16 @@ export function getUserDataByIdApi (query) {
     data: query
   })
 }
+
+/**
+ * 获取组织子节点数量
+ * @param {*} orgId 组织ID
+ */
+export function getSubCountApi (orgId) {
+  return request({
+    url: '/api/v1/org/getsubcount',
+    method: 'post',
+    data: { org_id: orgId }
+  })
+}
+

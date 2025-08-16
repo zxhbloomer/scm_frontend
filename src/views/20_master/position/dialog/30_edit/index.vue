@@ -6,7 +6,7 @@
     v-loading="settings.loading"
     element-loading-text="拼命加载中，请稍后..."
     element-loading-background="rgba(255, 255, 255, 0.7)"
-    title="编辑"
+    title="岗位修改"
     :visible="visible"
     :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
     :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
@@ -15,6 +15,7 @@
     :modal-append-to-body="true"
     width="1000px"
     destroy-on-close
+    custom-class="edit-dialog-priority"
   >
     <el-form
       ref="dataSubmitForm"
@@ -82,7 +83,7 @@
       </el-row>
 
       <el-form-item
-        label="说明："
+        label="备注："
         prop="descr"
       >
         <el-input
@@ -134,15 +135,15 @@
       </div>
       <el-button
         plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
-      <el-button
-        plain
         type="primary"
         :disabled="settings.loading || settings.btnDisabledStatus.disabledUpdate"
         @click="doUpdate()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -156,6 +157,15 @@
 }
 .el-form-item .el-select {
   width: 100%;
+}
+</style>
+
+<style>
+.edit-dialog-priority {
+  z-index: 3000 !important;
+}
+.edit-dialog-priority .el-dialog {
+  z-index: 3000 !important;
 }
 </style>
 

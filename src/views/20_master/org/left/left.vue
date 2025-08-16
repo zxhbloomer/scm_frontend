@@ -136,31 +136,30 @@
             </span>
             <span v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               {{ data.simple_name }}
+              <!-- 集团类型显示子节点数量 -->
+              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="color: #E6A23C; font-size: 12px;">
+                ({{ data.sub_count || 0 }})
+              </span>
+              <!-- 企业类型显示子节点数量 -->
+              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" style="color: #409EFF; font-size: 12px;">
+                ({{ data.sub_count || 0 }})
+              </span>
+              <!-- 部门类型显示子节点数量 -->
+              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="color: #67C23A; font-size: 12px;">
+                ({{ data.sub_count || 0 }})
+              </span>
             </span>
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
-          <span class="org_png">
-            <!-- <em
-              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
-              class="tenant"
-            >租户</em> -->
-            <em
-              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP"
-              class="group"
-            >集团</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY"
-              class="company"
-            >企业</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
-              class="dept"
-            >部门</em>
-            <em
-              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION"
-              class="position"
-            >岗位</em>
-          </span>
+          <el-tag
+            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
+            :type="getOrgTagType(data.type)"
+            size="mini"
+            effect="dark"
+            style="margin-left: 8px;"
+          >
+            {{ getOrgTagText(data.type) }}
+          </el-tag>
         </span>
       </el-tree>
     </div>
@@ -218,34 +217,38 @@
       </div>
     </el-dialog>
 
+    <!-- 集团编辑弹窗 -->
     <group-dialog
       v-if="popSettingsData.searchDialogDataOne.visible"
       :visible="popSettingsData.searchDialogDataOne.visible"
-      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
+      :data="popSettingsData.searchDialogDataOne.data"
       @closeMeOk="handleGroupCloseOk"
       @closeMeCancel="handleGroupCloseCancel"
     />
 
+    <!-- 企业编辑弹窗 -->
     <company-dialog
       v-if="popSettingsData.searchDialogDataTwo.visible"
       :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
+      :data="popSettingsData.searchDialogDataTwo.data"
       @closeMeOk="handleCompanyCloseOk"
       @closeMeCancel="handleCompanyCloseCancel"
     />
 
+    <!-- 部门编辑弹窗 -->
     <dept-dialog
       v-if="popSettingsData.searchDialogDataThree.visible"
       :visible="popSettingsData.searchDialogDataThree.visible"
-      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
+      :data="popSettingsData.searchDialogDataThree.data"
       @closeMeOk="handleDeptCloseOk"
       @closeMeCancel="handleDeptCloseCancel"
     />
 
+    <!-- 岗位编辑弹窗 -->
     <position-dialog
       v-if="popSettingsData.searchDialogDataFour.visible"
       :visible="popSettingsData.searchDialogDataFour.visible"
-      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
+      :data="popSettingsData.searchDialogDataFour.data"
       @closeMeOk="handlePositionCloseOk"
       @closeMeCancel="handlePositionCloseCancel"
     />
@@ -434,16 +437,19 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, updateApi, deleteApi, dragsaveApi } from '@/api/20_master/org/org'
+import { getCorrectTypeByInsertStatusApi, getTreeListApi, deleteApi, dragsaveApi, getSubCountApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
-import groupDialog from '@/views/20_master/group/dialog/10_list/index.vue'
-import companyDialog from '@/views/20_master/company/dialog/10_list/index.vue'
-import deptDialog from '@/views/20_master/dept/dialog/10_list/index.vue'
-import positionDialog from '@/views/20_master/position/dialog/10_list/index.vue'
+import groupDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
+import companyDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
+import deptDialog from '@/views/20_master/dept/dialog/30_edit/index.vue'
+import positionDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
 import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
-import { getDataByIdApi } from '@/api/20_master/position/position'
-import '@/styles/org_png.scss'
+import { getDataByIdApi as getPositionByIdApi } from '@/api/20_master/position/position'
+import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
+import { getByIdApi as getCompanyByIdApi } from '@/api/20_master/company/company'
+import { getByIdApi as getDeptByIdApi } from '@/api/20_master/dept/dept'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 
 export default {
   // name: 'P00000171', // 页面id，和router中的name需要一致，作为缓存
@@ -500,33 +506,33 @@ export default {
         btnDisabledStatus: {
           disabledOK: false
         },
-        // 弹出的查询框参数设置
+        // 弹出的编辑框参数设置 - 集团
         searchDialogDataOne: {
           // 弹出框显示参数
           visible: false,
-          // 点击确定以后返回的值
-          selectedDataJson: {}
+          // 编辑数据
+          data: null
         },
-        // 弹出的查询框参数设置
+        // 弹出的编辑框参数设置 - 企业
         searchDialogDataTwo: {
           // 弹出框显示参数
           visible: false,
-          // 点击确定以后返回的值
-          selectedDataJson: {}
+          // 编辑数据
+          data: null
         },
-        // 弹出的查询框参数设置
+        // 弹出的编辑框参数设置 - 部门
         searchDialogDataThree: {
           // 弹出框显示参数
           visible: false,
-          // 点击确定以后返回的值
-          selectedDataJson: {}
+          // 编辑数据
+          data: null
         },
-        // 弹出的查询框参数设置
+        // 弹出的编辑框参数设置 - 岗位
         searchDialogDataFour: {
           // 弹出框显示参数
           visible: false,
-          // 点击确定以后返回的值
-          selectedDataJson: {}
+          // 编辑数据
+          data: null
         },
         // 弹出的查询框参数设置
         searchDialogDataFive: {
@@ -669,6 +675,8 @@ export default {
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.treeData = response.data
+        // 为集团类型节点异步加载子节点数量
+        this.loadSubCount(this.dataJson.treeData)
         this.getListAfterProcess()
         this.settings.loading = false
         this.$nextTick(() => {
@@ -723,23 +731,53 @@ export default {
     },
     // 修改当前结点按钮
     handleUpdate () {
-      // 修改
-      // this.popSettingsData.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      // this.popSettingsData.dialogFormVisible = true
+      // 根据类型获取完整数据后显示编辑弹窗
       switch (this.dataJson.currentJson.type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          this.popSettingsData.searchDialogDataOne.visible = true
+          // 获取集团完整数据
+          getGroupByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataOne.data = response.data
+            this.popSettingsData.searchDialogDataOne.visible = true
+          }).catch(error => {
+            this.$message.error('获取集团数据失败: ' + error.message)
+          })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          this.popSettingsData.searchDialogDataTwo.visible = true
+          // 获取企业完整数据
+          getCompanyByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataTwo.data = response.data
+            this.popSettingsData.searchDialogDataTwo.visible = true
+          }).catch(error => {
+            this.$message.error('获取企业数据失败: ' + error.message)
+          })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          this.popSettingsData.searchDialogDataThree.visible = true
+          // 获取部门完整数据
+          getDeptByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataThree.data = response.data
+            this.popSettingsData.searchDialogDataThree.visible = true
+          }).catch(error => {
+            this.$message.error('获取部门数据失败: ' + error.message)
+          })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          this.popSettingsData.searchDialogDataFour.visible = true
+          // 获取岗位完整数据
+          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataFour.data = response.data
+            this.popSettingsData.searchDialogDataFour.visible = true
+          }).catch(error => {
+            this.$message.error('获取岗位数据失败: ' + error.message)
+          })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+          // 员工类型保持原有逻辑
+          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataFive.id = response.data.id
+            this.popSettingsData.searchDialogDataFive.data = response.data
+            this.popSettingsData.searchDialogDataFive.visible = true
+          }).catch(error => {
+            this.$message.error('获取员工数据失败: ' + error.message)
+          })
           break
       }
     },
@@ -763,7 +801,7 @@ export default {
           this.popSettingsData.searchDialogDataFour.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          getDataByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
             this.popSettingsData.searchDialogDataFive.id = response.data.id
             this.popSettingsData.searchDialogDataFive.data = response.data
             this.popSettingsData.searchDialogDataFive.visible = true
@@ -817,66 +855,46 @@ export default {
       })
     },
     // --------------弹出查询框：开始--------------
-    // 集团：关闭对话框：确定
+    // 递归更新树节点数据的辅助函数
+    updateTreeNodeData (treeData, nodeId, updatedData) {
+      for (let i = 0; i < treeData.length; i++) {
+        if (treeData[i].id === nodeId) {
+          // 保持树结构相关属性，只更新业务数据
+          const originalChildren = treeData[i].children
+          Object.assign(treeData[i], updatedData)
+          if (originalChildren) {
+            treeData[i].children = originalChildren
+          }
+          return true
+        }
+        if (treeData[i].children && treeData[i].children.length > 0) {
+          if (this.updateTreeNodeData(treeData[i].children, nodeId, updatedData)) {
+            return true
+          }
+        }
+      }
+      return false
+    },
+    // 集团：关闭编辑弹窗：确定
     handleGroupCloseOk (val) {
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = val
       this.popSettingsData.searchDialogDataOne.visible = false
-      this.settings.loading = true
-      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
-        insertApi({
-          serial_id: this.popSettingsData.searchDialogDataOne.selectedDataJson.id,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
-          parent_id: this.dataJson.currentJson.id
-        }).then((_data) => {
-          this.$notify({
-            title: '新增处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '新增处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+      if (val.return_flag) {
+        this.$notify({
+          title: '集团修改成功',
+          message: val.data.message || '修改成功',
+          type: 'success',
+          duration: this.settings.duration
         })
+        // 直接更新树中当前节点的数据
+        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
+        // 更新当前选中节点数据
+        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        updateApi({
-          id: this.dataJson.currentJson.id,
-          serial_id: this.popSettingsData.searchDialogDataOne.selectedDataJson.id,
-          code: this.dataJson.currentJson.code,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
-          parent_id: this.dataJson.currentJson.parent_id,
-          dbversion: this.dataJson.currentJson.dbversion,
-          son_count: this.dataJson.currentJson.son_count
-        }).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+        this.$notify({
+          title: '集团修改失败',
+          message: val.error.message || '修改失败',
+          type: 'error',
+          duration: this.settings.duration
         })
       }
     },
@@ -884,66 +902,26 @@ export default {
     handleGroupCloseCancel () {
       this.popSettingsData.searchDialogDataOne.visible = false
     },
-    // 企业：关闭对话框：确定
+    // 企业：关闭编辑弹窗：确定
     handleCompanyCloseOk (val) {
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
       this.popSettingsData.searchDialogDataTwo.visible = false
-      this.settings.loading = true
-      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
-        insertApi({
-          serial_id: this.popSettingsData.searchDialogDataTwo.selectedDataJson.id,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
-          parent_id: this.dataJson.currentJson.id
-        }).then((_data) => {
-          this.$notify({
-            title: '新增处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '新增处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+      if (val.return_flag) {
+        this.$notify({
+          title: '企业修改成功',
+          message: val.data.message || '修改成功',
+          type: 'success',
+          duration: this.settings.duration
         })
+        // 直接更新树中当前节点的数据
+        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
+        // 更新当前选中节点数据
+        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        updateApi({
-          id: this.dataJson.currentJson.id,
-          serial_id: this.popSettingsData.searchDialogDataTwo.selectedDataJson.id,
-          code: this.dataJson.currentJson.code,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
-          parent_id: this.dataJson.currentJson.parent_id,
-          dbversion: this.dataJson.currentJson.dbversion,
-          son_count: this.dataJson.currentJson.son_count
-        }).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+        this.$notify({
+          title: '企业修改失败',
+          message: val.error.message || '修改失败',
+          type: 'error',
+          duration: this.settings.duration
         })
       }
     },
@@ -951,66 +929,26 @@ export default {
     handleCompanyCloseCancel () {
       this.popSettingsData.searchDialogDataTwo.visible = false
     },
-    // 部门：关闭对话框：确定
+    // 部门：关闭编辑弹窗：确定
     handleDeptCloseOk (val) {
-      this.popSettingsData.searchDialogDataThree.selectedDataJson = val
       this.popSettingsData.searchDialogDataThree.visible = false
-      this.settings.loading = true
-      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
-        insertApi({
-          serial_id: this.popSettingsData.searchDialogDataThree.selectedDataJson.id,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
-          parent_id: this.dataJson.currentJson.id
-        }).then((_data) => {
-          this.$notify({
-            title: '新增处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '新增处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+      if (val.return_flag) {
+        this.$notify({
+          title: '部门修改成功',
+          message: val.data.message || '修改成功',
+          type: 'success',
+          duration: this.settings.duration
         })
+        // 直接更新树中当前节点的数据
+        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
+        // 更新当前选中节点数据
+        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        updateApi({
-          id: this.dataJson.currentJson.id,
-          serial_id: this.popSettingsData.searchDialogDataThree.selectedDataJson.id,
-          code: this.dataJson.currentJson.code,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
-          parent_id: this.dataJson.currentJson.parent_id,
-          dbversion: this.dataJson.currentJson.dbversion,
-          son_count: this.dataJson.currentJson.son_count
-        }).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+        this.$notify({
+          title: '部门修改失败',
+          message: val.error.message || '修改失败',
+          type: 'error',
+          duration: this.settings.duration
         })
       }
     },
@@ -1018,66 +956,26 @@ export default {
     handleDeptCloseCancel () {
       this.popSettingsData.searchDialogDataThree.visible = false
     },
-    // 岗位：关闭对话框：确定
+    // 岗位：关闭编辑弹窗：确定
     handlePositionCloseOk (val) {
-      this.popSettingsData.searchDialogDataFour.selectedDataJson = val
       this.popSettingsData.searchDialogDataFour.visible = false
-      this.settings.loading = true
-      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
-        insertApi({
-          serial_id: this.popSettingsData.searchDialogDataFour.selectedDataJson.id,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
-          parent_id: this.dataJson.currentJson.id
-        }).then((_data) => {
-          this.$notify({
-            title: '新增处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '新增处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+      if (val.return_flag) {
+        this.$notify({
+          title: '岗位修改成功',
+          message: val.data.message || '修改成功',
+          type: 'success',
+          duration: this.settings.duration
         })
+        // 直接更新树中当前节点的数据
+        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
+        // 更新当前选中节点数据
+        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        updateApi({
-          id: this.dataJson.currentJson.id,
-          serial_id: this.popSettingsData.searchDialogDataFour.selectedDataJson.id,
-          code: this.dataJson.currentJson.code,
-          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
-          parent_id: this.dataJson.currentJson.parent_id,
-          dbversion: this.dataJson.currentJson.dbversion,
-          son_count: this.dataJson.currentJson.son_count
-        }).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 查询
-          this.getDataList()
-          this.popSettingsData.dialogFormVisible = false
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          // this.popSettingsData.dialogFormVisible = false
-        }).finally(() => {
-          this.settings.loading = false
+        this.$notify({
+          title: '岗位修改失败',
+          message: val.error.message || '修改失败',
+          type: 'error',
+          duration: this.settings.duration
         })
       }
     },
@@ -1255,6 +1153,60 @@ export default {
       } else {
         return false
       }
+    },
+    // 获取组织类型标签颜色
+    getOrgTagType (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return 'warning' // 橙色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '' // 蓝色（默认）
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return 'success' // 绿色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return 'info' // 灰色
+        default:
+          return 'info'
+      }
+    },
+    // 获取组织类型标签文本
+    getOrgTagText (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return '集团'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '企业'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return '部门'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return '岗位'
+        default:
+          return ''
+      }
+    },
+    // 为集团、企业、部门类型节点异步加载子节点数量
+    loadSubCount (treeNodes) {
+      if (!treeNodes || !Array.isArray(treeNodes)) return
+
+      treeNodes.forEach(node => {
+        // 如果是集团、企业或部门类型，异步获取子节点数量
+        if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ||
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY ||
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
+          getSubCountApi(node.id).then(response => {
+            // 使用this.$set确保响应式更新
+            this.$set(node, 'sub_count', response.data)
+          }).catch(error => {
+            console.error('获取子节点数量失败:', error)
+            this.$set(node, 'sub_count', 0)
+          })
+        }
+
+        // 递归处理子节点
+        if (node.children && node.children.length > 0) {
+          this.loadSubCount(node.children)
+        }
+      })
     }
   }
 }

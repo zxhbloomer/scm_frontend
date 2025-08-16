@@ -53,24 +53,15 @@
             {{ data.simple_name }}
           </span>
         </span>
-        <span class="org_png">
-          <em
-            v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP"
-            class="group"
-          >集团</em>
-          <em
-            v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY"
-            class="company"
-          >企业</em>
-          <em
-            v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
-            class="dept"
-          >部门</em>
-          <em
-            v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION"
-            class="position"
-          >岗位</em>
-        </span>
+        <el-tag
+          v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
+          :type="getOrgTagType(data.type)"
+          size="mini"
+          effect="dark"
+          style="margin-left: 8px;"
+        >
+          {{ getOrgTagText(data.type) }}
+        </el-tag>
       </span>
     </el-tree>
   </div>
@@ -144,6 +135,36 @@ export default {
         this.$nextTick(() => {
           this.$refs.treeObject.filter(this.dataJson.filterText)
         })
+      }
+    },
+    // 获取组织类型标签颜色
+    getOrgTagType (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return 'warning' // 橙色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '' // 蓝色（默认）
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return 'success' // 绿色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return 'info' // 灰色
+        default:
+          return 'info'
+      }
+    },
+    // 获取组织类型标签文本
+    getOrgTagText (type) {
+      switch (type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return '集团'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '企业'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return '部门'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return '岗位'
+        default:
+          return ''
       }
     }
   }

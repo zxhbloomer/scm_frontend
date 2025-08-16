@@ -352,7 +352,7 @@ import oneDialog from '@/views/20_master/relation/left/dialog/edit_group'
 import twoDialog from '@/views/20_master/relation/left/dialog/edit_group'
 import threeDialog from '@/views/20_master/relation/left/dialog/edit_group'
 import { isNotEmpty } from '@/utils/index.js'
-import '@/styles/org_png.scss'
+// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 // import { MessageBox } from 'element-ui'
 // import deepCopy from 'deep-copy'
 
