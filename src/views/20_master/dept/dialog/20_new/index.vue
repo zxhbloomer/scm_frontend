@@ -211,7 +211,7 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import { insertApi } from '@/api/20_master/dept/dept'
 import deepCopy from 'deep-copy'
-import staffDialog from '@/views/20_master/staff/dialog/dialog'
+import staffDialog from '@/views/20_master/staff/dialog/10_list/index'
 import InputSearch from '@/components/40_input/inputSearch'
 
 export default {

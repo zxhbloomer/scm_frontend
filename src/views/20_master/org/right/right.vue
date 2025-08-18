@@ -40,6 +40,21 @@
             type="danger"
           />
         </template>
+        <!-- 企业部门统计显示 -->
+        <div v-if="dataJson.companyDeptStats" class="company-dept-stats" style="padding: 10px 0; border-bottom: 1px solid #EBEEF5;">
+          <span style="color: #606266; font-size: 14px;">
+            （部门数：
+            <el-link
+              type="primary"
+              :underline="false"
+              style="font-weight: bold;"
+              @click="handleDeptManageClick"
+            >
+              {{ dataJson.companyDeptStats.deptCount }}
+            </el-link>
+            ）
+          </span>
+        </div>
         <company-template :height="height - 42" />
       </el-tab-pane>
       <el-tab-pane>
@@ -189,7 +204,9 @@ export default {
         // 当前表格中的索引，第几条
         rowIndex: 0,
         // 当前选中的行（checkbox）
-        multipleSelection: []
+        multipleSelection: [],
+        // 企业部门统计信息
+        companyDeptStats: null
       },
       // 页面设置json
       settings: {
@@ -361,6 +378,11 @@ export default {
     EventBus.$on(this.EMITS.EMIT_ORG_POSITION_UPDATED, _data => {
       this.getDataList(this.dataJson.leftTreeData)
     })
+    // 监听企业部门统计事件
+    EventBus.$on('company-dept-stats', _data => {
+      console.log('[DEBUG] 右侧组件接收到企业部门统计数据:', _data)
+      this.dataJson.companyDeptStats = _data
+    })
   },
   created () {
     this.popSettingsData.searchDialogDataOne.dialogVisible = true
@@ -526,6 +548,31 @@ export default {
     },
     handleTabsClick (tab, event) {
       // console.log(tab, event)
+    },
+    // 部门管理点击事件
+    handleDeptManageClick () {
+      console.log('[DEBUG] 点击部门数量链接，准备跳转到部门管理页面')
+      console.log('[DEBUG] 企业统计数据:', this.dataJson.companyDeptStats)
+
+      if (this.dataJson.companyDeptStats && this.dataJson.companyDeptStats.companyId) {
+        // 跳转到部门管理页面，传递企业ID作为查询条件
+        this.$router.push({
+          path: '/dept/dept',
+          query: {
+            company_id: this.dataJson.companyDeptStats.companyId,
+            company_name: this.dataJson.companyDeptStats.companyData ? this.dataJson.companyDeptStats.companyData.name : ''
+          }
+        })
+        console.log('[DEBUG] 跳转参数:', {
+          path: '/dept/dept',
+          query: {
+            company_id: this.dataJson.companyDeptStats.companyId,
+            company_name: this.dataJson.companyDeptStats.companyData ? this.dataJson.companyDeptStats.companyData.name : ''
+          }
+        })
+      } else {
+        this.$message.warning('企业信息缺失，无法跳转到部门管理页面')
+      }
     }
   }
 }

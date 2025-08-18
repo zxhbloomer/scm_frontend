@@ -6,7 +6,7 @@
     v-loading="settings.loading"
     element-loading-text="拼命加载中，请稍后..."
     element-loading-background="rgba(255, 255, 255, 0.7)"
-    :title="PARAMETERS.STATUS_TEXT_MAP[dialogStatus]"
+    :title="getDialogTitle()"
     :visible="visible"
     :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
     :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
@@ -164,19 +164,7 @@
       class="dialog-footer"
     >
       <el-divider />
-      <div class="floatLeft">
-        <el-button
-          v-show="!isViewModel"
-          type="danger"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-          @click="doReset()"
-        >重置</el-button>
-      </div>
-      <el-button
-        plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
+      <div class="floatLeft" />
       <el-button
         v-show="settings.btnShowStatus.showInsert"
         plain
@@ -198,6 +186,11 @@
         :disabled="settings.loading || settings.btnDisabledStatus.disabledCopyInsert "
         @click="doCopyInsert()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -283,7 +276,6 @@ export default {
         },
         // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
-          disabledReset: true,
           disabledInsert: true,
           disabledUpdate: true,
           disabledCopyInsert: true
@@ -334,6 +326,16 @@ export default {
     this.unWatch()
   },
   methods: {
+    // 获取弹窗标题
+    getDialogTitle () {
+      const titleMap = {
+        view: '查看',
+        update: '岗位角色修改',
+        insert: '岗位角色新增',
+        copyInsert: '复制新增'
+      }
+      return titleMap[this.dialogStatus] || '未知操作'
+    },
     // 初始化处理
     init () {
       this.initButtonShowStatus()
@@ -415,7 +417,6 @@ export default {
       this.unWatch()
       // 监听页面上面是否有修改，有修改按钮高亮
       this.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
-        this.settings.btnDisabledStatus.disabledReset = false
         this.settings.btnDisabledStatus.disabledInsert = false
         this.settings.btnDisabledStatus.disabledUpdate = false
         this.settings.btnDisabledStatus.disabledCopyInsert = false
@@ -438,47 +439,6 @@ export default {
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')
-    },
-    // 重置按钮
-    doReset () {
-      switch (this.settings.dialogStatus) {
-        case this.PARAMETERS.STATUS_UPDATE:
-          // 数据初始化
-          // this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-          this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-          // 设置控件焦点focus
-          this.$nextTick(() => {
-            this.$refs['refFocusOne'].focus()
-          })
-          break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          // 数据初始化
-          // this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-          this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-          this.dataJson.tempJson.code = ''
-          // 设置控件焦点focus
-          this.$nextTick(() => {
-            this.$refs['refFocusTwo'].focus()
-          })
-          break
-        default:
-          // 数据初始化
-          // this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-          this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-          // 设置控件焦点focus
-          this.$nextTick(() => {
-            this.$refs['refFocusOne'].focus()
-          })
-          break
-      }
-      // 初始化按钮
-      this.initButtonDisabledStatus()
-      // 初始化watch
-      this.setWatch()
-      // 去除validate信息
-      this.$nextTick(() => {
-        this.$refs['dataSubmitForm'].clearValidate()
-      })
     },
     // 插入逻辑
     doInsert () {

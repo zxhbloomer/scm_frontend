@@ -18,8 +18,8 @@ const STATUS_COPY_INSERT = 'copyInsert'
 /** 弹出框标题 */
 const STATUS_TEXT_MAP = {
   view: '查看',
-  update: '修改',
-  insert: '新增',
+  update: '页面修改',
+  insert: '页面新增',
   copyInsert: '复制新增'
 }
 /** 翻页条件 */

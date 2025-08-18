@@ -152,13 +152,10 @@
       @pagination="getDataList"
     />
 
-    <edit-dialog
+    <view-dialog
       v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
       :data="popSettings.one.props.data"
       :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
       @closeMeCancel="handleCloseDialogOneCancel"
     />
 
@@ -206,14 +203,14 @@ import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
-import editDialog from '@/views/20_master/staff/dialog/edit'
-import setPosition from '@/views/20_master/staff/dialog/setPosition'
+import viewDialog from '@/views/20_master/staff/dialog/40_view/index'
+import setPosition from '@/views/20_master/staff/dialog/50_position/index'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   name: constants_program.P_STAFF, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination, DeleteTypeNormal, editDialog, setPosition },
+  components: { Pagination, DeleteTypeNormal, viewDialog, setPosition },
   directives: { elDragDialog, permission },
   mixins: [resizeMixin],
   props: {
@@ -307,13 +304,11 @@ export default {
         }
       },
       popSettings: {
-        // 弹出编辑页面
+        // 弹出查看页面
         one: {
           visible: false,
           props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
+            data: {}
           }
         },
         two: {
@@ -376,6 +371,9 @@ export default {
       var _data = deepCopy(row)
       if (this.meDialogStatus) {
         this.$emit('rowDbClick', _data)
+      } else {
+        // 非选择模式下，双击查看员工详情
+        this.handleViewStaff(_data)
       }
     },
     handleSearch () {
@@ -432,98 +430,15 @@ export default {
     handleSelectionChange (val) {
       this.dataJson.multipleSelection = val
     },
-    // ------------------编辑弹出框 start--------------------
-    handleCloseDialogOneOk (val) {
-      switch (this.popSettings.one.props.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.doInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          this.doCopyInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
-      }
+    // ------------------查看弹出框 start--------------------
+    handleViewStaff (staffData) {
+      this.popSettings.one.props.data = deepCopy(staffData)
+      this.popSettings.one.visible = true
     },
     handleCloseDialogOneCancel () {
       this.popSettings.one.visible = false
     },
-    // 处理插入回调
-    doInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        this.$notify({
-          title: '新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-      } else {
-        this.$notify({
-          title: '新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
-    // 处理复制新增回调
-    doCopyInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '复制新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-      } else {
-        this.$notify({
-          title: '复制新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
-    // 处理更新回调
-    doUpdateModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '更新处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-      } else {
-        this.$notify({
-          title: '更新处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
-    // ------------------编辑弹出框 end--------------------
+    // ------------------查看弹出框 end--------------------
     handlePositionClick (val) {
       if (this.meDialogStatus) {
         return

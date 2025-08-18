@@ -41,14 +41,7 @@
       class="dialog-footer"
     >
       <el-divider />
-      <div class="floatLeft">
-        <el-button
-          v-show="!isViewModel"
-          type="danger"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-          @click="doReset()"
-        >重置</el-button>
-      </div>
+      <div class="floatLeft" />
       <el-button
         plain
         :disabled="settings.loading"
@@ -124,13 +117,10 @@ export default {
         },
         // 按钮状态：是否可用
         btnDisabledStatus: {
-          disabledReset: false,
           disabledInsert: false,
           disabledUpdate: false,
           disabledCopyInsert: false
         },
-        // 重置按钮点击后
-        btnResetStatus: false,
         // 以下为pop的内容：数据弹出框
         selection: [],
         dialogStatus: '',
@@ -169,17 +159,14 @@ export default {
         const listB = this.settings.transfer.old_position_roles
         // 如果新值，旧值为undefined 则return
         if (listA === undefined || listB === undefined) {
-          this.settings.btnDisabledStatus.disabledReset = true
           return
         }
         const result = listA.length === listB.length && listA.every(a => listB.some(b => a === b)) && listB.every(_b => listA.some(_a => _a === _b))
         if (result) {
           // 未改变值
-          this.settings.btnDisabledStatus.disabledReset = true
           this.settings.btnDisabledStatus.disabledInsert = true
         } else {
           // 有改变值
-          this.settings.btnDisabledStatus.disabledReset = false
           this.settings.btnDisabledStatus.disabledInsert = false
         }
       },
@@ -219,7 +206,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-      this.settings.btnDisabledStatus.disabledReset = true
     },
     // 查看角色岗位
     initView () {
@@ -246,7 +232,6 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
-      this.settings.btnDisabledStatus.disabledReset = true
     },
     // 穿梭框的过滤方法
     transferFilterMethod (query, item) {
@@ -254,11 +239,6 @@ export default {
     },
     handleCancel () {
       this.$emit('closeMeCancel')
-    },
-    // 重置按钮
-    doReset () {
-      this.settings.btnResetStatus = true
-      this.init()
     },
     // 插入逻辑：岗位角色维护，点击确定按钮
     doInsert () {

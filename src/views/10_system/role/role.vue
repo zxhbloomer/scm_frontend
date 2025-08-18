@@ -125,14 +125,6 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="type"
-        label="角色类型"
-      />
-      <el-table-column
-        show-overflow-tooltip
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
         prop="name"
         label="角色名称"
       />
@@ -183,7 +175,7 @@
         min-width="150"
         :sort-orders="settings.sortOrders"
         prop="descr"
-        label="说明"
+        label="备注"
       />
       <el-table-column
         min-width="65"
@@ -389,21 +381,6 @@
           </el-col>
           <el-col :span="12">
             <el-form-item
-              label="角色类型："
-              prop="type"
-            >
-              <el-input
-                v-model.trim="dataJson.tempJson.type"
-                clearable
-                show-word-limit
-                :maxlength="dataJson.inputSettings.maxLength.type"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item
               label="角色名称："
               prop="name"
             >
@@ -415,23 +392,9 @@
               />
             </el-form-item>
           </el-col>
-
-          <!-- <el-col :span="12">
-            <el-form-item
-              label="简称："
-              prop="simple_name"
-            >
-              <el-input
-                v-model.trim="dataJson.tempJson.simple_name"
-                clearable
-                show-word-limit
-                :maxlength="dataJson.inputSettings.maxLength.simple_name"
-              />
-            </el-form-item>
-          </el-col> -->
         </el-row>
         <el-form-item
-          label="说明："
+          label="备注："
           prop="descr"
         >
           <el-input
@@ -475,31 +438,31 @@
       >
         <el-divider />
         <el-button
-          plain
-          :disabled="settings.loading"
-          @click="popSettingsData.dialogFormVisible = false"
-        >取 消</el-button>
-        <el-button
           v-show="popSettingsData.btnStatus.doInsert"
           plain
           type="primary"
-          :disabled="settings.loading"
+          :disabled="settings.loading || popSettingsData.btnDisabledStatus.disabledInsert"
           @click="doInsert()"
         >确定</el-button>
         <el-button
           v-show="popSettingsData.btnStatus.doUpdate"
           plain
           type="primary"
-          :disabled="settings.loading"
+          :disabled="settings.loading || popSettingsData.btnDisabledStatus.disabledUpdate"
           @click="doUpdate()"
         >确定</el-button>
         <el-button
           v-show="popSettingsData.btnStatus.doCopyInsert"
           plain
           type="primary"
-          :disabled="settings.loading"
+          :disabled="settings.loading || popSettingsData.btnDisabledStatus.disabledCopyInsert"
           @click="doCopyInsert()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="popSettingsData.dialogFormVisible = false"
+        >取 消</el-button>
       </div>
     </el-dialog>
 
@@ -576,7 +539,6 @@ export default {
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
-          type: '',
           code: '',
           name: '',
           descr: '',
@@ -587,7 +549,6 @@ export default {
         tempJson: null,
         inputSettings: {
           maxLength: {
-            type: 10,
             code: 10,
             name: 10,
             descr: 200,
@@ -628,8 +589,8 @@ export default {
       popSettingsData: {
         // 弹出窗口状态名称
         textMap: {
-          update: '修改',
-          insert: '新增',
+          update: '角色修改',
+          insert: '角色新增',
           copyInsert: '复制新增'
         },
         // 按钮状态
@@ -638,12 +599,23 @@ export default {
           doUpdate: false,
           doCopyInsert: false
         },
+        // 按钮禁用状态：true=禁用，false=可用
+        btnDisabledStatus: {
+          disabledInsert: true,
+          disabledUpdate: true,
+          disabledCopyInsert: true
+        },
+        // 监听器
+        watch: {
+          unwatch_tempJson: null
+        },
         // 以下为pop的内容：数据弹出框
         selection: [],
         dialogStatus: '',
         dialogFormVisible: false,
         // pop的check内容
         rules: {
+          name: [{ required: true, message: '请输入角色名称', trigger: 'change' }],
           create_dt: [{ type: 'date', required: true, message: 'timestamp is required', trigger: 'blur' }],
           role_name: [{ required: true, message: 'title is required', trigger: 'blur' }]
         }
@@ -677,6 +649,15 @@ export default {
         // 清空错误文件
         this.popSettingsImport.errorFileUrl = ''
       }
+    },
+    // 监听弹窗关闭，清除监听器
+    'popSettingsData.dialogFormVisible': {
+      handler (newVal, oldVal) {
+        if (newVal === false) {
+          // 弹窗关闭时清除监听器
+          this.unWatch()
+        }
+      }
     }
   },
   created () {
@@ -690,6 +671,10 @@ export default {
     if (this.$route.query.name !== undefined) {
       this.dataJson.searchForm.name = this.$route.query.name
     }
+  },
+  beforeDestroy () {
+    // 组件销毁前清除监听器
+    this.unWatch()
   },
   methods: {
     // 获取行索引
@@ -816,10 +801,14 @@ export default {
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
-      // 设置按钮
+      // 设置按钮显示状态
       this.popSettingsData.btnStatus.doInsert = true
       this.popSettingsData.btnStatus.doUpdate = false
       this.popSettingsData.btnStatus.doCopyInsert = false
+      // 初始化按钮禁用状态
+      this.initButtonDisabledStatus()
+      // 设置监听器
+      this.setWatch()
     },
     // 点击按钮 更新
     handleUpdate () {
@@ -833,10 +822,14 @@ export default {
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
-      // 设置按钮
+      // 设置按钮显示状态
       this.popSettingsData.btnStatus.doInsert = false
       this.popSettingsData.btnStatus.doUpdate = true
       this.popSettingsData.btnStatus.doCopyInsert = false
+      // 初始化按钮禁用状态
+      this.initButtonDisabledStatus()
+      // 设置监听器
+      this.setWatch()
     },
     // 导出按钮
     handleExport () {
@@ -901,10 +894,14 @@ export default {
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
       })
-      // 设置按钮
+      // 设置按钮显示状态
       this.popSettingsData.btnStatus.doInsert = false
       this.popSettingsData.btnStatus.doUpdate = false
       this.popSettingsData.btnStatus.doCopyInsert = true
+      // 初始化按钮禁用状态
+      this.initButtonDisabledStatus()
+      // 设置监听器
+      this.setWatch()
     },
     handleCurrentChange (row) {
       this.dataJson.tempJson = Object.assign({}, row) // copy obj
@@ -1111,6 +1108,28 @@ export default {
     // 重置查询区域
     doResetSearch () {
       this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+    },
+    // 初始化按钮禁用状态
+    initButtonDisabledStatus () {
+      this.popSettingsData.btnDisabledStatus.disabledInsert = true
+      this.popSettingsData.btnDisabledStatus.disabledUpdate = true
+      this.popSettingsData.btnDisabledStatus.disabledCopyInsert = true
+    },
+    // 设置监听器
+    setWatch () {
+      this.unWatch()
+      // 监听页面上面是否有修改，有修改按钮高亮
+      this.popSettingsData.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
+        this.popSettingsData.btnDisabledStatus.disabledInsert = false
+        this.popSettingsData.btnDisabledStatus.disabledUpdate = false
+        this.popSettingsData.btnDisabledStatus.disabledCopyInsert = false
+      }, { deep: true })
+    },
+    // 清除监听器
+    unWatch () {
+      if (this.popSettingsData.watch.unwatch_tempJson) {
+        this.popSettingsData.watch.unwatch_tempJson()
+      }
     }
   }
 }

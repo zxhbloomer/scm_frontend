@@ -26,13 +26,13 @@
     >
       <el-divider />
       <el-button
-        plain
-        @click="handleDoCancel()"
-      >取消</el-button>
-      <el-button
         :disabled="dataJson.settings.btnDisabledStatus.disabledOk"
         @click="handleDoOk()"
       >确定</el-button>
+      <el-button
+        plain
+        @click="handleDoCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>

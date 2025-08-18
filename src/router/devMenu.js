@@ -277,7 +277,7 @@ export const router_five = [
       },
       {
         path: '/org/staff',
-        component: () => import('@/views/20_master/staff/staff'),
+        component: () => import('@/views/20_master/staff/index'),
         name: 'P00000023', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
         meta: { title: '员工管理维护', icon: 'staff' }
       }

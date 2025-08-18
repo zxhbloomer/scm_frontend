@@ -1,12 +1,14 @@
 <template>
-  <div class="app-container">
+  <div>
+    <FloatMenu />
+    <!-- 查询表单 -->
     <el-form
       ref="minusForm"
       :inline="true"
       :model="dataJson.searchForm"
-      label-position="getLabelPosition()"
+      label-position="right"
     >
-      <el-form-item>
+      <el-form-item label="">
         <el-input
           v-model.trim="dataJson.searchForm.position_name"
           clearable
@@ -65,7 +67,6 @@
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
-          v-popover:popover
           type="primary"
           plain
           icon="perfect-icon-reset"
@@ -82,6 +83,7 @@
       </el-form-item>
     </el-form>
 
+    <!-- 操作按钮 -->
     <el-button-group>
       <el-button
         v-permission="'P_STAFF:ADD'"
@@ -98,6 +100,14 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
+      <el-button
+        v-permission="'P_STAFF:COPY_INSERT'"
+        :disabled="!settings.btnShowStatus.showCopyInsert"
+        type="primary"
+        icon="el-icon-camera-solid"
+        :loading="settings.loading"
+        @click="handleCopyInsert"
+      >复制新增</el-button>
       <el-button
         v-permission="'P_STAFF:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
@@ -130,16 +140,18 @@
         type="primary"
         icon="el-icon-user"
         :loading="settings.loading"
-        @click="handleUpdate"
+        @click="handleSetRole"
       >设置角色</el-button>
     </el-button-group>
+
+    <!-- 数据表格 -->
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -158,11 +170,18 @@
         prop="id"
       />
       <el-table-column
-        type="index"
-        width="45"
         label="No"
-      />
+        type="index"
+        width="50"
+        align="center"
+      >
+        <template v-slot="scope">
+          <span>{{ (dataJson.searchForm.pageCondition.current - 1) * dataJson.searchForm.pageCondition.size + scope.$index + 1 }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
@@ -171,6 +190,8 @@
         label="用户名"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
@@ -179,6 +200,8 @@
         label="员工姓名"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="120"
@@ -186,17 +209,9 @@
         prop="simple_name"
         label="姓名简称"
       />
-      <!--      <el-table-column
-        min-width="130"
-        :sort-orders="settings.sortOrders"
-        prop="name"
-        label="是否开启登录"
-      >
-        <template v-slot="scope">
-          {{ scope.row.is_enable ? '已开启' : '未开启' }}
-        </template>
-      </el-table-column>-->
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="80"
@@ -205,6 +220,8 @@
         label="性别"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="80"
@@ -213,6 +230,8 @@
         label="生日"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="130"
@@ -221,6 +240,8 @@
         label="身份证号"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="120"
@@ -229,20 +250,23 @@
         label="邮箱地址"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
         prop="company_name"
-        label="所属公司"
+        label="所属主体企业"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
         prop="dept_name"
         label="默认部门"
       />
-
       <el-table-column
         header-align="center"
         label="岗位信息"
@@ -259,11 +283,11 @@
           </el-tag>
         </template>
       </el-table-column>
-
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         sortable="custom"
         min-width="150"
-        :auto-fit="true"
         prop="last_login_date"
         label="最后登录时间"
       >
@@ -271,11 +295,11 @@
           {{ scope.row.last_login_date == null ? '-' : formatDateTime(scope.row.last_login_date) }}
         </template>
       </el-table-column>
-
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         sortable="custom"
         min-width="150"
-        :auto-fit="true"
         prop="last_logout_date"
         label="最后主动登出时间"
       >
@@ -283,9 +307,10 @@
           {{ scope.row.last_logout_date == null ? '-' : formatDateTime(scope.row.last_logout_date) }}
         </template>
       </el-table-column>
-
       <el-table-column
-        min-width="90"
+        header-align="center"
+        min-width="80"
+        :auto-fit="true"
         :sort-orders="settings.sortOrders"
         label="删除"
       >
@@ -329,6 +354,8 @@
         </template>
       </el-table-column>
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="90"
@@ -337,6 +364,8 @@
         label="创建人"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="180"
@@ -349,6 +378,8 @@
         </template>
       </el-table-column>
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="90"
@@ -357,6 +388,8 @@
         label="更新人"
       />
       <el-table-column
+        header-align="center"
+        :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
         min-width="180"
@@ -369,6 +402,8 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <!-- 分页 -->
     <pagination
       ref="minusPaging"
       :total="dataJson.paging.total"
@@ -377,23 +412,49 @@
       @pagination="getDataList"
     />
 
-    <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
-      :tab-name="popSettings.one.props.tabName"
-      :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
-      @closeMeCancel="handleCloseDialogOneCancel"
+    <!-- 新增弹窗 -->
+    <new-dialog
+      v-if="dialogs.new"
+      ref="newDialog"
+      :visible="dialogs.new"
+      @closeMeOk="handleNewDialogOk"
+      @closeMeCancel="handleNewDialogCancel"
     />
 
-    <set-position
-      v-if="popSettings.two.visible"
-      :data="popSettings.two.props.data"
-      :visible="popSettings.two.visible"
-      @closeMeOk="handleCloseDialogTwoOk"
-      @closeMeCancel="handleCloseDialogTwoCancel"
+    <!-- 编辑弹窗 -->
+    <edit-dialog
+      v-if="dialogs.edit"
+      :visible="dialogs.edit"
+      :data="dataJson.currentJson"
+      :dialog-status="dialogStatus"
+      @closeMeOk="handleEditDialogOk"
+      @closeMeCancel="handleEditDialogCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="dialogs.view"
+      :visible="dialogs.view"
+      :data="dataJson.currentJson"
+      @closeMeCancel="handleViewDialogCancel"
+    />
+
+    <!-- 设置岗位弹窗 -->
+    <position-dialog
+      v-if="dialogs.position"
+      :visible="dialogs.position"
+      :data="dataJson.currentJson"
+      @closeMeOk="handlePositionDialogOk"
+      @closeMeCancel="handlePositionDialogCancel"
+    />
+
+    <!-- 设置密码弹窗 -->
+    <password-dialog
+      v-if="dialogs.password"
+      :visible="dialogs.password"
+      :data="dataJson.currentJson"
+      @closeMeOk="handlePasswordDialogOk"
+      @closeMeCancel="handlePasswordDialogCancel"
     />
 
     <iframe
@@ -413,6 +474,7 @@
 }
 .position_tag {
   cursor: pointer;
+  margin-right: 5px;
 }
 .floatRight {
   float: right;
@@ -423,28 +485,40 @@
 .el-form-item .el-select {
   width: 100%;
 }
+.perfect_popper .el-form-item--mini.el-form-item {
+  margin-bottom: 10px;
+}
 .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
 </style>
 
 <script>
-import constants_program from '@/common/constants/constants_program'
-import { getListApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/20_master/staff/staff'
-import resizeMixin from './staffResizeHandlerMixin'
+import permission from '@/directive/permission/index.js' // 权限判断指令
+import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/20_master/staff/staff'
 import Pagination from '@/components/Pagination'
-import elDragDialog from '@/directive/el-drag-dialog'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
-import editDialog from '@/views/20_master/staff/dialog/edit'
-import setPosition from '@/views/20_master/staff/dialog/setPosition'
+import FloatMenu from '@/components/FloatMenu/index.vue'
+import NewDialog from '../../dialog/20_new/index.vue'
+import EditDialog from '../../dialog/30_edit/index.vue'
+import ViewDialog from '../../dialog/40_view/index.vue'
+import PositionDialog from '../../dialog/50_position/index.vue'
+import PasswordDialog from '../../dialog/60_password/index.vue'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission/index.js'// 权限判断指令
 
 export default {
-  name: constants_program.P_STAFF, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination, DeleteTypeNormal, editDialog, setPosition },
-  directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
+  name: 'StaffList',
+  components: {
+    Pagination,
+    DeleteTypeNormal,
+    FloatMenu,
+    NewDialog,
+    EditDialog,
+    ViewDialog,
+    PositionDialog,
+    PasswordDialog
+  },
+  directives: { permission },
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -460,8 +534,12 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
+          position_name: '',
+          login_name: '',
           name: '',
-          code: '',
+          id_card: '',
+          is_enable: '',
+          c_name: '',
           is_del: '0' // 未删除
         },
         enableList: [
@@ -491,77 +569,20 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
-        duration: 4000,
-        // 日期类型下拉选项json
-        pickerOptions: {
-          shortcuts: [{
-            text: '未来一周',
-            onClick (picker) {
-              const end = new Date()
-              const start = new Date()
-              end.setTime(start.getTime() + 3600 * 1000 * 24 * 7)
-              picker.$emit('pick', [start, end])
-            }
-          }, {
-            text: '未来一个月',
-            onClick (picker) {
-              const end = new Date()
-              const start = new Date()
-              end.setTime(start.getTime() + 3600 * 1000 * 24 * 30)
-              picker.$emit('pick', [start, end])
-            }
-          }, {
-            text: '未来三个月',
-            onClick (picker) {
-              const end = new Date()
-              const start = new Date()
-              end.setTime(start.getTime() + 3600 * 1000 * 24 * 90)
-              picker.$emit('pick', [start, end])
-            }
-          }, {
-            text: '未来六个月',
-            onClick (picker) {
-              const end = new Date()
-              const start = new Date()
-              end.setTime(start.getTime() + 3600 * 1000 * 24 * 180)
-              picker.$emit('pick', [start, end])
-            }
-          }, {
-            text: '未来一年',
-            onClick (picker) {
-              const end = new Date()
-              const start = new Date()
-              end.setTime(start.getTime() + 3600 * 1000 * 24 * 365)
-              picker.$emit('pick', [start, end])
-            }
-          }
-          ]
-        }
+        duration: 4000
       },
-      popSettings: {
-        // 弹出编辑页面
-        one: {
-          visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            dialogStatus: '',
-            tabName: 'tab1'
-          }
-        },
-        two: {
-          visible: false,
-          props: {
-            data: {}
-          }
-        }
-      }
+      // 弹窗控制
+      dialogs: {
+        new: false,
+        edit: false,
+        view: false,
+        position: false,
+        password: false
+      },
+      dialogStatus: ''
     }
   },
-  computed: {
-
-  },
+  computed: {},
   // 监听器
   watch: {
     // 选中的数据，使得导出按钮可用，否则就不可使用
@@ -589,12 +610,6 @@ export default {
       // 初始化查询
       this.getDataList()
     },
-    // 弹出框设置初始化
-    initDialogStatus () {
-    },
-    // 下拉选项控件事件
-    handleSelectChange (val) {
-    },
     // 获取行索引
     getRowIndex (row) {
       const _index = this.dataJson.listData.lastIndexOf(row)
@@ -620,73 +635,6 @@ export default {
       // 清空选择
       this.dataJson.multipleSelection = []
       this.$refs.multipleTable.clearSelection()
-    },
-    // 删除操作
-    handleDel (row) {
-      let _message = ''
-      const _value = row.is_del
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (_value === true) {
-        _message = '是否要删除选择的数据？'
-      } else {
-        _message = '是否要复原该条数据？'
-      }
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        deleteApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.is_del = !row.is_del
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.is_del = !row.is_del
-      })
-    },
-    // 点击按钮 新增
-    handleInsert () {
-      // 新增
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
-      this.popSettings.one.visible = true
-    },
-    // 点击按钮 更新
-    handleUpdate () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsgAlert('请选择一条数据')
-        return
-      }
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.one.visible = true
-    },
-    handleView () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
-      this.popSettings.one.visible = true
     },
     // 导出按钮
     handleExport () {
@@ -742,23 +690,14 @@ export default {
         this.settings.loading = false
       })
     },
-    // 点击按钮 复制新增
-    handleCopyInsert () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      // 复制新增
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
-      this.popSettings.one.visible = true
-    },
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
-        // this.settings.btnShowStatus.doInsert = true
         this.settings.btnShowStatus.showUpdate = true
         this.settings.btnShowStatus.showCopyInsert = true
       } else {
-        // this.settings.btnShowStatus.doInsert = false
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showCopyInsert = false
       }
@@ -804,30 +743,45 @@ export default {
     handleSelectionChange (val) {
       this.dataJson.multipleSelection = val
     },
-    // ------------------编辑弹出框 start--------------------
-    handleCloseDialogOneOk (val) {
-      switch (this.popSettings.one.props.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.doInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          this.doCopyInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
+    // 点击按钮 新增
+    handleInsert () {
+      this.dialogStatus = this.PARAMETERS.STATUS_INSERT
+      this.dialogs.new = true
+    },
+    // 点击按钮 复制新增
+    handleCopyInsert () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
       }
+      this.dialogStatus = this.PARAMETERS.STATUS_COPY_INSERT
+      this.dialogs.new = true
+      // 复制新增时，将当前数据传递给新增弹窗
+      this.$nextTick(() => {
+        this.$refs.newDialog && this.$refs.newDialog.setCopyData(this.dataJson.currentJson)
+      })
     },
-    handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
+    // 点击按钮 更新
+    handleUpdate () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogStatus = this.PARAMETERS.STATUS_UPDATE
+      this.dialogs.edit = true
     },
-    // 处理插入回调
-    doInsertModelCallBack (val) {
+    // 查看
+    handleView () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.view = true
+    },
+    // 新增弹窗回调
+    handleNewDialogOk (val) {
       if (val.return_flag) {
-        this.popSettings.one.visible = false
-
+        this.dialogs.new = false
         // 设置到table中绑定的json数据源
         this.dataJson.listData.unshift(val.data.data)
         this.$notify({
@@ -846,35 +800,13 @@ export default {
         })
       }
     },
-    // 处理复制新增回调
-    doCopyInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '复制新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-      } else {
-        this.$notify({
-          title: '复制新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
+    handleNewDialogCancel () {
+      this.dialogs.new = false
     },
-    // 处理更新回调
-    doUpdateModelCallBack (val) {
+    // 编辑弹窗回调
+    handleEditDialogOk (val) {
       if (val.return_flag) {
-        this.popSettings.one.visible = false
-
+        this.dialogs.edit = false
         // 设置到table中绑定的json数据源
         this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
         // 设置到currentjson中
@@ -895,7 +827,92 @@ export default {
         })
       }
     },
-    // ------------------编辑弹出框 end--------------------
+    handleEditDialogCancel () {
+      this.dialogs.edit = false
+    },
+    // 查看弹窗回调
+    handleViewDialogCancel () {
+      this.dialogs.view = false
+    },
+    // 设置岗位弹窗
+    handleSetPosition () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.position = true
+    },
+    handlePositionDialogOk () {
+      this.dialogs.position = false
+    },
+    handlePositionDialogCancel () {
+      this.dialogs.position = false
+    },
+    // 设置角色
+    handleSetRole () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      // TODO: 实现设置角色功能
+      this.showErrorMsg('设置角色功能待实现')
+    },
+    // 设置密码弹窗
+    handleSetPassword () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.dialogs.password = true
+    },
+    handlePasswordDialogOk () {
+      this.dialogs.password = false
+    },
+    handlePasswordDialogCancel () {
+      this.dialogs.password = false
+    },
+    // 删除操作
+    handleDel (row) {
+      let _message = ''
+      const _value = row.is_del
+      const selectionJson = []
+      selectionJson.push({ 'id': row.id })
+      if (_value === true) {
+        _message = '是否要删除选择的数据？'
+      } else {
+        _message = '是否要复原该条数据？'
+      }
+      // 选择全部的时候
+      this.$confirm(_message, '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        // loading
+        this.settings.loading = true
+        deleteApi(selectionJson).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          row.is_del = !row.is_del
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(action => {
+        row.is_del = !row.is_del
+      })
+    },
+    // 岗位点击
     handlePositionClick (val) {
       if (this.meDialogStatus) {
         return
@@ -904,22 +921,6 @@ export default {
       this.$router.push({
         path: '/position/position', query: { name: val, fullpath: true }
       })
-    },
-    // -------------------岗位调整 弹出框 start-----
-    handleSetPosition (val) {
-      this.popSettings.two.props.data = deepCopy(this.dataJson.currentJson)
-      if (this.popSettings.two.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      // 更新
-      this.popSettings.two.visible = true
-    },
-    handleCloseDialogTwoOk () {
-      this.popSettings.two.visible = false
-    },
-    handleCloseDialogTwoCancel () {
-      this.popSettings.two.visible = false
     }
   }
 }

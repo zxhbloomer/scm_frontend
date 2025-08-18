@@ -314,7 +314,9 @@ export default {
       // 页面设置json
       settings: {
         // loading 状态
-        loading: true
+        loading: true,
+        // 表格排序规则
+        sortOrders: deepCopy(this.PARAMETERS.SORT_PARA)
       }
     }
   },
@@ -373,6 +375,10 @@ export default {
     },
     handleSearch () {
       this.getDataList()
+    },
+    // 重置查询区域
+    doResetSearch () {
+      this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
     },
     // tabs点击事件
     handleTabsClick (tab, event) {

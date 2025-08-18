@@ -215,13 +215,10 @@
       </el-table-column>
     </el-table>
 
-    <edit-dialog
+    <view-dialog
       v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
       :data="popSettings.one.props.data"
       :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
       @closeMeCancel="handleCloseDialogOneCancel"
     />
 
@@ -270,10 +267,10 @@ import { getStaffTabListApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import deepCopy from 'deep-copy'
-import editDialog from '@/views/20_master/staff/dialog/edit'
+import viewDialog from '@/views/20_master/staff/dialog/40_view/index'
 
 export default {
-  components: { DeleteTypeNormal, editDialog },
+  components: { DeleteTypeNormal, viewDialog },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -326,13 +323,11 @@ export default {
         duration: 4000
       },
       popSettings: {
-        // 弹出编辑页面
+        // 弹出查看页面
         one: {
           visible: false,
           props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
+            data: {}
           }
         }
       }
@@ -444,8 +439,7 @@ export default {
       return row.id
     },
     handleView (val) {
-      this.popSettings.one.props.data = (val)
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
+      this.popSettings.one.props.data = deepCopy(val)
       this.popSettings.one.visible = true
     },
     // tabs点击事件
@@ -466,9 +460,6 @@ export default {
       this.dataJson.searchForm.active_tabs_index = tab.index
     },
     handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
-    },
-    handleCloseDialogOneOk () {
       this.popSettings.one.visible = false
     },
     handlePositionClick (val) {

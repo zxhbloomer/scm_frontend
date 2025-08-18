@@ -1,15 +1,19 @@
 <template>
   <el-dialog
+    v-if="listenVisible"
     v-el-drag-dialog
+    v-loading="settings.loading"
+    element-loading-text="拼命加载中，请稍后..."
+    element-loading-background="rgba(255, 255, 255, 0.7)"
     title="设置密码"
-    :visible.sync="visible"
-    :close-on-click-modal="false"
-    :close-on-press-escape="false"
-    :show-close="false"
+    :visible="visible"
+    :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
+    :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
+    :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
     :append-to-body="true"
-    :modal-append-to-body="false"
+    :modal-append-to-body="true"
     width="600px"
-    top="5vh"
+    destroy-on-close
   >
     <div class="login-container">
       <el-form
@@ -20,7 +24,6 @@
         autocomplete="on"
         label-position="left"
       >
-
         <el-form-item prop="password">
           <password
             v-model="dataJson.loginForm.password"
@@ -28,7 +31,6 @@
             type="password"
           />
         </el-form-item>
-
       </el-form>
     </div>
     <div
@@ -37,13 +39,17 @@
     >
       <el-divider />
       <el-button
+        v-show="settings.btnShowStatus.showInsert && !isViewModel"
         plain
-        @click="handleDoCancel()"
-      >取消</el-button>
-      <el-button
-        :disabled="dataJson.settings.btnDisabledStatus.disabledOk"
+        type="primary"
+        :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert"
         @click="handleDoOk()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleDoCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -52,7 +58,6 @@
 .login-container {
   .el-input {
     display: inline-block;
-    // height: 47px;
     width: 85%;
 
     input {
@@ -61,7 +66,6 @@
       -webkit-appearance: none;
       border-radius: 0px;
       padding: 12px 5px 12px 15px;
-      // height: 47px;
 
       &:-webkit-autofill {
         box-shadow: 0 0 0px 1000px;
@@ -148,7 +152,7 @@ import { getUsrPsdStringApi } from '@/api/user'
 import Password from '@/components/pwdMeter/pwdMeter.vue'
 
 export default {
-  name: 'COM000010',
+  name: 'PasswordDialog',
   components: { Password },
   directives: { elDragDialog },
   props: {
@@ -156,6 +160,10 @@ export default {
     visible: {
       type: Boolean,
       default: false
+    },
+    data: {
+      type: Object,
+      default: null
     }
   },
   data () {
@@ -167,13 +175,6 @@ export default {
         },
         capsTooltip: false,
         passwordType: 'password',
-        // 页面设置json
-        settings: {
-          // 按钮状态：是否可用
-          btnDisabledStatus: {
-            disabledOk: true
-          }
-        },
         loginRules: {
           password: [
             { required: true, message: '新密码不能为空', trigger: 'blur' },
@@ -193,7 +194,22 @@ export default {
               trigger: 'blur'
             }]
         }
-      }
+      },
+      // 页面设置json
+      settings: {
+        // 按钮状态
+        btnShowStatus: {
+          showInsert: false
+        },
+        // 按钮状态：是否可用
+        btnDisabledStatus: {
+          disabledInsert: true
+        },
+        // loading 状态
+        loading: false,
+        duration: 4000
+      },
+      isViewModel: false
     }
   },
   computed: {
@@ -207,9 +223,11 @@ export default {
     'dataJson.loginForm.password': {
       handler (newVal, oldVal) {
         if (newVal === undefined || newVal === null || JSON.stringify(newVal) === '{}') {
-          this.dataJson.settings.btnDisabledStatus.disabledOk = true
+          this.settings.btnDisabledStatus.disabledInsert = true
+          this.settings.btnShowStatus.showInsert = false
         } else {
-          this.dataJson.settings.btnDisabledStatus.disabledOk = false
+          this.settings.btnDisabledStatus.disabledInsert = false
+          this.settings.btnShowStatus.showInsert = true
         }
       },
       deep: true
@@ -219,9 +237,6 @@ export default {
       handler (newVal, oldVal) {
         if (newVal) {
           this.init()
-          // dialog打开后初始化
-          this.$store.dispatch('popUpSearchDialog/program', { programId: 'COM000010', status: 'open' })
-          this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
         }
       },
       deep: true,
@@ -236,6 +251,9 @@ export default {
       this.dataJson.loginForm.password = ''
       this.dataJson.loginForm.encodePsd = ''
       this.dataJson.passwordType = 'password'
+      this.settings.btnShowStatus.showInsert = false
+      this.settings.btnDisabledStatus.disabledInsert = true
+      this.settings.loading = false
     },
     checkCapslock ({ shiftKey, key } = {}) {
       if (key && key.length === 1) {
@@ -263,17 +281,13 @@ export default {
     handleDoOk () {
       this.$refs['refLoginForm'].validate((valid) => {
         if (valid) {
+          this.settings.loading = true
           this.getUsrPsdString()
-          this.$store.dispatch('popUpSearchDialog/selectedDataJson', this.dataJson.loginForm.password)
-          this.$store.dispatch('popUpSearchDialog/program', { programId: 'COM000010', status: 'closed' })
-          this.$emit('closeMeOk', this.$store.getters.selectedDataJson)
         }
       })
     },
     // 取消
     handleDoCancel () {
-      this.$store.dispatch('popUpSearchDialog/program', { programId: 'COM000010', status: 'closed' })
-      this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
       this.$emit('closeMeCancel')
     },
     validatePassword (rule, value, callback) {
@@ -286,6 +300,20 @@ export default {
     getUsrPsdString () {
       getUsrPsdStringApi({ pwd: this.dataJson.loginForm.password }).then(response => {
         this.dataJson.loginForm.password = response.data
+        this.$emit('closeMeOk', {
+          return_flag: true,
+          data: {
+            data: { password: this.dataJson.loginForm.password },
+            message: '密码设置成功'
+          }
+        })
+      }).catch(error => {
+        this.$emit('closeMeOk', {
+          return_flag: false,
+          error: { message: error.message || '密码设置失败' }
+        })
+      }).finally(() => {
+        this.settings.loading = false
       })
     }
   }
