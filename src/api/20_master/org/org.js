@@ -207,12 +207,17 @@ export function getUserDataByIdApi (query) {
 /**
  * 获取组织子节点数量
  * @param {*} orgId 组织ID
+ * @param {*} orgType 组织类型（可选，集团类型返回详细分类统计）
  */
-export function getSubCountApi (orgId) {
+export function getSubCountApi (orgId, orgType) {
+  const data = { org_id: orgId }
+  if (orgType) {
+    data.org_type = orgType
+  }
   return request({
     url: '/api/v1/org/getsubcount',
     method: 'post',
-    data: { org_id: orgId }
+    data
   })
 }
 

@@ -136,104 +136,31 @@
             </span>
             <span v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               {{ data.simple_name }}
-              <!-- 集团类型显示子节点数量 -->
-              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="font-size: 12px;">
-                <!-- 使用计算属性获取显示数据 -->
-                <template v-if="getGroupDisplayData(data.sub_count).hasContent">
-                  <span v-if="getGroupDisplayData(data.sub_count).isDetailed">
-                    (
-                    <!-- 使用v-for循环渲染链接，用v-if做case判断 -->
-                    <template v-for="(link, index) in getGroupDisplayData(data.sub_count).links">
-                      <!-- case: sub_group 子集团链接 -->
-                      <el-link
-                        v-if="link.type === 'sub_group'"
-                        :key="link.type + '_' + index"
-                        type="warning"
-                        :underline="false"
-                        style="font-size: 12px;"
-                        @click="handleLinkClick(link, data)"
-                      >
-                        {{ link.text }}
-                      </el-link>
-                      <!-- case: company 企业链接 -->
-                      <el-link
-                        v-else-if="link.type === 'company'"
-                        :key="link.type + '_' + index"
-                        type="warning"
-                        :underline="false"
-                        style="font-size: 12px;"
-                        @click="handleLinkClick(link, data)"
-                      >
-                        {{ link.text }}
-                      </el-link>
-                      <!-- 分隔符：如果不是最后一个就加"、" -->
-                      <span v-if="index < getGroupDisplayData(data.sub_count).links.length - 1" :key="'separator_' + index">、</span>
-                    </template>
-                    )
-                  </span>
-                  <!-- case: 简单数字显示（向下兼容） -->
-                  <span v-else style="color: #E6A23C;">
-                    {{ getGroupDisplayData(data.sub_count).simpleText }}
-                  </span>
-                </template>
-              </span>
-              <!-- 企业类型显示部门数量 -->
-              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" class="company-dept-count" style="color: #409EFF; font-size: 12px;">
-                （部门数：{{ data.dept_count || 0 }}）
-              </span>
-              <!-- 部门类型显示子部门和岗位数量 -->
-              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="font-size: 12px;">
-                <!-- 使用计算属性获取显示数据 -->
-                <template v-if="getDeptDisplayData(data.sub_count).hasContent">
-                  <span v-if="getDeptDisplayData(data.sub_count).isDetailed">
-                    (
-                    <!-- 使用v-for循环渲染链接，用v-if做case判断 -->
-                    <template v-for="(link, index) in getDeptDisplayData(data.sub_count).links">
-                      <!-- case: sub_dept 子部门链接 -->
-                      <el-link
-                        v-if="link.type === 'sub_dept'"
-                        :key="link.type + '_' + index"
-                        type="success"
-                        :underline="false"
-                        style="font-size: 12px;"
-                        @click="handleLinkClick(link, data)"
-                      >
-                        {{ link.text }}
-                      </el-link>
-                      <!-- case: position 岗位链接 -->
-                      <el-link
-                        v-if="link.type === 'position'"
-                        :key="link.type + '_' + index"
-                        type="success"
-                        :underline="false"
-                        style="font-size: 12px;"
-                        @click="handleLinkClick(link, data)"
-                      >
-                        {{ link.text }}
-                      </el-link>
-                      <!-- 分隔符：如果不是最后一个就加"、" -->
-                      <span v-if="index < getDeptDisplayData(data.sub_count).links.length - 1" :key="'separator_' + index">、</span>
-                    </template>
-                    )
-                  </span>
-                  <!-- case: 简单数字显示（向下兼容） -->
-                  <span v-else style="color: #67C23A;">
-                    {{ getDeptDisplayData(data.sub_count).simpleText }}
-                  </span>
-                </template>
-              </span>
             </span>
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
-          <el-tag
-            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
-            :type="getOrgTagType(data.type)"
-            size="mini"
-            effect="dark"
-            style="margin-left: 8px;"
-          >
-            {{ getOrgTagText(data.type) }}
-          </el-tag>
+          <span class="org_png">
+            <!-- <em
+              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
+              class="tenant"
+            >租户</em> -->
+            <em
+              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP"
+              class="group"
+            >集团</em>
+            <em
+              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY"
+              class="company"
+            >企业</em>
+            <em
+              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
+              class="dept"
+            >部门</em>
+            <em
+              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION"
+              class="position"
+            >岗位</em>
+          </span>
         </span>
       </el-tree>
     </div>
@@ -291,38 +218,34 @@
       </div>
     </el-dialog>
 
-    <!-- 集团编辑弹窗 -->
     <group-dialog
       v-if="popSettingsData.searchDialogDataOne.visible"
       :visible="popSettingsData.searchDialogDataOne.visible"
-      :data="popSettingsData.searchDialogDataOne.data"
+      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
       @closeMeOk="handleGroupCloseOk"
       @closeMeCancel="handleGroupCloseCancel"
     />
 
-    <!-- 企业编辑弹窗 -->
     <company-dialog
       v-if="popSettingsData.searchDialogDataTwo.visible"
       :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data="popSettingsData.searchDialogDataTwo.data"
+      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
       @closeMeOk="handleCompanyCloseOk"
       @closeMeCancel="handleCompanyCloseCancel"
     />
 
-    <!-- 部门编辑弹窗 -->
     <dept-dialog
       v-if="popSettingsData.searchDialogDataThree.visible"
       :visible="popSettingsData.searchDialogDataThree.visible"
-      :data="popSettingsData.searchDialogDataThree.data"
+      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
       @closeMeOk="handleDeptCloseOk"
       @closeMeCancel="handleDeptCloseCancel"
     />
 
-    <!-- 岗位编辑弹窗 -->
     <position-dialog
       v-if="popSettingsData.searchDialogDataFour.visible"
       :visible="popSettingsData.searchDialogDataFour.visible"
-      :data="popSettingsData.searchDialogDataFour.data"
+      :data-model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
       @closeMeOk="handlePositionCloseOk"
       @closeMeCancel="handlePositionCloseCancel"
     />
@@ -335,43 +258,6 @@
       :model="CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED"
       @closeMeOk="handleSetPositionOk"
       @closeMeCancel="handleSetPositionCancel"
-    />
-
-    <!-- 新增：10_list 弹窗组件 -->
-    <!-- 集团列表弹窗 -->
-    <group-list-dialog
-      v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'group'"
-      :visible="popSettingsData.listDialogData.visible"
-      :data="popSettingsData.listDialogData.data"
-      @closeMeOk="handleListDialogOk"
-      @closeMeCancel="handleListDialogCancel"
-    />
-
-    <!-- 企业列表弹窗 -->
-    <company-list-dialog
-      v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'company'"
-      :visible="popSettingsData.listDialogData.visible"
-      :data="popSettingsData.listDialogData.data"
-      @closeMeOk="handleListDialogOk"
-      @closeMeCancel="handleListDialogCancel"
-    />
-
-    <!-- 部门列表弹窗 -->
-    <dept-list-dialog
-      v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'dept'"
-      :visible="popSettingsData.listDialogData.visible"
-      :data="popSettingsData.listDialogData.data"
-      @closeMeOk="handleListDialogOk"
-      @closeMeCancel="handleListDialogCancel"
-    />
-
-    <!-- 岗位列表弹窗 -->
-    <position-list-dialog
-      v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'position'"
-      :visible="popSettingsData.listDialogData.visible"
-      :data="popSettingsData.listDialogData.data"
-      @closeMeOk="handleListDialogOk"
-      @closeMeCancel="handleListDialogCancel"
     />
 
   </div>
@@ -548,31 +434,20 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi } from '@/api/20_master/org/org'
+import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, updateApi, deleteApi, dragsaveApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
-import groupDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
-import companyDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
-import deptDialog from '@/views/20_master/dept/dialog/30_edit/index.vue'
-import positionDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
+import groupDialog from '@/views/20_master/group/dialog/10_list/index.vue'
+import companyDialog from '@/views/20_master/company/dialog/10_list/index.vue'
+import deptDialog from '@/views/20_master/dept/dialog/10_list/index.vue'
+import positionDialog from '@/views/20_master/position/dialog/10_list/index.vue'
 import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/index.vue'
-// 新增：引入 10_list 弹窗组件
-import groupListDialog from '@/views/20_master/group/dialog/10_list/index.vue'
-import companyListDialog from '@/views/20_master/company/dialog/10_list/index.vue'
-import deptListDialog from '@/views/20_master/dept/dialog/10_list/index.vue'
-import positionListDialog from '@/views/20_master/position/dialog/10_list/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
-import { getDataByIdApi as getPositionByIdApi } from '@/api/20_master/position/position'
-import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
-import { getByIdApi as getCompanyByIdApi } from '@/api/20_master/company/company'
-import { getByIdApi as getDeptByIdApi } from '@/api/20_master/dept/dept'
-// import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
+import { getDataByIdApi } from '@/api/20_master/position/position'
+import '@/styles/org_png.scss'
 
 export default {
   // name: 'P00000171', // 页面id，和router中的name需要一致，作为缓存
-  components: {
-    groupDialog, companyDialog, deptDialog, positionDialog, setPositionDialog,
-    groupListDialog, companyListDialog, deptListDialog, positionListDialog
-  },
+  components: { groupDialog, companyDialog, deptDialog, positionDialog, setPositionDialog },
   directives: { elDragDialog },
   props: {
     height: {
@@ -625,33 +500,33 @@ export default {
         btnDisabledStatus: {
           disabledOK: false
         },
-        // 弹出的编辑框参数设置 - 集团
+        // 弹出的查询框参数设置
         searchDialogDataOne: {
           // 弹出框显示参数
           visible: false,
-          // 编辑数据
-          data: null
+          // 点击确定以后返回的值
+          selectedDataJson: {}
         },
-        // 弹出的编辑框参数设置 - 企业
+        // 弹出的查询框参数设置
         searchDialogDataTwo: {
           // 弹出框显示参数
           visible: false,
-          // 编辑数据
-          data: null
+          // 点击确定以后返回的值
+          selectedDataJson: {}
         },
-        // 弹出的编辑框参数设置 - 部门
+        // 弹出的查询框参数设置
         searchDialogDataThree: {
           // 弹出框显示参数
           visible: false,
-          // 编辑数据
-          data: null
+          // 点击确定以后返回的值
+          selectedDataJson: {}
         },
-        // 弹出的编辑框参数设置 - 岗位
+        // 弹出的查询框参数设置
         searchDialogDataFour: {
           // 弹出框显示参数
           visible: false,
-          // 编辑数据
-          data: null
+          // 点击确定以后返回的值
+          selectedDataJson: {}
         },
         // 弹出的查询框参数设置
         searchDialogDataFive: {
@@ -661,15 +536,6 @@ export default {
           visible: false,
           // 点击确定以后返回的值
           selectedDataJson: {}
-        },
-        // 新增：10_list 弹窗状态管理
-        listDialogData: {
-          // 弹出框显示参数
-          visible: false,
-          // 弹窗类型：group/company/dept/position
-          dialogType: '',
-          // 传递给弹窗的数据
-          data: null
         }
       }
     }
@@ -803,8 +669,6 @@ export default {
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.treeData = response.data
-        // 为集团类型节点异步加载子节点数量
-        this.loadSubCount(this.dataJson.treeData)
         this.getListAfterProcess()
         this.settings.loading = false
         this.$nextTick(() => {
@@ -830,12 +694,6 @@ export default {
       this.dataJson.tempJson = Object.assign({}, row) // copy obj
       this.dataJson.currentJson = this.$refs.treeObject.getCurrentNode()
       this.dataJson.currentJson.currentkey = this.$refs.treeObject.getCurrentKey()
-
-      // 企业节点部门统计处理
-      if (row && row.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
-        this.loadCompanyDeptCount(row.id)
-      }
-
       // 通知兄弟组件
       // EventBus.$off(this.EMITS.EMIT_ORG_CHANGE)
       EventBus.$emit(this.EMITS.EMIT_ORG_CHANGE, row)
@@ -859,59 +717,29 @@ export default {
     },
     // 点击新增子结构按钮
     handleInsert () {
-      // 新增：先弹出类型选择弹窗
+      // 新增
       this.popSettingsData.dialogStatus = this.PARAMETERS.STATUS_INSERT
       this.popSettingsData.dialogFormVisible = true
     },
     // 修改当前结点按钮
     handleUpdate () {
-      // 根据类型获取完整数据后显示编辑弹窗
+      // 修改
+      // this.popSettingsData.dialogStatus = this.PARAMETERS.STATUS_UPDATE
+      // this.popSettingsData.dialogFormVisible = true
       switch (this.dataJson.currentJson.type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          // 获取集团完整数据
-          getGroupByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataOne.data = response.data
-            this.popSettingsData.searchDialogDataOne.visible = true
-          }).catch(error => {
-            this.$message.error('获取集团数据失败: ' + error.message)
-          })
+          this.popSettingsData.searchDialogDataOne.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          // 获取企业完整数据
-          getCompanyByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataTwo.data = response.data
-            this.popSettingsData.searchDialogDataTwo.visible = true
-          }).catch(error => {
-            this.$message.error('获取企业数据失败: ' + error.message)
-          })
+          this.popSettingsData.searchDialogDataTwo.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          // 获取部门完整数据
-          getDeptByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataThree.data = response.data
-            this.popSettingsData.searchDialogDataThree.visible = true
-          }).catch(error => {
-            this.$message.error('获取部门数据失败: ' + error.message)
-          })
+          this.popSettingsData.searchDialogDataThree.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          // 获取岗位完整数据
-          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataFour.data = response.data
-            this.popSettingsData.searchDialogDataFour.visible = true
-          }).catch(error => {
-            this.$message.error('获取岗位数据失败: ' + error.message)
-          })
+          this.popSettingsData.searchDialogDataFour.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工类型保持原有逻辑
-          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataFive.id = response.data.id
-            this.popSettingsData.searchDialogDataFive.data = response.data
-            this.popSettingsData.searchDialogDataFive.visible = true
-          }).catch(error => {
-            this.$message.error('获取员工数据失败: ' + error.message)
-          })
           break
       }
     },
@@ -921,41 +749,28 @@ export default {
     },
     doOk () {
       this.popSettingsData.dialogFormVisible = false
-
-      // 根据用户选择的类型，设置相应的listDialogData弹窗
-      let dialogType = ''
       switch (this.dataJson.tempJson.org_type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          dialogType = 'group'
+          this.popSettingsData.searchDialogDataOne.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          dialogType = 'company'
+          this.popSettingsData.searchDialogDataTwo.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          dialogType = 'dept'
+          this.popSettingsData.searchDialogDataThree.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          dialogType = 'position'
+          this.popSettingsData.searchDialogDataFour.visible = true
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工类型保持原有逻辑
-          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
+          getDataByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
             this.popSettingsData.searchDialogDataFive.id = response.data.id
             this.popSettingsData.searchDialogDataFive.data = response.data
             this.popSettingsData.searchDialogDataFive.visible = true
           }).finally(() => {
           })
-          return
+          break
       }
-
-      // 设置弹窗数据并显示
-      this.popSettingsData.listDialogData.dialogType = dialogType
-      this.popSettingsData.listDialogData.data = {
-        parent_id: this.dataJson.currentJson.id,
-        parent_name: this.dataJson.currentJson.simple_name || '组织机构根节点',
-        parent_type: this.dataJson.currentJson.type
-      }
-      this.popSettingsData.listDialogData.visible = true
     },
     handleDelete () {
       this.$confirm('请注意：即将删除当前选择结点以及【子结点】的数据，而且不能恢复。', '确认信息', {
@@ -1002,46 +817,66 @@ export default {
       })
     },
     // --------------弹出查询框：开始--------------
-    // 递归更新树节点数据的辅助函数
-    updateTreeNodeData (treeData, nodeId, updatedData) {
-      for (let i = 0; i < treeData.length; i++) {
-        if (treeData[i].id === nodeId) {
-          // 保持树结构相关属性，只更新业务数据
-          const originalChildren = treeData[i].children
-          Object.assign(treeData[i], updatedData)
-          if (originalChildren) {
-            treeData[i].children = originalChildren
-          }
-          return true
-        }
-        if (treeData[i].children && treeData[i].children.length > 0) {
-          if (this.updateTreeNodeData(treeData[i].children, nodeId, updatedData)) {
-            return true
-          }
-        }
-      }
-      return false
-    },
-    // 集团：关闭编辑弹窗：确定
+    // 集团：关闭对话框：确定
     handleGroupCloseOk (val) {
+      this.popSettingsData.searchDialogDataOne.selectedDataJson = val
       this.popSettingsData.searchDialogDataOne.visible = false
-      if (val.return_flag) {
-        this.$notify({
-          title: '集团修改成功',
-          message: val.data.message || '修改成功',
-          type: 'success',
-          duration: this.settings.duration
+      this.settings.loading = true
+      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
+        insertApi({
+          serial_id: this.popSettingsData.searchDialogDataOne.selectedDataJson.id,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
+          parent_id: this.dataJson.currentJson.id
+        }).then((_data) => {
+          this.$notify({
+            title: '新增处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '新增处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        this.$notify({
-          title: '集团修改失败',
-          message: val.error.message || '修改失败',
-          type: 'error',
-          duration: this.settings.duration
+        updateApi({
+          id: this.dataJson.currentJson.id,
+          serial_id: this.popSettingsData.searchDialogDataOne.selectedDataJson.id,
+          code: this.dataJson.currentJson.code,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
+          parent_id: this.dataJson.currentJson.parent_id,
+          dbversion: this.dataJson.currentJson.dbversion,
+          son_count: this.dataJson.currentJson.son_count
+        }).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
       }
     },
@@ -1049,26 +884,66 @@ export default {
     handleGroupCloseCancel () {
       this.popSettingsData.searchDialogDataOne.visible = false
     },
-    // 企业：关闭编辑弹窗：确定
+    // 企业：关闭对话框：确定
     handleCompanyCloseOk (val) {
+      this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
       this.popSettingsData.searchDialogDataTwo.visible = false
-      if (val.return_flag) {
-        this.$notify({
-          title: '企业修改成功',
-          message: val.data.message || '修改成功',
-          type: 'success',
-          duration: this.settings.duration
+      this.settings.loading = true
+      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
+        insertApi({
+          serial_id: this.popSettingsData.searchDialogDataTwo.selectedDataJson.id,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
+          parent_id: this.dataJson.currentJson.id
+        }).then((_data) => {
+          this.$notify({
+            title: '新增处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '新增处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        this.$notify({
-          title: '企业修改失败',
-          message: val.error.message || '修改失败',
-          type: 'error',
-          duration: this.settings.duration
+        updateApi({
+          id: this.dataJson.currentJson.id,
+          serial_id: this.popSettingsData.searchDialogDataTwo.selectedDataJson.id,
+          code: this.dataJson.currentJson.code,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
+          parent_id: this.dataJson.currentJson.parent_id,
+          dbversion: this.dataJson.currentJson.dbversion,
+          son_count: this.dataJson.currentJson.son_count
+        }).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
       }
     },
@@ -1076,26 +951,66 @@ export default {
     handleCompanyCloseCancel () {
       this.popSettingsData.searchDialogDataTwo.visible = false
     },
-    // 部门：关闭编辑弹窗：确定
+    // 部门：关闭对话框：确定
     handleDeptCloseOk (val) {
+      this.popSettingsData.searchDialogDataThree.selectedDataJson = val
       this.popSettingsData.searchDialogDataThree.visible = false
-      if (val.return_flag) {
-        this.$notify({
-          title: '部门修改成功',
-          message: val.data.message || '修改成功',
-          type: 'success',
-          duration: this.settings.duration
+      this.settings.loading = true
+      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
+        insertApi({
+          serial_id: this.popSettingsData.searchDialogDataThree.selectedDataJson.id,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
+          parent_id: this.dataJson.currentJson.id
+        }).then((_data) => {
+          this.$notify({
+            title: '新增处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '新增处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        this.$notify({
-          title: '部门修改失败',
-          message: val.error.message || '修改失败',
-          type: 'error',
-          duration: this.settings.duration
+        updateApi({
+          id: this.dataJson.currentJson.id,
+          serial_id: this.popSettingsData.searchDialogDataThree.selectedDataJson.id,
+          code: this.dataJson.currentJson.code,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
+          parent_id: this.dataJson.currentJson.parent_id,
+          dbversion: this.dataJson.currentJson.dbversion,
+          son_count: this.dataJson.currentJson.son_count
+        }).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
       }
     },
@@ -1103,26 +1018,66 @@ export default {
     handleDeptCloseCancel () {
       this.popSettingsData.searchDialogDataThree.visible = false
     },
-    // 岗位：关闭编辑弹窗：确定
+    // 岗位：关闭对话框：确定
     handlePositionCloseOk (val) {
+      this.popSettingsData.searchDialogDataFour.selectedDataJson = val
       this.popSettingsData.searchDialogDataFour.visible = false
-      if (val.return_flag) {
-        this.$notify({
-          title: '岗位修改成功',
-          message: val.data.message || '修改成功',
-          type: 'success',
-          duration: this.settings.duration
+      this.settings.loading = true
+      if (this.popSettingsData.dialogStatus === this.PARAMETERS.STATUS_INSERT) {
+        insertApi({
+          serial_id: this.popSettingsData.searchDialogDataFour.selectedDataJson.id,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
+          parent_id: this.dataJson.currentJson.id
+        }).then((_data) => {
+          this.$notify({
+            title: '新增处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '新增处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
       } else {
-        this.$notify({
-          title: '岗位修改失败',
-          message: val.error.message || '修改失败',
-          type: 'error',
-          duration: this.settings.duration
+        updateApi({
+          id: this.dataJson.currentJson.id,
+          serial_id: this.popSettingsData.searchDialogDataFour.selectedDataJson.id,
+          code: this.dataJson.currentJson.code,
+          type: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
+          parent_id: this.dataJson.currentJson.parent_id,
+          dbversion: this.dataJson.currentJson.dbversion,
+          son_count: this.dataJson.currentJson.son_count
+        }).then((_data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 查询
+          this.getDataList()
+          this.popSettingsData.dialogFormVisible = false
+        }, (_error) => {
+          this.$notify({
+            title: '更新处理失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+          // this.popSettingsData.dialogFormVisible = false
+        }).finally(() => {
+          this.settings.loading = false
         })
       }
     },
@@ -1140,61 +1095,6 @@ export default {
     // 员工岗位设置：关闭对话框：取消
     handleSetPositionCancel () {
       this.popSettingsData.searchDialogDataFive.visible = false
-    },
-
-    // 新增：10_list 弹窗事件处理
-    // 列表弹窗：关闭对话框：确定
-    handleListDialogOk (val) {
-      this.popSettingsData.listDialogData.visible = false
-      if (val) {
-        this.settings.loading = true
-
-        // 根据弹窗类型决定组织类型
-        let orgType = ''
-        switch (this.popSettingsData.listDialogData.dialogType) {
-          case 'group':
-            orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP
-            break
-          case 'company':
-            orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY
-            break
-          case 'dept':
-            orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT
-            break
-          case 'position':
-            orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION
-            break
-        }
-
-        // 调用insertApi创建组织关系
-        insertApi({
-          serial_id: val.id,
-          type: orgType,
-          parent_id: this.dataJson.currentJson.id
-        }).then((_data) => {
-          this.$notify({
-            title: '新增处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          // 刷新树数据，以便显示新增的节点
-          this.getDataList()
-        }, (_error) => {
-          this.$notify({
-            title: '新增处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }
-    },
-    // 列表弹窗：关闭对话框：取消
-    handleListDialogCancel () {
-      this.popSettingsData.listDialogData.visible = false
     },
     // --------------弹出查询框：结束--------------
     getCorrectTypeByInsertStatus (_code, _type, _filter_para) {
@@ -1355,260 +1255,7 @@ export default {
       } else {
         return false
       }
-    },
-    // 获取组织类型标签颜色
-    getOrgTagType (type) {
-      switch (type) {
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          return 'warning' // 橙色
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          return '' // 蓝色（默认）
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          return 'success' // 绿色
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          return 'info' // 灰色
-        default:
-          return 'info'
-      }
-    },
-    // 获取组织类型标签文本
-    getOrgTagText (type) {
-      switch (type) {
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          return '集团'
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          return '企业'
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          return '部门'
-        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          return '岗位'
-        default:
-          return ''
-      }
-    },
-    // 为集团、企业、部门类型节点异步加载子节点数量
-    loadSubCount (treeNodes) {
-      if (!treeNodes || !Array.isArray(treeNodes)) return
-
-      treeNodes.forEach(node => {
-        // 如果是集团、企业或部门类型，异步获取子节点数量
-        if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ||
-            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY ||
-            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
-          // 对于集团类型，传递orgType参数以获取详细分类统计
-          if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP) {
-            console.log(`[DEBUG] 调用集团API: orgId=${node.id}, orgType=${node.type}`)
-            getSubCountApi(node.id, node.type).then(response => {
-              console.log(`[DEBUG] 集团API返回数据:`, response.data)
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
-            }).catch(error => {
-              console.error('获取集团子节点数量失败:', error)
-              this.$set(node, 'sub_count', 0)
-            })
-          } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
-            // 企业类型：同时获取子节点数量和部门统计
-            getSubCountApi(node.id).then(response => {
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
-            }).catch(error => {
-              console.error('获取企业子节点数量失败:', error)
-              this.$set(node, 'sub_count', 0)
-            })
-
-            // 获取企业部门统计
-            getSubCountApi(node.id, this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY).then(response => {
-              const deptCount = response.data.dept_count || 0
-              this.$set(node, 'dept_count', deptCount)
-            }).catch(error => {
-              console.error('获取企业部门统计失败:', error)
-              this.$set(node, 'dept_count', 0)
-            })
-          } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
-            // 部门类型：获取详细的子部门和岗位统计
-            console.log(`[DEBUG] 调用部门API: orgId=${node.id}, orgType=${node.type}`)
-            getSubCountApi(node.id, node.type).then(response => {
-              console.log(`[DEBUG] 部门API返回数据:`, response.data)
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
-            }).catch(error => {
-              console.error('获取部门子节点统计失败:', error)
-              this.$set(node, 'sub_count', 0)
-            })
-          } else {
-            // 其他类型（岗位等）仍使用原来的调用方式
-            getSubCountApi(node.id).then(response => {
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
-            }).catch(error => {
-              console.error('获取子节点数量失败:', error)
-              this.$set(node, 'sub_count', 0)
-            })
-          }
-        }
-
-        // 递归处理子节点
-        if (node.children && node.children.length > 0) {
-          this.loadSubCount(node.children)
-        }
-      })
-    },
-    // 获取集团节点的显示数据结构
-    getGroupDisplayData (subCount) {
-      console.log(`[DEBUG] getGroupDisplayData接收到的数据:`, subCount, '类型:', typeof subCount)
-      // 如果subCount是详细分类对象（包含sub_group_count和company_count）
-      if (subCount && typeof subCount === 'object' &&
-          subCount.hasOwnProperty('sub_group_count') &&
-          subCount.hasOwnProperty('company_count')) {
-        const links = []
-
-        // 子集团数量大于0时才显示
-        if (subCount.sub_group_count > 0) {
-          links.push({
-            type: 'sub_group',
-            text: `子集团数:${subCount.sub_group_count}`,
-            count: subCount.sub_group_count,
-            url: '/group/group'
-          })
-        }
-
-        // 企业数量大于0时才显示
-        if (subCount.company_count > 0) {
-          links.push({
-            type: 'company',
-            text: `企业数:${subCount.company_count}`,
-            count: subCount.company_count,
-            url: '/company/company'
-          })
-        }
-
-        return {
-          isDetailed: true,
-          links: links,
-          hasContent: links.length > 0
-        }
-      } else {
-        // 如果是简单数字，继续显示原格式
-        return {
-          isDetailed: false,
-          simpleText: `(${subCount || 0})`,
-          hasContent: true
-        }
-      }
-    },
-
-    // 获取部门节点的显示数据结构
-    getDeptDisplayData (subCount) {
-      console.log(`[DEBUG] getDeptDisplayData接收到的数据:`, subCount, '类型:', typeof subCount)
-      // 如果subCount是详细分类对象（包含sub_dept_count和position_count）
-      if (subCount && typeof subCount === 'object' &&
-          subCount.hasOwnProperty('sub_dept_count') &&
-          subCount.hasOwnProperty('position_count')) {
-        const links = []
-
-        // 子部门数量大于0时才显示
-        if (subCount.sub_dept_count > 0) {
-          links.push({
-            type: 'sub_dept',
-            text: `子部门数:${subCount.sub_dept_count}`,
-            count: subCount.sub_dept_count,
-            url: '/dept/dept'
-          })
-        }
-
-        // 岗位数量大于0时才显示
-        if (subCount.position_count > 0) {
-          links.push({
-            type: 'position',
-            text: `岗位数:${subCount.position_count}`,
-            count: subCount.position_count,
-            url: '/position/position'
-          })
-        }
-
-        return {
-          isDetailed: true,
-          links: links,
-          hasContent: links.length > 0
-        }
-      } else {
-        // 如果是简单数字，继续显示原格式
-        return {
-          isDetailed: false,
-          simpleText: `(${subCount || 0})`,
-          hasContent: true
-        }
-      }
-    },
-
-    // 获取企业部门统计数据（手动选择时调用）
-    loadCompanyDeptCount (companyId) {
-      // 检查节点是否已有部门统计数据，如果没有才重新获取
-      const currentNode = this.$refs.treeObject.getCurrentNode()
-      if (currentNode && currentNode.id === companyId && currentNode.dept_count !== undefined) {
-        // 如果已有数据，直接返回，避免重复API调用
-        return
-      }
-
-      getSubCountApi(companyId, this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY)
-        .then(response => {
-          const deptCount = response.data.dept_count || 0
-
-          // 获取当前选中的树节点并更新部门数量
-          if (currentNode && currentNode.id === companyId) {
-            this.$set(currentNode, 'dept_count', deptCount)
-          }
-
-          // 同时更新dataJson中的数据
-          if (this.dataJson.currentJson) {
-            this.$set(this.dataJson.currentJson, 'dept_count', deptCount)
-          }
-        })
-        .catch(error => {
-          console.error('获取企业部门统计失败:', error)
-          // 失败时设置为0
-          if (currentNode && currentNode.id === companyId) {
-            this.$set(currentNode, 'dept_count', 0)
-          }
-
-          if (this.dataJson.currentJson) {
-            this.$set(this.dataJson.currentJson, 'dept_count', 0)
-          }
-        })
-    },
-
-    // 处理链接点击事件
-    handleLinkClick (linkData, nodeData) {
-      // 阻止事件冒泡，避免触发树节点选择
-      event.stopPropagation()
-
-      // 根据链接类型进行不同处理
-      switch (linkData.type) {
-        case 'sub_group':
-          // 跳转到集团页面
-          this.$router.push(linkData.url)
-          console.log('跳转到集团页面:', linkData.url, '当前节点:', nodeData.simple_name)
-          break
-        case 'company':
-          // 跳转到企业页面
-          this.$router.push(linkData.url)
-          console.log('跳转到企业页面:', linkData.url, '当前节点:', nodeData.simple_name)
-          break
-        case 'sub_dept':
-          // 跳转到部门页面
-          this.$router.push(linkData.url)
-          console.log('跳转到部门页面:', linkData.url, '当前节点:', nodeData.simple_name)
-          break
-        case 'position':
-          // 跳转到岗位页面
-          this.$router.push(linkData.url)
-          console.log('跳转到岗位页面:', linkData.url, '当前节点:', nodeData.simple_name)
-          break
-        default:
-          console.warn('未知的链接类型:', linkData.type)
-      }
     }
   }
 }
 </script>
-

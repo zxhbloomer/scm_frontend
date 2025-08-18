@@ -88,7 +88,7 @@
             {{ data.simple_name }}
             <!-- 集团类型显示子节点数量 -->
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="color: #E6A23C; font-size: 12px;">
-              ({{ data.sub_count || 0 }})
+              {{ getGroupDisplayText(data.sub_count) }}
             </span>
             <!-- 企业类型显示子节点数量 -->
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" style="color: #409EFF; font-size: 12px;">
@@ -547,7 +547,9 @@ export default {
         if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ||
             node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY ||
             node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
-          getSubCountApi(node.id).then(response => {
+          // 集团类型传递org_type以获得详细分类统计，其他类型使用简单计数
+          const orgType = node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ? node.type : null
+          getSubCountApi(node.id, orgType).then(response => {
             // 使用this.$set确保响应式更新
             this.$set(node, 'sub_count', response.data)
           }).catch(error => {
@@ -561,6 +563,31 @@ export default {
           this.loadSubCount(node.children)
         }
       })
+    },
+    // 获取集团节点的显示文本
+    getGroupDisplayText (subCount) {
+      // 如果subCount是详细分类对象（包含sub_group_count和company_count）
+      if (subCount && typeof subCount === 'object' &&
+          subCount.hasOwnProperty('sub_group_count') &&
+          subCount.hasOwnProperty('company_count')) {
+        const parts = []
+
+        // 子集团数量大于0时才显示
+        if (subCount.sub_group_count > 0) {
+          parts.push(`子集团:${subCount.sub_group_count}`)
+        }
+
+        // 企业数量大于0时才显示
+        if (subCount.company_count > 0) {
+          parts.push(`企业:${subCount.company_count}`)
+        }
+
+        // 如果有内容就用括号包围，没有就显示空
+        return parts.length > 0 ? `(${parts.join('、')})` : ''
+      } else {
+        // 如果是简单数字，继续显示原格式
+        return `(${subCount || 0})`
+      }
     }
   }
 }

@@ -193,14 +193,14 @@
     >
       <el-divider />
       <el-button
-        plain
-        @click="handleDoCancel()"
-      >取消</el-button>
-      <el-button
         type="primary"
         :disabled="settings.btnDisabledStatus.disabledOk"
         @click="handleDoOk()"
       >确定</el-button>
+      <el-button
+        plain
+        @click="handleDoCancel()"
+      >取消</el-button>
     </div>
 
     <!-- 新增弹窗 -->
@@ -273,7 +273,7 @@ export default {
           name: '',
           code: '',
           is_del: '0', // 未删除
-          dataModel: this.dataModel // 弹出框模式
+          dataModel: this.dataModel || this.CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED // 弹出框模式，默认显示未使用组织
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
