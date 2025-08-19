@@ -47,7 +47,7 @@
         />
       </el-form-item>
       <el-form-item>
-        <delete-type-normal v-model="dataJson.searchForm.is_del" />
+        <delete-type-normal v-model="dataJson.searchForm.is_del" disabled />
       </el-form-item>
       <el-form-item label="">
         <select-dict
@@ -73,6 +73,33 @@
         >查询</el-button>
       </el-form-item>
     </el-form>
+
+    <!-- 操作按钮 -->
+    <el-button-group>
+      <el-button
+        v-permission="'P_STAFF:ADD'"
+        type="primary"
+        icon="el-icon-circle-plus-outline"
+        :loading="settings.loading"
+        @click="handleInsert"
+      >新增</el-button>
+      <el-button
+        v-permission="'P_STAFF:UPDATE'"
+        :disabled="!settings.btnShowStatus.showUpdate"
+        type="primary"
+        icon="el-icon-edit-outline"
+        :loading="settings.loading"
+        @click="handleUpdate"
+      >修改</el-button>
+      <el-button
+        v-permission="'P_STAFF:INFO'"
+        :disabled="!settings.btnShowStatus.showUpdate"
+        type="primary"
+        icon="el-icon-info"
+        :loading="settings.loading"
+        @click="handleView"
+      >查看</el-button>
+    </el-button-group>
 
     <!-- 数据表格 -->
     <el-table
@@ -331,6 +358,31 @@
       @pagination="getDataList"
     />
 
+    <!-- 新增弹窗 -->
+    <new-dialog
+      v-if="dialogs.new"
+      :visible="dialogs.new"
+      @closeMeOk="handleNewDialogOk"
+      @closeMeCancel="handleNewDialogCancel"
+    />
+
+    <!-- 编辑弹窗 -->
+    <edit-dialog
+      v-if="dialogs.edit"
+      :visible="dialogs.edit"
+      :data="dataJson.currentJson"
+      @closeMeOk="handleEditDialogOk"
+      @closeMeCancel="handleEditDialogCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="dialogs.view"
+      :visible="dialogs.view"
+      :data="dataJson.currentJson"
+      @closeMeCancel="handleViewDialogCancel"
+    />
+
     <div
       slot="footer"
       class="dialog-footer"
@@ -365,13 +417,21 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import { getListApi } from '@/api/20_master/staff/staff'
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
+import SelectDict from '@/components/00_dict/select/SelectDict'
+import NewDialog from '../20_new/index.vue'
+import EditDialog from '../30_edit/index.vue'
+import ViewDialog from '../40_view/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {
   name: 'StaffSelectDialog',
   components: {
     Pagination,
-    DeleteTypeNormal
+    DeleteTypeNormal,
+    SelectDict,
+    NewDialog,
+    EditDialog,
+    ViewDialog
   },
   directives: { elDragDialog },
   props: {
@@ -403,7 +463,8 @@ export default {
           name: '',
           id_card: '',
           is_enable: '',
-          is_del: '0' // 未删除
+          is_del: '0', // 未删除
+          dataModel: this.CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED // 弹出框模式，默认显示未使用组织
         },
         enableList: [
           { 'enable_name': '已开启', 'status': true },
@@ -416,9 +477,7 @@ export default {
         // 单条数据 json
         currentJson: {},
         // 当前表格中的索引，第几条
-        rowIndex: 0,
-        // 当前选中的行（checkbox）
-        multipleSelection: []
+        rowIndex: 0
       },
       // 页面设置json
       settings: {
@@ -426,11 +485,18 @@ export default {
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
         // 按钮状态
         btnShowStatus: {
-          showSelect: true
+          showSelect: true,
+          showUpdate: false
         },
         // loading 状态
         loading: true,
         duration: 4000
+      },
+      // 弹窗控制
+      dialogs: {
+        new: false,
+        edit: false,
+        view: false
       },
       isViewModel: false
     }
@@ -487,6 +553,12 @@ export default {
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
       this.dataJson.currentJson.index = this.getRowIndex(row)
+      // 更新按钮状态
+      if (row && row.id) {
+        this.settings.btnShowStatus.showUpdate = true
+      } else {
+        this.settings.btnShowStatus.showUpdate = false
+      }
     },
     handleSortChange (column) {
       // 服务器端排序
@@ -525,6 +597,90 @@ export default {
     // 取消
     handleCancel () {
       this.$emit('closeMeCancel')
+    },
+    // 点击按钮 新增
+    handleInsert () {
+      this.dialogs.new = true
+    },
+    // 点击按钮 修改
+    handleUpdate () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$message.warning('请选择一条数据')
+        return
+      }
+      this.dialogs.edit = true
+    },
+    // 查看
+    handleView () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$message.warning('请选择一条数据')
+        return
+      }
+      this.dialogs.view = true
+    },
+    // 新增弹窗回调
+    handleNewDialogOk (val) {
+      if (val.return_flag) {
+        this.dialogs.new = false
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.unshift(val.data.data)
+
+        // 设置新增的数据为当前选中数据
+        this.dataJson.currentJson = Object.assign({}, val.data.data)
+        this.settings.btnShowStatus.showUpdate = true
+
+        this.$notify({
+          title: '新增处理成功',
+          message: val.data.message,
+          type: 'success',
+          duration: this.settings.duration
+        })
+
+        // 新增成功后关闭整个选择弹窗并返回新增的数据
+        this.$emit('closeMeOk', Object.assign({}, this.dataJson.currentJson))
+      } else {
+        this.$notify({
+          title: '新增处理失败',
+          message: val.error.message,
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
+    },
+    handleNewDialogCancel () {
+      this.dialogs.new = false
+    },
+    // 编辑弹窗回调
+    handleEditDialogOk (val) {
+      if (val.return_flag) {
+        this.dialogs.edit = false
+        // 设置到table中绑定的json数据源
+        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
+        // 设置到currentjson中
+        this.dataJson.currentJson = Object.assign({}, val.data.data)
+
+        this.$notify({
+          title: '更新处理成功',
+          message: val.data.message,
+          type: 'success',
+          duration: this.settings.duration
+        })
+        this.getDataList()
+      } else {
+        this.$notify({
+          title: '更新处理失败',
+          message: val.error.message,
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
+    },
+    handleEditDialogCancel () {
+      this.dialogs.edit = false
+    },
+    // 查看弹窗回调
+    handleViewDialogCancel () {
+      this.dialogs.view = false
     }
   }
 }

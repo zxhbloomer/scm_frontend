@@ -148,13 +148,6 @@
         class="dialog-footer"
       >
         <el-divider />
-        <div class="floatLeft">
-          <el-button
-            type="danger"
-            :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-            @click="doReset()"
-          >重置</el-button>
-        </div>
         <el-button
           plain
           type="primary"
@@ -256,7 +249,6 @@ export default {
         loading: false,
         // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
-          disabledReset: true,
           disabledInsert: true
         },
         // pop的check内容
@@ -371,7 +363,6 @@ export default {
       this.unWatch()
       // 监听页面上面是否有修改，有修改按钮高亮
       this.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
-        this.settings.btnDisabledStatus.disabledReset = false
         this.settings.btnDisabledStatus.disabledInsert = false
       }, { deep: true }
       )
@@ -428,26 +419,6 @@ export default {
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')
-    },
-    // 重置按钮
-    doReset () {
-      // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      if (this.copyData) {
-        this.dataJson.tempJson.code = ''
-      }
-      // 设置控件焦点focus
-      this.$nextTick(() => {
-        this.$refs['refFocusOne'] && this.$refs['refFocusOne'].focus()
-      })
-      // 初始化按钮
-      this.settings.btnDisabledStatus = this.$options.data.call(this).settings.btnDisabledStatus
-      // 初始化watch
-      this.setWatch()
-      // 去除validate信息
-      this.$nextTick(() => {
-        this.$refs['dataSubmitForm'].clearValidate()
-      })
     },
     // 插入逻辑
     doInsert () {

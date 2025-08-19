@@ -40,6 +40,13 @@
       <el-form-item label="">
         <delete-type-normal v-model="dataJson.searchForm.is_del" disabled />
       </el-form-item>
+      <el-form-item label="">
+        <select-dict
+          v-model="dataJson.searchForm.dataModel"
+          :para="CONSTANTS.DICT_ORG_USED_TYPE"
+          init-placeholder="请选择"
+        />
+      </el-form-item>
       <el-form-item style="float:right">
         <el-button
           type="primary"
@@ -236,6 +243,7 @@ import permission from '@/directive/permission/index.js'
 import { getListApi } from '@/api/20_master/position/position'
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
+import SelectDict from '@/components/00_dict/select/SelectDict'
 import NewDialog from '../20_new/index.vue'
 import EditDialog from '../30_edit/index.vue'
 import ViewDialog from '../40_view/index.vue'
@@ -246,6 +254,7 @@ export default {
   components: {
     Pagination,
     DeleteTypeNormal,
+    SelectDict,
     NewDialog,
     EditDialog,
     ViewDialog
