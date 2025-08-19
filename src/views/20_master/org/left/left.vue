@@ -522,6 +522,108 @@
     top: -26px;
     width: 1px;
   }
+
+  /* 拖拽样式优化 - 简单明显的区分 */
+
+  /* 子级拖拽样式 - 绿色背景+文字 */
+  .drag-drop-inner {
+    background: linear-gradient(90deg, #f0f9ff 0%, #e8f5e8 100%) !important;
+    border: 3px solid #67C23A !important;
+    border-radius: 8px !important;
+    position: relative !important;
+    box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3) !important;
+  }
+
+  .drag-drop-inner::after {
+    content: '📁 成为子节点';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #67C23A;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  /* 平级拖拽样式 - 优化版本 */
+  .drag-drop-before {
+    position: relative;
+  }
+
+  .drag-drop-before::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 20px;
+    right: 10px;
+    height: 6px;
+    background: linear-gradient(90deg, #FF6B35 0%, #FF8C42 100%);
+    border-radius: 3px;
+    z-index: 9998;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.5);
+    border: 1px solid #FF6B35;
+    pointer-events: none;
+  }
+
+  .drag-drop-before::after {
+    content: '⬆️ 上方';
+    position: absolute;
+    top: -25px;
+    right: 10px;
+    background: #FF6B35;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 9999;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(255, 107, 53, 0.5);
+    pointer-events: none;
+    display: block;
+  }
+
+  .drag-drop-after {
+    position: relative;
+  }
+
+  .drag-drop-after::before {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 20px;
+    right: 10px;
+    height: 6px;
+    background: linear-gradient(90deg, #FF6B35 0%, #FF8C42 100%);
+    border-radius: 3px;
+    z-index: 9998;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.5);
+    border: 1px solid #FF6B35;
+    pointer-events: none;
+  }
+
+  .drag-drop-after::after {
+    content: '⬇️ 下方';
+    position: absolute;
+    bottom: -25px;
+    right: 10px;
+    background: #FF6B35;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 9999;
+    white-space: nowrap;
+    box-shadow: 0 3px 10px rgba(255, 107, 53, 0.5);
+    pointer-events: none;
+    display: block;
+  }
   .el-icon--right {
     margin-left: 0px;
   }
@@ -1219,13 +1321,39 @@ export default {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
     },
+
     handleDragEnter (draggingNode, dropNode, ev) {
+      // 清除之前的样式
+      this.clearDragStyles()
+
+      // 计算拖拽类型并应用样式
+      const dropType = this.calculateDropType(ev)
+      if (dropType && this.allowDrop(draggingNode, dropNode, dropType)) {
+        this.applyDragStyle(ev.target, dropType)
+      }
     },
+
     handleDragLeave (draggingNode, dropNode, ev) {
+      // 延迟清除样式，避免移动过程中的闪烁
+      setTimeout(() => {
+        this.clearDragStyles()
+      }, 50)
     },
+
     handleDragOver (draggingNode, dropNode, ev) {
+      // 清除之前的样式
+      this.clearDragStyles()
+
+      // 计算拖拽类型并应用样式
+      const dropType = this.calculateDropType(ev)
+      if (dropType && this.allowDrop(draggingNode, dropNode, dropType)) {
+        this.applyDragStyle(ev.target, dropType)
+      }
     },
+
     handleDragEnd (draggingNode, dropNode, dropType, ev) {
+      // 清除所有拖拽样式
+      this.clearDragStyles()
     },
     /**
      * 拖拽结束后事件
@@ -1784,6 +1912,64 @@ export default {
           }
         })
       }
+    },
+
+    // 拖拽样式辅助方法
+
+    /**
+     * 计算拖拽类型
+     * @param {Event} ev - 事件对象
+     * @returns {String} dropType - 'inner', 'before', 'after'
+     */
+    calculateDropType (ev) {
+      const nodeContent = ev.target.closest('.el-tree-node__content')
+      if (!nodeContent) return null
+
+      const rect = nodeContent.getBoundingClientRect()
+      const y = ev.clientY - rect.top
+      const height = rect.height
+
+      // 根据鼠标位置判断拖拽类型
+      if (y < height * 0.25) {
+        return 'before' // 上方25%区域 - 插入前面
+      } else if (y > height * 0.75) {
+        return 'after' // 下方25%区域 - 插入后面
+      } else {
+        return 'inner' // 中间50%区域 - 成为子节点
+      }
+    },
+
+    /**
+     * 应用拖拽样式
+     * @param {Element} target - 目标元素
+     * @param {String} dropType - 拖拽类型
+     */
+    applyDragStyle (target, dropType) {
+      const nodeContent = target.closest('.el-tree-node__content')
+      if (!nodeContent) return
+
+      // 清除之前的样式
+      this.clearDragStyles()
+
+      // 应用对应的样式类
+      if (dropType === 'inner') {
+        nodeContent.classList.add('drag-drop-inner')
+      } else if (dropType === 'before') {
+        nodeContent.classList.add('drag-drop-before')
+      } else if (dropType === 'after') {
+        nodeContent.classList.add('drag-drop-after')
+      }
+    },
+
+    /**
+     * 清除所有拖拽样式
+     */
+    clearDragStyles () {
+      // 清除所有节点的拖拽样式类
+      const allNodes = this.$el.querySelectorAll('.el-tree-node__content')
+      allNodes.forEach(node => {
+        node.classList.remove('drag-drop-inner', 'drag-drop-before', 'drag-drop-after')
+      })
     }
   }
 }
