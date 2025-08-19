@@ -133,6 +133,10 @@
             />
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               组织机构根节点
+              <!-- 显示根节点统计信息 -->
+              <span v-if="data.root_stats" style="font-size: 12px; color: #606266;">
+                {{ data.root_stats }}
+              </span>
             </span>
             <span v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               {{ data.simple_name }}
@@ -227,7 +231,7 @@
                 v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staff_count > 0"
                 style="color: #909399; font-size: 12px;"
               >
-                （含员工：{{ data.staff_count }}）
+                （员工数：{{ data.staff_count }}）
               </span>
             </span>
           </span>
@@ -635,6 +639,46 @@
     margin-left: 0px;
   }
 
+  /* 🎯 精确的节点选中状态颜色控制 - 只影响选中节点 */
+  .el-tree-node.is-current > .el-tree-node__content {
+    /* 企业部门数量: 蓝色 → 白色 */
+    .company-dept-count,
+    span[style*="color: #409EFF"],
+    span[style*="color:#409EFF"] {
+      color: white !important;
+    }
+
+    /* 部门统计数据: 绿色 → 白色 */
+    span[style*="color: #67C23A"],
+    span[style*="color:#67C23A"] {
+      color: white !important;
+    }
+
+    /* 岗位员工数量: 灰色 → 白色 */
+    span[style*="color: #909399"],
+    span[style*="color:#909399"] {
+      color: white !important;
+    }
+
+    /* 集团统计数据: 橙色 → 白色 */
+    span[style*="color: #E6A23C"],
+    span[style*="color:#E6A23C"] {
+      color: white !important;
+    }
+
+    /* Element UI 链接组件颜色覆盖 */
+    .el-link--success,
+    .el-link--warning {
+      color: white !important;
+    }
+
+    /* 所有描述文字 */
+    .custom-tree-node span[style*="color"],
+    .custom-tree-node .el-link {
+      color: white !important;
+    }
+  }
+
   // .el-tree-node:after {
   //   border-top: 1px solid #4386c6;
   //   height: 20px;
@@ -665,7 +709,7 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi } from '@/api/20_master/org/org'
+import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi, getRootStatisticsApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
 import groupDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
 import companyDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
@@ -928,6 +972,8 @@ export default {
         this.dataJson.treeData = response.data
         // 为集团类型节点异步加载子节点数量
         this.loadSubCount(this.dataJson.treeData)
+        // 加载根节点统计信息
+        this.loadRootStatistics()
         this.getListAfterProcess()
         this.settings.loading = false
         this.$nextTick(() => {
@@ -1549,9 +1595,7 @@ export default {
             node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
           // 对于集团类型，传递orgType参数以获取详细分类统计
           if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP) {
-            console.log(`[DEBUG] 调用集团API: orgId=${node.id}, orgType=${node.type}`)
             getSubCountApi(node.id, node.type).then(response => {
-              console.log(`[DEBUG] 集团API返回数据:`, response.data)
               // 使用this.$set确保响应式更新
               this.$set(node, 'sub_count', response.data)
             }).catch(error => {
@@ -1559,28 +1603,20 @@ export default {
               this.$set(node, 'sub_count', 0)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
-            // 企业类型：同时获取子节点数量和部门统计
-            getSubCountApi(node.id).then(response => {
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
-            }).catch(error => {
-              console.error('获取企业子节点数量失败:', error)
-              this.$set(node, 'sub_count', 0)
-            })
-
-            // 获取企业部门统计
+            // 企业类型：只调用一次API获取部门统计（包含dept_count）
             getSubCountApi(node.id, this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY).then(response => {
               const deptCount = response.data.dept_count || 0
               this.$set(node, 'dept_count', deptCount)
+              // 不再需要单独的sub_count，部门数量就是其子节点数量
+              this.$set(node, 'sub_count', response.data)
             }).catch(error => {
               console.error('获取企业部门统计失败:', error)
               this.$set(node, 'dept_count', 0)
+              this.$set(node, 'sub_count', 0)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
             // 部门类型：获取详细的子部门和岗位统计
-            console.log(`[DEBUG] 调用部门API: orgId=${node.id}, orgType=${node.type}`)
             getSubCountApi(node.id, node.type).then(response => {
-              console.log(`[DEBUG] 部门API返回数据:`, response.data)
               // 使用this.$set确保响应式更新
               this.$set(node, 'sub_count', response.data)
             }).catch(error => {
@@ -1589,12 +1625,9 @@ export default {
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
             // 岗位类型：获取员工数量统计
-            console.log(`[DEBUG] 调用岗位员工统计API: orgId=${node.id}`)
             getSubCountApi(node.id).then(response => {
-              console.log(`[DEBUG] 岗位员工统计API返回数据:`, response.data)
               // 使用this.$set确保响应式更新，存储员工数量
               this.$set(node, 'staff_count', response.data)
-              console.log(`[DEBUG] 岗位节点员工数量已更新: ${node.name}, 员工数: ${response.data}`)
             }).catch(error => {
               console.error('获取岗位员工数量失败:', error)
               this.$set(node, 'staff_count', 0)
@@ -1608,6 +1641,55 @@ export default {
         }
       })
     },
+    // 加载根节点统计信息
+    loadRootStatistics () {
+      getRootStatisticsApi().then(response => {
+        const stats = response.data
+
+        // 查找根节点（通常是第一个节点，且没有parent_id）
+        const rootNode = this.dataJson.treeData.find(node => !node.parent_id)
+
+        if (rootNode) {
+          // 添加统计信息到根节点标签
+          const statsText = `（集团数：${stats.group_count}、主体企业数：${stats.company_count}、岗位数：${stats.position_count}、员工数：${stats.staff_count}）`
+
+          // 根据根节点类型选择正确的更新字段
+          if (rootNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT) {
+            // 租户类型节点：模板显示固定的"组织机构根节点"，无法直接修改
+            // 我们可以在模板中添加条件来显示统计信息
+            this.$set(rootNode, 'root_stats', statsText)
+          } else {
+            // 非租户类型节点：使用simple_name字段
+            const originalName = rootNode.simple_name || rootNode.name || '组织机构管理'
+
+            // 生成新的名称
+            let newName
+            if (originalName.includes('（')) {
+              // 替换现有统计信息
+              newName = originalName.replace(/（.*）/, statsText)
+            } else {
+              // 添加统计信息
+              newName = originalName + statsText
+            }
+
+            // 使用Vue.set确保响应式更新
+            this.$set(rootNode, 'simple_name', newName)
+          }
+
+          // 强制触发视图更新
+          this.$forceUpdate()
+        } else {
+          // 备用方案：使用第一个节点
+          if (this.dataJson.treeData && this.dataJson.treeData.length > 0) {
+            const firstNode = this.dataJson.treeData[0]
+            const statsText = `（集团数：${stats.group_count}、主体企业数：${stats.company_count}、岗位数：${stats.position_count}、员工数：${stats.staff_count}）`
+            this.$set(firstNode, 'label', (firstNode.label || '组织机构管理') + statsText)
+          }
+        }
+      }).catch(error => {
+        console.error('获取根节点统计信息失败:', error)
+      })
+    },
     // 更新指定岗位节点的员工数量显示
     updatePositionStaffCount (positionNode) {
       if (!positionNode || positionNode.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
@@ -1615,7 +1697,6 @@ export default {
       }
       // 调用API获取该岗位的员工数量
       getSubCountApi(positionNode.id).then(response => {
-        console.log(`[DEBUG] 更新岗位员工数量: orgId=${positionNode.id}, 员工数=${response.data}`)
         // 更新树中对应节点的数据
         this.updateTreeNodeStaffCount(this.dataJson.treeData, positionNode.id, response.data)
         // 更新当前选中节点的数据
@@ -1650,7 +1731,6 @@ export default {
     },
     // 获取集团节点的显示数据结构
     getGroupDisplayData (subCount) {
-      console.log(`[DEBUG] getGroupDisplayData接收到的数据:`, subCount, '类型:', typeof subCount)
       // 如果subCount是详细分类对象（包含sub_group_count和company_count）
       if (subCount && typeof subCount === 'object' &&
           subCount.hasOwnProperty('sub_group_count') &&
@@ -1695,7 +1775,6 @@ export default {
 
     // 获取部门节点的显示数据结构
     getDeptDisplayData (subCount) {
-      console.log(`[DEBUG] getDeptDisplayData接收到的数据:`, subCount, '类型:', typeof subCount)
       // 如果subCount是详细分类对象（包含sub_dept_count和position_count）
       if (subCount && typeof subCount === 'object' &&
           subCount.hasOwnProperty('sub_dept_count') &&
@@ -1986,6 +2065,9 @@ export default {
 
         // 5. 为集团类型节点异步加载子节点数量
         this.loadSubCount(this.dataJson.treeData)
+
+        // 5.5. 加载根节点统计信息
+        this.loadRootStatistics()
 
         // 6. 执行数据处理
         this.getListAfterProcess()

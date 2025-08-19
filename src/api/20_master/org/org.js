@@ -221,3 +221,15 @@ export function getSubCountApi (orgId, orgType) {
   })
 }
 
+/**
+ * 获取根节点统计信息
+ * 包含集团数、主体企业数、岗位数、员工数的综合统计
+ * @returns {Promise} 根节点统计数据
+ */
+export function getRootStatisticsApi () {
+  return request({
+    url: '/api/v1/org/root/count',
+    method: 'get'
+  })
+}
+
