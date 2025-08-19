@@ -340,10 +340,6 @@ export default {
     id: {
       type: Number,
       default: null
-    },
-    dataModel: {
-      type: String,
-      default: ''
     }
   },
   data () {
@@ -358,7 +354,7 @@ export default {
           code: '',
           is_del: '0', // 未删除
           id: this.id,
-          dataModel: this.dataModel || this.CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED // 弹出框模式，默认显示未使用组织
+          dataModel: this.CONSTANTS.DICT_ORG_USED_TYPE_SHOW_UNUSED // 弹出框模式，默认显示未使用组织
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),

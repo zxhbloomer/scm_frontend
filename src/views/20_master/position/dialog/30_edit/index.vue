@@ -126,13 +126,6 @@
       class="dialog-footer"
     >
       <el-divider />
-      <div class="floatLeft">
-        <el-button
-          type="danger"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-          @click="doReset()"
-        >重置</el-button>
-      </div>
       <el-button
         plain
         type="primary"
@@ -206,7 +199,6 @@ export default {
         loading: false,
         duration: 4000,
         btnDisabledStatus: {
-          disabledReset: true,
           disabledUpdate: true
         },
         rules: {
@@ -265,7 +257,6 @@ export default {
       this.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
         // 比较是否有改变
         const hasChanged = JSON.stringify(newVal) !== JSON.stringify(this.dataJson.tempJsonOriginal)
-        this.settings.btnDisabledStatus.disabledReset = !hasChanged
         this.settings.btnDisabledStatus.disabledUpdate = !hasChanged
       }, { deep: true })
     },
@@ -297,20 +288,6 @@ export default {
           }).finally(() => {
             this.settings.loading = false
           })
-        }
-      })
-    },
-    doReset () {
-      this.dataJson.tempJson = deepcopy(this.dataJson.tempJsonOriginal)
-      this.$refs.dataSubmitForm.clearValidate()
-
-      // 重新设置监听
-      this.setWatch()
-
-      // 设置焦点
-      this.$nextTick(() => {
-        if (this.$refs.refFocusOne) {
-          this.$refs.refFocusOne.focus()
         }
       })
     },

@@ -37,23 +37,7 @@
         min-width="150"
         prop="simple_name"
         label="组织机构简称"
-      >
-        <template v-slot="scope">
-          {{ scope.row.simple_name }}
-          <!-- 集团类型显示子节点数量 -->
-          <span v-if="scope.row.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="color: #E6A23C; font-size: 12px;">
-            {{ getGroupDisplayText(scope.row.sub_count) }}
-          </span>
-          <!-- 企业类型显示子节点数量 -->
-          <span v-if="scope.row.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" style="color: #409EFF; font-size: 12px;">
-            ({{ scope.row.sub_count || 0 }})
-          </span>
-          <!-- 部门类型显示子节点数量 -->
-          <span v-if="scope.row.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="color: #67C23A; font-size: 12px;">
-            ({{ scope.row.sub_count || 0 }})
-          </span>
-        </template>
-      </el-table-column>
+      />
       <!-- <el-table-column show-overflow-tooltip min-width="250" prop="code" label="组织机构编码" /> -->
       <el-table-column
         show-overflow-tooltip

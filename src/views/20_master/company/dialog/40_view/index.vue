@@ -30,11 +30,7 @@
             label="企业编号："
             prop="code"
           >
-            <el-input
-              v-model="dataJson.tempJson.code"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.code || '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -42,11 +38,7 @@
             label="社会信用代码："
             prop="company_no"
           >
-            <el-input
-              v-model="dataJson.tempJson.company_no"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.company_no || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -56,11 +48,7 @@
             label="企业名称："
             prop="name"
           >
-            <el-input
-              v-model="dataJson.tempJson.name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -68,11 +56,7 @@
             label="企业简称："
             prop="simple_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.simple_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.simple_name || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -82,11 +66,7 @@
             label="法定代表人："
             prop="juridical_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.juridical_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.juridical_name || '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -94,11 +74,7 @@
             label="注册资本（万）："
             prop="register_capital"
           >
-            <el-input
-              :value="formatCurrency(dataJson.tempJson.register_capital,'true',4)"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ formatCurrency(dataJson.tempJson.register_capital,'true',4) || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -108,11 +84,7 @@
             label="成立日期："
             prop="setup_date"
           >
-            <el-input
-              :value="dataJson.tempJson.setup_date ? formatDate(dataJson.tempJson.setup_date) : ''"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.setup_date ? formatDate(dataJson.tempJson.setup_date) : '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -120,11 +92,7 @@
             label="企业类型："
             prop="type_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.type_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.type_name || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -134,24 +102,15 @@
             label="集团信息："
             prop="group_full_simple_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.group_full_simple_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.group_full_simple_name || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
       <el-form-item
-        label="说明："
+        label="备注："
         prop="descr"
       >
-        <el-input
-          v-model="dataJson.tempJson.descr"
-          type="textarea"
-          disabled
-          placeholder=""
-        />
+        <div class="view-textarea">{{ dataJson.tempJson.descr || '--' }}</div>
       </el-form-item>
       <el-row>
         <el-col :span="12">
@@ -159,11 +118,7 @@
             label="创建人："
             prop="c_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.c_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.c_name || '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -171,11 +126,7 @@
             label="创建时间："
             prop="c_time"
           >
-            <el-input
-              :value="dataJson.tempJson.c_time ? formatDateTime(dataJson.tempJson.c_time) : ''"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.c_time ? formatDateTime(dataJson.tempJson.c_time) : '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -185,11 +136,7 @@
             label="更新人："
             prop="u_name"
           >
-            <el-input
-              v-model="dataJson.tempJson.u_name"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.u_name || '--' }}</span>
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -197,11 +144,7 @@
             label="更新时间："
             prop="u_time"
           >
-            <el-input
-              :value="dataJson.tempJson.u_time ? formatDateTime(dataJson.tempJson.u_time) : ''"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.u_time ? formatDateTime(dataJson.tempJson.u_time) : '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -211,11 +154,7 @@
             label="删除状态："
             prop="is_del"
           >
-            <el-input
-              :value="dataJson.tempJson.is_del ? '已删除' : '未删除'"
-              disabled
-              placeholder=""
-            />
+            <span class="view-text">{{ dataJson.tempJson.is_del ? '已删除' : '未删除' }}</span>
           </el-form-item>
         </el-col>
       </el-row>
@@ -279,4 +218,24 @@ export default {
 </script>
 
 <style scoped>
+.view-text {
+  color: #606266;
+  font-size: 14px;
+  line-height: 32px;
+  display: inline-block;
+  min-height: 32px;
+}
+
+.view-textarea {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  min-height: 80px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
 </style>

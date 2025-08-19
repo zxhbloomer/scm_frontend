@@ -177,9 +177,9 @@
                   </span>
                 </template>
               </span>
-              <!-- 企业类型显示部门数量 -->
-              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" class="company-dept-count" style="color: #409EFF; font-size: 12px;">
-                （部门数：{{ data.dept_count || 0 }}）
+              <!-- 企业类型显示部门数量 - 只在数量大于0时显示 -->
+              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY && (data.dept_count > 0)" class="company-dept-count" style="color: #409EFF; font-size: 12px;">
+                （部门数：{{ data.dept_count }}）
               </span>
               <!-- 部门类型显示子部门和岗位数量 -->
               <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="font-size: 12px;">
@@ -221,6 +221,13 @@
                     {{ getDeptDisplayData(data.sub_count).simpleText }}
                   </span>
                 </template>
+              </span>
+              <!-- 岗位节点显示员工数量 -->
+              <span
+                v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staff_count > 0"
+                style="color: #909399; font-size: 12px;"
+              >
+                （含员工：{{ data.staff_count }}）
               </span>
             </span>
           </span>
@@ -1136,10 +1143,8 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
+        // 刷新树数据以确保缓存同步
+        this.handleTreeRefresh()
       } else {
         this.$notify({
           title: '集团修改失败',
@@ -1163,10 +1168,8 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
+        // 刷新树数据以确保缓存同步
+        this.handleTreeRefresh()
       } else {
         this.$notify({
           title: '企业修改失败',
@@ -1190,10 +1193,8 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
+        // 刷新树数据以确保缓存同步
+        this.handleTreeRefresh()
       } else {
         this.$notify({
           title: '部门修改失败',
@@ -1217,10 +1218,8 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
-        // 直接更新树中当前节点的数据
-        this.updateTreeNodeData(this.dataJson.treeData, this.dataJson.currentJson.id, val.data.data)
-        // 更新当前选中节点数据
-        Object.assign(this.dataJson.currentJson, val.data.data)
+        // 刷新树数据以确保缓存同步
+        this.handleTreeRefresh()
       } else {
         this.$notify({
           title: '岗位修改失败',
@@ -1289,8 +1288,8 @@ export default {
           if (this.popSettingsData.listDialogData.dialogType === 'staff') {
             this.updatePositionStaffCount(this.dataJson.currentJson)
           } else {
-            // 其他类型刷新树数据，以便显示新增的节点
-            this.getDataList()
+            // 其他类型刷新树数据，以便显示新增的节点和确保缓存同步
+            this.handleTreeRefresh()
           }
         }, (_error) => {
           this.$notify({
@@ -1408,10 +1407,9 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
-        // 查询
-        this.getDataList()
+        // 刷新树数据
+        this.handleTreeRefresh()
         this.popSettingsData.dialogFormVisible = false
-        this.getDataList()
         // this.$off(this.EMITS.EMIT_ORG_LOADING_OK)
         EventBus.$emit(this.EMITS.EMIT_ORG_LOADING_OK)
       }, (_error) => {
@@ -1594,18 +1592,12 @@ export default {
             console.log(`[DEBUG] 调用岗位员工统计API: orgId=${node.id}`)
             getSubCountApi(node.id).then(response => {
               console.log(`[DEBUG] 岗位员工统计API返回数据:`, response.data)
-              // 使用this.$set确保响应式更新
+              // 使用this.$set确保响应式更新，存储员工数量
               this.$set(node, 'staff_count', response.data)
-              // 更新节点显示标签，添加员工数量
-              if (response.data > 0) {
-                this.$set(node, 'label', node.name + `（员工数：${response.data}）`)
-              } else {
-                this.$set(node, 'label', node.name)
-              }
+              console.log(`[DEBUG] 岗位节点员工数量已更新: ${node.name}, 员工数: ${response.data}`)
             }).catch(error => {
               console.error('获取岗位员工数量失败:', error)
               this.$set(node, 'staff_count', 0)
-              this.$set(node, 'label', node.name)
             })
           }
         }
@@ -1691,11 +1683,12 @@ export default {
           hasContent: links.length > 0
         }
       } else {
-        // 如果是简单数字，继续显示原格式
+        // 如果是简单数字且大于0才显示，等于0时不显示
+        const count = subCount || 0
         return {
           isDetailed: false,
-          simpleText: `(${subCount || 0})`,
-          hasContent: true
+          simpleText: `(${count})`,
+          hasContent: count > 0
         }
       }
     },
@@ -1735,11 +1728,12 @@ export default {
           hasContent: links.length > 0
         }
       } else {
-        // 如果是简单数字，继续显示原格式
+        // 如果是简单数字且大于0才显示，等于0时不显示
+        const count = subCount || 0
         return {
           isDetailed: false,
-          simpleText: `(${subCount || 0})`,
-          hasContent: true
+          simpleText: `(${count})`,
+          hasContent: count > 0
         }
       }
     },
@@ -1970,6 +1964,63 @@ export default {
       allNodes.forEach(node => {
         node.classList.remove('drag-drop-inner', 'drag-drop-before', 'drag-drop-after')
       })
+    },
+
+    /**
+     * 树数据刷新方法
+     * 保存当前选中状态，重新获取树数据，恢复选中状态
+     */
+    async handleTreeRefresh () {
+      try {
+        // 1. 保存当前选中状态
+        const selectedId = this.$refs.treeObject ? this.$refs.treeObject.getCurrentKey() : null
+
+        // 2. 显示加载状态
+        this.settings.loading = true
+
+        // 3. 重新获取树数据
+        const response = await getTreeListApi(this.dataJson.searchForm)
+
+        // 4. 更新树数据
+        this.dataJson.treeData = response.data
+
+        // 5. 为集团类型节点异步加载子节点数量
+        this.loadSubCount(this.dataJson.treeData)
+
+        // 6. 执行数据处理
+        this.getListAfterProcess()
+
+        // 7. 恢复选中状态
+        this.$nextTick(() => {
+          if (selectedId && this.$refs.treeObject) {
+            // 尝试恢复之前选中的节点
+            this.$refs.treeObject.setCurrentKey(selectedId)
+            const currentNode = this.$refs.treeObject.getCurrentNode()
+            if (currentNode) {
+              this.handleCurrentChange(currentNode)
+            } else {
+              // 如果之前选中的节点不存在了，选中第一个节点
+              if (this.dataJson.treeData && this.dataJson.treeData.length > 0) {
+                this.$refs.treeObject.setCurrentKey(this.dataJson.treeData[0].id)
+                this.handleCurrentChange(this.dataJson.treeData[0])
+              }
+            }
+          } else {
+            // 如果没有之前选中的节点，选中第一个节点
+            if (this.dataJson.treeData && this.dataJson.treeData.length > 0) {
+              this.$refs.treeObject.setCurrentKey(this.dataJson.treeData[0].id)
+              this.handleCurrentChange(this.dataJson.treeData[0])
+            }
+          }
+        })
+
+        console.log('树数据刷新成功')
+      } catch (error) {
+        console.error('树数据刷新失败:', error)
+        this.$message.error('刷新组织架构数据失败')
+      } finally {
+        this.settings.loading = false
+      }
     }
   }
 }

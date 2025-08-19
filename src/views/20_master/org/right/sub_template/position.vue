@@ -193,12 +193,16 @@
       @pagination="getDataList"
     />
 
-    <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
+    <view-dialog
+      v-if="popSettings.one.visible && popSettings.one.type === 'view'"
       :data="popSettings.one.props.data"
       :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
+      @closeMeCancel="handleCloseDialogOneCancel"
+    />
+    <edit-dialog
+      v-if="popSettings.one.visible && popSettings.one.type === 'edit'"
+      :data="popSettings.one.props.data"
+      :visible="popSettings.one.visible"
       @closeMeOk="handleCloseDialogOneOk"
       @closeMeCancel="handleCloseDialogOneCancel"
     />
@@ -238,11 +242,12 @@ import Pagination from '@/components/Pagination'
 import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import editDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
+import viewDialog from '@/views/20_master/position/dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
 import { getPositionListApi } from '@/api/20_master/org/org'
 
 export default {
-  components: { Pagination, setPositionDialog, editDialog },
+  components: { Pagination, setPositionDialog, editDialog, viewDialog },
   directives: {},
   mixins: [],
   props: {
@@ -289,10 +294,10 @@ export default {
         // 弹出编辑页面
         one: {
           visible: false,
+          type: '', // 'view' 或 'edit'
           props: {
             id: undefined,
-            data: {},
-            dialogStatus: ''
+            data: {}
           }
         },
         // 设置数据页面
@@ -423,14 +428,12 @@ export default {
     // ------------------岗位master弹出框--------------------
     handleEdit (val) {
       this.popSettings.one.props.data = Object.assign({}, val)
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
+      this.popSettings.one.type = 'edit'
       this.popSettings.one.visible = true
     },
     handleView (val) {
       this.popSettings.one.props.data = Object.assign({}, val)
-      // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
+      this.popSettings.one.type = 'view'
       this.popSettings.one.visible = true
     },
     handleCloseDialogOneOk (val) {
@@ -438,18 +441,9 @@ export default {
       // this.$off(this.EMITS.EMIT_ORG_LEFT)
       EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
 
-      switch (this.popSettings.one.props.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.doInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          this.doCopyInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
+      // 只有编辑操作才需要处理回调
+      if (this.popSettings.one.type === 'edit') {
+        this.doUpdateModelCallBack(val)
       }
     },
     handleCloseDialogOneCancel () {

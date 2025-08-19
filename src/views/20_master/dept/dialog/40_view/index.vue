@@ -28,36 +28,24 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="部门编号：">
-              <el-input
-                v-model.trim="dataJson.tempJson.code"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.code || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="部门名称：">
-              <el-input
-                v-model.trim="dataJson.tempJson.name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
         <el-row>
           <el-col :span="12">
             <el-form-item label="部门简称：">
-              <el-input
-                v-model.trim="dataJson.tempJson.simple_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.simple_name || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="部门主管：">
-              <el-input
-                v-model.trim="dataJson.tempJson.handler_id_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.handler_id_name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -65,18 +53,12 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="部门副主管：">
-              <el-input
-                v-model.trim="dataJson.tempJson.sub_handler_id_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.sub_handler_id_name || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="上级主管领导：">
-              <el-input
-                v-model.trim="dataJson.tempJson.leader_id_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.leader_id_name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -84,21 +66,13 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="上级分管领导：">
-              <el-input
-                v-model.trim="dataJson.tempJson.response_leader_id_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.response_leader_id_name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="说明：">
-          <el-input
-            v-model.trim="dataJson.tempJson.descr"
-            type="textarea"
-            :rows="3"
-            disabled
-          />
+        <el-form-item label="备注：">
+          <div class="view-textarea">{{ dataJson.tempJson.descr || '--' }}</div>
         </el-form-item>
 
         <el-alert
@@ -111,18 +85,12 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="集团信息：">
-              <el-input
-                v-model.trim="dataJson.tempJson.group_full_simple_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.group_full_simple_name || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="企业信息：">
-              <el-input
-                v-model.trim="dataJson.tempJson.company_simple_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.company_simple_name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -130,10 +98,7 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="上级部门：">
-              <el-input
-                v-model.trim="dataJson.tempJson.parent_dept_simple_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.parent_dept_simple_name || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -148,18 +113,12 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="创建人：">
-              <el-input
-                v-model.trim="dataJson.tempJson.c_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.c_name || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="创建时间：">
-              <el-input
-                :value="formatDateTime(dataJson.tempJson.c_time)"
-                disabled
-              />
+              <span class="view-text">{{ formatDateTime(dataJson.tempJson.c_time) || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -167,18 +126,12 @@
         <el-row>
           <el-col :span="12">
             <el-form-item label="更新人：">
-              <el-input
-                v-model.trim="dataJson.tempJson.u_name"
-                disabled
-              />
+              <span class="view-text">{{ dataJson.tempJson.u_name || '--' }}</span>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="更新时间：">
-              <el-input
-                :value="formatDateTime(dataJson.tempJson.u_time)"
-                disabled
-              />
+              <span class="view-text">{{ formatDateTime(dataJson.tempJson.u_time) || '--' }}</span>
             </el-form-item>
           </el-col>
         </el-row>
@@ -210,6 +163,27 @@
 <style scoped>
 .el-form-item .el-select {
   width: 100%;
+}
+
+.view-text {
+  color: #606266;
+  font-size: 14px;
+  line-height: 32px;
+  display: inline-block;
+  min-height: 32px;
+}
+
+.view-textarea {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  min-height: 80px;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 </style>
 

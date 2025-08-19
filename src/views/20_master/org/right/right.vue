@@ -33,7 +33,7 @@
         <group-template :height="height - 42" />
       </el-tab-pane>
       <el-tab-pane>
-        <template slot="label">企业信息
+        <template slot="label">主体企业信息
           <el-badge
             v-show="dataJson.listData.company_count>0"
             :value="dataJson.listData.company_count"
