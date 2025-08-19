@@ -680,6 +680,11 @@ export default {
           // 传递给弹窗的数据
           data: null
         }
+      },
+      // 拖拽确认相关状态
+      dragConfirmData: {
+        originalTreeData: null, // 保存拖拽前的树状态
+        isProcessing: false // 是否正在处理拖拽确认
       }
     }
   },
@@ -1211,6 +1216,8 @@ export default {
       })
     },
     handleDragStart (node, ev) {
+      // 在拖拽开始时保存原始树状态，用于可能的撤销操作
+      this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
     },
     handleDragEnter (draggingNode, dropNode, ev) {
     },
@@ -1228,26 +1235,39 @@ export default {
      * ev:event
      */
     handleDrop (draggingNode, dropNode, dropType, ev) {
-      // 进入结点，作为子结点
+      // 如果正在处理确认，避免重复触发
+      if (this.dragConfirmData.isProcessing) {
+        return
+      }
+
+      this.dragConfirmData.isProcessing = true
+
+      // 更新节点父子关系（Element UI已自动调整树结构）
       if (dropType === 'inner') {
-        // 获取老子的id
-        const parent_id = dropNode.data.id
-        // 获取儿子
-        draggingNode.data.parent_id = parent_id
+        draggingNode.data.parent_id = dropNode.data.id
+      } else if (dropType === 'before' || dropType === 'after') {
+        draggingNode.data.parent_id = dropNode.data.parent_id
       }
-      if (dropType === 'before') {
-        // 获取老子的id
-        const parent_id = dropNode.data.parent_id
-        // 获取儿子
-        draggingNode.data.parent_id = parent_id
-      }
-      if (dropType === 'after') {
-        // 获取老子的id
-        const parent_id = dropNode.data.parent_id
-        // 获取儿子
-        draggingNode.data.parent_id = parent_id
-      }
-      this.doDragSave()
+
+      // 生成确认消息
+      const confirmMessage = this.generateDragConfirmMessage(draggingNode, dropNode, dropType)
+
+      // 显示确认弹窗
+      this.$confirm(confirmMessage, '确认组织架构调整', {
+        confirmButtonText: '确定调整',
+        cancelButtonText: '取消',
+        dangerouslyUseHTMLString: true,
+        showClose: false,
+        closeOnClickModal: false
+      }).then(() => {
+        // 用户确认 - 执行保存
+        this.doDragSave()
+      }).catch(() => {
+        // 用户取消 - 恢复原始状态
+        this.restoreTreeState()
+      }).finally(() => {
+        this.dragConfirmData.isProcessing = false
+      })
     },
     doDragSave () {
       this.settings.loading = true
@@ -1661,6 +1681,108 @@ export default {
           break
         default:
           console.warn('未知的链接类型:', linkData.type)
+      }
+    },
+
+    // 生成拖拽确认消息
+    generateDragConfirmMessage (draggingNode, dropNode, dropType) {
+      const dragNodeName = draggingNode.data.simple_name || draggingNode.data.label
+      const dragNodeType = this.getOrgTagText(draggingNode.data.type)
+      const dropNodeName = dropNode.data.simple_name || dropNode.data.label
+      const dropNodeType = this.getOrgTagText(dropNode.data.type)
+      const dropTypeText = this.getDropTypeText(dropType)
+      const affectedInfo = this.getAffectedChildrenInfo(draggingNode)
+
+      return `
+        <div style="text-align: left; line-height: 1.6;">
+          <p style="margin: 0 0 8px 0; font-size: 16px;"><strong>确认调整组织架构？</strong></p>
+          <p style="margin: 0 0 8px 0;">
+            <span style="color: #409EFF;">拖拽节点：</span>
+            <strong style="color: #303133;">「${dragNodeName}」</strong>
+            <span style="background: #E1F5FE; color: #0277BD; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${dragNodeType}</span>
+          </p>
+          <p style="margin: 0 0 8px 0;">
+            <span style="color: #67C23A;">目标位置：</span>
+            <strong style="color: #303133;">「${dropNodeName}」</strong>
+            <span style="background: #E8F5E8; color: #388E3C; padding: 2px 6px; border-radius: 4px; font-size: 12px;">${dropNodeType}</span>
+            ${dropTypeText}
+          </p>
+          ${affectedInfo}
+        </div>
+      `
+    },
+
+    // 获取放置位置描述
+    getDropTypeText (dropType) {
+      switch (dropType) {
+        case 'inner':
+          return '<span style="color: #67C23A;"> 下</span>'
+        case 'before':
+          return '<span style="color: #E6A23C;"> 前</span>'
+        case 'after':
+          return '<span style="color: #E6A23C;"> 后</span>'
+        default:
+          return ''
+      }
+    },
+
+    // 获取影响的子节点信息
+    getAffectedChildrenInfo (node) {
+      const childCount = this.getChildrenCount(node)
+      if (childCount > 0) {
+        return `
+          <p style="margin: 0 0 8px 0; color: #F56C6C;">
+            <i class="el-icon-info"></i>
+            <strong>影响范围：</strong>将同时移动 <strong>${childCount}</strong> 个子节点
+          </p>
+        `
+      }
+      return ''
+    },
+
+    // 递归计算子节点数量
+    getChildrenCount (node) {
+      if (!node.children || node.children.length === 0) {
+        return 0
+      }
+
+      let count = node.children.length
+      node.children.forEach(child => {
+        count += this.getChildrenCount(child)
+      })
+
+      return count
+    },
+
+    // 恢复树状态（撤销拖拽）
+    restoreTreeState () {
+      if (this.dragConfirmData.originalTreeData) {
+        // 使用 Vue.set 确保响应式更新
+        this.$set(this.dataJson, 'treeData', JSON.parse(JSON.stringify(this.dragConfirmData.originalTreeData)))
+
+        // 清除保存的状态
+        this.dragConfirmData.originalTreeData = null
+
+        // 显示取消消息
+        this.$message({
+          type: 'info',
+          message: '已取消组织架构调整',
+          duration: 2000
+        })
+
+        // 强制重新渲染树组件
+        this.$nextTick(() => {
+          // 重新渲染树组件以确保视图同步
+          if (this.$refs.treeObject) {
+            // 强制重新渲染
+            this.$refs.treeObject.$forceUpdate()
+
+            // 如果有当前选中节点，重新设置选中状态
+            if (this.dataJson.currentJson && this.dataJson.currentJson.id) {
+              this.$refs.treeObject.setCurrentKey(this.dataJson.currentJson.id)
+            }
+          }
+        })
       }
     }
   }
