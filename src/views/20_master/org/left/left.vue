@@ -373,6 +373,14 @@
       @closeMeOk="handleListDialogOk"
       @closeMeCancel="handleListDialogCancel"
     />
+    <!-- 员工列表弹窗 -->
+    <staff-list-dialog
+      v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'staff'"
+      :visible="popSettingsData.listDialogData.visible"
+      :data="popSettingsData.listDialogData.data"
+      @closeMeOk="handleListDialogOk"
+      @closeMeCancel="handleListDialogCancel"
+    />
 
   </div>
 </template>
@@ -560,6 +568,7 @@ import groupListDialog from '@/views/20_master/group/dialog/10_list/index.vue'
 import companyListDialog from '@/views/20_master/company/dialog/10_list/index.vue'
 import deptListDialog from '@/views/20_master/dept/dialog/10_list/index.vue'
 import positionListDialog from '@/views/20_master/position/dialog/10_list/index.vue'
+import staffListDialog from '@/views/20_master/staff/dialog/10_list/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
 import { getDataByIdApi as getPositionByIdApi } from '@/api/20_master/position/position'
 import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
@@ -571,7 +580,7 @@ export default {
   // name: 'P00000171', // 页面id，和router中的name需要一致，作为缓存
   components: {
     groupDialog, companyDialog, deptDialog, positionDialog, setPositionDialog,
-    groupListDialog, companyListDialog, deptListDialog, positionListDialog
+    groupListDialog, companyListDialog, deptListDialog, positionListDialog, staffListDialog
   },
   directives: { elDragDialog },
   props: {
@@ -904,14 +913,8 @@ export default {
           })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工类型保持原有逻辑
-          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataFive.id = response.data.id
-            this.popSettingsData.searchDialogDataFive.data = response.data
-            this.popSettingsData.searchDialogDataFive.visible = true
-          }).catch(error => {
-            this.$message.error('获取员工数据失败: ' + error.message)
-          })
+          // 员工不作为树节点显示，不允许在此编辑
+          this.$message.warning('员工信息请通过员工管理模块进行编辑')
           break
       }
     },
@@ -938,14 +941,8 @@ export default {
           dialogType = 'position'
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工类型保持原有逻辑
-          getPositionByIdApi({ id: this.dataJson.currentJson.serial_id }).then(response => {
-            this.popSettingsData.searchDialogDataFive.id = response.data.id
-            this.popSettingsData.searchDialogDataFive.data = response.data
-            this.popSettingsData.searchDialogDataFive.visible = true
-          }).finally(() => {
-          })
-          return
+          dialogType = 'staff'
+          break
       }
 
       // 设置弹窗数据并显示
@@ -1164,6 +1161,9 @@ export default {
           case 'position':
             orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION
             break
+          case 'staff':
+            orgType = this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF
+            break
         }
 
         // 调用insertApi创建组织关系
@@ -1178,8 +1178,13 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 刷新树数据，以便显示新增的节点
-          this.getDataList()
+          // 如果是员工类型，只更新当前岗位节点的员工数量显示，不刷新整个树
+          if (this.popSettingsData.listDialogData.dialogType === 'staff') {
+            this.updatePositionStaffCount(this.dataJson.currentJson)
+          } else {
+            // 其他类型刷新树数据，以便显示新增的节点
+            this.getDataList()
+          }
         }, (_error) => {
           this.$notify({
             title: '新增处理失败',
@@ -1391,10 +1396,11 @@ export default {
       if (!treeNodes || !Array.isArray(treeNodes)) return
 
       treeNodes.forEach(node => {
-        // 如果是集团、企业或部门类型，异步获取子节点数量
+        // 如果是集团、企业、部门或岗位类型，异步获取子节点数量
         if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP ||
             node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY ||
-            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT ||
+            node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
           // 对于集团类型，传递orgType参数以获取详细分类统计
           if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP) {
             console.log(`[DEBUG] 调用集团API: orgId=${node.id}, orgType=${node.type}`)
@@ -1435,14 +1441,23 @@ export default {
               console.error('获取部门子节点统计失败:', error)
               this.$set(node, 'sub_count', 0)
             })
-          } else {
-            // 其他类型（岗位等）仍使用原来的调用方式
+          } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+            // 岗位类型：获取员工数量统计
+            console.log(`[DEBUG] 调用岗位员工统计API: orgId=${node.id}`)
             getSubCountApi(node.id).then(response => {
+              console.log(`[DEBUG] 岗位员工统计API返回数据:`, response.data)
               // 使用this.$set确保响应式更新
-              this.$set(node, 'sub_count', response.data)
+              this.$set(node, 'staff_count', response.data)
+              // 更新节点显示标签，添加员工数量
+              if (response.data > 0) {
+                this.$set(node, 'label', node.name + `（员工数：${response.data}）`)
+              } else {
+                this.$set(node, 'label', node.name)
+              }
             }).catch(error => {
-              console.error('获取子节点数量失败:', error)
-              this.$set(node, 'sub_count', 0)
+              console.error('获取岗位员工数量失败:', error)
+              this.$set(node, 'staff_count', 0)
+              this.$set(node, 'label', node.name)
             })
           }
         }
@@ -1452,6 +1467,46 @@ export default {
           this.loadSubCount(node.children)
         }
       })
+    },
+    // 更新指定岗位节点的员工数量显示
+    updatePositionStaffCount (positionNode) {
+      if (!positionNode || positionNode.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+        return
+      }
+      // 调用API获取该岗位的员工数量
+      getSubCountApi(positionNode.id).then(response => {
+        console.log(`[DEBUG] 更新岗位员工数量: orgId=${positionNode.id}, 员工数=${response.data}`)
+        // 更新树中对应节点的数据
+        this.updateTreeNodeStaffCount(this.dataJson.treeData, positionNode.id, response.data)
+        // 更新当前选中节点的数据
+        if (this.dataJson.currentJson && this.dataJson.currentJson.id === positionNode.id) {
+          this.$set(this.dataJson.currentJson, 'staff_count', response.data)
+        }
+      }).catch(error => {
+        console.error('更新岗位员工数量失败:', error)
+      })
+    },
+    // 递归更新树节点中指定节点的员工数量显示
+    updateTreeNodeStaffCount (treeData, nodeId, staffCount) {
+      for (let i = 0; i < treeData.length; i++) {
+        if (treeData[i].id === nodeId) {
+          // 更新员工数量
+          this.$set(treeData[i], 'staff_count', staffCount)
+          // 更新节点显示标签
+          if (staffCount > 0) {
+            this.$set(treeData[i], 'label', treeData[i].name + `（员工数：${staffCount}）`)
+          } else {
+            this.$set(treeData[i], 'label', treeData[i].name)
+          }
+          return true
+        }
+        if (treeData[i].children && treeData[i].children.length > 0) {
+          if (this.updateTreeNodeStaffCount(treeData[i].children, nodeId, staffCount)) {
+            return true
+          }
+        }
+      }
+      return false
     },
     // 获取集团节点的显示数据结构
     getGroupDisplayData (subCount) {

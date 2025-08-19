@@ -46,22 +46,15 @@
           @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item label="">
-        <el-select
-          v-model="dataJson.searchForm.is_enable"
-          clearable
-          placeholder="是否开启登录"
-        >
-          <el-option
-            v-for="item in dataJson.enableList"
-            :key="item.status"
-            :label="item.enable_name"
-            :value="item.status"
-          />
-        </el-select>
-      </el-form-item>
       <el-form-item>
         <delete-type-normal v-model="dataJson.searchForm.is_del" />
+      </el-form-item>
+      <el-form-item label="">
+        <select-dict
+          v-model="dataJson.searchForm.dataModel"
+          :para="CONSTANTS.DICT_ORG_USED_TYPE"
+          init-placeholder="仅显示未使用组织"
+        />
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
@@ -150,7 +143,16 @@
         header-align="center"
         show-overflow-tooltip
         sortable="custom"
-        min-width="120"
+        min-width="80"
+        :sort-orders="settings.sortOrders"
+        prop="birthday"
+        label="生日"
+      />
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="130"
         :sort-orders="settings.sortOrders"
         prop="id_card"
         label="身份证号"
@@ -183,7 +185,7 @@
       <el-table-column
         header-align="center"
         label="岗位信息"
-        min-width="120"
+        min-width="150"
       >
         <template v-slot="column_lists">
           <el-tag
@@ -193,6 +195,118 @@
           >
             {{ item.position_name }}
           </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="150"
+        prop="last_login_date"
+        label="最后登录时间"
+      >
+        <template v-slot="scope">
+          {{ scope.row.last_login_date == null ? '-' : formatDateTime(scope.row.last_login_date) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="150"
+        prop="last_logout_date"
+        label="最后主动登出时间"
+      >
+        <template v-slot="scope">
+          {{ scope.row.last_logout_date == null ? '-' : formatDateTime(scope.row.last_logout_date) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        min-width="80"
+        :sort-orders="settings.sortOrders"
+        label="删除"
+      >
+        <template v-slot:header>
+          <span>
+            删除
+            <el-tooltip
+              class="item"
+              effect="dark"
+              placement="bottom"
+            >
+              <div slot="content">
+                删除状态提示：<br>
+                绿色：未删除 <br>
+                红色：已删除
+              </div>
+              <svg-icon
+                icon-class="perfect-icon-question1_btn"
+                style="margin-left: 5px"
+              />
+            </el-tooltip>
+          </span>
+        </template>
+        <template v-slot="scope">
+          <el-tooltip
+            :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
+            placement="top"
+            :open-delay="500"
+          >
+            <el-switch
+              v-model="scope.row.is_del"
+              active-color="#ff4949"
+              inactive-color="#13ce66"
+              :active-value="true"
+              :inactive-value="false"
+              :width="30"
+              disabled
+            />
+          </el-tooltip>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="90"
+        :sort-orders="settings.sortOrders"
+        prop="c_name"
+        label="创建人"
+      />
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="180"
+        :sort-orders="settings.sortOrders"
+        prop="c_time"
+        label="创建时间"
+      >
+        <template v-slot="scope">
+          {{ formatDateTime(scope.row.c_time) }}
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="90"
+        :sort-orders="settings.sortOrders"
+        prop="u_name"
+        label="更新人"
+      />
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="180"
+        :sort-orders="settings.sortOrders"
+        prop="u_time"
+        label="更新时间"
+      >
+        <template v-slot="scope">
+          {{ formatDateTime(scope.row.u_time) }}
         </template>
       </el-table-column>
       <el-table-column
@@ -228,7 +342,7 @@
         type="primary"
         :disabled="settings.loading || !dataJson.currentJson.id"
         @click="handleSelect()"
-      >选择</el-button>
+      >确定</el-button>
       <el-button
         plain
         :disabled="settings.loading"
