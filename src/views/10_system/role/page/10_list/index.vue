@@ -426,7 +426,6 @@ export default {
     handleEditCancel () {
       this.dialogVisible.edit = false
     },
-
     // 查看
     handleView () {
       if (!this.selectedRow.id) {
@@ -568,7 +567,6 @@ export default {
         label: ''
       }
     },
-
     // 员工关联
     handleViewStaff (row) {
       this.selectedRow = row
