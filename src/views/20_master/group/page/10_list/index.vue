@@ -168,24 +168,7 @@
         label="删除"
       >
         <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -300,6 +283,7 @@
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/20_master/group/group'
 import Pagination from '@/components/Pagination'
+import FieldHelp from '@/components/30_table/FieldHelp'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import NewDialog from '../../dialog/20_new/index.vue'
@@ -311,6 +295,7 @@ export default {
   name: 'GroupList',
   components: {
     Pagination,
+    FieldHelp,
     DeleteTypeNormal,
     FloatMenu,
     NewDialog,

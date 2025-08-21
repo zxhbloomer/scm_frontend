@@ -99,7 +99,7 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="company_simple_name"
+        prop="company_name"
         label="所属公司"
       />
       <el-table-column
@@ -107,16 +107,8 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="dept_simple_name"
+        prop="dept_name"
         label="默认部门"
-      />
-      <el-table-column
-        sortable="custom"
-        min-width="220"
-        :sort-orders="settings.sortOrders"
-        show-overflow-tooltip
-        prop="simple_name"
-        label="岗位信息"
       />
     </el-table>
   </div>

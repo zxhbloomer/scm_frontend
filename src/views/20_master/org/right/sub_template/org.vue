@@ -556,22 +556,13 @@ export default {
       this.dataJson.multipleSelection = arr
     },
     renderHeaderIsDel: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              可见状态提示：<br />
-            绿色：可见  <br />
-            红色：不可见
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
+      return h('field-help', {
+        props: {
+          field: 'visibility',
+          page: 'org-list',
+          defaultLabel: column.label
+        }
+      })
     },
     // --------------弹出查询框：--------------
 

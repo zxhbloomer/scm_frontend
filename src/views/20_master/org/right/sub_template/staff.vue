@@ -100,14 +100,6 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="姓名简称"
-      />
-      <el-table-column
-        show-overflow-tooltip
-        sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
         prop="sex_text"
         label="性别"
       />
@@ -131,14 +123,14 @@
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
-        prop="company_simple_name"
+        prop="company_name"
         label="所属公司"
       />
       <el-table-column
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
-        prop="dept_simple_name"
+        prop="dept_name"
         label="默认部门"
       />
       <el-table-column
@@ -158,29 +150,16 @@
         </template>
       </el-table-column>
       <el-table-column
+        v-if="false"
         min-width="90"
         :sort-orders="settings.sortOrders"
         label="删除"
       >
         <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help
+            default-label="删除"
+            help="删除状态提示：<br>绿色：未删除<br>红色：已删除"
+          />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -268,9 +247,10 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import deepCopy from 'deep-copy'
 import viewDialog from '@/views/20_master/staff/dialog/40_view/index'
+import FieldHelp from '@/components/30_table/FieldHelp'
 
 export default {
-  components: { DeleteTypeNormal, viewDialog },
+  components: { DeleteTypeNormal, viewDialog, FieldHelp },
   directives: { elDragDialog },
   mixins: [],
   props: {

@@ -386,7 +386,7 @@
         align="right"
       >
         <template v-slot:header>
-          <field-help field="order_count" page="pocontract-list" default-label="订单笔数" />
+          <field-help default-label="订单笔数" help="该合同下已创建的采购订单数量" />
         </template>
         <template v-slot:default="scope">
           <el-link
@@ -447,7 +447,7 @@
         align="right"
       >
         <template v-slot:header>
-          <field-help field="virtual_progress" page="pocontract-list" default-label="执行进度" />
+          <field-help default-label="执行进度" help="合同执行进度 = 已完成金额 ÷ 合同总金额 × 100%" />
         </template>
         <template v-slot:default="scope">
           {{ scope.row.virtual_progress == null ? '0.00%' : (scope.row.virtual_progress * 100).toFixed(2) + '%' }}

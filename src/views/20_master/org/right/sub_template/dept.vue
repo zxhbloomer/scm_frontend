@@ -134,6 +134,7 @@
         label="备注"
       />
       <el-table-column
+        v-if="false"
         min-width="100"
         :sort-orders="settings.sortOrders"
         label="删除"

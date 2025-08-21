@@ -204,16 +204,6 @@
         :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="姓名简称"
-      />
-      <el-table-column
-        header-align="center"
-        :auto-fit="true"
-        show-overflow-tooltip
-        sortable="custom"
         min-width="80"
         :sort-orders="settings.sortOrders"
         prop="sex_text"
@@ -315,24 +305,7 @@
         label="删除"
       >
         <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -499,6 +472,7 @@ import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/2
 import Pagination from '@/components/Pagination'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import FloatMenu from '@/components/FloatMenu/index.vue'
+import FieldHelp from '@/components/30_table/FieldHelp'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
@@ -512,6 +486,7 @@ export default {
     Pagination,
     DeleteTypeNormal,
     FloatMenu,
+    FieldHelp,
     NewDialog,
     EditDialog,
     ViewDialog,

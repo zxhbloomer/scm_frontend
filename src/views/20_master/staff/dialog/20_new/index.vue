@@ -65,39 +65,6 @@
             </el-col>
           </el-row>
 
-          <!--            <el-row>-->
-          <!--              <el-col :span="12">-->
-          <!--                <el-form-item-->
-          <!--                  label="员工姓名简称："-->
-          <!--                  prop="simple_name"-->
-          <!--                >-->
-          <!--                  <el-input-->
-          <!--                    v-model.trim="dataJson.tempJson.simple_name"-->
-          <!--                    clearable-->
-          <!--                    show-word-limit-->
-          <!--                    :maxlength="dataJson.inputSettings.maxLength.simple_name"-->
-          <!--                    :placeholder="isPlaceholderShow('请输入')"-->
-          <!--                    :disabled="isViewModel"-->
-          <!--                  />-->
-          <!--                </el-form-item>-->
-          <!--              </el-col>-->
-          <!--              <el-col :span="12">-->
-          <!--                <el-form-item-->
-          <!--                  label="员工姓名简称拼音："-->
-          <!--                  prop="simple_name_py"-->
-          <!--                >-->
-          <!--                  <el-input-->
-          <!--                    v-model.trim="dataJson.tempJson.simple_name_py"-->
-          <!--                    clearable-->
-          <!--                    show-word-limit-->
-          <!--                    :maxlength="dataJson.inputSettings.maxLength.simple_name_py"-->
-          <!--                    :placeholder="isPlaceholderShow('请输入')"-->
-          <!--                    :disabled="isViewModel"-->
-          <!--                  />-->
-          <!--                </el-form-item>-->
-          <!--              </el-col>-->
-          <!--            </el-row>-->
-
           <el-row>
             <el-col :span="12">
               <el-form-item label="身份证号码：" prop="id_card">
@@ -643,6 +610,7 @@
                     >确定</el-button>
                   </div>
                   <select-company-dept
+                    v-if="!isCompanyReadonly"
                     slot="reference"
                     v-model.trim="dataJson.tempJson.company_name"
                     :placeholder="isPlaceholderShow('请选择所属公司')"
@@ -651,6 +619,14 @@
                     :disabled="isViewModel"
                     @closeParentDialog="handleDialogClose"
                     @onReturnData="handleCompanyReturnData"
+                  />
+                  <el-input
+                    v-else
+                    slot="reference"
+                    v-model.trim="dataJson.tempJson.company_name"
+                    :placeholder="isPlaceholderShow('从组织树自动获取')"
+                    readonly
+                    disabled
                   />
                 </el-popover>
               </el-form-item>
@@ -661,6 +637,7 @@
                 prop="dept_name"
               >
                 <select-company-dept
+                  v-if="!isDepartmentReadonly"
                   v-model.trim="dataJson.tempJson.dept_name"
                   :placeholder="isPlaceholderShow('请选择默认部门')"
                   :type="CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
@@ -669,6 +646,13 @@
                   :parent-id="dataJson.tempJson.company_id"
                   @closeParentDialog="handleDialogClose"
                   @onReturnData="handleDeptReturnData"
+                />
+                <el-input
+                  v-else
+                  v-model.trim="dataJson.tempJson.dept_name"
+                  :placeholder="isPlaceholderShow('从组织树自动获取')"
+                  readonly
+                  disabled
                 />
               </el-form-item>
             </el-col>
@@ -780,6 +764,15 @@ export default {
     visible: {
       type: Boolean,
       default: false
+    },
+    // 组织上下文信息（从组织树传递）
+    organizationContext: {
+      type: Object,
+      default: () => ({
+        selectedNode: null,
+        companyInfo: null,
+        departmentInfo: null
+      })
     }
   },
   data () {
@@ -791,7 +784,6 @@ export default {
           two_fileVo: {},
           id: undefined,
           name: '',
-          simple_name: '',
           name_py: '',
           code: '',
           descr: '',
@@ -842,8 +834,6 @@ export default {
           maxLength: {
             name: 20,
             name_py: 20,
-            simple_name: 10,
-            simple_name_py: 15,
             id_card: 25,
             passport: 20,
             nation: 20,
@@ -998,6 +988,19 @@ export default {
     // 判断是否为更新模式（新增弹窗始终为false）
     isUpdateModel () {
       return false
+    },
+    // 判断是否有组织上下文信息
+    hasOrganizationContext () {
+      return this.organizationContext &&
+             (this.organizationContext.companyInfo || this.organizationContext.departmentInfo)
+    },
+    // 判断公司字段是否应该只读（从组织上下文获取时）
+    isCompanyReadonly () {
+      return this.hasOrganizationContext && this.organizationContext.companyInfo
+    },
+    // 判断部门字段是否应该只读（从组织上下文获取时）
+    isDepartmentReadonly () {
+      return this.hasOrganizationContext && this.organizationContext.departmentInfo
     }
   },
   // 监听器
@@ -1040,7 +1043,6 @@ export default {
         two_fileVo: {},
         id: undefined,
         name: '',
-        simple_name: '',
         name_py: '',
         code: '',
         descr: '',
@@ -1105,6 +1107,29 @@ export default {
       this.settings.loading = false
       this.settings.btnShowStatus.showInsert = true
       this.settings.btnDisabledStatus.disabledInsert = false
+
+      // 应用组织上下文信息
+      this.applyOrganizationContext()
+    },
+
+    // 应用组织上下文信息到表单字段
+    applyOrganizationContext () {
+      if (!this.hasOrganizationContext) {
+        return
+      }
+
+      // 应用公司信息
+      if (this.organizationContext.companyInfo) {
+        this.dataJson.tempJson.company_id = this.organizationContext.companyInfo.id
+        this.dataJson.tempJson.company_name = this.organizationContext.companyInfo.name
+        this.dataJson.tempJson.company_simple_name = this.organizationContext.companyInfo.name
+      }
+
+      // 应用部门信息
+      if (this.organizationContext.departmentInfo) {
+        this.dataJson.tempJson.dept_id = this.organizationContext.departmentInfo.id
+        this.dataJson.tempJson.dept_name = this.organizationContext.departmentInfo.name
+      }
     },
     // 设置复制数据（用于复制新增）
     setCopyData (data) {

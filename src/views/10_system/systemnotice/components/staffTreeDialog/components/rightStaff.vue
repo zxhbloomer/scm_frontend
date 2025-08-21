@@ -69,14 +69,6 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="姓名简称"
-      />
-      <el-table-column
-        show-overflow-tooltip
-        sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
         prop="sex_text"
         label="性别"
       />
@@ -84,14 +76,14 @@
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
-        prop="company_simple_name"
+        prop="company_name"
         label="所属公司"
       />
       <el-table-column
         show-overflow-tooltip
         sortable="custom"
         min-width="150"
-        prop="dept_simple_name"
+        prop="dept_name"
         label="默认部门"
       />
       <el-table-column

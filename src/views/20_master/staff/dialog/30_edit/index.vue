@@ -975,8 +975,6 @@ export default {
           maxLength: {
             name: 20,
             name_py: 20,
-            simple_name: 10,
-            simple_name_py: 15,
             id_card: 25,
             passport: 20,
             nation: 20,

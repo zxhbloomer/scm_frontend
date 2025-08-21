@@ -102,14 +102,6 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="姓名简称"
-      />
-      <el-table-column
-        show-overflow-tooltip
-        sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
         prop="email"
         label="邮箱地址"
       />

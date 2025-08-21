@@ -259,24 +259,10 @@
         label="状态"
       >
         <template v-slot:header>
-          <span>
-            状态
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                状态提示：<br>
-                绿色：启用 <br>
-                红色：禁用
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help
+            default-label="状态"
+            help="状态提示：<br>正常：账户正常使用<br>异常：账户存在问题"
+          />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -428,9 +414,10 @@ import { EventBus } from '@/common/eventbus/eventbus'
 import new_template from '@/views/20_master/bankaccounts/dialog/new'
 import edit_template from '@/views/20_master/bankaccounts/dialog/edit'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
+import FieldHelp from '@/components/30_table/FieldHelp'
 
 export default {
-  components: { SelectDicts, edit_template, new_template, Pagination },
+  components: { SelectDicts, edit_template, new_template, Pagination, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {

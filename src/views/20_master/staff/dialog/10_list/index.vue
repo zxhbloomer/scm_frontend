@@ -152,15 +152,6 @@
         header-align="center"
         show-overflow-tooltip
         sortable="custom"
-        min-width="100"
-        :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="姓名简称"
-      />
-      <el-table-column
-        header-align="center"
-        show-overflow-tooltip
-        sortable="custom"
         min-width="60"
         :sort-orders="settings.sortOrders"
         prop="sex_text"
@@ -362,6 +353,7 @@
     <new-dialog
       v-if="dialogs.new"
       :visible="dialogs.new"
+      :organization-context="organizationContext"
       @closeMeOk="handleNewDialogOk"
       @closeMeCancel="handleNewDialogCancel"
     />
@@ -449,6 +441,15 @@ export default {
     selectedData: {
       type: Array,
       default: () => []
+    },
+    // 组织上下文信息（用于传递给新增弹窗）
+    organizationContext: {
+      type: Object,
+      default: () => ({
+        selectedNode: null,
+        companyInfo: null,
+        departmentInfo: null
+      })
     }
   },
   data () {

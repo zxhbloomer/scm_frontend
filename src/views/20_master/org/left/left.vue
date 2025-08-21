@@ -389,6 +389,7 @@
       v-if="popSettingsData.listDialogData.visible && popSettingsData.listDialogData.dialogType === 'staff'"
       :visible="popSettingsData.listDialogData.visible"
       :data="popSettingsData.listDialogData.data"
+      :organization-context="dataJson.organizationContext"
       @closeMeOk="handleListDialogOk"
       @closeMeCancel="handleListDialogCancel"
     />
@@ -758,7 +759,13 @@ export default {
         tempJson: {
           org_type: ''
         },
-        tempJsonOriginal: null
+        tempJsonOriginal: null,
+        // 当前选中的组织节点上下文
+        organizationContext: {
+          selectedNode: null, // 当前选中的树节点
+          companyInfo: null, // 提取的公司信息
+          departmentInfo: null // 提取的部门信息
+        }
       },
       // 页面设置json
       settings: {
@@ -1005,10 +1012,128 @@ export default {
         this.loadCompanyDeptCount(row.id)
       }
 
+      // 提取组织上下文信息
+      this.extractOrganizationContext(row)
+
       // 通知兄弟组件
       // EventBus.$off(this.EMITS.EMIT_ORG_CHANGE)
       EventBus.$emit(this.EMITS.EMIT_ORG_CHANGE, row)
     },
+
+    // 提取组织上下文信息
+    extractOrganizationContext (node) {
+      if (!node) {
+        this.dataJson.organizationContext.selectedNode = null
+        this.dataJson.organizationContext.companyInfo = null
+        this.dataJson.organizationContext.departmentInfo = null
+        return
+      }
+
+      this.dataJson.organizationContext.selectedNode = node
+
+      // 根据节点类型提取相应信息
+      switch (node.type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          // 企业节点：设置公司信息，清空部门信息
+          this.dataJson.organizationContext.companyInfo = {
+            id: node.serial_id,
+            name: node.simple_name,
+            code: node.code
+          }
+          this.dataJson.organizationContext.departmentInfo = null
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          // 部门节点：设置部门信息，同时查找父级企业信息
+          this.dataJson.organizationContext.departmentInfo = {
+            id: node.serial_id,
+            name: node.simple_name,
+            code: node.code
+          }
+
+          // 查找父级企业信息
+          this.findParentCompany(node)
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          // 岗位节点：查找父级部门和企业信息
+          this.findParentDepartmentAndCompany(node)
+          break
+
+        default:
+          // 其他类型节点：清空上下文信息
+          this.dataJson.organizationContext.companyInfo = null
+          this.dataJson.organizationContext.departmentInfo = null
+          break
+      }
+    },
+
+    // 递归查找父级企业信息
+    findParentCompany (node) {
+      if (!node.parent_id || !this.dataJson.treeData) return
+
+      const parentNode = this.findNodeInTree(this.dataJson.treeData, node.parent_id)
+
+      if (parentNode) {
+        if (parentNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
+          // 找到企业节点
+          this.dataJson.organizationContext.companyInfo = {
+            id: parentNode.serial_id,
+            name: parentNode.simple_name,
+            code: parentNode.code
+          }
+        } else {
+          // 继续向上查找
+          this.findParentCompany(parentNode)
+        }
+      }
+    },
+
+    // 查找父级部门和企业信息（用于岗位节点）
+    findParentDepartmentAndCompany (node) {
+      if (!node.parent_id || !this.dataJson.treeData) return
+
+      const parentNode = this.findNodeInTree(this.dataJson.treeData, node.parent_id)
+
+      if (parentNode) {
+        if (parentNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
+          // 找到部门节点
+          this.dataJson.organizationContext.departmentInfo = {
+            id: parentNode.serial_id,
+            name: parentNode.simple_name,
+            code: parentNode.code
+          }
+          // 继续查找父级企业
+          this.findParentCompany(parentNode)
+        } else if (parentNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
+          // 直接找到企业节点
+          this.dataJson.organizationContext.companyInfo = {
+            id: parentNode.serial_id,
+            name: parentNode.simple_name,
+            code: parentNode.code
+          }
+        }
+      }
+    },
+
+    // 在树数据中递归查找指定ID的节点
+    findNodeInTree (treeData, nodeId) {
+      if (!treeData || !Array.isArray(treeData)) return null
+
+      for (const node of treeData) {
+        if (node.id === nodeId) {
+          return node
+        }
+
+        if (node.children && node.children.length > 0) {
+          const found = this.findNodeInTree(node.children, nodeId)
+          if (found) return found
+        }
+      }
+
+      return null
+    },
+
     // 兄弟组件发过来的调用请求
     handleDataChange () {
       // 查询

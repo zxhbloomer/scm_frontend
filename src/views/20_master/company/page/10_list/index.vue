@@ -233,24 +233,7 @@
         label="删除"
       >
         <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -343,6 +326,7 @@ import constants_program from '@/common/constants/constants_program'
 import { EventBus } from '@/common/eventbus/eventbus'
 import { getListApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/20_master/company/company'
 import Pagination from '@/components/Pagination'
+import FieldHelp from '@/components/30_table/FieldHelp'
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
@@ -355,6 +339,7 @@ export default {
   name: constants_program.P_COMPANY, // 页面id，和router中的name需要一致，作为缓存
   components: {
     Pagination,
+    FieldHelp,
     DeleteTypeNormal,
     NewDialog,
     EditDialog,

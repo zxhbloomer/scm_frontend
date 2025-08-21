@@ -799,22 +799,13 @@ export default {
     },
     // ------------------编辑弹出框 end--------------------
     renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              是否是黑名单状态提示：<br />
-              绿色：否  <br />
-              红色：是
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
+      return h('field-help', {
+        props: {
+          field: 'is_blacklist',
+          page: 'enterprise-list',
+          defaultLabel: column.label
+        }
+      })
     },
     // 数据批量导入按钮
     handleOpenImportDialog () {

@@ -467,12 +467,6 @@ export const router_five = [
     },
     children: [
       {
-        path: 'dept',
-        component: () => import('@/views/20_master/permission/dept/permission_dept'),
-        name: 'P00000039',
-        meta: { title: '部门权限维护', icon: 'permission' }
-      },
-      {
         path: 'authorize',
         component: () => import('@/views/20_master/authorize/authorize'),
         name: 'P00000254',
@@ -513,23 +507,16 @@ export const router_five = [
       },
       {
         path: '/permission',
-        component: () => import('@/views/20_master/permission/role/permission_role'),
+        component: () => import('@/views/20_master/permission/index.vue'),
         name: 'P00000044',
         meta: { title: '权限设置', icon: 'permission' }
       },
       {
         path: '/role',
-        component: () => import('@/views/10_system/role/role'),
+        component: () => import('@/views/10_system/role/index'),
         name: 'P00000045',
         meta: { title: '角色管理', icon: 'permission' }
-      },
-      {
-        path: '/dept',
-        component: () => import('@/views/20_master/permission/dept/permission_dept'),
-        name: 'P00000046',
-        meta: { title: '授权管理', icon: 'permission' }
       }
-
     ]
   },
   {

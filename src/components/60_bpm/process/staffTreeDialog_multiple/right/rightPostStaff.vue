@@ -40,7 +40,7 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_full_name"
         label="集团信息"
       />
 
@@ -49,7 +49,7 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="company_simple_name"
+        prop="company_name"
         label="企业信息"
       />
 
@@ -58,7 +58,7 @@
         sortable="custom"
         min-width="120"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_full_name"
         label="部门信息"
       />
 

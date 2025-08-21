@@ -1,68 +1,78 @@
 <template>
-  <el-dialog
-    v-if="listenVisible"
-    v-el-drag-dialog
-    :title="settings.position_title"
-    :visible="visible"
-    :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
-    :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
-    :show-close="false"
-    :append-to-body="true"
-    :modal-append-to-body="true"
-    width="740px"
-  >
-    <el-form
-      ref="dataSubmitForm"
-      :model="dataJson.tempJson"
-      label-position="rigth"
-      label-width="120px"
-      status-icon
+  <div>
+    <el-dialog
+      v-if="listenVisible"
+      v-el-drag-dialog
+      :title="settings.position_title"
+      :visible="visible"
+      :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
+      :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
+      :show-close="false"
+      :append-to-body="true"
+      :modal-append-to-body="true"
+      width="740px"
     >
-      <el-row>
-        <el-col
-          :span="24"
-          class="transferCenter"
-        >
-          <el-transfer
-            v-model="settings.transfer.staff_positions"
-            filterable
-            :filter-method="transferFilterMethod"
-            filter-placeholder="请输入员工姓名"
-            :data="settings.transfer.staff_all"
-            :titles="['未选择员工', '已选择员工']"
-            :button-texts="['员工反选', '选择员工']"
-            :render-content="renderTransfer"
-          />
-        </el-col>
-      </el-row>
-    </el-form>
-    <div
-      slot="footer"
-      class="dialog-footer"
-    >
-      <el-divider />
-      <div class="floatLeft">
+      <el-form
+        ref="dataSubmitForm"
+        :model="dataJson.tempJson"
+        label-position="rigth"
+        label-width="120px"
+        status-icon
+      >
+        <el-row>
+          <el-col
+            :span="24"
+            class="transferCenter"
+          >
+            <el-transfer
+              v-model="settings.transfer.staff_positions"
+              filterable
+              :filter-method="transferFilterMethod"
+              filter-placeholder="请输入员工姓名"
+              :data="settings.transfer.staff_all"
+              :titles="['未选择员工', '已选择员工']"
+              :button-texts="['员工反选', '选择员工']"
+              :render-content="renderTransfer"
+            />
+          </el-col>
+        </el-row>
+      </el-form>
+      <div
+        slot="footer"
+        class="dialog-footer"
+      >
+        <el-divider />
+        <div class="floatLeft">
+          <el-button
+            v-show="!isViewModel"
+            type="danger"
+            :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
+            @click="doReset()"
+          >重置</el-button>
+        </div>
         <el-button
-          v-show="!isViewModel"
-          type="danger"
-          :disabled="settings.loading || settings.btnDisabledStatus.disabledReset"
-          @click="doReset()"
-        >重置</el-button>
+          v-show="settings.btnShowStatus.showInsert && !isViewModel"
+          plain
+          type="primary"
+          :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert "
+          @click="doInsert()"
+        >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
       </div>
-      <el-button
-        v-show="settings.btnShowStatus.showInsert && !isViewModel"
-        plain
-        type="primary"
-        :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert "
-        @click="doInsert()"
-      >确定</el-button>
-      <el-button
-        plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
-    </div>
-  </el-dialog>
+    </el-dialog>
+
+    <!-- 员工查看弹窗 -->
+    <staff-view-dialog
+      v-if="staffDialog.visible"
+      :visible="staffDialog.visible"
+      :data="staffDialog.staffData"
+      @closeMeCancel="handleStaffDialogClose"
+    />
+  </div>
 </template>
 
 <style scoped>
@@ -83,10 +93,13 @@ import { getStaffTransferListApi, setStaffTransferApi } from '@/api/20_master/or
 import constants_para from '@/common/constants/constants_para'
 import deepcopy from 'deep-copy'
 import elDragDialog from '@/directive/el-drag-dialog'
+import StaffViewDialog from '../../../staff/dialog/40_view/index.vue'
 
 export default {
   // name: '', // 页面id，和router中的name需要一致，作为缓存
-  components: {},
+  components: {
+    StaffViewDialog
+  },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -145,6 +158,11 @@ export default {
         },
         // 弹出框title，岗位名称
         position_title: ''
+      },
+      // 员工查看弹窗控制
+      staffDialog: {
+        visible: false,
+        staffData: null
       }
     }
   },
@@ -285,17 +303,19 @@ export default {
         this.closeLoading()
       })
     },
-    // 点击跳转到组织机构页面，并关闭本页面
-    handleForward (val) {
-      this.$confirm('查看该员工详情，需要关闭当前页面，请注意保存！', '确认信息', {
-      }).then(() => {
-        // 通知路由，打开组织机构页面
-        this.$router.push({
-          name: this.PROGRAMS.P_STAFF, params: { name: val }
-        })
-        this.handleCancel()
-      }).catch(action => {
-      })
+    // 点击查看员工详情，弹出员工查看对话框
+    handleForward (staffName) {
+      // 从员工列表中找到对应的员工数据
+      const staffItem = this.settings.transfer.staff_all.find(item => item.label === staffName)
+      if (staffItem) {
+        this.staffDialog.staffData = { id: staffItem.key, name: staffItem.label }
+        this.staffDialog.visible = true
+      }
+    },
+    // 关闭员工查看弹窗
+    handleStaffDialogClose () {
+      this.staffDialog.visible = false
+      this.staffDialog.staffData = null
     },
     // 穿梭框增加按钮
     renderTransfer (h, option) {

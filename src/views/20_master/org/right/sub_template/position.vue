@@ -69,14 +69,6 @@
       </el-table-column>
       <el-table-column
         show-overflow-tooltip
-        sortable="custom"
-        min-width="150"
-        :sort-orders="settings.sortOrders"
-        prop="simple_name"
-        label="岗位简称"
-      />
-      <el-table-column
-        show-overflow-tooltip
         min-width="130"
         prop=""
         label="操作"
@@ -121,29 +113,13 @@
         </template>
       </el-table-column>
       <el-table-column
+        v-if="false"
         min-width="100"
         :sort-orders="settings.sortOrders"
         label="删除"
       >
         <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
+          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
         </template>
         <template v-slot="scope">
           <el-tooltip
@@ -239,6 +215,7 @@
 import { EventBus } from '@/common/eventbus/eventbus'
 // import { getPositionListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
+import FieldHelp from '@/components/30_table/FieldHelp'
 import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import editDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
@@ -247,7 +224,7 @@ import deepCopy from 'deep-copy'
 import { getPositionListApi } from '@/api/20_master/org/org'
 
 export default {
-  components: { Pagination, setPositionDialog, editDialog, viewDialog },
+  components: { Pagination, FieldHelp, setPositionDialog, editDialog, viewDialog },
   directives: {},
   mixins: [],
   props: {

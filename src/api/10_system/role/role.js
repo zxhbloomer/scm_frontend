@@ -87,18 +87,6 @@ export function deleteApi (data) {
 }
 
 /**
- * 启用逻辑
- * @param {*} data
- */
-export function enableApi (data) {
-  return request({
-    url: '/api/v1/role/enable',
-    method: 'post',
-    data
-  })
-}
-
-/**
  * 获取所有角色的数据，为穿梭框服务
  * @param {*} data
  */
