@@ -149,8 +149,8 @@
       >
         <template v-slot="scope">
           <el-tag
-            v-for="item in scope.row.permissionList"
-            :key="item.key"
+            v-for="(item, index) in scope.row.permissionList"
+            :key="index"
             class="permission_tag"
             effect="dark"
             @click.stop="handlePermissionClick(item)"
@@ -259,16 +259,6 @@
       @closeMeCancel="handlePermissionDetailCancel"
     />
 
-    <!-- 员工关联弹窗 -->
-    <role-staff-transfer-dialog
-      v-if="dialogVisible.staff"
-      :visible="dialogVisible.staff"
-      :role-id="selectedRow.id"
-      :role-data="selectedRow"
-      mode="view"
-      @closeMeOk="handleStaffOk"
-      @closeMeCancel="handleStaffCancel"
-    />
   </div>
 </template>
 
@@ -288,7 +278,6 @@ import RoleViewDialog from '../../dialog/40_view/index.vue'
 import PermissionSelectDialog from '@/views/20_master/permission/component/dialog/listfor/role/index.vue'
 // 权限详情弹窗 - 用于查看具体权限信息
 import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
-import RoleStaffTransferDialog from '../../dialog/50_transfer/index.vue'
 
 export default {
   name: 'RoleList',
@@ -300,8 +289,7 @@ export default {
     RoleEditDialog,
     RoleViewDialog,
     PermissionSelectDialog,
-    PermissionViewDialog,
-    RoleStaffTransferDialog
+    PermissionViewDialog
   },
   directives: { permission },
   data () {
@@ -331,8 +319,7 @@ export default {
         edit: false,
         view: false,
         permission: false,
-        permissionDetail: false,
-        staff: false
+        permissionDetail: false
       },
       // 权限详情弹窗相关数据
       selectedPermission: {
@@ -566,23 +553,6 @@ export default {
         id: null,
         label: ''
       }
-    },
-    // 员工关联
-    handleViewStaff (row) {
-      this.selectedRow = row
-      this.dialogVisible.staff = true
-    },
-
-    handleStaffOk (result) {
-      this.dialogVisible.staff = false
-      if (result.return_flag) {
-        this.loadData()
-        this.$message.success('员工关联成功')
-      }
-    },
-
-    handleStaffCancel () {
-      this.dialogVisible.staff = false
     },
 
     // 表格事件

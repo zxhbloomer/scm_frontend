@@ -32,6 +32,11 @@ const EMIT_PERMISSION_IS_EDIT = 'global:permission:is:edit'
 const EMIT_PERMISSION_DIALOG_SELECT = 'global:permission:dialog:select'
 
 /**
+ * 角色选择弹窗事件
+ */
+const EMIT_ROLE_DIALOG_SELECT = 'global:role:dialog:select'
+
+/**
  * 物料规格页面之间，进行通讯，兄弟通讯，
  * left：树
  * right：tabs
@@ -274,6 +279,7 @@ export default {
   EMIT_PERMISSION_OPERATE_INFO_OK,
   EMIT_PERMISSION_IS_EDIT,
   EMIT_PERMISSION_DIALOG_SELECT,
+  EMIT_ROLE_DIALOG_SELECT,
 
   EMIT_SPEC_LEFT,
   EMIT_SPEC_RIGHT,

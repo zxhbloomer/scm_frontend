@@ -87,25 +87,25 @@ export function deleteApi (data) {
 }
 
 /**
- * 获取所有角色的数据，为穿梭框服务
- * @param {*} data
+ * 获取所有角色列表（无分页，用于角色选择弹窗）
+ * @param {Object} data - 查询条件
+ * @param {string} data.name - 角色名称（可选）
+ * @param {string} data.code - 角色编码（可选）
+ * @param {boolean} data.is_del - 是否删除（固定为false）
  */
-export function getRoleTransferListApi (data) {
+export function getAllRolesApi (data) {
   return request({
-    url: '/api/v1/role/position/transfer/list',
+    url: '/api/v1/role/all',
     method: 'post',
     data
   })
 }
 
 /**
- * 保存穿梭框数据，权限角色设置
- * @param {*} data
+ * 获取角色选择弹窗列表（无分页，用于角色选择弹窗）
+ * @deprecated 请使用 getAllRolesApi
+ * @param {Object} data - 查询条件
  */
-export function setRoleTransferListApi (data) {
-  return request({
-    url: '/api/v1/role/position/transfer/save',
-    method: 'post',
-    data
-  })
+export function getRoleListForDialogApi (data) {
+  return getAllRolesApi(data)
 }

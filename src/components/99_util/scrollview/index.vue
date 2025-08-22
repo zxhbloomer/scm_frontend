@@ -5,7 +5,7 @@ export default {
   props: {
     width: {
       type: String,
-      default: 'calc(100% - 320px)'
+      default: 'calc(100% - 330px)'
     }
   },
 

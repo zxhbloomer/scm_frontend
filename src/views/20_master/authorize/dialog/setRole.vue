@@ -72,7 +72,8 @@
 
 <script>
 
-import { getRoleTransferListApi, setRoleTransferListApi } from '@/api/10_system/role/role'
+import { getAllRolesApi } from '@/api/10_system/role/role'
+import { getPositionAssignedRoleIdsApi, savePositionRolesApi } from '@/api/20_master/position/position'
 import constants_para from '@/common/constants/constants_para'
 import deepcopy from 'deep-copy'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -185,13 +186,55 @@ export default {
         this.initEdit()
       }
     },
+
+    // 加载岗位角色数据
+    loadPositionRoles (isViewMode = false) {
+      this.settings.loading = true
+
+      // 并行查询所有角色和已分配角色ID
+      const roleQueryData = { is_del: false }
+      const positionQueryData = { position_id: this.settings.transfer.position_id }
+
+      Promise.all([
+        getAllRolesApi(roleQueryData),
+        getPositionAssignedRoleIdsApi(positionQueryData)
+      ]).then(([rolesResponse, assignedResponse]) => {
+        // 处理所有角色数据
+        const allRoles = rolesResponse.data || []
+        this.settings.transfer.role_all = allRoles.map(role => ({
+          key: role.id,
+          label: role.name,
+          disabled: isViewMode // 查看模式下禁用所有选项
+        }))
+
+        // 处理已分配角色ID
+        const assignedRoleIds = assignedResponse.data || []
+        this.settings.transfer.position_roles = [...assignedRoleIds]
+        this.settings.transfer.old_position_roles = deepcopy(assignedRoleIds)
+
+        console.log('角色数据加载成功:', {
+          allRoles: this.settings.transfer.role_all.length,
+          assignedRoles: assignedRoleIds.length
+        })
+      }).catch(error => {
+        console.error('加载岗位角色数据失败:', error)
+        this.$notify({
+          title: '数据加载失败',
+          message: error.message || '无法加载角色数据，请稍后重试',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
     // 初始化
     initEdit () {
       this.settings.position_title = '维护岗位【' + this.data.name + '】角色'
       // 初始化数据
       this.settings.transfer = {
         position_id: null,
-        // 所有staff
+        // 所有role
         role_all: [],
         position_roles: [],
         old_position_roles: [],
@@ -199,13 +242,9 @@ export default {
       }
       this.settings.btnShowStatus.showInsert = true
       this.settings.transfer.position_id = this.id
-      getRoleTransferListApi(this.settings.transfer).then(response => {
-        this.settings.transfer.role_all = response.data.role_all
-        this.settings.transfer.position_roles = response.data.position_role
-        this.settings.transfer.old_position_roles = deepcopy(response.data.position_role)
-      }).finally(() => {
-        this.settings.loading = false
-      })
+
+      // 加载岗位角色数据
+      this.loadPositionRoles()
     },
     // 查看角色岗位
     initView () {
@@ -221,17 +260,9 @@ export default {
       }
       this.settings.btnShowStatus.showInsert = true
       this.settings.transfer.position_id = this.id
-      getRoleTransferListApi(this.settings.transfer).then(response => {
-        this.settings.transfer.role_all = response.data.role_all
-        // 添加新的属性
-        this.settings.transfer.role_all.map((item, index) => {
-          item.disabled = true
-        })
-        this.settings.transfer.position_roles = response.data.position_role
-        this.settings.transfer.old_position_roles = deepcopy(response.data.position_role)
-      }).finally(() => {
-        this.settings.loading = false
-      })
+
+      // 加载岗位角色数据
+      this.loadPositionRoles(true)
     },
     // 穿梭框的过滤方法
     transferFilterMethod (query, item) {
@@ -242,9 +273,17 @@ export default {
     },
     // 插入逻辑：岗位角色维护，点击确定按钮
     doInsert () {
-      setRoleTransferListApi(this.settings.transfer).then((_data) => {
-        this.settings.loading = true
-        this.settings.transfer.current_row.staff_count = _data.data.position_role_count
+      this.settings.loading = true
+
+      const saveData = {
+        positionId: this.settings.transfer.position_id,
+        roleIds: this.settings.transfer.position_roles
+      }
+
+      savePositionRolesApi(saveData).then((_data) => {
+        // 更新当前行的角色数量
+        this.settings.transfer.current_row.role_count = this.settings.transfer.position_roles.length
+
         this.$notify({
           title: '更新处理成功',
           message: _data.message,

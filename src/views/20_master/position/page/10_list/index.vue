@@ -434,7 +434,8 @@ import constants_para from '@/common/constants/constants_para'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import setWarehouseGroupDialog from '@/views/20_master/relation/dialog/dialog'
-import setRoleDialog from '@/views/20_master/authorize/dialog/setRole.vue'
+import setRoleDialog from '@/views/10_system/role/component/dialog/listfor/position/index.vue'
+import { savePositionRolesApi } from '@/api/20_master/position/position'
 
 export default {
   name: constants_program.P_POSITION, // 页面id，和router中的name需要一致，作为缓存
@@ -921,13 +922,55 @@ export default {
       this.popSettings.four.visible = true
     },
     handleEditRoleMember (val, row) {
+      console.log('[岗位页面] handleEditRoleMember调用:', { 岗位ID: val, 岗位名称: row?.name })
       this.popSettings.four.props.id = val
       this.popSettings.four.props.data = row
       this.popSettings.four.props.model = constants_para.MODEL_EDIT
+      console.log('[岗位页面] 设置弹窗props完成，准备显示弹窗')
       this.popSettings.four.visible = true
+      console.log('[岗位页面] 弹窗visible已设置为true')
     },
     handleCloseDialogFourOk (val) {
-      this.popSettings.four.visible = false
+      if (!val || !val.return_flag) {
+        this.popSettings.four.visible = false
+        return
+      }
+
+      // 提取选中的角色ID列表
+      const selectedRoles = Array.isArray(val.data) ? val.data : [val.data]
+      const roleIds = selectedRoles.map(role => role.id).filter(id => id)
+
+      // 准备保存数据
+      const saveData = {
+        positionId: this.popSettings.four.props.id,
+        roleIds: roleIds
+      }
+
+      // 调用API保存岗位-角色关系
+      this.settings.loading = true
+      savePositionRolesApi(saveData).then(response => {
+        this.$notify({
+          title: '角色设置成功',
+          message: response.message || `成功为岗位【${this.popSettings.four.props.data.name}】设置了${roleIds.length}个角色`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+
+        // 关闭弹窗
+        this.popSettings.four.visible = false
+
+        // 刷新列表数据以显示最新的角色信息
+        this.getDataList()
+      }).catch(error => {
+        this.$notify({
+          title: '角色设置失败',
+          message: error.message || '保存岗位角色关系时发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
     },
     handleCloseDialogFourCancel () {
       this.popSettings.four.visible = false

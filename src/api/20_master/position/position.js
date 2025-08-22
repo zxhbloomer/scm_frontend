@@ -121,3 +121,30 @@ export function updateWarehousePermissionApi (data) {
     data
   })
 }
+
+/**
+ * 获取岗位已分配的角色ID列表
+ * @param {Object} data - 查询条件
+ * @param {number} data.position_id - 岗位ID
+ */
+export function getPositionAssignedRoleIdsApi (data) {
+  return request({
+    url: '/api/v1/org/position/role/assigned',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 保存岗位角色关系（全删全插）
+ * @param {Object} data - 保存数据
+ * @param {number} data.positionId - 岗位ID
+ * @param {Array<number>} data.roleIds - 角色ID列表
+ */
+export function savePositionRolesApi (data) {
+  return request({
+    url: '/api/v1/org/position/role/save',
+    method: 'post',
+    data
+  })
+}
