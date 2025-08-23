@@ -61,6 +61,30 @@ export function saveRolePermissionsApi (data) {
 }
 
 /**
+ * 获取岗位已分配的权限ID列表
+ * @param {*} data
+ */
+export function getPositionAssignedPermissionIdsApi (query) {
+  return request({
+    url: '/api/v1/org/position/permissions/assigned',
+    method: 'post',
+    data: query
+  })
+}
+
+/**
+ * 保存岗位权限关系（全删全插）
+ * @param {*} data
+ */
+export function savePositionPermissionsApi (data) {
+  return request({
+    url: '/api/v1/org/position/permissions/save',
+    method: 'post',
+    data
+  })
+}
+
+/**
    * 更新api
    * @param {*} data
    */

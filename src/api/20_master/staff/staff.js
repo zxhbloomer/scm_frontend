@@ -145,3 +145,77 @@ export function setPositionStaff (data) {
     data
   })
 }
+
+// ===================【员工角色权限管理API】===================
+
+/**
+ * 获取员工已分配的角色ID列表
+ * @param {*} data
+ */
+export function getStaffAssignedRoleIds (data) {
+  return request({
+    url: '/api/v1/staff/role/assigned',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 保存员工角色关系（全删全插）
+ * @param {*} data
+ */
+export function saveStaffRoles (data) {
+  return request({
+    url: '/api/v1/staff/role/save',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取员工已分配的权限ID列表
+ * @param {*} data
+ */
+export function getStaffAssignedPermissionIds (data) {
+  return request({
+    url: '/api/v1/staff/permissions/assigned',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 保存员工权限关系（全删全插）
+ * @param {*} data
+ */
+export function saveStaffPermissions (data) {
+  return request({
+    url: '/api/v1/staff/permissions/save',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 获取员工已排除的权限ID列表
+ * @param {*} data - 包含staff_id的请求数据
+ */
+export function getStaffExcludedPermissionIds (data) {
+  return request({
+    url: '/api/v1/staff/permissions/excluded',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 保存员工排除权限关系（全删全插）
+ * @param {*} data - 包含staffId和excludePermissionIds的请求数据
+ */
+export function saveStaffExcludePermissions (data) {
+  return request({
+    url: '/api/v1/staff/permissions/exclude/save',
+    method: 'post',
+    data
+  })
+}

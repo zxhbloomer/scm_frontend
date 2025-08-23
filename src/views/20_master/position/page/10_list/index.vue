@@ -179,25 +179,6 @@
       />
       <el-table-column
         :auto-fit="true"
-        sortable="custom"
-        min-width="120"
-        :sort-orders="settings.sortOrders"
-        prop="role_name_list"
-        label="角色信息"
-      >
-        <template v-slot="column_lists">
-          <el-tag
-            v-for="item in column_lists.row.roleList"
-            :key="item.key"
-            class="position_tag"
-            @click.stop="handleRoleClick(item.label)"
-          >
-            {{ item.label }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column
-        :auto-fit="true"
         min-width="130"
         prop="staff_count"
         sortable="custom"
@@ -220,6 +201,94 @@
             </el-link>
             )
           </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        :auto-fit="true"
+        min-width="130"
+        sortable="custom"
+        prop="role_count"
+        label="设置角色"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditRoleMember(scope.row.id, scope.row)"
+          >
+            设置角色
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewRoleMember(scope.row.id, scope.row)"
+            >
+              {{ scope.row.role_count }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        :auto-fit="true"
+        sortable="custom"
+        min-width="120"
+        :sort-orders="settings.sortOrders"
+        prop="roleList"
+        label="角色信息"
+      >
+        <template v-slot="column_lists">
+          <el-tag
+            v-for="item in column_lists.row.roleList"
+            :key="item.key"
+            class="position_tag"
+            effect="dark"
+            @click.stop="handleRoleClick(item.label)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        :auto-fit="true"
+        min-width="130"
+        prop="permission_count"
+        label="设置权限"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditPermissionMember(scope.row.id, scope.row)"
+          >
+            设置权限
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewPermissionMember(scope.row.id, scope.row)"
+            >
+              {{ scope.row.permission_count || 0 }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        label="权限信息"
+        min-width="150"
+      >
+        <template v-slot="scope">
+          <el-tag
+            v-for="(item, index) in scope.row.permissionList"
+            :key="index"
+            class="permission_tag"
+            effect="dark"
+            @click.stop="handlePermissionClick(item)"
+          >
+            {{ item.label }}
+          </el-tag>
         </template>
       </el-table-column>
       <!-- <el-table-column
@@ -247,32 +316,6 @@
           </span>
         </template>
       </el-table-column> -->
-      <el-table-column
-        :auto-fit="true"
-        min-width="130"
-        sortable="custom"
-        prop="role_count"
-        label="设置角色"
-      >
-        <template v-slot="scope">
-          <el-link
-            type="primary"
-            @click="handleEditRoleMember(scope.row.id, scope.row)"
-          >
-            设置角色
-          </el-link>
-          <span>
-            （
-            <el-link
-              type="primary"
-              @click="handleViewRoleMember(scope.row.id, scope.row)"
-            >
-              {{ scope.row.role_count }}
-            </el-link>
-            ）
-          </span>
-        </template>
-      </el-table-column>
       <el-table-column
         min-width="75"
         :sort-orders="settings.sortOrders"
@@ -384,6 +427,21 @@
       @closeMeOk="handleCloseDialogFourOk"
       @closeMeCancel="handleCloseDialogFourCancel"
     />
+    <set-permission-dialog
+      v-if="popSettings.five.visible"
+      :position-id="popSettings.five.props.positionId"
+      :visible="popSettings.five.visible"
+      @closeMeOk="handleCloseDialogFiveOk"
+      @closeMeCancel="handleCloseDialogFiveCancel"
+    />
+    <!-- 权限详情弹窗 -->
+    <permission-view-dialog
+      v-if="popSettings.permissionDetail.visible"
+      :visible="popSettings.permissionDetail.visible"
+      :permission-id="popSettings.permissionDetail.permissionId"
+      :head-info="popSettings.permissionDetail.headInfo"
+      @closeMeCancel="handlePermissionDetailCancel"
+    />
     <iframe
       id="refIframe"
       ref="refIframe"
@@ -397,6 +455,16 @@
 </template>
 
 <style scoped>
+.position_tag {
+  cursor: pointer;
+  margin: 2px;
+}
+
+.permission_tag {
+  cursor: pointer;
+  margin: 2px;
+}
+
 .el-button-group {
   margin-bottom: 10px;
 }
@@ -435,11 +503,14 @@ import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import setWarehouseGroupDialog from '@/views/20_master/relation/dialog/dialog'
 import setRoleDialog from '@/views/10_system/role/component/dialog/listfor/position/index.vue'
+import setPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/position/index.vue'
+// 权限详情弹窗 - 用于查看具体权限信息
+import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import { savePositionRolesApi } from '@/api/20_master/position/position'
 
 export default {
   name: constants_program.P_POSITION, // 页面id，和router中的name需要一致，作为缓存
-  components: { setRoleDialog, Pagination, FieldHelp, DeleteTypeNormal, SelectDict, NewDialog, EditDialog, ViewDialog, TransferDialog, setWarehouseGroupDialog, FloatMenu },
+  components: { setRoleDialog, setPermissionDialog, PermissionViewDialog, Pagination, FieldHelp, DeleteTypeNormal, SelectDict, NewDialog, EditDialog, ViewDialog, TransferDialog, setWarehouseGroupDialog, FloatMenu },
   directives: { permission },
   props: {
     // 自己作为弹出框时的参数
@@ -533,6 +604,20 @@ export default {
             data: {},
             model: ''
           }
+        },
+        // 设置权限页面
+        five: {
+          visible: false,
+          props: {
+            positionId: undefined,
+            data: {}
+          }
+        },
+        // 权限详情弹窗
+        permissionDetail: {
+          visible: false,
+          permissionId: null,
+          headInfo: ''
         }
       }
     }
@@ -975,6 +1060,45 @@ export default {
     handleCloseDialogFourCancel () {
       this.popSettings.four.visible = false
     },
+    // 岗位设置权限
+    handleViewPermissionMember (val, row) {
+      this.popSettings.five.props.positionId = val
+      this.popSettings.five.props.data = row
+      this.popSettings.five.visible = true
+    },
+    handleEditPermissionMember (val, row) {
+      console.log('[岗位页面] handleEditPermissionMember调用:', { 岗位ID: val, 岗位名称: row?.name })
+      this.popSettings.five.props.positionId = val
+      this.popSettings.five.props.data = row
+      console.log('[岗位页面] 设置权限弹窗props完成，准备显示弹窗')
+      this.popSettings.five.visible = true
+      console.log('[岗位页面] 权限弹窗visible已设置为true')
+    },
+    handleCloseDialogFiveOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.five.visible = false
+        return
+      }
+
+      // 提取权限数量
+      const permissionCount = val.data?.permissionCount || 0
+
+      this.$notify({
+        title: '权限设置成功',
+        message: `成功为岗位【${this.popSettings.five.props.data?.name}】设置了${permissionCount}个权限`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      // 关闭弹窗
+      this.popSettings.five.visible = false
+
+      // 刷新列表数据以显示最新的权限信息
+      this.getDataList()
+    },
+    handleCloseDialogFiveCancel () {
+      this.popSettings.five.visible = false
+    },
     handleRoleClick (val) {
       if (this.meDialogStatus) {
         return
@@ -983,6 +1107,28 @@ export default {
       this.$router.push({
         path: '/role', query: { name: val, fullpath: true }
       })
+    },
+    // 权限标签点击事件 - 打开权限详情弹窗
+    handlePermissionClick (permissionItem) {
+      if (this.meDialogStatus) {
+        return
+      }
+      if (!permissionItem || !permissionItem.id) {
+        this.$message.warning('权限信息不完整，无法查看详情')
+        return
+      }
+      // 设置权限详情弹窗数据
+      this.popSettings.permissionDetail.permissionId = permissionItem.id
+      this.popSettings.permissionDetail.headInfo = permissionItem.label || permissionItem.key || '未知权限'
+      // 打开权限详情弹窗
+      this.popSettings.permissionDetail.visible = true
+    },
+    // 权限详情弹窗回调 - 关闭操作
+    handlePermissionDetailCancel () {
+      this.popSettings.permissionDetail.visible = false
+      // 清空权限详情数据
+      this.popSettings.permissionDetail.permissionId = null
+      this.popSettings.permissionDetail.headInfo = ''
     }
   }
 }

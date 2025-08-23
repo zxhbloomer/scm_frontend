@@ -273,6 +273,135 @@
           </el-tag>
         </template>
       </el-table-column>
+      <!-- 员工角色权限管理4列 -->
+      <el-table-column
+        header-align="center"
+        :auto-fit="true"
+        min-width="120"
+        label="设置角色"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditStaffRole(scope.row.id, scope.row)"
+          >
+            设置角色
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewStaffRole(scope.row.id, scope.row)"
+            >
+              {{ scope.row.role_count || 0 }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        :auto-fit="true"
+        min-width="150"
+        label="角色信息"
+      >
+        <template v-slot="column_lists">
+          <el-tag
+            v-for="item in column_lists.row.roleList"
+            :key="item.key"
+            class="position_tag"
+            effect="dark"
+            @click.stop="handleRoleClick(item.label)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        :auto-fit="true"
+        min-width="120"
+        label="设置权限"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditStaffPermission(scope.row.id, scope.row)"
+          >
+            设置权限
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewStaffPermission(scope.row.id, scope.row)"
+            >
+              {{ scope.row.permission_count || 0 }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        label="权限信息"
+        min-width="150"
+      >
+        <template v-slot="scope">
+          <el-tag
+            v-for="(item, index) in scope.row.permissionList"
+            :key="index"
+            class="permission_tag"
+            effect="dark"
+            @click.stop="handlePermissionClick(item)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        :auto-fit="true"
+        min-width="120"
+        label="排除权限"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="danger"
+            @click="handleEditStaffExcludePermission(scope.row.id, scope.row)"
+          >
+            设置排除权限
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="danger"
+              @click="handleViewStaffExcludePermission(scope.row.id, scope.row)"
+            >
+              {{ scope.row.exclude_permission_count || 0 }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        label="排除权限信息"
+        min-width="150"
+      >
+        <template v-slot="scope">
+          <el-tag
+            v-for="(item, index) in scope.row.excludePermissionList"
+            :key="index"
+            class="permission_tag"
+            type="danger"
+            effect="dark"
+            @click.stop="handlePermissionClick(item)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column
         header-align="center"
         :auto-fit="true"
@@ -430,6 +559,48 @@
       @closeMeCancel="handlePasswordDialogCancel"
     />
 
+    <!-- 员工角色设置弹窗 -->
+    <staff-role-dialog
+      v-if="popSettings.staffRole.visible"
+      :visible="popSettings.staffRole.visible"
+      :staff-id="popSettings.staffRole.props.staffId"
+      :staff-data="popSettings.staffRole.props.staffData"
+      :model="popSettings.staffRole.props.model"
+      @closeMeOk="handleStaffRoleDialogOk"
+      @closeMeCancel="handleStaffRoleDialogCancel"
+    />
+
+    <!-- 员工权限设置弹窗 -->
+    <staff-permission-dialog
+      v-if="popSettings.staffPermission.visible"
+      :visible="popSettings.staffPermission.visible"
+      :staff-id="popSettings.staffPermission.props.staffId"
+      :staff-data="popSettings.staffPermission.props.staffData"
+      :model="popSettings.staffPermission.props.model"
+      @closeMeOk="handleStaffPermissionDialogOk"
+      @closeMeCancel="handleStaffPermissionDialogCancel"
+    />
+
+    <!-- 员工排除权限设置弹窗 -->
+    <staff-exclude-permission-dialog
+      v-if="popSettings.staffExcludePermission.visible"
+      :visible="popSettings.staffExcludePermission.visible"
+      :staff-id="popSettings.staffExcludePermission.props.staffId"
+      :staff-data="popSettings.staffExcludePermission.props.staffData"
+      :model="popSettings.staffExcludePermission.props.model"
+      @closeMeOk="handleStaffExcludePermissionDialogOk"
+      @closeMeCancel="handleStaffExcludePermissionDialogCancel"
+    />
+
+    <!-- 权限详情弹窗 -->
+    <permission-view-dialog
+      v-if="popSettings.permissionDetail.visible"
+      :visible="popSettings.permissionDetail.visible"
+      :permission-id="popSettings.permissionDetail.permissionId"
+      :head-info="popSettings.permissionDetail.headInfo"
+      @closeMeCancel="handlePermissionDetailCancel"
+    />
+
     <iframe
       id="refIframe"
       ref="refIframe"
@@ -478,6 +649,12 @@ import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
 import PositionDialog from '../../dialog/50_position/index.vue'
 import PasswordDialog from '../../dialog/60_password/index.vue'
+// 员工角色权限弹窗组件
+import StaffRoleDialog from '@/views/10_system/role/component/dialog/listfor/staff/index.vue'
+import StaffPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staff/index.vue'
+import StaffExcludePermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staffexclude/index.vue'
+// 权限详情弹窗 - 用于查看具体权限信息
+import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {
@@ -491,7 +668,11 @@ export default {
     EditDialog,
     ViewDialog,
     PositionDialog,
-    PasswordDialog
+    PasswordDialog,
+    StaffRoleDialog,
+    StaffPermissionDialog,
+    StaffExcludePermissionDialog,
+    PermissionViewDialog
   },
   directives: { permission },
   props: {
@@ -554,7 +735,43 @@ export default {
         position: false,
         password: false
       },
-      dialogStatus: ''
+      dialogStatus: '',
+      // 员工角色权限弹窗配置
+      popSettings: {
+        // 员工角色设置弹窗
+        staffRole: {
+          visible: false,
+          props: {
+            staffId: null,
+            staffData: null,
+            model: 'edit' // 'edit' 或 'view'
+          }
+        },
+        // 员工权限设置弹窗
+        staffPermission: {
+          visible: false,
+          props: {
+            staffId: null,
+            staffData: null,
+            model: 'edit' // 'edit' 或 'view'
+          }
+        },
+        // 权限详情弹窗
+        permissionDetail: {
+          visible: false,
+          permissionId: null,
+          headInfo: ''
+        },
+        // 员工排除权限设置弹窗
+        staffExcludePermission: {
+          visible: false,
+          props: {
+            staffId: null,
+            staffData: null,
+            model: 'edit' // 'edit' 或 'view'
+          }
+        }
+      }
     }
   },
   computed: {},
@@ -896,6 +1113,163 @@ export default {
       this.$router.push({
         path: '/position/position', query: { name: val, fullpath: true }
       })
+    },
+
+    // ===================【员工角色权限事件处理器】===================
+
+    // 员工设置角色
+    handleEditStaffRole (staffId, staffData) {
+      console.log('[员工页面] handleEditStaffRole调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffRole.props.staffId = staffId
+      this.popSettings.staffRole.props.staffData = staffData
+      this.popSettings.staffRole.props.model = 'edit'
+      console.log('[员工页面] 设置角色弹窗props完成，准备显示弹窗')
+      this.popSettings.staffRole.visible = true
+    },
+
+    handleViewStaffRole (staffId, staffData) {
+      console.log('[员工页面] handleViewStaffRole调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffRole.props.staffId = staffId
+      this.popSettings.staffRole.props.staffData = staffData
+      this.popSettings.staffRole.props.model = 'view'
+      this.popSettings.staffRole.visible = true
+    },
+
+    handleStaffRoleDialogOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.staffRole.visible = false
+        return
+      }
+
+      this.$notify({
+        title: '角色设置成功',
+        message: `员工角色已成功设置`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      this.popSettings.staffRole.visible = false
+      // 刷新列表数据以显示最新的角色信息
+      this.getDataList()
+    },
+
+    handleStaffRoleDialogCancel () {
+      this.popSettings.staffRole.visible = false
+    },
+
+    // 员工设置权限
+    handleEditStaffPermission (staffId, staffData) {
+      console.log('[员工页面] handleEditStaffPermission调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffPermission.props.staffId = staffId
+      this.popSettings.staffPermission.props.staffData = staffData
+      this.popSettings.staffPermission.props.model = 'edit'
+      this.popSettings.staffPermission.visible = true
+    },
+
+    handleViewStaffPermission (staffId, staffData) {
+      console.log('[员工页面] handleViewStaffPermission调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffPermission.props.staffId = staffId
+      this.popSettings.staffPermission.props.staffData = staffData
+      this.popSettings.staffPermission.props.model = 'view'
+      this.popSettings.staffPermission.visible = true
+    },
+
+    handleStaffPermissionDialogOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.staffPermission.visible = false
+        return
+      }
+
+      this.$notify({
+        title: '权限设置成功',
+        message: `员工权限已成功设置`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      this.popSettings.staffPermission.visible = false
+      // 刷新列表数据以显示最新的权限信息
+      this.getDataList()
+    },
+
+    handleStaffPermissionDialogCancel () {
+      this.popSettings.staffPermission.visible = false
+    },
+
+    // 员工设置排除权限
+    handleEditStaffExcludePermission (staffId, staffData) {
+      console.log('[员工页面] handleEditStaffExcludePermission调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffExcludePermission.props.staffId = staffId
+      this.popSettings.staffExcludePermission.props.staffData = staffData
+      this.popSettings.staffExcludePermission.props.model = 'edit'
+      this.popSettings.staffExcludePermission.visible = true
+    },
+
+    handleViewStaffExcludePermission (staffId, staffData) {
+      console.log('[员工页面] handleViewStaffExcludePermission调用:', { 员工ID: staffId, 员工名称: staffData?.name })
+      this.popSettings.staffExcludePermission.props.staffId = staffId
+      this.popSettings.staffExcludePermission.props.staffData = staffData
+      this.popSettings.staffExcludePermission.props.model = 'view'
+      this.popSettings.staffExcludePermission.visible = true
+    },
+
+    handleStaffExcludePermissionDialogOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.staffExcludePermission.visible = false
+        return
+      }
+
+      this.$notify({
+        title: '排除权限设置成功',
+        message: `员工排除权限已成功设置`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      this.popSettings.staffExcludePermission.visible = false
+      // 刷新列表数据以显示最新的排除权限信息
+      this.getDataList()
+    },
+
+    handleStaffExcludePermissionDialogCancel () {
+      this.popSettings.staffExcludePermission.visible = false
+    },
+
+    // 角色标签点击事件
+    handleRoleClick (roleName) {
+      if (this.meDialogStatus) {
+        return
+      }
+      // 通知路由，打开角色页面
+      this.$router.push({
+        path: '/role', query: { name: roleName, fullpath: true }
+      })
+    },
+
+    // 权限标签点击事件 - 打开权限详情弹窗
+    handlePermissionClick (permissionItem) {
+      if (this.meDialogStatus) {
+        return
+      }
+
+      if (!permissionItem || !permissionItem.id) {
+        this.$message.warning('权限信息不完整，无法查看详情')
+        return
+      }
+
+      // 设置权限详情弹窗数据
+      this.popSettings.permissionDetail.permissionId = permissionItem.id
+      this.popSettings.permissionDetail.headInfo = permissionItem.label || permissionItem.key || '未知权限'
+      // 打开权限详情弹窗
+      this.popSettings.permissionDetail.visible = true
+    },
+
+    // 权限详情弹窗回调 - 关闭操作
+    handlePermissionDetailCancel () {
+      this.popSettings.permissionDetail.visible = false
+      // 清空权限详情数据
+      this.popSettings.permissionDetail.permissionId = null
+      this.popSettings.permissionDetail.headInfo = ''
     }
   }
 }
