@@ -1750,7 +1750,7 @@ export default {
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
             // 岗位类型：获取员工数量统计
-            getSubCountApi(node.id).then(response => {
+            getSubCountApi(node.id, node.type).then(response => {
               // 使用this.$set确保响应式更新，存储员工数量
               this.$set(node, 'staff_count', response.data)
             }).catch(error => {
@@ -1821,7 +1821,7 @@ export default {
         return
       }
       // 调用API获取该岗位的员工数量
-      getSubCountApi(positionNode.id).then(response => {
+      getSubCountApi(positionNode.id, positionNode.type).then(response => {
         // 更新树中对应节点的数据
         this.updateTreeNodeStaffCount(this.dataJson.treeData, positionNode.id, response.data)
         // 更新当前选中节点的数据
@@ -2228,6 +2228,24 @@ export default {
       } finally {
         this.settings.loading = false
       }
+    },
+
+    // 调试岗位显示信息
+    debugPositionInfo (data) {
+      if (data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+        console.log('=== 前端显示调试 ===', {
+          nodeId: data.id,
+          nodeName: data.name,
+          nodeType: data.type,
+          staff_count: data.staff_count,
+          staff_count_type: typeof data.staff_count,
+          显示条件: data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
+          员工数量条件: data.staff_count > 0,
+          最终显示: data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staff_count > 0
+        })
+        return ` [调试: id=${data.id}, count=${data.staff_count}]`
+      }
+      return ''
     }
   }
 }

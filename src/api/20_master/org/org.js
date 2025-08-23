@@ -214,6 +214,7 @@ export function getSubCountApi (orgId, orgType) {
   if (orgType) {
     data.org_type = orgType
   }
+  // console.log('=== API调用getSubCountApi ===', { orgId, orgType, finalData: data })
   return request({
     url: '/api/v1/org/getsubcount',
     method: 'post',
