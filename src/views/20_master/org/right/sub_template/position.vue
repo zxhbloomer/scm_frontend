@@ -112,6 +112,95 @@
           {{ scope.row.code }}
         </template>
       </el-table-column>
+      <!-- 新增的4个列：角色和权限管理 -->
+      <el-table-column
+        :auto-fit="true"
+        min-width="130"
+        sortable="custom"
+        prop="role_count"
+        label="设置角色"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditRoleMember(scope.row.id, scope.row)"
+          >
+            设置角色
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewRoleMember(scope.row.id, scope.row)"
+            >
+              {{ scope.row.role_count }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="120"
+        :sort-orders="settings.sortOrders"
+        prop="roleList"
+        label="角色信息"
+      >
+        <template v-slot="column_lists">
+          <el-tag
+            v-for="item in column_lists.row.roleList"
+            :key="item.id"
+            class="position_tag"
+            effect="dark"
+            @click.stop="handleRoleClick(item.label)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column
+        show-overflow-tooltip
+        min-width="130"
+        prop="permission_count"
+        label="设置权限"
+      >
+        <template v-slot="scope">
+          <el-link
+            type="primary"
+            @click="handleEditPermissionMember(scope.row.id, scope.row)"
+          >
+            设置权限
+          </el-link>
+          <span>
+            （
+            <el-link
+              type="primary"
+              @click="handleViewPermissionMember(scope.row.id, scope.row)"
+            >
+              {{ scope.row.permission_count || 0 }}
+            </el-link>
+            ）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        label="权限信息"
+        min-width="150"
+      >
+        <template v-slot="scope">
+          <el-tag
+            v-for="item in scope.row.permissionList"
+            :key="item.id"
+            class="permission_tag"
+            effect="dark"
+            @click.stop="handlePermissionClick(item)"
+          >
+            {{ item.label }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column
         v-if="false"
         min-width="100"
@@ -192,6 +281,35 @@
       @closeMeOk="handleCloseDialogTwoOk"
       @closeMeCancel="handleCloseDialogTwoOk"
     />
+
+    <!-- 角色设置弹窗 -->
+    <set-role-dialog
+      v-if="popSettings.role.visible"
+      :id="popSettings.role.props.id"
+      :data="popSettings.role.props.data"
+      :visible="popSettings.role.visible"
+      :model="popSettings.role.props.model"
+      @closeMeOk="handleCloseDialogRoleOk"
+      @closeMeCancel="handleCloseDialogRoleCancel"
+    />
+
+    <!-- 权限设置弹窗 -->
+    <set-permission-dialog
+      v-if="popSettings.permission.visible"
+      :position-id="popSettings.permission.props.positionId"
+      :visible="popSettings.permission.visible"
+      @closeMeOk="handleCloseDialogPermissionOk"
+      @closeMeCancel="handleCloseDialogPermissionCancel"
+    />
+
+    <!-- 权限详情弹窗 -->
+    <permission-view-dialog
+      v-if="popSettings.permissionDetail.visible"
+      :visible="popSettings.permissionDetail.visible"
+      :permission-id="popSettings.permissionDetail.permissionId"
+      :head-info="popSettings.permissionDetail.headInfo"
+      @closeMeCancel="handlePermissionDetailCancel"
+    />
   </div>
 </template>
 
@@ -209,6 +327,16 @@
   display: flex;
   justify-content: center;
 }
+
+.position_tag {
+  cursor: pointer;
+  margin: 2px;
+}
+
+.permission_tag {
+  cursor: pointer;
+  margin: 2px;
+}
 </style>
 
 <script>
@@ -220,11 +348,16 @@ import setPositionDialog from '@/views/20_master/position/dialog/50_transfer/ind
 import constants_para from '@/common/constants/constants_para'
 import editDialog from '@/views/20_master/position/dialog/30_edit/index.vue'
 import viewDialog from '@/views/20_master/position/dialog/40_view/index.vue'
+// 角色和权限管理组件
+import setRoleDialog from '@/views/10_system/role/component/dialog/listfor/position/index.vue'
+import setPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/position/index.vue'
+import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import deepCopy from 'deep-copy'
 import { getPositionListApi } from '@/api/20_master/org/org'
+import { savePositionRolesApi } from '@/api/20_master/position/position'
 
 export default {
-  components: { Pagination, FieldHelp, setPositionDialog, editDialog, viewDialog },
+  components: { Pagination, FieldHelp, setPositionDialog, editDialog, viewDialog, setRoleDialog, setPermissionDialog, PermissionViewDialog },
   directives: {},
   mixins: [],
   props: {
@@ -285,6 +418,29 @@ export default {
             data: {},
             model: ''
           }
+        },
+        // 角色设置弹窗
+        role: {
+          visible: false,
+          props: {
+            id: undefined,
+            data: {},
+            model: ''
+          }
+        },
+        // 权限设置弹窗
+        permission: {
+          visible: false,
+          props: {
+            positionId: undefined,
+            data: {}
+          }
+        },
+        // 权限详情弹窗
+        permissionDetail: {
+          visible: false,
+          permissionId: null,
+          headInfo: ''
         }
       }
     }
@@ -515,7 +671,152 @@ export default {
     },
     handleCloseDialogTwoCancel () {
       this.popSettings.two.visible = false
+    },
+
+    // ------------------角色管理功能 start--------------------
+    // 角色设置 - 查看模式
+    handleViewRoleMember (val, row) {
+      this.popSettings.role.props.id = val
+      this.popSettings.role.props.data = row
+      this.popSettings.role.props.model = constants_para.MODEL_VIEW
+      this.popSettings.role.visible = true
+    },
+    // 角色设置 - 编辑模式
+    handleEditRoleMember (val, row) {
+      console.log('[组织岗位页面] handleEditRoleMember调用:', { 岗位ID: val, 岗位名称: row?.name })
+      this.popSettings.role.props.id = val
+      this.popSettings.role.props.data = row
+      this.popSettings.role.props.model = constants_para.MODEL_EDIT
+      console.log('[组织岗位页面] 设置角色弹窗props完成，准备显示弹窗')
+      this.popSettings.role.visible = true
+      console.log('[组织岗位页面] 角色弹窗visible已设置为true')
+    },
+    // 角色设置弹窗 - 成功回调
+    handleCloseDialogRoleOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.role.visible = false
+        return
+      }
+
+      // 提取选中的角色ID列表
+      const selectedRoles = Array.isArray(val.data) ? val.data : [val.data]
+      const roleIds = selectedRoles.map(role => role.id).filter(id => id)
+
+      // 准备保存数据
+      const saveData = {
+        positionId: this.popSettings.role.props.id,
+        roleIds: roleIds
+      }
+
+      // 调用API保存岗位-角色关系
+      this.settings.loading = true
+      savePositionRolesApi(saveData).then(response => {
+        this.$notify({
+          title: '角色设置成功',
+          message: response.message || `成功为岗位【${this.popSettings.role.props.data.name}】设置了${roleIds.length}个角色`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+
+        // 关闭弹窗
+        this.popSettings.role.visible = false
+
+        // 刷新列表数据以显示最新的角色信息
+        this.getDataList()
+
+        // 通知组织树刷新
+        EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
+      }).catch(error => {
+        this.$notify({
+          title: '角色设置失败',
+          message: error.message || '保存岗位角色关系时发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
+    // 角色设置弹窗 - 取消回调
+    handleCloseDialogRoleCancel () {
+      this.popSettings.role.visible = false
+    },
+    // 角色标签点击 - 导航到角色页面
+    handleRoleClick (val) {
+      // 通知路由，打开角色页面
+      this.$router.push({
+        path: '/role', query: { name: val, fullpath: true }
+      })
+    },
+    // ------------------角色管理功能 end--------------------
+
+    // ------------------权限管理功能 start--------------------
+    // 权限设置 - 查看模式
+    handleViewPermissionMember (val, row) {
+      this.popSettings.permission.props.positionId = val
+      this.popSettings.permission.props.data = row
+      this.popSettings.permission.visible = true
+    },
+    // 权限设置 - 编辑模式
+    handleEditPermissionMember (val, row) {
+      console.log('[组织岗位页面] handleEditPermissionMember调用:', { 岗位ID: val, 岗位名称: row?.name })
+      this.popSettings.permission.props.positionId = val
+      this.popSettings.permission.props.data = row
+      console.log('[组织岗位页面] 设置权限弹窗props完成，准备显示弹窗')
+      this.popSettings.permission.visible = true
+      console.log('[组织岗位页面] 权限弹窗visible已设置为true')
+    },
+    // 权限设置弹窗 - 成功回调
+    handleCloseDialogPermissionOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.permission.visible = false
+        return
+      }
+
+      // 提取权限数量
+      const permissionCount = val.data?.permissionCount || 0
+
+      this.$notify({
+        title: '权限设置成功',
+        message: `成功为岗位【${this.popSettings.permission.props.data?.name}】设置了${permissionCount}个权限`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      // 关闭弹窗
+      this.popSettings.permission.visible = false
+
+      // 刷新列表数据以显示最新的权限信息
+      this.getDataList()
+
+      // 通知组织树刷新
+      EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
+    },
+    // 权限设置弹窗 - 取消回调
+    handleCloseDialogPermissionCancel () {
+      this.popSettings.permission.visible = false
+    },
+    // 权限标签点击 - 打开权限详情弹窗
+    handlePermissionClick (permissionItem) {
+      if (!permissionItem || !permissionItem.id) {
+        this.$message.warning('权限信息不完整，无法查看详情')
+        return
+      }
+      // 设置权限详情弹窗数据
+      this.popSettings.permissionDetail.permissionId = permissionItem.id
+      this.popSettings.permissionDetail.headInfo = permissionItem.label || permissionItem.key || '未知权限'
+      // 打开权限详情弹窗
+      this.popSettings.permissionDetail.visible = true
+    },
+    // 权限详情弹窗 - 关闭操作
+    handlePermissionDetailCancel () {
+      this.popSettings.permissionDetail.visible = false
+      // 清空权限详情数据
+      this.popSettings.permissionDetail.permissionId = null
+      this.popSettings.permissionDetail.headInfo = ''
     }
+    // ------------------权限管理功能 end--------------------
+
     // ------------------岗位设置仓库弹出框 start--------------------
     // ------------------编辑弹出框 end--------------------
   }
