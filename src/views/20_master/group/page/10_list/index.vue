@@ -73,6 +73,14 @@
         @click="handleUpdate"
       >修改</el-button>
       <el-button
+        v-permission="'P_GROUP:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="primary"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelButton"
+      >删除</el-button>
+      <el-button
         v-permission="'P_GROUP:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
         type="primary"

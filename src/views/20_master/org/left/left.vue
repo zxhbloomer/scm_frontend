@@ -501,6 +501,18 @@
       @closeMeCancel="handleStaffExcludePermissionDialogCancel"
     />
 
+    <!-- 跟随鼠标的文字提示 -->
+    <div
+      v-show="mouseFollowTip.visible"
+      class="mouse-follow-tip"
+      :style="{
+        left: mouseFollowTip.x + 'px',
+        top: mouseFollowTip.y + 'px'
+      }"
+    >
+      {{ mouseFollowTip.text }}
+    </div>
+
   </div>
 </template>
 
@@ -1058,6 +1070,13 @@ export default {
         visible: false,
         positionId: null,
         positionData: null
+      },
+      // 跟随鼠标的文字提示
+      mouseFollowTip: {
+        visible: false,
+        x: 0,
+        y: 0,
+        text: '测试'
       }
     }
   },
@@ -1173,6 +1192,13 @@ export default {
     // 描绘完成
     EventBus.$on(this.EMITS.EMIT_ORG_LOADING, _data => { this.settings.loading = true })
     EventBus.$on(this.EMITS.EMIT_ORG_LOADING_OK, _data => { this.settings.loading = false })
+
+    // 绑定鼠标移动事件监听器 - 用于跟随鼠标的文字提示
+    document.addEventListener('mousemove', this.handleMouseMove)
+  },
+  beforeDestroy () {
+    // 移除鼠标移动事件监听器，防止内存泄漏
+    document.removeEventListener('mousemove', this.handleMouseMove)
   },
   methods: {
     // 选择or重置按钮的初始化
@@ -1710,40 +1736,77 @@ export default {
     handleDragStart (node, ev) {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
+
+      // 拖拽开始时，初始化鼠标跟随提示状态
+      this.hideMouseFollowTip()
     },
 
     handleDragEnter (draggingNode, dropNode, ev) {
+      // 更新鼠标位置（拖拽时确保位置跟随）
+      this.updateMousePosition(ev)
+
       // 清除之前的样式
       this.clearDragStyles()
 
       // 计算拖拽类型并应用样式
       const dropType = this.calculateDropType(ev)
-      if (dropType && this.allowDrop(draggingNode, dropNode, dropType)) {
+      const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
+
+      if (allowDrop) {
         this.applyDragStyle(ev.target, dropType)
+        // 允许拖拽时隐藏跟随鼠标的提示
+        this.hideMouseFollowTip()
+      } else {
+        // 不允许拖拽时显示具体的错误原因
+        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropType)
+        this.showMouseFollowTip(failureReason)
       }
     },
 
     handleDragLeave (draggingNode, dropNode, ev) {
+      // 更新鼠标位置（拖拽时确保位置跟随）
+      this.updateMousePosition(ev)
+
       // 延迟清除样式，避免移动过程中的闪烁
       setTimeout(() => {
         this.clearDragStyles()
       }, 50)
+
+      // 离开节点时隐藏跟随鼠标的提示
+      this.hideMouseFollowTip()
     },
 
     handleDragOver (draggingNode, dropNode, ev) {
+      // 更新鼠标位置（拖拽时确保位置跟随） - 这是最重要的事件
+      this.updateMousePosition(ev)
+
       // 清除之前的样式
       this.clearDragStyles()
 
       // 计算拖拽类型并应用样式
       const dropType = this.calculateDropType(ev)
-      if (dropType && this.allowDrop(draggingNode, dropNode, dropType)) {
+      const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
+
+      if (allowDrop) {
         this.applyDragStyle(ev.target, dropType)
+        // 允许拖拽时隐藏跟随鼠标的提示
+        this.hideMouseFollowTip()
+      } else {
+        // 不允许拖拽时显示具体的错误原因
+        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropType)
+        this.showMouseFollowTip(failureReason)
       }
     },
 
     handleDragEnd (draggingNode, dropNode, dropType, ev) {
+      // 更新鼠标位置（拖拽时确保位置跟随）
+      if (ev) this.updateMousePosition(ev)
+
       // 清除所有拖拽样式
       this.clearDragStyles()
+
+      // 拖拽结束时确保隐藏跟随鼠标的提示
+      this.hideMouseFollowTip()
     },
     /**
      * 拖拽结束后事件
@@ -1753,6 +1816,12 @@ export default {
      * ev:event
      */
     handleDrop (draggingNode, dropNode, dropType, ev) {
+      // 更新鼠标位置（最后一次位置更新）
+      if (ev) this.updateMousePosition(ev)
+
+      // 拖拽结束，隐藏跟随鼠标的提示
+      this.hideMouseFollowTip()
+
       // 如果正在处理确认，避免重复触发
       if (this.dragConfirmData.isProcessing) {
         return
@@ -1901,6 +1970,140 @@ export default {
       }
       return false
     },
+
+    /**
+     * 获取拖拽失败的具体原因
+     * @param {Object} draggingNode - 被拖拽的节点
+     * @param {Object} dropNode - 目标节点
+     * @param {String} type - 拖拽类型 ('before', 'after', 'inner')
+     * @returns {String} 失败原因描述
+     */
+    getDropFailureReason (draggingNode, dropNode, type) {
+      // 不得放到根目录位置
+      if (!isNotEmpty(dropNode.data.parent_id)) {
+        return '不能放置到根目录位置'
+      }
+
+      // 处理员工节点拖拽限制
+      if (draggingNode.data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
+        // 员工只能拖拽到岗位节点内部
+        if (dropNode.data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+          if (type !== 'inner') {
+            return '员工只能分配到岗位内部'
+          }
+        } else {
+          // 员工不能拖拽到其他类型节点
+          switch (dropNode.data.type) {
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+              return '员工不能直接归属于集团'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+              return '员工不能直接归属于企业'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+              return '员工不能直接归属于部门'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+              return '员工不能直接归属于租户'
+            default:
+              return '员工只能分配到岗位下'
+          }
+        }
+      }
+
+      // 处理其他节点类型的拖拽限制
+      switch (draggingNode.data.type) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          // 集团拖拽限制
+          switch (dropNode.data.type) {
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+              return '集团不能作为企业的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+              return '集团不能作为部门的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+              return '集团不能作为岗位的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+              return '集团不能作为员工的子级'
+            default:
+              return '集团只能在租户或其他集团下'
+          }
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          // 企业拖拽限制
+          switch (dropNode.data.type) {
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+              if (dropNode.data.code.length <= 8 && type === 'prev') {
+                return '不能放置到此集团前面'
+              }
+              break
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+              if (type === 'inner') {
+                return '企业不能嵌套到其他企业内部'
+              }
+              break
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+              return '企业不能作为部门的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+              return '企业不能作为岗位的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+              return '企业不能作为员工的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+              return '企业不能直接归属于租户'
+            default:
+              return '企业只能在集团下或与其他企业平级'
+          }
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          // 部门拖拽限制
+          switch (dropNode.data.type) {
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+              return '部门不能直接归属于集团'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+              if (type !== 'inner') {
+                return '部门只能在企业内部'
+              }
+              break
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+              return '部门不能作为岗位的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+              return '部门不能作为员工的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+              return '部门不能直接归属于租户'
+            default:
+              return '部门只能在企业内部或其他部门下'
+          }
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          // 岗位拖拽限制
+          switch (dropNode.data.type) {
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+              return '岗位不能直接归属于集团'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+              return '岗位不能直接归属于企业'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+              if (type !== 'inner') {
+                return '岗位只能在部门内部'
+              }
+              break
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+              if (type === 'inner') {
+                return '岗位不能嵌套到其他岗位内部'
+              }
+              break
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+              return '岗位不能作为员工的子级'
+            case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
+              return '岗位不能直接归属于租户'
+            default:
+              return '岗位只能在部门内部或与其他岗位平级'
+          }
+          break
+
+        default:
+          return '不支持此类型的拖拽操作'
+      }
+
+      return '不允许的拖拽操作'
+    },
     // 允许拖拽的情况
     allowDrag (draggingNode) {
       // 员工节点允许拖拽（即使没有parent_id）
@@ -1915,6 +2118,42 @@ export default {
         return false
       }
     },
+
+    /**
+     * 鼠标移动处理函数 - 更新跟随鼠标提示的位置
+     */
+    handleMouseMove (event) {
+      this.updateMousePosition(event)
+    },
+
+    /**
+     * 更新鼠标位置 - 从事件对象中提取坐标
+     * @param {Event} event - 鼠标事件或拖拽事件
+     */
+    updateMousePosition (event) {
+      // 拖拽事件和鼠标事件都有 clientX 和 clientY 属性
+      if (event && typeof event.clientX !== 'undefined' && typeof event.clientY !== 'undefined') {
+        this.mouseFollowTip.x = event.clientX
+        this.mouseFollowTip.y = event.clientY
+      }
+    },
+
+    /**
+     * 显示跟随鼠标的文字提示
+     * @param {String} text - 要显示的文字
+     */
+    showMouseFollowTip (text = '测试') {
+      this.mouseFollowTip.visible = true
+      this.mouseFollowTip.text = text
+    },
+
+    /**
+     * 隐藏跟随鼠标的文字提示
+     */
+    hideMouseFollowTip () {
+      this.mouseFollowTip.visible = false
+    },
+
     // 获取组织类型标签颜色
     getOrgTagType (type) {
       switch (type) {
@@ -3632,6 +3871,54 @@ export default {
   background: rgba(215, 53, 2, 0.1) !important;
   border: 2px dashed #d73502 !important;
   border-radius: 4px;
+}
+
+/* 跟随鼠标的文字提示样式 */
+.mouse-follow-tip {
+  position: fixed;
+  background: linear-gradient(135deg, #ff6b6b, #ff5252);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 9999;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  transform: translate(-50%, -100%);
+  margin-top: -15px;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  animation: tipPulse 2s ease-in-out infinite;
+  letter-spacing: 0.5px;
+}
+
+/* 提示框脉动动画 */
+@keyframes tipPulse {
+  0%, 100% {
+    transform: translate(-50%, -100%) scale(1);
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: translate(-50%, -100%) scale(1.05);
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6), 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* 为提示框添加小箭头指向鼠标位置 */
+.mouse-follow-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid #ff5252;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
 }
 
 </style>
