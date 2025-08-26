@@ -1317,6 +1317,12 @@ export default {
         loginName: this.dataJson.tempJson.user.login_name
       })
     },
+    // 密码设置成功回调，更新密码数据
+    updatePasswordData (encryptedPassword) {
+      this.dataJson.tempJson.user.pwd = encryptedPassword
+      // 强制更新视图以确保密码状态标签正确显示
+      this.$forceUpdate()
+    },
     // 登录模式变更处理
     handleSysLoginTypeChange (val) {
       if (val === '10' && this.dataJson.tempJson.mobile_phone !== undefined) {

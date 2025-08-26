@@ -356,6 +356,7 @@
       :organization-context="organizationContext"
       @closeMeOk="handleNewDialogOk"
       @closeMeCancel="handleNewDialogCancel"
+      @handleSetPasswordClick="handleSetPasswordClick"
     />
 
     <!-- 编辑弹窗 -->
@@ -373,6 +374,14 @@
       :visible="dialogs.view"
       :data="dataJson.currentJson"
       @closeMeCancel="handleViewDialogCancel"
+    />
+
+    <!-- 设置密码弹窗 -->
+    <password-dialog
+      v-if="dialogs.password"
+      :visible="dialogs.password"
+      @closeMeOk="handlePasswordDialogOk"
+      @closeMeCancel="handlePasswordDialogCancel"
     />
 
     <div
@@ -413,6 +422,7 @@ import SelectDict from '@/components/00_dict/select/SelectDict'
 import NewDialog from '../20_new/index.vue'
 import EditDialog from '../30_edit/index.vue'
 import ViewDialog from '../40_view/index.vue'
+import PasswordDialog from '../60_password/index.vue'
 import deepCopy from 'deep-copy'
 
 export default {
@@ -423,7 +433,8 @@ export default {
     SelectDict,
     NewDialog,
     EditDialog,
-    ViewDialog
+    ViewDialog,
+    PasswordDialog
   },
   directives: { elDragDialog },
   props: {
@@ -497,8 +508,11 @@ export default {
       dialogs: {
         new: false,
         edit: false,
-        view: false
+        view: false,
+        password: false
       },
+      // 密码设置相关数据
+      passwordStaffData: null,
       isViewModel: false
     }
   },
@@ -682,6 +696,29 @@ export default {
     // 查看弹窗回调
     handleViewDialogCancel () {
       this.dialogs.view = false
+    },
+
+    // ========== 密码设置相关方法 ==========
+    // 处理新增员工弹窗中的密码设置请求
+    handleSetPasswordClick (data) {
+      // 存储当前员工信息用于密码设置
+      this.passwordStaffData = data
+      // 打开密码设置弹窗
+      this.dialogs.password = true
+    },
+
+    // 密码设置弹窗确定
+    handlePasswordDialogOk (passwordResult) {
+      // 将加密后的密码更新到新增员工的数据中
+      if (passwordResult && passwordResult.return_flag && this.$refs.newDialog) {
+        this.$refs.newDialog.updatePasswordData(passwordResult.data.password)
+      }
+      this.dialogs.password = false
+    },
+
+    // 密码设置弹窗取消
+    handlePasswordDialogCancel () {
+      this.dialogs.password = false
     }
   }
 }

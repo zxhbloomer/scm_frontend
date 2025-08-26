@@ -20,11 +20,11 @@ export function convertEmployeesToTreeNodes (staffList, parentCode) {
     const name = staff.name || staff.staff_name || staff.user_name || staff.real_name || staff.display_name || `员工${staff.id}`
 
     return {
-      id: staff.id, // 使用员工的原始数字ID，通过nodeType区分节点类型
+      id: staff.id, // 使用员工的原始数字ID，通过type区分节点类型
       label: name, // 树节点显示文本
       children: null, // 员工是叶子节点，无子节点
       isLeaf: true, // 标识为叶子节点，Element UI不显示展开图标
-      nodeType: 'staff', // 自定义字段：标识节点类型（用于区分员工和组织节点）
+      type: '60', // 使用统一的type字段标识员工类型（DICT_ORG_SETTING_TYPE_STAFF）
       orgCode: parentCode, // 自定义字段：记录所属组织编码
       staffData: { // 自定义字段：保存完整的员工业务数据
         id: staff.id,
@@ -48,7 +48,7 @@ export function convertEmployeesToTreeNodes (staffList, parentCode) {
  * @returns {boolean} 是否为员工节点
  */
 export function isStaffNode (nodeData) {
-  return nodeData && nodeData.nodeType === 'staff'
+  return nodeData && nodeData.type === '60' // DICT_ORG_SETTING_TYPE_STAFF
 }
 
 /**

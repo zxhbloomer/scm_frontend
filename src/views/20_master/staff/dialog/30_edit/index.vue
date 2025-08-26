@@ -1019,10 +1019,8 @@ export default {
         rules: {},
         // 基本信息栏目check
         rulesOne: {
-          name: [{ required: true, message: '请输入员工姓名', trigger: 'change' }],
-
-          id_card: [{ required: true, message: '请输入身份证号', trigger: 'change' }]
-
+          name: [{ required: true, message: '请输入员工姓名', trigger: 'change' }]
+          // id_card: [{ required: true, message: '请输入身份证号', trigger: 'change' }] // 身份证号码改为非必填
         },
         rulesTwo: {
           'user.login_name': [{ required: true, message: '请输入登录用户名', trigger: 'change' }]

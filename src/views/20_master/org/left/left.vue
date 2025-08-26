@@ -107,13 +107,6 @@
           class="custom-tree-node"
         >
           <span>
-            <!-- 岗位节点loading - 最左边 -->
-            <i
-              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staffLoading"
-              class="el-icon-loading staff-loading-icon"
-              style="margin-right: 5px;"
-            />
-
             <svg-icon
               v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
               icon-class="perfect-icon-tenant"
@@ -141,19 +134,20 @@
             />
             <!-- 员工节点图标 -->
             <svg-icon
-              v-else-if="data.nodeType === 'staff'"
+              v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF"
               icon-class="perfect-icon-user"
               class="el-icon--right"
             />
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               组织机构根节点
               <!-- 显示根节点统计信息 -->
-              <span v-if="data.root_stats" style="font-size: 12px; color: #606266;">
+              <span v-if="data.countLoading" style="font-size: 12px; color: #606266;">（加载中...）</span>
+              <span v-else-if="data.root_stats" style="font-size: 12px; color: #606266;">
                 {{ data.root_stats }}
               </span>
             </span>
             <!-- 员工节点显示 -->
-            <span v-else-if="data.nodeType === 'staff'">
+            <span v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF">
               {{ data.label }}
               <span style="color: #909399; font-size: 12px;">
                 {{ getStaffDisplayText(data) }}
@@ -163,8 +157,10 @@
               {{ data.simple_name }}
               <!-- 集团类型显示子节点数量 -->
               <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="font-size: 12px;">
+                <!-- 如果正在加载，显示loading -->
+                <span v-if="data.countLoading" style="color: #E6A23C;">（加载中...）</span>
                 <!-- 使用计算属性获取显示数据 -->
-                <template v-if="getGroupDisplayData(data.sub_count).hasContent">
+                <template v-else-if="getGroupDisplayData(data.sub_count).hasContent">
                   <span v-if="getGroupDisplayData(data.sub_count).isDetailed">
                     (
                     <!-- 使用v-for循环渲染链接，用v-if做case判断 -->
@@ -202,14 +198,17 @@
                   </span>
                 </template>
               </span>
-              <!-- 企业类型显示部门数量 - 只在数量大于0时显示 -->
-              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY && (data.dept_count > 0)" class="company-dept-count" style="color: #409EFF; font-size: 12px;">
-                （部门数：{{ data.dept_count }}）
+              <!-- 企业类型显示部门数量 -->
+              <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY" class="company-dept-count" style="color: #409EFF; font-size: 12px;">
+                <span v-if="data.countLoading">（加载中...）</span>
+                <span v-else-if="data.dept_count > 0">（部门数：{{ data.dept_count }}）</span>
               </span>
               <!-- 部门类型显示子部门和岗位数量 -->
               <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT" style="font-size: 12px;">
+                <!-- 如果正在加载，显示loading -->
+                <span v-if="data.countLoading" style="color: #67C23A;">（加载中...）</span>
                 <!-- 使用计算属性获取显示数据 -->
-                <template v-if="getDeptDisplayData(data.sub_count).hasContent">
+                <template v-else-if="getDeptDisplayData(data.sub_count).hasContent">
                   <span v-if="getDeptDisplayData(data.sub_count).isDetailed">
                     (
                     <!-- 使用v-for循环渲染链接，用v-if做case判断 -->
@@ -258,7 +257,7 @@
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
           <el-tag
-            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT && data.nodeType !== 'staff'"
+            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT && data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF"
             :type="getOrgTagType(data.type)"
             size="mini"
             effect="dark"
@@ -268,7 +267,7 @@
           </el-tag>
           <!-- 员工节点标签 -->
           <el-tag
-            v-if="data.nodeType === 'staff'"
+            v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF"
             type="success"
             size="mini"
             effect="plain"
@@ -645,13 +644,13 @@
 
   /* 拖拽样式优化 - 简单明显的区分 */
 
-  /* 子级拖拽样式 - 绿色背景+文字 */
+  /* 子级拖拽样式 - 红色背景+文字 */
   .drag-drop-inner {
-    background: linear-gradient(90deg, #f0f9ff 0%, #e8f5e8 100%) !important;
-    border: 3px solid #67C23A !important;
+    background: linear-gradient(90deg, #fff0f0 0%, #ffe8e8 100%) !important;
+    border: 3px solid #F56C6C !important;
     border-radius: 8px !important;
     position: relative !important;
-    box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
   }
 
   .drag-drop-inner::after {
@@ -660,7 +659,7 @@
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: #67C23A;
+    background: #F56C6C;
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -678,72 +677,36 @@
   .drag-drop-before::before {
     content: '';
     position: absolute;
-    top: -4px;
+    top: -3px;
     left: 20px;
     right: 10px;
-    height: 6px;
-    background: linear-gradient(90deg, #FF6B35 0%, #FF8C42 100%);
-    border-radius: 3px;
+    height: 4px;
+    background: linear-gradient(90deg, #F56C6C 0%, #FF7979 100%);
+    border-radius: 2px;
     z-index: 9998;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.5);
-    border: 1px solid #FF6B35;
+    box-shadow: 0 2px 8px rgba(245, 108, 108, 0.5);
+    border: 1px solid #F56C6C;
     pointer-events: none;
   }
 
   .drag-drop-before::after {
-    content: '⬆️ 上方';
+    content: '⬆️ 插入上方';
     position: absolute;
-    top: -25px;
+    top: -16px;
     right: 10px;
-    background: #FF6B35;
+    background: #F56C6C;
     color: white;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 10px;
     font-weight: bold;
-    z-index: 9999;
+    z-index: 10000;
     white-space: nowrap;
-    box-shadow: 0 3px 10px rgba(255, 107, 53, 0.5);
+    box-shadow: 0 2px 6px rgba(245, 108, 108, 0.7);
     pointer-events: none;
     display: block;
   }
 
-  .drag-drop-after {
-    position: relative;
-  }
-
-  .drag-drop-after::before {
-    content: '';
-    position: absolute;
-    bottom: -4px;
-    left: 20px;
-    right: 10px;
-    height: 6px;
-    background: linear-gradient(90deg, #FF6B35 0%, #FF8C42 100%);
-    border-radius: 3px;
-    z-index: 9998;
-    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.5);
-    border: 1px solid #FF6B35;
-    pointer-events: none;
-  }
-
-  .drag-drop-after::after {
-    content: '⬇️ 下方';
-    position: absolute;
-    bottom: -25px;
-    right: 10px;
-    background: #FF6B35;
-    color: white;
-    padding: 4px 10px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: bold;
-    z-index: 9999;
-    white-space: nowrap;
-    box-shadow: 0 3px 10px rgba(255, 107, 53, 0.5);
-    pointer-events: none;
-    display: block;
-  }
   .el-icon--right {
     margin-left: 0px;
   }
@@ -1227,8 +1190,6 @@ export default {
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.treeData = response.data
-        // 直接为所有岗位节点加载员工数据
-        this.loadAllEmployeesForPositions()
         // 为集团类型节点异步加载子节点数量
         this.loadSubCount(this.dataJson.treeData)
         // 加载根节点统计信息
@@ -1868,6 +1829,17 @@ export default {
       if (!isNotEmpty(dropNode.data.parent_id)) {
         return false
       }
+
+      // 处理员工节点拖拽验证
+      if (draggingNode.data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
+        // 员工只能拖拽到岗位节点，且必须是放入内部
+        if (dropNode.data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && type === 'inner') {
+          return true
+        }
+        // 员工不能拖拽到其他类型节点
+        return false
+      }
+
       switch (draggingNode.data.type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
           // 集团可嵌套，必须在租户下
@@ -1931,6 +1903,12 @@ export default {
     },
     // 允许拖拽的情况
     allowDrag (draggingNode) {
+      // 员工节点允许拖拽（即使没有parent_id）
+      if (draggingNode.data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
+        return true
+      }
+
+      // 其他节点需要有parent_id才能拖拽
       if (isNotEmpty(draggingNode.data.parent_id)) {
         return true
       } else {
@@ -1963,6 +1941,8 @@ export default {
           return '部门'
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
           return '岗位'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+          return '员工'
         default:
           return ''
       }
@@ -2007,6 +1987,12 @@ export default {
 
               // 直接设置子节点
               this.$set(positionNode, 'children', employeeNodes)
+
+              // 同步更新员工数量统计
+              this.$set(positionNode, 'staff_count', employeeNodes.length)
+            } else {
+              // 没有员工时，确保staff_count为0
+              this.$set(positionNode, 'staff_count', 0)
             }
           } catch (error) {
             // 静默处理错误，不影响其他岗位加载
@@ -2060,7 +2046,7 @@ export default {
 
         nodes.forEach(node => {
           // 检查是否为员工节点
-          if (node.nodeType === 'staff') {
+          if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
             staffNodes.push(node)
           }
 
@@ -2136,15 +2122,19 @@ export default {
             node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
           // 对于集团类型，传递orgType参数以获取详细分类统计
           if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP) {
+            this.$set(node, 'countLoading', true)
             getSubCountApi(node.id, node.type).then(response => {
               // 使用this.$set确保响应式更新
               this.$set(node, 'sub_count', response.data)
             }).catch(error => {
               console.error('获取集团子节点数量失败:', error)
               this.$set(node, 'sub_count', 0)
+            }).finally(() => {
+              this.$set(node, 'countLoading', false)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY) {
             // 企业类型：只调用一次API获取部门统计（包含dept_count）
+            this.$set(node, 'countLoading', true)
             getSubCountApi(node.id, this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY).then(response => {
               const deptCount = response.data.dept_count || 0
               this.$set(node, 'dept_count', deptCount)
@@ -2154,36 +2144,47 @@ export default {
               console.error('获取企业部门统计失败:', error)
               this.$set(node, 'dept_count', 0)
               this.$set(node, 'sub_count', 0)
+            }).finally(() => {
+              this.$set(node, 'countLoading', false)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT) {
             // 部门类型：获取详细的子部门和岗位统计
+            this.$set(node, 'countLoading', true)
             getSubCountApi(node.id, node.type).then(response => {
               // 使用this.$set确保响应式更新
               this.$set(node, 'sub_count', response.data)
             }).catch(error => {
               console.error('获取部门子节点统计失败:', error)
               this.$set(node, 'sub_count', 0)
+            }).finally(() => {
+              this.$set(node, 'countLoading', false)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
-            // 岗位类型：并行获取员工数量、角色数量和权限数量统计
+            // 岗位类型：并行获取角色数量和权限数量统计，员工数直接从子节点计算
+            this.$set(node, 'countLoading', true)
+
+            // 如果已经有员工子节点，直接使用子节点数量作为员工数
+            const actualStaffCount = node.children ? node.children.filter(child => child.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF).length : 0
+            this.$set(node, 'staff_count', actualStaffCount)
+
             Promise.all([
-              getSubCountApi(node.id, node.type), // 员工数
               getPositionAssignedRoleIdsApi({ position_id: node.serial_id }), // 角色数
               getPositionAssignedPermissionIdsApi({ position_id: node.serial_id }) // 权限数
             ]).then(responses => {
-              // 使用this.$set确保响应式更新
-              this.$set(node, 'staff_count', responses[0].data || 0)
-              this.$set(node, 'role_count', Array.isArray(responses[1].data) ? responses[1].data.length : 0)
-              this.$set(node, 'permission_count', Array.isArray(responses[2].data) ? responses[2].data.length : 0)
+              // 使用this.$set确保响应式更新，员工数保持从子节点计算的值
+              this.$set(node, 'role_count', Array.isArray(responses[0].data) ? responses[0].data.length : 0)
+              this.$set(node, 'permission_count', Array.isArray(responses[1].data) ? responses[1].data.length : 0)
             }).catch(error => {
               console.error('获取岗位统计数据失败:', error)
-              // 设置默认值
-              this.$set(node, 'staff_count', 0)
+              // 设置默认值（员工数保持从子节点计算的值）
               this.$set(node, 'role_count', 0)
               this.$set(node, 'permission_count', 0)
+            }).finally(() => {
+              this.$set(node, 'countLoading', false)
             })
-          } else if (node.nodeType === 'staff') {
+          } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
             // 员工类型：并行获取角色数量、权限数量和排除权限数量统计
+            this.$set(node, 'countLoading', true)
             Promise.all([
               getStaffAssignedRoleIds({ staff_id: node.staffData.id }), // 角色数
               getStaffAssignedPermissionIds({ staff_id: node.staffData.id }), // 权限数
@@ -2199,6 +2200,8 @@ export default {
               this.$set(node, 'role_count', 0)
               this.$set(node, 'permission_count', 0)
               this.$set(node, 'exclude_permission_count', 0)
+            }).finally(() => {
+              this.$set(node, 'countLoading', false)
             })
           }
         }
@@ -2211,11 +2214,14 @@ export default {
     },
     // 加载根节点统计信息
     loadRootStatistics () {
+      // 查找根节点（通常是第一个节点，且没有parent_id）
+      const rootNode = this.dataJson.treeData.find(node => !node.parent_id)
+      if (rootNode) {
+        this.$set(rootNode, 'countLoading', true)
+      }
+
       getRootStatisticsApi().then(response => {
         const stats = response.data
-
-        // 查找根节点（通常是第一个节点，且没有parent_id）
-        const rootNode = this.dataJson.treeData.find(node => !node.parent_id)
 
         if (rootNode) {
           // 添加统计信息到根节点标签
@@ -2256,6 +2262,10 @@ export default {
         }
       }).catch(error => {
         console.error('获取根节点统计信息失败:', error)
+      }).finally(() => {
+        if (rootNode) {
+          this.$set(rootNode, 'countLoading', false)
+        }
       })
     },
     // 更新指定岗位节点的员工数量显示
@@ -2263,6 +2273,9 @@ export default {
       if (!positionNode || positionNode.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
         return
       }
+      // 设置loading状态
+      this.$set(positionNode, 'countLoading', true)
+
       // 并行获取岗位的员工数、角色数和权限数
       Promise.all([
         getSubCountApi(positionNode.id, positionNode.type), // 员工数
@@ -2286,14 +2299,19 @@ export default {
         }
       }).catch(error => {
         console.error('更新岗位统计数据失败:', error)
+      }).finally(() => {
+        this.$set(positionNode, 'countLoading', false)
       })
     },
 
     // 更新指定员工节点的权限统计显示
     updateStaffStats (staffNode) {
-      if (!staffNode || staffNode.nodeType !== 'staff') {
+      if (!staffNode || staffNode.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         return
       }
+      // 设置loading状态
+      this.$set(staffNode, 'countLoading', true)
+
       // 并行获取员工的角色数、权限数和排除权限数
       Promise.all([
         getStaffAssignedRoleIds({ staff_id: staffNode.staffData.id }), // 角色数
@@ -2317,6 +2335,8 @@ export default {
         }
       }).catch(error => {
         console.error('更新员工统计数据失败:', error)
+      }).finally(() => {
+        this.$set(staffNode, 'countLoading', false)
       })
     },
     // 递归更新树节点中指定节点的统计数据显示
@@ -2664,9 +2684,8 @@ export default {
         nodeContent.classList.add('drag-drop-inner')
       } else if (dropType === 'before') {
         nodeContent.classList.add('drag-drop-before')
-      } else if (dropType === 'after') {
-        nodeContent.classList.add('drag-drop-after')
       }
+      // 'after' 类型使用Element UI内置指示器，不需要额外样式
     },
 
     /**
@@ -2676,7 +2695,7 @@ export default {
       // 清除所有节点的拖拽样式类
       const allNodes = this.$el.querySelectorAll('.el-tree-node__content')
       allNodes.forEach(node => {
-        node.classList.remove('drag-drop-inner', 'drag-drop-before', 'drag-drop-after')
+        node.classList.remove('drag-drop-inner', 'drag-drop-before')
       })
     },
 
@@ -2840,15 +2859,15 @@ export default {
     // 根据节点类型生成菜单项
     getContextMenuItems (nodeData) {
       // 检查nodeData是否有效
-      if (!nodeData || (!nodeData.type && !nodeData.nodeType)) {
+      if (!nodeData || !nodeData.type) {
         console.log('getContextMenuItems: nodeData 无效', nodeData)
         return []
       }
 
       const items = []
 
-      // 处理员工节点 (使用 nodeType)
-      if (nodeData.nodeType === 'staff') {
+      // 处理员工节点
+      if (nodeData.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         console.log('getContextMenuItems: 检测到员工节点', nodeData)
         items.push(
           { label: '修改员工', icon: 'el-icon-edit', action: 'edit_staff', enabled: true },
@@ -3097,7 +3116,7 @@ export default {
     // === 员工节点相关方法 ===
     // 处理员工编辑
     handleStaffEdit (nodeData) {
-      if (nodeData.nodeType !== 'staff') {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         this.$message.warning('只有员工节点才能编辑员工信息')
         return
       }
@@ -3165,7 +3184,7 @@ export default {
 
     // 打开员工角色管理弹窗
     openStaffRoleDialog (nodeData) {
-      if (nodeData.nodeType !== 'staff') {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         this.$message.warning('只有员工节点才能管理角色')
         return
       }
@@ -3189,7 +3208,7 @@ export default {
 
     // 打开员工权限管理弹窗
     openStaffPermissionDialog (nodeData) {
-      if (nodeData.nodeType !== 'staff') {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         this.$message.warning('只有员工节点才能管理权限')
         return
       }
@@ -3213,7 +3232,7 @@ export default {
 
     // 打开员工权限排除弹窗
     openStaffExcludePermissionDialog (nodeData) {
-      if (nodeData.nodeType !== 'staff') {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         this.$message.warning('只有员工节点才能排除权限')
         return
       }
@@ -3502,6 +3521,11 @@ export default {
         return ''
       }
 
+      // 如果正在加载，显示loading文字
+      if (node.countLoading) {
+        return '（加载中...）'
+      }
+
       const parts = []
 
       // 只有数量>0时才添加到显示文本中
@@ -3523,8 +3547,13 @@ export default {
 
     // 获取员工节点显示文本
     getStaffDisplayText (node) {
-      if (node.nodeType !== 'staff') {
+      if (node.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
         return ''
+      }
+
+      // 如果正在加载，显示loading文字
+      if (node.countLoading) {
+        return '（加载中...）'
       }
 
       const parts = []
@@ -3549,3 +3578,60 @@ export default {
 }
 </script>
 
+<style scoped>
+.org-left {
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* 覆盖Element UI拖拽指示器样式 - 使用红色主题并添加文字 */
+::v-deep .el-tree__drop-indicator {
+  background-color: #d73502 !important;  /* 红色线条替代蓝色 */
+  height: 2px !important;  /* 稍微粗一点 */
+}
+
+/* 在拖拽指示器上添加文字提示 */
+::v-deep .el-tree__drop-indicator::before {
+  content: "插入到此位置";
+  position: absolute;
+  right: 80px !important;
+  left: auto !important;
+  top: -20px;
+  color: #d73502;
+  font-size: 12px;
+  font-style: normal !important;  /* 强制正常字体样式，不倾斜 */
+  font-weight: normal !important;  /* 正常字重 */
+  text-transform: none !important;  /* 不变换文字 */
+  letter-spacing: normal !important;  /* 正常字间距 */
+  transform: none !important;  /* 强制不变形，确保文字水平显示 */
+  background: white !important;
+  padding: 2px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+  z-index: 1000;
+  /* 禁用选择和焦点状态 */
+  user-select: none !important;  /* 禁止文字被选中 */
+  outline: none !important;      /* 去除焦点轮廓 */
+  border: none !important;       /* 确保没有边框 */
+  box-shadow: none !important;   /* 去除阴影 */
+}
+
+/* 覆盖Element UI的is-drop-inner样式，使用自定义drag-drop-inner */
+::v-deep .el-tree-node.is-drop-inner > .el-tree-node__content {
+  background: transparent !important;
+  border: none !important;
+}
+
+::v-deep .el-tree-node.is-drop-inner > .el-tree-node__content .el-tree-node__label {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* 自定义内嵌拖拽样式 - 成为子节点时的样式 */
+::v-deep .el-tree-node__content.drag-drop-inner {
+  background: rgba(215, 53, 2, 0.1) !important;
+  border: 2px dashed #d73502 !important;
+  border-radius: 4px;
+}
+
+</style>

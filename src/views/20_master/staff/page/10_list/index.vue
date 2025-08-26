@@ -521,6 +521,7 @@
       :visible="dialogs.new"
       @closeMeOk="handleNewDialogOk"
       @closeMeCancel="handleNewDialogCancel"
+      @handleSetPasswordClick="handleSetPasswordClick"
     />
 
     <!-- 编辑弹窗 -->
@@ -1057,7 +1058,18 @@ export default {
       }
       this.dialogs.password = true
     },
-    handlePasswordDialogOk () {
+    // 处理新增员工弹窗中的密码设置请求
+    handleSetPasswordClick (data) {
+      // 存储当前员工信息用于密码设置
+      this.passwordStaffData = data
+      // 打开密码设置弹窗
+      this.dialogs.password = true
+    },
+    handlePasswordDialogOk (passwordResult) {
+      // 将加密后的密码更新到新增员工的数据中
+      if (passwordResult && passwordResult.return_flag && this.$refs.newDialog) {
+        this.$refs.newDialog.updatePasswordData(passwordResult.data.password)
+      }
       this.dialogs.password = false
     },
     handlePasswordDialogCancel () {

@@ -178,21 +178,8 @@ export default {
         loginRules: {
           password: [
             { required: true, message: '新密码不能为空', trigger: 'blur' },
-            { min: 8, message: '长度需大于8位', trigger: 'blur' },
-            {
-              validator: (rule, value, callback) => {
-                if (!/[A-Z]/.test(value)) {
-                  callback(new Error('密码必须包含大写字母'))
-                } else if (!/[a-z]/.test(value)) {
-                  callback(new Error('密码必须包含小写字母'))
-                } else if (!/[0-9]/.test(value)) {
-                  callback(new Error('密码必须包含数字'))
-                } else {
-                  callback()
-                }
-              },
-              trigger: 'blur'
-            }]
+            { min: 6, message: '长度需大于等于6位', trigger: 'blur' }
+          ]
         }
       },
       // 页面设置json
