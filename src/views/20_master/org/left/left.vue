@@ -100,12 +100,20 @@
         @node-drag-end="handleDragEnd"
         @node-drop="handleDrop"
         @current-change="handleCurrentChange"
+        @node-contextmenu="handleNodeContextMenu"
       >
         <span
           slot-scope="{ node, data }"
           class="custom-tree-node"
         >
           <span>
+            <!-- 岗位节点loading - 最左边 -->
+            <i
+              v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staffLoading"
+              class="el-icon-loading staff-loading-icon"
+              style="margin-right: 5px;"
+            />
+
             <svg-icon
               v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
               icon-class="perfect-icon-tenant"
@@ -131,6 +139,12 @@
               icon-class="perfect-icon-position"
               class="el-icon--right"
             />
+            <!-- 员工节点图标 -->
+            <svg-icon
+              v-else-if="data.nodeType === 'staff'"
+              icon-class="perfect-icon-user"
+              class="el-icon--right"
+            />
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               组织机构根节点
               <!-- 显示根节点统计信息 -->
@@ -138,7 +152,14 @@
                 {{ data.root_stats }}
               </span>
             </span>
-            <span v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
+            <!-- 员工节点显示 -->
+            <span v-else-if="data.nodeType === 'staff'">
+              {{ data.label }}
+              <span style="color: #909399; font-size: 12px;">
+                {{ getStaffDisplayText(data) }}
+              </span>
+            </span>
+            <span v-else-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               {{ data.simple_name }}
               <!-- 集团类型显示子节点数量 -->
               <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="font-size: 12px;">
@@ -226,18 +247,18 @@
                   </span>
                 </template>
               </span>
-              <!-- 岗位节点显示员工数量 -->
+              <!-- 岗位节点显示员工数量、角色数量和权限数量 -->
               <span
-                v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staff_count > 0"
+                v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION"
                 style="color: #909399; font-size: 12px;"
               >
-                （员工数：{{ data.staff_count }}）
+                {{ getPositionDisplayText(data) }}
               </span>
             </span>
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
           <el-tag
-            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
+            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT && data.nodeType !== 'staff'"
             :type="getOrgTagType(data.type)"
             size="mini"
             effect="dark"
@@ -245,9 +266,39 @@
           >
             {{ getOrgTagText(data.type) }}
           </el-tag>
+          <!-- 员工节点标签 -->
+          <el-tag
+            v-if="data.nodeType === 'staff'"
+            type="success"
+            size="mini"
+            effect="plain"
+            style="margin-left: 8px;"
+          >
+            员工
+          </el-tag>
         </span>
       </el-tree>
     </div>
+
+    <!-- 右键菜单 -->
+    <ul
+      v-if="contextMenu.visible"
+      class="context-menu"
+      :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
+      tabindex="-1"
+      @blur="hideContextMenu"
+    >
+      <li
+        v-for="(item, index) in contextMenu.items"
+        :key="index"
+        class="context-menu-item"
+        :class="{ disabled: !item.enabled }"
+        @click="handleContextMenuClick(item)"
+      >
+        <i :class="item.icon" />
+        {{ item.label }}
+      </li>
+    </ul>
 
     <!-- pop窗口 数据编辑:新增、修改、步骤窗体-->
     <el-dialog
@@ -392,6 +443,63 @@
       :organization-context="dataJson.organizationContext"
       @closeMeOk="handleListDialogOk"
       @closeMeCancel="handleListDialogCancel"
+    />
+
+    <!-- 岗位角色管理弹窗 -->
+    <position-role-dialog
+      v-if="roleDialogData.visible"
+      :id="roleDialogData.positionId"
+      :visible="roleDialogData.visible"
+      :data="roleDialogData.positionData"
+      model="edit"
+      @closeMeOk="handleRoleDialogOk"
+      @closeMeCancel="handleRoleDialogCancel"
+    />
+
+    <!-- 岗位权限管理弹窗 -->
+    <position-permission-dialog
+      v-if="permissionDialogData.visible"
+      :visible="permissionDialogData.visible"
+      :position-id="permissionDialogData.positionId"
+      @closeMeOk="handlePermissionDialogOk"
+      @closeMeCancel="handlePermissionDialogCancel"
+    />
+
+    <!-- 员工编辑弹窗 -->
+    <staff-edit-dialog
+      v-if="popSettingsData.staffEditDialogData.visible"
+      :visible="popSettingsData.staffEditDialogData.visible"
+      :data="popSettingsData.staffEditDialogData.data"
+      :dialog-status="PARAMETERS.STATUS_UPDATE"
+      @closeMeOk="handleStaffEditDialogOk"
+      @closeMeCancel="handleStaffEditDialogCancel"
+    />
+
+    <!-- 员工角色管理弹窗 -->
+    <staff-role-dialog
+      v-if="popSettingsData.staffRoleDialogData.visible"
+      :visible="popSettingsData.staffRoleDialogData.visible"
+      :staff-id="popSettingsData.staffRoleDialogData.staffId"
+      @closeMeOk="handleStaffRoleDialogOk"
+      @closeMeCancel="handleStaffRoleDialogCancel"
+    />
+
+    <!-- 员工权限管理弹窗 -->
+    <staff-permission-dialog
+      v-if="popSettingsData.staffPermissionDialogData.visible"
+      :visible="popSettingsData.staffPermissionDialogData.visible"
+      :staff-id="popSettingsData.staffPermissionDialogData.staffId"
+      @closeMeOk="handleStaffPermissionDialogOk"
+      @closeMeCancel="handleStaffPermissionDialogCancel"
+    />
+
+    <!-- 员工权限排除弹窗 -->
+    <staff-exclude-permission-dialog
+      v-if="popSettingsData.staffExcludePermissionDialogData.visible"
+      :visible="popSettingsData.staffExcludePermissionDialogData.visible"
+      :staff-id="popSettingsData.staffExcludePermissionDialogData.staffId"
+      @closeMeOk="handleStaffExcludePermissionDialogOk"
+      @closeMeCancel="handleStaffExcludePermissionDialogCancel"
     />
 
   </div>
@@ -640,6 +748,20 @@
     margin-left: 0px;
   }
 
+  /* 员工Loading转圈动画 - 原生样式 */
+  .staff-loading-icon {
+    animation: loading-rotate 2s linear infinite;
+  }
+
+  @keyframes loading-rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
   /* 🎯 精确的节点选中状态颜色控制 - 只影响选中节点 */
   .el-tree-node.is-current > .el-tree-node__content {
     /* 企业部门数量: 蓝色 → 白色 */
@@ -708,9 +830,74 @@
 }
 </style>
 
+<style scoped>
+/* 右键菜单样式 */
+.context-menu {
+  position: fixed !important;
+  z-index: 9999 !important;
+  background: white !important;
+  border: 1px solid #ebeef5 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1) !important;
+  padding: 4px 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+  min-width: 120px !important;
+  max-width: 200px !important;
+  outline: none !important;
+  display: block !important;
+  font-family: inherit !important;
+}
+
+.context-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 16px !important;
+  font-size: 14px !important;
+  color: #606266 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+  min-height: 32px !important;
+  box-sizing: border-box !important;
+  user-select: none !important;
+}
+
+.context-menu-item:hover:not(.disabled) {
+  background-color: #f5f7fa !important;
+  color: #409eff !important;
+}
+
+.context-menu-item.disabled {
+  color: #c0c4cc !important;
+  cursor: not-allowed !important;
+}
+
+.context-menu-item.disabled:hover {
+  background-color: transparent !important;
+  color: #c0c4cc !important;
+}
+
+.context-menu-item i {
+  margin-right: 8px !important;
+  font-size: 16px !important;
+  width: 16px !important;
+  text-align: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* 分隔线样式（如果需要的话） */
+.context-menu-divider {
+  height: 1px !important;
+  background-color: #e4e7ed !important;
+  margin: 4px 0 !important;
+}
+</style>
+
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi, getRootStatisticsApi } from '@/api/20_master/org/org'
+import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi, getRootStatisticsApi, getEmployeesForTreeApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
 import groupDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
 import companyDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
@@ -723,18 +910,32 @@ import companyListDialog from '@/views/20_master/company/dialog/10_list/index.vu
 import deptListDialog from '@/views/20_master/dept/dialog/10_list/index.vue'
 import positionListDialog from '@/views/20_master/position/dialog/10_list/index.vue'
 import staffListDialog from '@/views/20_master/staff/dialog/10_list/index.vue'
+// 新增：引入角色和权限管理弹窗组件
+import positionRoleDialog from '@/views/10_system/role/component/dialog/listfor/position/index.vue'
+import positionPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/position/index.vue'
+// 新增：引入员工相关弹窗组件
+import staffEditDialog from '@/views/20_master/staff/dialog/30_edit/index.vue'
+import staffRoleDialog from '@/views/10_system/role/component/dialog/listfor/staff/index.vue'
+import staffPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staff/index.vue'
+import staffExcludePermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staffexclude/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
-import { getDataByIdApi as getPositionByIdApi } from '@/api/20_master/position/position'
+import { convertEmployeesToTreeNodes, isStaffNode, isPositionNode } from '@/utils/treeHelper'
+import { getDataByIdApi as getPositionByIdApi, getPositionAssignedRoleIdsApi } from '@/api/20_master/position/position'
+import { getPositionAssignedPermissionIdsApi } from '@/api/20_master/permission/permission'
 import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
 import { getByIdApi as getCompanyByIdApi } from '@/api/20_master/company/company'
 import { getByIdApi as getDeptByIdApi } from '@/api/20_master/dept/dept'
+// 新增：引入员工相关API
+import { getApi as getStaffByIdApi, getStaffAssignedRoleIds, getStaffAssignedPermissionIds, getStaffExcludedPermissionIds } from '@/api/20_master/staff/staff'
 // import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 
 export default {
   // name: 'P00000171', // 页面id，和router中的name需要一致，作为缓存
   components: {
     groupDialog, companyDialog, deptDialog, positionDialog, setPositionDialog,
-    groupListDialog, companyListDialog, deptListDialog, positionListDialog, staffListDialog
+    groupListDialog, companyListDialog, deptListDialog, positionListDialog, staffListDialog,
+    positionRoleDialog, positionPermissionDialog,
+    staffEditDialog, staffRoleDialog, staffPermissionDialog, staffExcludePermissionDialog
   },
   directives: { elDragDialog },
   props: {
@@ -756,6 +957,12 @@ export default {
         treeData: [],
         // 单条数据 json
         currentJson: null,
+        // 树组件配置
+        defaultProps: {
+          children: 'children',
+          label: 'label',
+          isLeaf: 'isLeaf'
+        },
         tempJson: {
           org_type: ''
         },
@@ -772,6 +979,8 @@ export default {
         para: this.CONSTANTS.DICT_ORG_SETTING_TYPE,
         filterPara: [],
         loading: true,
+        // 员工数据加载标志位
+        isLoadingEmployees: false,
         // 按钮状态：是否可用
         btnDisabledStatus: {
           disabledInsert: true,
@@ -831,6 +1040,26 @@ export default {
           // 点击确定以后返回的值
           selectedDataJson: {}
         },
+        // 员工编辑弹窗参数设置
+        staffEditDialogData: {
+          visible: false,
+          data: null
+        },
+        // 员工角色管理弹窗参数设置
+        staffRoleDialogData: {
+          visible: false,
+          staffId: null
+        },
+        // 员工权限管理弹窗参数设置
+        staffPermissionDialogData: {
+          visible: false,
+          staffId: null
+        },
+        // 员工权限排除弹窗参数设置
+        staffExcludePermissionDialogData: {
+          visible: false,
+          staffId: null
+        },
         // 新增：10_list 弹窗状态管理
         listDialogData: {
           // 弹出框显示参数
@@ -845,6 +1074,27 @@ export default {
       dragConfirmData: {
         originalTreeData: null, // 保存拖拽前的树状态
         isProcessing: false // 是否正在处理拖拽确认
+      },
+      // 右键菜单相关数据
+      contextMenu: {
+        visible: false,
+        x: 0,
+        y: 0,
+        items: [],
+        currentNode: null, // 当前右键的节点
+        currentData: null // 当前右键的节点数据
+      },
+      // 角色管理弹窗状态
+      roleDialogData: {
+        visible: false,
+        positionId: null,
+        positionData: null
+      },
+      // 权限管理弹窗状态
+      permissionDialogData: {
+        visible: false,
+        positionId: null,
+        positionData: null
       }
     }
   },
@@ -977,6 +1227,8 @@ export default {
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
         this.dataJson.treeData = response.data
+        // 直接为所有岗位节点加载员工数据
+        this.loadAllEmployeesForPositions()
         // 为集团类型节点异步加载子节点数量
         this.loadSubCount(this.dataJson.treeData)
         // 加载根节点统计信息
@@ -1022,6 +1274,11 @@ export default {
 
     // 提取组织上下文信息
     extractOrganizationContext (node) {
+      if (!this.dataJson || !this.dataJson.organizationContext) {
+        console.warn('dataJson or organizationContext is not initialized')
+        return
+      }
+
       if (!node) {
         this.dataJson.organizationContext.selectedNode = null
         this.dataJson.organizationContext.companyInfo = null
@@ -1070,7 +1327,7 @@ export default {
 
     // 递归查找父级企业信息
     findParentCompany (node) {
-      if (!node.parent_id || !this.dataJson.treeData) return
+      if (!node || !node.parent_id || !this.dataJson || !this.dataJson.treeData) return
 
       const parentNode = this.findNodeInTree(this.dataJson.treeData, node.parent_id)
 
@@ -1091,7 +1348,7 @@ export default {
 
     // 查找父级部门和企业信息（用于岗位节点）
     findParentDepartmentAndCompany (node) {
-      if (!node.parent_id || !this.dataJson.treeData) return
+      if (!node || !node.parent_id || !this.dataJson || !this.dataJson.treeData) return
 
       const parentNode = this.findNodeInTree(this.dataJson.treeData, node.parent_id)
 
@@ -1198,8 +1455,10 @@ export default {
           })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工不作为树节点显示，不允许在此编辑
-          this.$message.warning('员工信息请通过员工管理模块进行编辑')
+          // 员工节点：显示员工详情信息（可选择打开专门的员工编辑弹窗）
+          if (this.dataJson.currentJson && isStaffNode(this.dataJson.currentJson)) {
+            this.$message.info('员工信息详情，如需编辑请通过员工管理模块')
+          }
           break
       }
     },
@@ -1455,9 +1714,9 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 如果是员工类型，只更新当前岗位节点的员工数量显示，不刷新整个树
+          // 如果是员工类型，只更新当前岗位节点的统计数据显示，不刷新整个树
           if (this.popSettingsData.listDialogData.dialogType === 'staff') {
-            this.updatePositionStaffCount(this.dataJson.currentJson)
+            this.updatePositionStats(this.dataJson.currentJson)
           } else {
             // 其他类型刷新树数据，以便显示新增的节点和确保缓存同步
             this.handleTreeRefresh()
@@ -1708,6 +1967,163 @@ export default {
           return ''
       }
     },
+
+    /**
+     * 为所有岗位节点直接加载员工数据 - 简化版本，不使用懒加载
+     */
+    async loadAllEmployeesForPositions () {
+      // 防止重复调用
+      if (this.settings.isLoadingEmployees) {
+        return
+      }
+      this.settings.isLoadingEmployees = true
+
+      try {
+        // 递归查找所有岗位节点
+        const positionNodes = this.findAllPositionNodes(this.dataJson.treeData)
+
+        if (positionNodes.length === 0) {
+          return
+        }
+
+        // 第一步：为所有岗位节点设置loading状态
+        positionNodes.forEach(positionNode => {
+          this.$set(positionNode, 'staffLoading', true)
+        })
+
+        // 强制更新界面
+        this.$forceUpdate()
+
+        // 第二步：逐个加载员工数据
+        for (const positionNode of positionNodes) {
+          try {
+            // 调用API获取员工数据
+            const response = await getEmployeesForTreeApi(positionNode.code)
+            const staffList = response.data?.list || []
+
+            if (staffList.length > 0) {
+              // 转换员工数据为树节点格式
+              const employeeNodes = convertEmployeesToTreeNodes(staffList, positionNode.code)
+
+              // 直接设置子节点
+              this.$set(positionNode, 'children', employeeNodes)
+            }
+          } catch (error) {
+            // 静默处理错误，不影响其他岗位加载
+          } finally {
+            // 第三步：逐个清除loading状态
+            this.$set(positionNode, 'staffLoading', false)
+          }
+        }
+      } finally {
+        this.settings.isLoadingEmployees = false
+      }
+
+      // 员工节点创建完成后，立即加载统计数据
+      await this.loadStaffStatsForAllEmployees()
+    },
+
+    /**
+     * 递归查找所有岗位节点
+     */
+    findAllPositionNodes (treeData) {
+      const positionNodes = []
+
+      const traverse = (nodes) => {
+        if (!Array.isArray(nodes)) return
+
+        nodes.forEach(node => {
+          // 检查是否为岗位节点
+          if (isPositionNode(node)) {
+            positionNodes.push(node)
+          }
+
+          // 递归查找子节点
+          if (node.children && Array.isArray(node.children)) {
+            traverse(node.children)
+          }
+        })
+      }
+
+      traverse(treeData)
+      return positionNodes
+    },
+
+    /**
+     * 递归查找所有员工节点
+     */
+    findAllStaffNodes (treeData) {
+      const staffNodes = []
+
+      const traverse = (nodes) => {
+        if (!Array.isArray(nodes)) return
+
+        nodes.forEach(node => {
+          // 检查是否为员工节点
+          if (node.nodeType === 'staff') {
+            staffNodes.push(node)
+          }
+
+          // 递归查找子节点
+          if (node.children && Array.isArray(node.children)) {
+            traverse(node.children)
+          }
+        })
+      }
+
+      traverse(treeData)
+      return staffNodes
+    },
+
+    /**
+     * 为所有员工节点加载统计数据
+     */
+    async loadStaffStatsForAllEmployees () {
+      try {
+        // 递归查找所有员工节点
+        const staffNodes = this.findAllStaffNodes(this.dataJson.treeData)
+
+        if (staffNodes.length === 0) {
+          return
+        }
+
+        // 为每个员工节点并行获取统计数据
+        const promises = staffNodes.map(async (staffNode) => {
+          try {
+            // 数据验证
+            if (!staffNode.staffData || !staffNode.staffData.id) {
+              return
+            }
+
+            // 并行获取员工的角色数、权限数和排除权限数
+            const responses = await Promise.all([
+              getStaffAssignedRoleIds({ staff_id: staffNode.staffData.id }), // 角色数
+              getStaffAssignedPermissionIds({ staff_id: staffNode.staffData.id }), // 权限数
+              getStaffExcludedPermissionIds({ staff_id: staffNode.staffData.id }) // 排除权限数
+            ])
+
+            // 使用this.$set确保响应式更新
+            this.$set(staffNode, 'role_count', Array.isArray(responses[0].data) ? responses[0].data.length : 0)
+            this.$set(staffNode, 'permission_count', Array.isArray(responses[1].data) ? responses[1].data.length : 0)
+            this.$set(staffNode, 'exclude_permission_count', Array.isArray(responses[2].data) ? responses[2].data.length : 0)
+          } catch (error) {
+            // 设置默认值
+            this.$set(staffNode, 'role_count', 0)
+            this.$set(staffNode, 'permission_count', 0)
+            this.$set(staffNode, 'exclude_permission_count', 0)
+          }
+        })
+
+        // 等待所有员工统计数据加载完成
+        await Promise.all(promises)
+
+        // 强制Vue重新渲染，确保统计数据显示
+        this.$forceUpdate()
+      } catch (error) {
+        console.error('加载员工统计数据时发生错误:', error)
+      }
+    },
+
     // 为集团、企业、部门类型节点异步加载子节点数量
     loadSubCount (treeNodes) {
       if (!treeNodes || !Array.isArray(treeNodes)) return
@@ -1749,13 +2165,40 @@ export default {
               this.$set(node, 'sub_count', 0)
             })
           } else if (node.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
-            // 岗位类型：获取员工数量统计
-            getSubCountApi(node.id, node.type).then(response => {
-              // 使用this.$set确保响应式更新，存储员工数量
-              this.$set(node, 'staff_count', response.data)
+            // 岗位类型：并行获取员工数量、角色数量和权限数量统计
+            Promise.all([
+              getSubCountApi(node.id, node.type), // 员工数
+              getPositionAssignedRoleIdsApi({ position_id: node.serial_id }), // 角色数
+              getPositionAssignedPermissionIdsApi({ position_id: node.serial_id }) // 权限数
+            ]).then(responses => {
+              // 使用this.$set确保响应式更新
+              this.$set(node, 'staff_count', responses[0].data || 0)
+              this.$set(node, 'role_count', Array.isArray(responses[1].data) ? responses[1].data.length : 0)
+              this.$set(node, 'permission_count', Array.isArray(responses[2].data) ? responses[2].data.length : 0)
             }).catch(error => {
-              console.error('获取岗位员工数量失败:', error)
+              console.error('获取岗位统计数据失败:', error)
+              // 设置默认值
               this.$set(node, 'staff_count', 0)
+              this.$set(node, 'role_count', 0)
+              this.$set(node, 'permission_count', 0)
+            })
+          } else if (node.nodeType === 'staff') {
+            // 员工类型：并行获取角色数量、权限数量和排除权限数量统计
+            Promise.all([
+              getStaffAssignedRoleIds({ staff_id: node.staffData.id }), // 角色数
+              getStaffAssignedPermissionIds({ staff_id: node.staffData.id }), // 权限数
+              getStaffExcludedPermissionIds({ staff_id: node.staffData.id }) // 排除权限数
+            ]).then(responses => {
+              // 使用this.$set确保响应式更新
+              this.$set(node, 'role_count', Array.isArray(responses[0].data) ? responses[0].data.length : 0)
+              this.$set(node, 'permission_count', Array.isArray(responses[1].data) ? responses[1].data.length : 0)
+              this.$set(node, 'exclude_permission_count', Array.isArray(responses[2].data) ? responses[2].data.length : 0)
+            }).catch(error => {
+              console.error('获取员工统计数据失败:', error)
+              // 设置默认值
+              this.$set(node, 'role_count', 0)
+              this.$set(node, 'permission_count', 0)
+              this.$set(node, 'exclude_permission_count', 0)
             })
           }
         }
@@ -1816,38 +2259,105 @@ export default {
       })
     },
     // 更新指定岗位节点的员工数量显示
-    updatePositionStaffCount (positionNode) {
+    updatePositionStats (positionNode) {
       if (!positionNode || positionNode.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
         return
       }
-      // 调用API获取该岗位的员工数量
-      getSubCountApi(positionNode.id, positionNode.type).then(response => {
+      // 并行获取岗位的员工数、角色数和权限数
+      Promise.all([
+        getSubCountApi(positionNode.id, positionNode.type), // 员工数
+        getPositionAssignedRoleIdsApi({ position_id: positionNode.serial_id }), // 角色数
+        getPositionAssignedPermissionIdsApi({ position_id: positionNode.serial_id }) // 权限数
+      ]).then(responses => {
+        const stats = {
+          staff_count: responses[0].data || 0,
+          role_count: Array.isArray(responses[1].data) ? responses[1].data.length : 0,
+          permission_count: Array.isArray(responses[2].data) ? responses[2].data.length : 0
+        }
+
         // 更新树中对应节点的数据
-        this.updateTreeNodeStaffCount(this.dataJson.treeData, positionNode.id, response.data)
+        this.updateTreeNodeStats(this.dataJson.treeData, positionNode.id, stats)
+
         // 更新当前选中节点的数据
         if (this.dataJson.currentJson && this.dataJson.currentJson.id === positionNode.id) {
-          this.$set(this.dataJson.currentJson, 'staff_count', response.data)
+          this.$set(this.dataJson.currentJson, 'staff_count', stats.staff_count)
+          this.$set(this.dataJson.currentJson, 'role_count', stats.role_count)
+          this.$set(this.dataJson.currentJson, 'permission_count', stats.permission_count)
         }
       }).catch(error => {
-        console.error('更新岗位员工数量失败:', error)
+        console.error('更新岗位统计数据失败:', error)
       })
     },
-    // 递归更新树节点中指定节点的员工数量显示
-    updateTreeNodeStaffCount (treeData, nodeId, staffCount) {
+
+    // 更新指定员工节点的权限统计显示
+    updateStaffStats (staffNode) {
+      if (!staffNode || staffNode.nodeType !== 'staff') {
+        return
+      }
+      // 并行获取员工的角色数、权限数和排除权限数
+      Promise.all([
+        getStaffAssignedRoleIds({ staff_id: staffNode.staffData.id }), // 角色数
+        getStaffAssignedPermissionIds({ staff_id: staffNode.staffData.id }), // 权限数
+        getStaffExcludedPermissionIds({ staff_id: staffNode.staffData.id }) // 排除权限数
+      ]).then(responses => {
+        const stats = {
+          role_count: Array.isArray(responses[0].data) ? responses[0].data.length : 0,
+          permission_count: Array.isArray(responses[1].data) ? responses[1].data.length : 0,
+          exclude_permission_count: Array.isArray(responses[2].data) ? responses[2].data.length : 0
+        }
+
+        // 更新树中对应节点的数据
+        this.updateTreeNodeStaffStats(this.dataJson.treeData, staffNode.id, stats)
+
+        // 更新当前选中节点的数据
+        if (this.dataJson.currentJson && this.dataJson.currentJson.id === staffNode.id) {
+          this.$set(this.dataJson.currentJson, 'role_count', stats.role_count)
+          this.$set(this.dataJson.currentJson, 'permission_count', stats.permission_count)
+          this.$set(this.dataJson.currentJson, 'exclude_permission_count', stats.exclude_permission_count)
+        }
+      }).catch(error => {
+        console.error('更新员工统计数据失败:', error)
+      })
+    },
+    // 递归更新树节点中指定节点的统计数据显示
+    updateTreeNodeStats (treeData, nodeId, stats) {
       for (let i = 0; i < treeData.length; i++) {
         if (treeData[i].id === nodeId) {
-          // 更新员工数量
-          this.$set(treeData[i], 'staff_count', staffCount)
-          // 更新节点显示标签
-          if (staffCount > 0) {
-            this.$set(treeData[i], 'label', treeData[i].name + `（员工数：${staffCount}）`)
-          } else {
-            this.$set(treeData[i], 'label', treeData[i].name)
-          }
+          // 更新所有统计数据
+          this.$set(treeData[i], 'staff_count', stats.staff_count)
+          this.$set(treeData[i], 'role_count', stats.role_count)
+          this.$set(treeData[i], 'permission_count', stats.permission_count)
+
+          // 注意：不再更新label，因为现在使用getPositionDisplayText方法动态计算显示文本
+          // 这样可以确保显示逻辑保持一致性
+
           return true
         }
         if (treeData[i].children && treeData[i].children.length > 0) {
-          if (this.updateTreeNodeStaffCount(treeData[i].children, nodeId, staffCount)) {
+          if (this.updateTreeNodeStats(treeData[i].children, nodeId, stats)) {
+            return true
+          }
+        }
+      }
+      return false
+    },
+
+    // 递归更新树节点中指定员工节点的统计数据显示
+    updateTreeNodeStaffStats (treeData, nodeId, stats) {
+      for (let i = 0; i < treeData.length; i++) {
+        if (treeData[i].id === nodeId) {
+          // 更新员工统计数据
+          this.$set(treeData[i], 'role_count', stats.role_count)
+          this.$set(treeData[i], 'permission_count', stats.permission_count)
+          this.$set(treeData[i], 'exclude_permission_count', stats.exclude_permission_count)
+
+          // 注意：不再更新label，因为现在使用getStaffDisplayText方法动态计算显示文本
+          // 这样可以确保显示逻辑保持一致性
+
+          return true
+        }
+        if (treeData[i].children && treeData[i].children.length > 0) {
+          if (this.updateTreeNodeStaffStats(treeData[i].children, nodeId, stats)) {
             return true
           }
         }
@@ -2230,6 +2740,744 @@ export default {
       }
     },
 
+    // 右键菜单相关方法
+    // 处理节点右键菜单事件
+    handleNodeContextMenu (event, data, node, nodeComponent) {
+      try {
+        // 防止默认右键菜单
+        event.preventDefault()
+        event.stopPropagation()
+
+        // 参数验证
+        if (!event) {
+          console.error('右键菜单事件对象缺失')
+          return
+        }
+
+        if (!data) {
+          this.$message.warning('选中的节点数据无效')
+          return
+        }
+
+        if (!node) {
+          this.$message.warning('选中的树节点无效')
+          return
+        }
+
+        console.log('handleNodeContextMenu 参数:', { event, data, node, nodeComponent })
+
+        // 存储当前右键的节点信息
+        this.contextMenu.currentNode = node
+        this.contextMenu.currentData = data
+
+        // 获取菜单项
+        try {
+          this.contextMenu.items = this.getContextMenuItems(data)
+        } catch (error) {
+          this.$message.error('生成右键菜单失败: ' + error.message)
+          console.error('生成右键菜单失败:', error)
+          return
+        }
+
+        // 如果没有可用的菜单项，不显示菜单
+        if (!this.contextMenu.items || this.contextMenu.items.length === 0) {
+          this.$message.info('当前节点暂无可用操作')
+          return
+        }
+
+        // 计算菜单位置，防止菜单超出屏幕边界
+        const viewportWidth = window.innerWidth
+        const viewportHeight = window.innerHeight
+        const menuWidth = 200 // 预估菜单宽度
+        const menuHeight = this.contextMenu.items.length * 40 // 预估菜单高度
+
+        let x = event.clientX
+        let y = event.clientY
+
+        // 检查右侧边界
+        if (x + menuWidth > viewportWidth) {
+          x = viewportWidth - menuWidth - 10
+        }
+
+        // 检查底部边界
+        if (y + menuHeight > viewportHeight) {
+          y = viewportHeight - menuHeight - 10
+        }
+
+        // 确保不超出顶部和左侧边界
+        x = Math.max(10, x)
+        y = Math.max(10, y)
+
+        this.contextMenu.x = x
+        this.contextMenu.y = y
+
+        // 显示菜单
+        this.contextMenu.visible = true
+
+        // 在下一个tick中获取焦点，确保菜单可以响应键盘事件
+        this.$nextTick(() => {
+          try {
+            const menu = document.querySelector('.context-menu')
+            if (menu) {
+              menu.focus()
+            }
+          } catch (error) {
+            console.warn('设置右键菜单焦点失败:', error)
+          }
+        })
+
+        // 添加全局点击事件监听，用于隐藏菜单
+        document.addEventListener('click', this.hideContextMenu)
+      } catch (error) {
+        this.$message.error('显示右键菜单失败: ' + error.message)
+        console.error('右键菜单处理失败:', error)
+
+        // 确保在错误情况下清理状态
+        this.hideContextMenu()
+      }
+    },
+
+    // 根据节点类型生成菜单项
+    getContextMenuItems (nodeData) {
+      // 检查nodeData是否有效
+      if (!nodeData || (!nodeData.type && !nodeData.nodeType)) {
+        console.log('getContextMenuItems: nodeData 无效', nodeData)
+        return []
+      }
+
+      const items = []
+
+      // 处理员工节点 (使用 nodeType)
+      if (nodeData.nodeType === 'staff') {
+        console.log('getContextMenuItems: 检测到员工节点', nodeData)
+        items.push(
+          { label: '修改员工', icon: 'el-icon-edit', action: 'edit_staff', enabled: true },
+          { label: '维护员工角色', icon: 'el-icon-user-solid', action: 'manage_staff_role', enabled: true },
+          { label: '维护员工权限', icon: 'el-icon-key', action: 'manage_staff_permission', enabled: true },
+          { label: '排除权限', icon: 'el-icon-circle-close', action: 'exclude_staff_permission', enabled: true }
+        )
+        console.log('getContextMenuItems: 生成的员工菜单项', items)
+        return items
+      }
+
+      // 处理组织节点 (使用 type)
+      const nodeType = nodeData.type
+      if (!nodeType) {
+        console.log('getContextMenuItems: nodeData.type 无效', nodeData)
+        return []
+      }
+
+      // 调试信息：打印节点类型和常量
+      console.log('getContextMenuItems: nodeType =', nodeType)
+      console.log('getContextMenuItems: 常量值', {
+        TENANT: this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT,
+        GROUP: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
+        COMPANY: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
+        DEPT: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
+        POSITION: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION
+      })
+
+      switch (nodeType) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT: // 租户节点
+          items.push(
+            { label: '新增集团', icon: 'el-icon-plus', action: 'create_group_from_tenant', enabled: true },
+            { label: '新增企业', icon: 'el-icon-office-building', action: 'create_company_from_tenant', enabled: true }
+          )
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP: // 集团节点
+          items.push(
+            { label: '新增子集团', icon: 'el-icon-plus', action: 'create_sub_group', enabled: true },
+            { label: '新增企业', icon: 'el-icon-office-building', action: 'create_company_under_group', enabled: true },
+            { label: '修改集团', icon: 'el-icon-edit', action: 'edit_group', enabled: true }
+          )
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY: // 企业节点
+          items.push(
+            { label: '新增部门', icon: 'el-icon-plus', action: 'create_dept_under_company', enabled: true },
+            { label: '修改企业', icon: 'el-icon-edit', action: 'edit_company', enabled: true }
+          )
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT: // 部门节点
+          items.push(
+            { label: '新增子部门', icon: 'el-icon-plus', action: 'create_sub_dept', enabled: true },
+            { label: '新增岗位', icon: 'el-icon-user-solid', action: 'create_position_under_dept', enabled: true },
+            { label: '修改部门', icon: 'el-icon-edit', action: 'edit_dept', enabled: true }
+          )
+          break
+
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION: // 岗位节点
+          items.push(
+            { label: '修改岗位', icon: 'el-icon-edit', action: 'edit_position', enabled: true },
+            { label: '新增员工', icon: 'el-icon-user', action: 'create_staff_under_position', enabled: true },
+            { label: '维护岗位角色', icon: 'el-icon-user-solid', action: 'manage_position_role', enabled: true },
+            { label: '维护岗位权限', icon: 'el-icon-key', action: 'manage_position_permission', enabled: true }
+          )
+          break
+
+        default:
+          console.log('getContextMenuItems: 未知节点类型，使用默认菜单项', nodeType)
+          items.push(
+            { label: '刷新节点', icon: 'el-icon-refresh', action: 'refresh_node', enabled: true }
+          )
+          break
+      }
+
+      console.log('getContextMenuItems: 生成的菜单项', items)
+      return items
+    },
+
+    // 处理菜单项点击事件
+    handleContextMenuClick (menuItem) {
+      if (!menuItem.enabled) {
+        return
+      }
+
+      const nodeData = this.contextMenu.currentData
+      this.hideContextMenu()
+
+      // 设置当前节点上下文
+      this.dataJson.currentJson = Object.assign({}, nodeData)
+      this.$refs.treeObject.setCurrentKey(nodeData.id)
+
+      switch (menuItem.action) {
+        // === 租户节点操作 ===
+        case 'create_group_from_tenant':
+          this.openDirectListDialog('group', nodeData)
+          break
+        case 'create_company_from_tenant':
+          this.openDirectListDialog('company', nodeData)
+          break
+
+        // === 集团节点操作 ===
+        case 'create_sub_group':
+          this.openDirectListDialog('group', nodeData)
+          break
+        case 'create_company_under_group':
+          this.openDirectListDialog('company', nodeData)
+          break
+        case 'edit_group':
+          this.handleDirectEdit('group', nodeData)
+          break
+
+        // === 企业节点操作 ===
+        case 'create_dept_under_company':
+          this.openDirectListDialog('dept', nodeData)
+          break
+        case 'edit_company':
+          this.handleDirectEdit('company', nodeData)
+          break
+
+        // === 部门节点操作 ===
+        case 'create_sub_dept':
+          this.openDirectListDialog('dept', nodeData)
+          break
+        case 'create_position_under_dept':
+          this.openDirectListDialog('position', nodeData)
+          break
+        case 'edit_dept':
+          this.handleDirectEdit('dept', nodeData)
+          break
+
+        // === 岗位节点操作 ===
+        case 'edit_position':
+          this.handleDirectEdit('position', nodeData)
+          break
+        case 'create_staff_under_position':
+          this.openDirectListDialog('staff', nodeData)
+          break
+        case 'manage_position_role':
+          this.openPositionRoleDialog(nodeData)
+          break
+        case 'manage_position_permission':
+          this.openPositionPermissionDialog(nodeData)
+          break
+
+        // === 员工节点操作 ===
+        case 'edit_staff':
+          this.handleStaffEdit(nodeData)
+          break
+        case 'manage_staff_role':
+          this.openStaffRoleDialog(nodeData)
+          break
+        case 'manage_staff_permission':
+          this.openStaffPermissionDialog(nodeData)
+          break
+        case 'exclude_staff_permission':
+          this.openStaffExcludePermissionDialog(nodeData)
+          break
+
+        default:
+          console.log('未知的右键菜单操作:', menuItem.action)
+      }
+    },
+
+    // 隐藏右键菜单
+    hideContextMenu () {
+      this.contextMenu.visible = false
+      this.contextMenu.currentNode = null
+      this.contextMenu.currentData = null
+      this.contextMenu.items = []
+
+      // 移除全局点击事件监听
+      document.removeEventListener('click', this.hideContextMenu)
+    },
+
+    // 处理新增节点操作
+    handleCreateNode (action, parentNodeData) {
+      // 设置当前节点为父节点
+      this.dataJson.currentJson = Object.assign({}, parentNodeData)
+      this.$refs.treeObject.setCurrentKey(parentNodeData.id)
+
+      // 根据操作类型打开相应的弹窗
+      switch (action) {
+        case 'create_group':
+          this.doInsert('20') // 集团类型
+          break
+        case 'create_company':
+          this.doInsert('30') // 企业类型
+          break
+        case 'create_dept':
+          this.doInsert('40') // 部门类型
+          break
+        case 'create_position':
+          this.doInsert('50') // 岗位类型
+          break
+      }
+    },
+
+    // 处理修改节点操作
+    handleEditNode (action, nodeData) {
+      // 设置当前节点
+      this.dataJson.currentJson = Object.assign({}, nodeData)
+      this.$refs.treeObject.setCurrentKey(nodeData.id)
+
+      // 调用现有的修改方法
+      this.doUpdate()
+    },
+
+    // 处理删除节点操作
+    handleDeleteNode (action, nodeData) {
+      // 设置当前节点
+      this.dataJson.currentJson = Object.assign({}, nodeData)
+      this.$refs.treeObject.setCurrentKey(nodeData.id)
+
+      // 调用现有的删除方法
+      this.doDelete()
+    },
+
+    // 打开岗位角色管理弹窗
+    openPositionRoleDialog (nodeData) {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+        this.$message.warning('只有岗位节点才能设置角色')
+        return
+      }
+
+      // 获取岗位的serial_id作为positionId
+      this.roleDialogData.positionId = nodeData.serial_id || nodeData.id
+      this.roleDialogData.positionData = nodeData
+      this.roleDialogData.visible = true
+    },
+
+    // 打开岗位权限管理弹窗
+    openPositionPermissionDialog (nodeData) {
+      if (nodeData.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+        this.$message.warning('只有岗位节点才能设置权限')
+        return
+      }
+
+      // 获取岗位的serial_id作为positionId
+      this.permissionDialogData.positionId = nodeData.serial_id || nodeData.id
+      this.permissionDialogData.positionData = nodeData
+      this.permissionDialogData.visible = true
+    },
+
+    // === 员工节点相关方法 ===
+    // 处理员工编辑
+    handleStaffEdit (nodeData) {
+      if (nodeData.nodeType !== 'staff') {
+        this.$message.warning('只有员工节点才能编辑员工信息')
+        return
+      }
+
+      // 数据验证
+      if (!nodeData.staffData || !nodeData.staffData.id) {
+        this.$message.error('员工数据不完整，无法编辑')
+        return
+      }
+
+      // 显示加载状态
+      const loadingMessage = this.$message({
+        message: '正在加载员工数据...',
+        type: 'info',
+        duration: 0,
+        showClose: false
+      })
+
+      // 获取员工完整数据
+      getStaffByIdApi({ id: nodeData.staffData.id }).then(response => {
+        // 关闭加载提示
+        loadingMessage.close()
+
+        // 验证响应数据
+        if (!response || !response.data) {
+          this.$message.error('服务器返回的员工数据为空')
+          return
+        }
+
+        this.popSettingsData.staffEditDialogData.data = response.data
+        this.popSettingsData.staffEditDialogData.visible = true
+        this.$message.success('员工数据加载完成')
+      }).catch(error => {
+        // 关闭加载提示
+        loadingMessage.close()
+
+        // 根据错误类型显示不同的提示信息
+        let errorMessage = '获取员工数据失败'
+        if (error.response) {
+          // 服务器返回错误
+          const status = error.response.status
+          switch (status) {
+            case 404:
+              errorMessage = '员工信息不存在，可能已被删除'
+              break
+            case 403:
+              errorMessage = '没有权限查看该员工信息'
+              break
+            case 500:
+              errorMessage = '服务器内部错误，请稍后重试'
+              break
+            default:
+              errorMessage = `服务器错误 (${status}): ${error.response.data?.message || '未知错误'}`
+          }
+        } else if (error.code === 'NETWORK_ERROR') {
+          errorMessage = '网络连接失败，请检查网络状态'
+        } else {
+          errorMessage = error.message || '未知错误'
+        }
+
+        this.$message.error(errorMessage)
+        console.error('获取员工数据失败:', error)
+      })
+    },
+
+    // 打开员工角色管理弹窗
+    openStaffRoleDialog (nodeData) {
+      if (nodeData.nodeType !== 'staff') {
+        this.$message.warning('只有员工节点才能管理角色')
+        return
+      }
+
+      // 数据验证
+      if (!nodeData.staffData || !nodeData.staffData.id) {
+        this.$message.error('员工数据不完整，无法管理角色')
+        return
+      }
+
+      try {
+        this.popSettingsData.staffRoleDialogData.staffId = nodeData.staffData.id
+        this.popSettingsData.staffRoleDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffRoleDialogData.visible = true
+        this.$message.success('打开员工角色管理弹窗')
+      } catch (error) {
+        this.$message.error('打开员工角色管理弹窗失败: ' + error.message)
+        console.error('员工角色管理弹窗打开失败:', error)
+      }
+    },
+
+    // 打开员工权限管理弹窗
+    openStaffPermissionDialog (nodeData) {
+      if (nodeData.nodeType !== 'staff') {
+        this.$message.warning('只有员工节点才能管理权限')
+        return
+      }
+
+      // 数据验证
+      if (!nodeData.staffData || !nodeData.staffData.id) {
+        this.$message.error('员工数据不完整，无法管理权限')
+        return
+      }
+
+      try {
+        this.popSettingsData.staffPermissionDialogData.staffId = nodeData.staffData.id
+        this.popSettingsData.staffPermissionDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffPermissionDialogData.visible = true
+        this.$message.success('打开员工权限管理弹窗')
+      } catch (error) {
+        this.$message.error('打开员工权限管理弹窗失败: ' + error.message)
+        console.error('员工权限管理弹窗打开失败:', error)
+      }
+    },
+
+    // 打开员工权限排除弹窗
+    openStaffExcludePermissionDialog (nodeData) {
+      if (nodeData.nodeType !== 'staff') {
+        this.$message.warning('只有员工节点才能排除权限')
+        return
+      }
+
+      // 数据验证
+      if (!nodeData.staffData || !nodeData.staffData.id) {
+        this.$message.error('员工数据不完整，无法排除权限')
+        return
+      }
+
+      try {
+        this.popSettingsData.staffExcludePermissionDialogData.staffId = nodeData.staffData.id
+        this.popSettingsData.staffExcludePermissionDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffExcludePermissionDialogData.visible = true
+        this.$message.success('打开员工权限排除弹窗')
+      } catch (error) {
+        this.$message.error('打开员工权限排除弹窗失败: ' + error.message)
+        console.error('员工权限排除弹窗打开失败:', error)
+      }
+    },
+
+    // 角色弹窗关闭-确定
+    handleRoleDialogOk (result) {
+      if (result.return_flag) {
+        this.$message.success('岗位角色设置成功')
+        // 可以在这里刷新树节点或者更新显示信息
+        this.loadSubCount([this.roleDialogData.positionData])
+      }
+      this.roleDialogData.visible = false
+      this.roleDialogData.positionId = null
+      this.roleDialogData.positionData = null
+    },
+
+    // 角色弹窗关闭-取消
+    handleRoleDialogCancel () {
+      this.roleDialogData.visible = false
+      this.roleDialogData.positionId = null
+      this.roleDialogData.positionData = null
+    },
+
+    // 权限弹窗关闭-确定
+    handlePermissionDialogOk (result) {
+      if (result.return_flag) {
+        this.$message.success('岗位权限设置成功')
+        // 可以在这里刷新树节点或者更新显示信息
+        this.loadSubCount([this.permissionDialogData.positionData])
+      }
+      this.permissionDialogData.visible = false
+      this.permissionDialogData.positionId = null
+      this.permissionDialogData.positionData = null
+    },
+
+    // 权限弹窗关闭-取消
+    handlePermissionDialogCancel () {
+      this.permissionDialogData.visible = false
+      this.permissionDialogData.positionId = null
+      this.permissionDialogData.positionData = null
+    },
+
+    // === 员工弹窗事件处理 ===
+    // 员工编辑弹窗关闭-确定
+    handleStaffEditDialogOk (result) {
+      try {
+        // 验证回调结果
+        if (!result) {
+          this.$message.warning('操作结果未知')
+          return
+        }
+
+        if (result.return_flag) {
+          this.$message.success('员工修改成功')
+          // 刷新组织树以更新员工信息显示
+          this.init().catch(error => {
+            this.$message.warning('员工修改成功，但刷新页面失败: ' + error.message)
+            console.error('刷新组织树失败:', error)
+          })
+        } else {
+          // 操作失败的情况
+          const errorMsg = result.message || result.error || '员工修改失败'
+          this.$message.error(errorMsg)
+        }
+      } catch (error) {
+        this.$message.error('处理员工修改结果时发生错误: ' + error.message)
+        console.error('员工编辑回调处理失败:', error)
+      } finally {
+        // 确保弹窗关闭和数据清理
+        this.popSettingsData.staffEditDialogData.visible = false
+        this.popSettingsData.staffEditDialogData.data = null
+      }
+    },
+
+    // 员工编辑弹窗关闭-取消
+    handleStaffEditDialogCancel () {
+      this.popSettingsData.staffEditDialogData.visible = false
+      this.popSettingsData.staffEditDialogData.data = null
+    },
+
+    // 员工角色弹窗关闭-确定
+    handleStaffRoleDialogOk (result) {
+      try {
+        // 验证回调结果
+        if (!result) {
+          this.$message.warning('角色设置结果未知')
+          return
+        }
+
+        if (result.return_flag) {
+          this.$message.success('员工角色设置成功')
+        } else {
+          // 操作失败的情况
+          const errorMsg = result.message || result.error || '员工角色设置失败'
+          this.$message.error(errorMsg)
+        }
+      } catch (error) {
+        this.$message.error('处理员工角色设置结果时发生错误: ' + error.message)
+        console.error('员工角色回调处理失败:', error)
+      } finally {
+        // 确保弹窗关闭和数据清理
+        this.popSettingsData.staffRoleDialogData.visible = false
+        this.popSettingsData.staffRoleDialogData.staffId = null
+      }
+    },
+
+    // 员工角色弹窗关闭-取消
+    handleStaffRoleDialogCancel () {
+      this.popSettingsData.staffRoleDialogData.visible = false
+      this.popSettingsData.staffRoleDialogData.staffId = null
+    },
+
+    // 员工权限弹窗关闭-确定
+    handleStaffPermissionDialogOk (result) {
+      try {
+        // 验证回调结果
+        if (!result) {
+          this.$message.warning('权限设置结果未知')
+          return
+        }
+
+        if (result.return_flag) {
+          this.$message.success('员工权限设置成功')
+        } else {
+          // 操作失败的情况
+          const errorMsg = result.message || result.error || '员工权限设置失败'
+          this.$message.error(errorMsg)
+        }
+      } catch (error) {
+        this.$message.error('处理员工权限设置结果时发生错误: ' + error.message)
+        console.error('员工权限回调处理失败:', error)
+      } finally {
+        // 确保弹窗关闭和数据清理
+        this.popSettingsData.staffPermissionDialogData.visible = false
+        this.popSettingsData.staffPermissionDialogData.staffId = null
+      }
+    },
+
+    // 员工权限弹窗关闭-取消
+    handleStaffPermissionDialogCancel () {
+      this.popSettingsData.staffPermissionDialogData.visible = false
+      this.popSettingsData.staffPermissionDialogData.staffId = null
+    },
+
+    // 员工权限排除弹窗关闭-确定
+    handleStaffExcludePermissionDialogOk (result) {
+      try {
+        // 验证回调结果
+        if (!result) {
+          this.$message.warning('权限排除设置结果未知')
+          return
+        }
+
+        if (result.return_flag) {
+          this.$message.success('员工权限排除设置成功')
+        } else {
+          // 操作失败的情况
+          const errorMsg = result.message || result.error || '员工权限排除设置失败'
+          this.$message.error(errorMsg)
+        }
+      } catch (error) {
+        this.$message.error('处理员工权限排除设置结果时发生错误: ' + error.message)
+        console.error('员工权限排除回调处理失败:', error)
+      } finally {
+        // 确保弹窗关闭和数据清理
+        this.popSettingsData.staffExcludePermissionDialogData.visible = false
+        this.popSettingsData.staffExcludePermissionDialogData.staffId = null
+      }
+    },
+
+    // 员工权限排除弹窗关闭-取消
+    handleStaffExcludePermissionDialogCancel () {
+      this.popSettingsData.staffExcludePermissionDialogData.visible = false
+      this.popSettingsData.staffExcludePermissionDialogData.staffId = null
+    },
+
+    // 新增：直接打开列表选择弹窗
+    openDirectListDialog (dialogType, parentNodeData) {
+      console.log('openDirectListDialog', dialogType, parentNodeData)
+
+      // 设置弹窗数据并直接显示列表选择弹窗
+      this.popSettingsData.listDialogData = {
+        visible: true,
+        dialogType: dialogType,
+        data: {
+          parent_id: parentNodeData.id, // 父节点ID
+          parent_name: parentNodeData.simple_name || '组织机构根节点', // 父节点名称
+          // 员工特殊处理：需要组织上下文
+          ...(dialogType === 'staff' ? {
+            organization_context: this.dataJson.organizationContext
+          } : {})
+        }
+      }
+    },
+
+    // 新增：直接编辑处理
+    handleDirectEdit (entityType, nodeData) {
+      console.log('handleDirectEdit', entityType, nodeData)
+
+      // 根据实体类型调用相应的API获取完整数据并打开编辑弹窗
+      switch (entityType) {
+        case 'group':
+          // 获取集团完整数据
+          getGroupByIdApi({ id: nodeData.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataOne.data = response.data
+            this.popSettingsData.searchDialogDataOne.visible = true
+          }).catch(error => {
+            this.$message.error('获取集团数据失败: ' + error.message)
+          })
+          break
+
+        case 'company':
+          // 获取企业完整数据
+          getCompanyByIdApi({ id: nodeData.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataTwo.data = response.data
+            this.popSettingsData.searchDialogDataTwo.visible = true
+          }).catch(error => {
+            this.$message.error('获取企业数据失败: ' + error.message)
+          })
+          break
+
+        case 'dept':
+          // 获取部门完整数据
+          getDeptByIdApi({ id: nodeData.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataThree.data = response.data
+            this.popSettingsData.searchDialogDataThree.visible = true
+          }).catch(error => {
+            this.$message.error('获取部门数据失败: ' + error.message)
+          })
+          break
+
+        case 'position':
+          // 获取岗位完整数据
+          getPositionByIdApi({ id: nodeData.serial_id }).then(response => {
+            this.popSettingsData.searchDialogDataFour.data = response.data
+            this.popSettingsData.searchDialogDataFour.visible = true
+          }).catch(error => {
+            this.$message.error('获取岗位数据失败: ' + error.message)
+          })
+          break
+
+        default:
+          console.log('未知的实体类型:', entityType)
+          this.$message.warning('未支持的编辑类型: ' + entityType)
+      }
+    },
+
     // 调试岗位显示信息
     debugPositionInfo (data) {
       if (data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
@@ -2246,6 +3494,56 @@ export default {
         return ` [调试: id=${data.id}, count=${data.staff_count}]`
       }
       return ''
+    },
+
+    // 获取岗位节点显示文本
+    getPositionDisplayText (node) {
+      if (node.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+        return ''
+      }
+
+      const parts = []
+
+      // 只有数量>0时才添加到显示文本中
+      if (node.staff_count > 0) {
+        parts.push(`员工数：${node.staff_count}`)
+      }
+
+      if (node.role_count > 0) {
+        parts.push(`角色数：${node.role_count}`)
+      }
+
+      if (node.permission_count > 0) {
+        parts.push(`权限数：${node.permission_count}`)
+      }
+
+      // 如果有内容才返回带括号的文本，否则返回空字符串
+      return parts.length > 0 ? `（${parts.join('、')}）` : ''
+    },
+
+    // 获取员工节点显示文本
+    getStaffDisplayText (node) {
+      if (node.nodeType !== 'staff') {
+        return ''
+      }
+
+      const parts = []
+
+      // 只有数量>0时才添加到显示文本中
+      if (node.role_count > 0) {
+        parts.push(`角色数：${node.role_count}`)
+      }
+
+      if (node.permission_count > 0) {
+        parts.push(`权限数：${node.permission_count}`)
+      }
+
+      if (node.exclude_permission_count > 0) {
+        parts.push(`排除权限：${node.exclude_permission_count}`)
+      }
+
+      // 如果有内容才返回带括号的文本，否则返回空字符串
+      return parts.length > 0 ? `（${parts.join('、')}）` : ''
     }
   }
 }

@@ -234,3 +234,35 @@ export function getRootStatisticsApi () {
   })
 }
 
+/**
+ * 获取组织下的员工列表，用于树节点懒加载
+ * @param {string} orgCode 组织编码
+ * @param {Object} options 可选参数
+ * @returns {Promise} 员工列表数据
+ */
+export function getEmployeesForTreeApi (orgCode, options = {}) {
+  // 完全模拟staff.vue中的searchForm结构
+  const searchForm = {
+    // 翻页条件 - 使用标准的PAGE_CONDITION
+    pageCondition: {
+      current: 1, // 当前页
+      size: 20, // 标准页面大小
+      sort: '-u_time' // 按更新时间倒序
+    },
+    // 查询条件
+    id: null,
+    name: '', // 员工名称（空表示查询所有）
+    code: orgCode, // 岗位编码
+    original_code: orgCode, // 原始编码
+    active_tabs_index: 0, // 固定使用第一个tab的数据（当前组织下员工）
+    is_del: '0', // 只查询未删除的员工
+    ...options // 允许传入额外参数
+  }
+
+  return request({
+    url: '/api/v1/org/staff/list',
+    method: 'post',
+    data: searchForm
+  })
+}
+

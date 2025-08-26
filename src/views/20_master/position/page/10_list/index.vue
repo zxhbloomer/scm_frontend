@@ -55,13 +55,13 @@
       </el-form-item>
     </el-form>
     <el-button-group>
-      <el-button
+      <!-- <el-button
         v-permission="'P_POSITION:ADD'"
         type="primary"
         icon="el-icon-circle-plus-outline"
         :loading="settings.loading"
         @click="handleInsert"
-      >新增</el-button>
+      >新增</el-button> -->
       <el-button
         v-permission="'P_POSITION:UPDATE'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -70,14 +70,6 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
-      <el-button
-        v-permission="'P_POSITION:COPY_INSERT'"
-        :disabled="!settings.btnShowStatus.showCopyInsert"
-        type="primary"
-        icon="el-icon-camera-solid"
-        :loading="settings.loading"
-        @click="handleCopyInsert"
-      >复制新增</el-button>
       <el-button
         v-permission="'P_POSITION:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
@@ -132,7 +124,7 @@
         sortable="custom"
         min-width="280"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团信息"
       />
       <el-table-column
@@ -150,7 +142,7 @@
         sortable="custom"
         min-width="180"
         :sort-orders="settings.sortOrders"
-        prop="dept_full_simple_name"
+        prop="parent_dept_simple_name"
         label="部门信息"
       />
       <el-table-column
@@ -555,7 +547,6 @@ export default {
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
-          showCopyInsert: false,
           showExport: false
         },
         // loading 状态
@@ -747,11 +738,9 @@ export default {
       if (this.dataJson.currentJson.id !== undefined) {
         // this.settings.btnShowStatus.doInsert = true
         this.settings.btnShowStatus.showUpdate = true
-        this.settings.btnShowStatus.showCopyInsert = true
       } else {
         // this.settings.btnShowStatus.doInsert = false
         this.settings.btnShowStatus.showUpdate = false
-        this.settings.btnShowStatus.showCopyInsert = false
       }
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
@@ -879,29 +868,6 @@ export default {
         })
       }
     },
-    // 处理复制新增回调
-    doCopyInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.new.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '复制新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '复制新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
     // 处理更新回调
     doUpdateModelCallBack (val) {
       if (val.return_flag) {
@@ -969,16 +935,6 @@ export default {
     // 点击按钮 新增
     handleInsert () {
       this.popSettings.new.copyData = null
-      this.popSettings.new.visible = true
-    },
-    // 点击按钮 复制新增
-    handleCopyInsert () {
-      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      // 传递复制数据给新增弹窗
-      this.popSettings.new.copyData = Object.assign({}, this.dataJson.currentJson)
       this.popSettings.new.visible = true
     },
     // 点击按钮 更新

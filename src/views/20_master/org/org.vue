@@ -145,7 +145,7 @@ export default {
     findParentCompany (node) {
       // 从left组件获取完整的树数据
       const leftComponent = this.$children.find(child => child.$options.name !== 'right')
-      if (!leftComponent || !leftComponent.dataJson.treeData) return
+      if (!leftComponent || !leftComponent.dataJson || !leftComponent.dataJson.treeData) return
 
       const parentId = node.parent_id
       const parentNode = this.findNodeInTree(leftComponent.dataJson.treeData, parentId)
@@ -168,7 +168,7 @@ export default {
     // 查找父级部门和企业信息（用于岗位节点）
     findParentDepartmentAndCompany (node) {
       const leftComponent = this.$children.find(child => child.$options.name !== 'right')
-      if (!leftComponent || !leftComponent.dataJson.treeData) return
+      if (!leftComponent || !leftComponent.dataJson || !leftComponent.dataJson.treeData) return
 
       const parentId = node.parent_id
       const parentNode = this.findNodeInTree(leftComponent.dataJson.treeData, parentId)

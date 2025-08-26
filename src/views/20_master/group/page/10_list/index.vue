@@ -25,6 +25,14 @@
         />
       </el-form-item>
       <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.parent_group_name"
+          clearable
+          placeholder="上级集团"
+          @keyup.enter.native="handleSearch"
+        />
+      </el-form-item>
+      <el-form-item label="">
         <delete-type-normal v-model="dataJson.searchForm.is_del" />
       </el-form-item>
       <el-form-item style="float:right">
@@ -64,14 +72,6 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
-      <el-button
-        v-permission="'P_GROUP:COPY_INSERT'"
-        :disabled="!settings.btnShowStatus.showCopyInsert"
-        type="primary"
-        icon="el-icon-camera-solid"
-        :loading="settings.loading"
-        @click="handleCopyInsert"
-      >复制新增</el-button>
       <el-button
         v-permission="'P_GROUP:EXPORT'"
         :disabled="!settings.btnShowStatus.showExport"
@@ -313,6 +313,7 @@ export default {
           // 查询条件
           name: '',
           code: '',
+          parent_group_name: '',
           is_del: '0' // 未删除
         },
         // 分页控件的json
@@ -333,7 +334,6 @@ export default {
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
-          showCopyInsert: false,
           showExport: false
         },
         // loading 状态
@@ -451,10 +451,8 @@ export default {
 
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnShowStatus.showUpdate = true
-        this.settings.btnShowStatus.showCopyInsert = true
       } else {
         this.settings.btnShowStatus.showUpdate = false
-        this.settings.btnShowStatus.showCopyInsert = false
       }
     },
     handleSortChange (column) {
@@ -495,18 +493,6 @@ export default {
     // 点击按钮 新增
     handleInsert () {
       this.dialogs.new = true
-    },
-    // 点击按钮 复制新增
-    handleCopyInsert () {
-      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.dialogs.new = true
-      // 复制新增时，将当前数据传递给新增弹窗
-      this.$nextTick(() => {
-        this.$refs.newDialog && this.$refs.newDialog.setCopyData(this.dataJson.currentJson)
-      })
     },
     // 点击按钮 更新
     handleUpdate () {

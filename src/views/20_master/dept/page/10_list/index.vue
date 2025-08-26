@@ -9,6 +9,22 @@
     >
       <el-form-item label="">
         <el-input
+          v-model.trim="dataJson.searchForm.group_name"
+          clearable
+          placeholder="集团名称"
+          @keyup.enter.native="handleSearch"
+        />
+      </el-form-item>
+      <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.company_name"
+          clearable
+          placeholder="主体企业"
+          @keyup.enter.native="handleSearch"
+        />
+      </el-form-item>
+      <el-form-item label="">
+        <el-input
           v-model.trim="dataJson.searchForm.code"
           clearable
           placeholder="部门编号"
@@ -20,6 +36,14 @@
           v-model.trim="dataJson.searchForm.name"
           clearable
           placeholder="部门名称"
+          @keyup.enter.native="handleSearch"
+        />
+      </el-form-item>
+      <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.parent_dept_name"
+          clearable
+          placeholder="上级部门"
           @keyup.enter.native="handleSearch"
         />
       </el-form-item>
@@ -105,7 +129,7 @@
         sortable="custom"
         min-width="180"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团信息"
       />
       <el-table-column
@@ -115,7 +139,7 @@
         min-width="150"
         :sort-orders="settings.sortOrders"
         prop="company_simple_name"
-        label="企业信息"
+        label="主体企业"
       />
       <el-table-column
         header-align="center"
@@ -335,6 +359,9 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
+          group_name: '',
+          company_name: '',
+          parent_dept_name: '',
           name: '',
           code: '',
           is_del: '0' // 未删除

@@ -153,7 +153,7 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团"
       />
       <el-table-column
@@ -171,7 +171,7 @@
         sortable="custom"
         min-width="80"
         :sort-orders="settings.sortOrders"
-        prop="dept_full_simple_name"
+        prop="parent_dept_simple_name"
         label="部门"
       />
       <el-table-column
@@ -253,6 +253,7 @@ import { getPositionStaffData, setPositionStaff } from '@/api/20_master/staff/st
 import deepCopy from 'deep-copy'
 import Pagination from '@/components/Pagination'
 import FieldHelp from '@/components/30_table/FieldHelp'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   components: { Pagination, FieldHelp },
@@ -405,6 +406,10 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
+
+          // 直接发送组织架构树刷新事件
+          EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
+          console.log('员工岗位关系变更成功，已通知组织架构树刷新')
         }, (_error) => {
           this.$notify({
             title: '更新处理失败',

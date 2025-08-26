@@ -140,7 +140,7 @@
         sortable="custom"
         min-width="180"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团信息"
       />
       <el-table-column

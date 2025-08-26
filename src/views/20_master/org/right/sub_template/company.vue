@@ -1,14 +1,5 @@
 <template>
   <div>
-    <!-- <el-form>
-      <el-form-item>
-        <el-button-group>
-          <el-button type="primary" icon="el-icon-circle-plus-outline" :loading="settings.loading" @click="handleInsert">新增</el-button>
-          <el-button :disabled="!settings.btnShowStatus.showUpdate" type="primary" icon="el-icon-edit-outline" :loading="settings.loading" @click="handleUpdate">修改</el-button>
-          <el-button :disabled="!settings.btnShowStatus.showCopyInsert" type="primary" icon="el-icon-edit-outline" :loading="settings.loading" @click="handleCopyInsert">复制新增</el-button>
-        </el-button-group>
-      </el-form-item>
-    </el-form> -->
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
@@ -40,7 +31,7 @@
         sortable="custom"
         min-width="280"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团信息"
       />
       <el-table-column
@@ -260,7 +251,6 @@ export default {
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
-          showCopyInsert: false,
           showExport: false
         },
         // loading 状态
@@ -342,10 +332,8 @@ export default {
 
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnShowStatus.showUpdate = true
-        this.settings.btnShowStatus.showCopyInsert = true
       } else {
         this.settings.btnShowStatus.showUpdate = false
-        this.settings.btnShowStatus.showCopyInsert = false
       }
     },
     handleSortChange (column) {
@@ -428,30 +416,6 @@ export default {
       } else {
         this.$notify({
           title: '新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
-    // 处理复制新增回调
-    doCopyInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '复制新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '复制新增处理失败',
           message: val.error.message,
           type: 'error',
           duration: this.settings.duration

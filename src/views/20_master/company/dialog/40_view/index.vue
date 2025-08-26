@@ -100,9 +100,9 @@
         <el-col :span="12">
           <el-form-item
             label="集团信息："
-            prop="group_full_simple_name"
+            prop="group_simple_name"
           >
-            <span class="view-text">{{ dataJson.tempJson.group_full_simple_name || '--' }}</span>
+            <span class="view-text">{{ dataJson.tempJson.group_simple_name || '--' }}</span>
           </el-form-item>
         </el-col>
       </el-row>

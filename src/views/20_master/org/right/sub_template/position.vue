@@ -31,7 +31,7 @@
         sortable="custom"
         min-width="280"
         :sort-orders="settings.sortOrders"
-        prop="group_full_simple_name"
+        prop="group_simple_name"
         label="集团信息"
       />
       <el-table-column
@@ -47,7 +47,7 @@
         sortable="custom"
         min-width="180"
         :sort-orders="settings.sortOrders"
-        prop="dept_full_simple_name"
+        prop="parent_dept_simple_name"
         label="部门信息"
       />
       <el-table-column
