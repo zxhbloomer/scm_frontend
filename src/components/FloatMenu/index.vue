@@ -755,7 +755,7 @@ export default {
         this.generateTransform({ top: top, left: bodyWidth - 70 })
       }
 
-      // 500ms后自动显示菜单
+      // 50ms后自动显示菜单
       this.showMenuTimer = setTimeout(() => {
         if (this.hoverFlag && !this.popoverShow && !this.moveFlags) {
           this.popoverShow = true
@@ -765,7 +765,7 @@ export default {
           })
         }
         this.showMenuTimer = null
-      }, 500)
+      }, 50)
     },
 
     // 计算菜单位置
@@ -920,6 +920,7 @@ export default {
         this.selected = this.resultList.filter(item => {
           return item.is_enable === true
         })
+
         if (this.selected.length === this.resultList.length) {
           this.checkAll = true
         } else if (this.selected.length > 0 && this.selected.length < this.resultList.length) {
