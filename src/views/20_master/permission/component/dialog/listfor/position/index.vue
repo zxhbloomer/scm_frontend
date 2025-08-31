@@ -38,7 +38,7 @@
       :visible="visible"
       :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
       :close-on-press-escape="!PARAMETERS.DIALOG_CLOSE_BY_ESC"
-      :show-close="!PARAMETERS.DIALOG_SHOW_CLOSE"
+      :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
       :append-to-body="true"
       :modal-append-to-body="true"
       width="1200px"
@@ -59,7 +59,6 @@
         <footer-selected
           ref="footerSelected"
           :data="selectedPermissions"
-          @emitButtonDisabledStatus="handleButtonDisabledStatus"
           @emitRemovePermission="handleRemovePermission"
         />
       </el-footer>
@@ -92,8 +91,8 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import PermissionList from '../role/list.vue'
-import FooterSelected from '../role/footerSelected.vue'
+import PermissionList from './list.vue'
+import FooterSelected from './footerSelected.vue'
 import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import { getAllPermissionsApi, getPositionAssignedPermissionIdsApi, savePositionPermissionsApi } from '@/api/20_master/permission/permission'
 import { EventBus } from '@/common/eventbus/eventbus'
@@ -234,6 +233,8 @@ export default {
     handlePermissionSelect (selectedData) {
       // 更新已选权限数据
       this.selectedPermissions = selectedData || []
+      // 用户操作后启用确定按钮
+      this.settings.btnShowStatus.showSave = true
     },
 
     // 保存选择的权限
@@ -244,19 +245,17 @@ export default {
         return
       }
 
-      // 验证权限数据
-      if (!this.selectedPermissions || this.selectedPermissions.length === 0) {
-        this.showErrorMsg('请选择至少一个权限')
-        return
+      // 验证权限数据格式（只在有选择的情况下验证）
+      if (this.selectedPermissions.length > 0) {
+        const invalidPermissions = this.selectedPermissions.filter(p => !p.id)
+        if (invalidPermissions.length > 0) {
+          this.showErrorMsg('权限数据格式异常，请重新选择')
+          console.error('无效的权限数据:', invalidPermissions)
+          return
+        }
       }
 
-      // 验证权限数据格式
-      const invalidPermissions = this.selectedPermissions.filter(p => !p.id)
-      if (invalidPermissions.length > 0) {
-        this.showErrorMsg('权限数据格式异常，请重新选择')
-        console.error('无效的权限数据:', invalidPermissions)
-        return
-      }
+      // 允许保存空的选择（删除所有权限的情况）
 
       try {
         this.settings.loading = true
@@ -316,6 +315,12 @@ export default {
     handleRemovePermission (removedPermission) {
       // 从父组件的selectedPermissions数组中移除权限
       this.selectedPermissions = this.selectedPermissions.filter(permission => permission.id !== removedPermission.id)
+      // 用户删除操作后启用确定按钮（即使删除到空也要能保存）
+      this.settings.btnShowStatus.showSave = true
+      // 通过EventBus通知列表组件更新选中状态
+      this.$nextTick(() => {
+        EventBus.$emit(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, this.selectedPermissions)
+      })
     },
 
     // 关闭弹窗

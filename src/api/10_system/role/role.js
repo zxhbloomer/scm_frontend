@@ -42,7 +42,7 @@ export function insertApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/role/export_all',
+    url: '/api/v1/role/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -55,7 +55,7 @@ export function exportAllApi (data) {
  */
 export function exportSelectionApi (data) {
   return request({
-    url: '/api/v1/role/export_selection',
+    url: '/api/v1/role/export',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -109,3 +109,4 @@ export function getAllRolesApi (data) {
 export function getRoleListForDialogApi (data) {
   return getAllRolesApi(data)
 }
+

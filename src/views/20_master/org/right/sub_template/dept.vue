@@ -86,6 +86,7 @@
         <template v-slot="scope">
           <el-button-group style="float: right">
             <el-button
+              v-permission="'P_ORG:EDIT'"
               type="primary"
               icon="el-icon-edit"
               style="padding:4px 4px; "
@@ -124,7 +125,7 @@
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
-        prop="leader_id_name"
+        prop="response_leader_id_name"
         label="上级分管领导"
       />
       <el-table-column
@@ -243,10 +244,11 @@ import Pagination from '@/components/Pagination'
 import editDialog from '@/views/20_master/dept/dialog/30_edit/index.vue'
 import viewDialog from '@/views/20_master/dept/dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   components: { Pagination, editDialog, viewDialog },
-  directives: {},
+  directives: { permission },
   mixins: [],
   props: {
     height: {

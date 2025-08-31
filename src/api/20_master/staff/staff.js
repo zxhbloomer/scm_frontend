@@ -219,3 +219,29 @@ export function saveStaffExcludePermissions (data) {
     data
   })
 }
+
+// ===================【员工删除管理API】===================
+
+/**
+ * 从组织架构中移除员工（保留员工数据，仅移除组织关联）
+ * @param {Array} data - 员工列表数据，包含id等信息
+ */
+export function removeFromOrgTreeApi (data) {
+  return request({
+    url: '/api/v1/staff/remove/orgtree',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 从组织中删除员工（逻辑删除员工数据）
+ * @param {Array} data - 员工列表数据，包含id等信息
+ */
+export function deleteFromOrgApi (data) {
+  return request({
+    url: '/api/v1/staff/delete/org',
+    method: 'post',
+    data
+  })
+}

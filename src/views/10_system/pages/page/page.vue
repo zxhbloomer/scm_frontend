@@ -75,20 +75,38 @@
       >复制新增</el-button>
       <el-button
         v-permission="'P_SYS_PAGE:REAL_DELETE'"
-        :disabled="!settings.btnShowStatus.showExport"
-        type="primary"
+        :disabled="!settings.btnShowStatus.showDelete"
+        type="danger"
         icon="el-icon-circle-close"
         :loading="settings.loading"
         @click="handleRealyDelete"
       >物理删除</el-button>
+      <!--      导出按钮 开始-->
       <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_SYS_PAGE:EXPORT'"
-        :disabled="!settings.btnShowStatus.showExport"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SYS_PAGE:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_SYS_PAGE:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!--      导出按钮 结束-->
       <el-button
         v-permission="'P_SYS_PAGE:INFO'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -97,14 +115,6 @@
         :loading="settings.loading"
         @click="handleView"
       >查看</el-button>
-      <el-button
-        v-permission="'P_SYS_PAGE:INFO'"
-        :disabled="!settings.btnShowStatus.showUpdate"
-        type="primary"
-        icon="el-icon-info"
-        :loading="settings.loading"
-        @click="handleColumnSetting"
-      >列配置</el-button>
     </el-button-group>
     <el-table
       ref="multipleTable"
@@ -112,7 +122,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :columns-index-key="true"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -120,13 +131,12 @@
       :default-sort="{prop: 'u_time', order: 'descending'}"
       style="width: 100%"
       @row-click="handleRowClick"
-      @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
     >
       <el-table-column
-        v-if="!meDialogStatus"
+        v-if="settings.exportModel"
         type="selection"
         width="45"
         prop="id"
@@ -185,6 +195,19 @@
         :auto-fit="true"
         header-align="center"
         show-overflow-tooltip
+        min-width="120"
+        prop="meta_icon"
+        label="菜单icon"
+      >
+        <template v-slot="scope">
+          <svg-icon v-if="scope.row.meta_icon" :icon-class="scope.row.meta_icon" style="font-size: 16px;" />
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        :auto-fit="true"
+        header-align="center"
+        show-overflow-tooltip
         sortable="custom"
         min-width="150"
         :sort-orders="settings.sortOrders"
@@ -223,15 +246,8 @@
       @closeMeCancel="handleCloseDialogOneCancel"
     />
 
-    <column-setting
-      v-if="popSettings.two.visible"
-      :id="popSettings.two.props.id"
-      :data="popSettings.two.props.data"
-      :visible="popSettings.two.visible"
-      :dialog-status="popSettings.two.props.dialogStatus"
-      @closeMeCancel="handleCloseDialogTwoCancel"
-      @closeMeOk="handleCloseDialogTwoCancel"
-    />
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
 
     <iframe
       id="refIframe"
@@ -268,17 +284,17 @@
 </style>
 
 <script>
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import { getListApi, realDeleteSelectionApi, exportApi } from '@/api/10_system/pages/page'
-import resizeMixin from './pageResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
+import SvgIcon from '@/components/SvgIcon'
 import editDialog from '@/views/10_system/pages/page/dialog/edit'
+import resizeMixin from './pageResizeHandlerMixin'
 import deepCopy from 'deep-copy'
-import columnSetting from '@/views/10_system/pages/page/dialog/columnEdit'
-import permission from '@/directive/permission/index.js'
 
 export default {
   // name: constants_program.P_SYS_PAGES, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination, editDialog, columnSetting },
+  components: { Pagination, editDialog, SvgIcon },
   directives: { permission },
   mixins: [resizeMixin],
   props: {
@@ -302,7 +318,6 @@ export default {
           // 查询条件
           name: '',
           code: '',
-          is_del: '0', // 未删除
           id: this.id,
           dataModel: this.dataModel // 弹出框模式
         },
@@ -333,8 +348,12 @@ export default {
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
-          showExport: false
+          showDelete: false,
+          showExport: false,
+          hidenExport: true
         },
+        // 导出模式控制
+        exportModel: false,
         // loading 状态
         loading: true,
         tableHeight: this.setUIheight(),
@@ -358,27 +377,52 @@ export default {
             data: {},
             dialogStatus: ''
           }
-        },
-        // 列配置 弹窗
-        two: {
-          visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
-          }
         }
-      }
+      },
+      // Vue Tours 引导配置
+      tourOption: {
+        useKeyboardNavigation: false,
+        labels: {
+          buttonStop: '结束'
+        },
+        highlight: false
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection',
+          content: '请通过点击多选框，选择要导出的数据！',
+          params: {
+            placement: 'top',
+            highlight: false,
+            enableScrolling: false
+          },
+          before: type => new Promise((resolve, reject) => {
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {
   },
   // 监听器
   watch: {
+    // 导出模式控制
+    'settings.exportModel': {
+      handler (newVal, oldVal) {
+        if (newVal) {
+          this.settings.btnShowStatus.hidenExport = false
+          // 启动引导
+          this.$tours['myTour'].start()
+        } else {
+          this.settings.btnShowStatus.hidenExport = true
+        }
+      }
+    },
     // 选中的数据，使得导出按钮可用，否则就不可使用
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
-        if (newVal.length > 0) {
+        if (this.settings.exportModel && newVal.length > 0) {
           this.settings.btnShowStatus.showExport = true
         } else {
           this.settings.btnShowStatus.showExport = false
@@ -387,6 +431,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {
@@ -462,7 +508,6 @@ export default {
       this.settings.loading = true
       // 开始导出
       exportApi(this.dataJson.searchForm).then(response => {
-        this.settings.loading = false
       }).finally(() => {
         this.settings.loading = false
       })
@@ -471,18 +516,32 @@ export default {
     handleExportSelectionData () {
       // loading
       this.settings.loading = true
-      const selectionJson = []
+      const selectionIds = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
+        selectionIds.push(value.id) // 直接推送ID值，不是对象
       })
-      const param = {}
-      param.ids = selectionJson
+      const searchData = { ids: selectionIds }
       // 开始导出
-      exportApi(param).then(response => {
-        this.settings.loading = false
+      exportApi(searchData).then(response => {
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+    /**
+     * 完成导出
+     */
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
+      this.settings.exportModel = false
     },
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
@@ -492,10 +551,12 @@ export default {
         // this.settings.btnShowStatus.doInsert = true
         this.settings.btnShowStatus.showUpdate = true
         this.settings.btnShowStatus.showCopyInsert = true
+        this.settings.btnShowStatus.showDelete = true
       } else {
         // this.settings.btnShowStatus.doInsert = false
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showCopyInsert = false
+        this.settings.btnShowStatus.showDelete = false
       }
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
@@ -573,73 +634,47 @@ export default {
       this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
       this.popSettings.one.visible = true
     },
-    // 列配置
-    handleColumnSetting () {
-      this.popSettings.two.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.two.props.data.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
-        return
-      }
-      this.popSettings.two.props.data.page_code = this.popSettings.two.props.data.code
-      this.popSettings.two.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.two.visible = true
-    },
     // 删除按钮
     handleRealyDelete () {
-      // 没有选择任何数据的情况
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行删除', '未选择数据错误', {
-          confirmButtonText: '关闭',
-          type: 'error'
+      if (this.dataJson.currentJson && this.dataJson.currentJson.id !== undefined) {
+        // 确认删除
+        const _message = '是否要删除选择的数据？'
+        this.$confirm(_message, '确认信息', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '确认',
+          cancelButtonText: '取消'
         }).then(() => {
-          this.settings.btnShowStatus.showDelete = false
+          // loading
+          this.settings.loading = true
+          const searchData = [{ id: this.dataJson.currentJson.id }]
+          // 开始删除
+          realDeleteSelectionApi(searchData).then((_data) => {
+            this.$notify({
+              title: '删除成功',
+              message: _data.message,
+              type: 'success',
+              duration: this.settings.duration
+            })
+            this.getDataList()
+            // 清空当前选中
+            this.dataJson.currentJson = null
+            this.settings.loading = false
+          }, (_error) => {
+            this.$notify({
+              title: '删除错误',
+              message: _error.message,
+              type: 'error',
+              duration: this.settings.duration
+            })
+            this.settings.loading = false
+          })
+        }).catch(() => {
+          // 取消删除
+          this.settings.loading = false
         })
       } else {
-        // 选中数据删除
-        this.handleRealDeleteSelectionData()
+        this.showErrorMsg('请选择一条数据')
       }
-    },
-    // 选中数据删除
-    handleRealDeleteSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
-      var _message = '是否要删除选择的数据？'
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        // 开始删除
-        realDeleteSelectionApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '删除成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          this.getDataList()
-          // loading
-          this.settings.loading = false
-        }, (_error) => {
-          this.$notify({
-            title: '删除错误',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        // 右上角X
-        this.settings.loading = false
-      })
     },
     // ------------------编辑弹出框 start--------------------
     handleCloseDialogOneOk (val) {
@@ -659,9 +694,6 @@ export default {
     },
     handleCloseDialogOneCancel () {
       this.popSettings.one.visible = false
-    },
-    handleCloseDialogTwoCancel () {
-      this.popSettings.two.visible = false
     },
     // 处理插入回调
     doInsertModelCallBack (val) {

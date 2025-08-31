@@ -32,9 +32,6 @@
           @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item label="">
-        <delete-type-normal v-model="dataJson.searchForm.is_del" />
-      </el-form-item>
       <el-form-item>
         <el-input
           v-model.trim="dataJson.searchForm.id_card"
@@ -101,6 +98,14 @@
         @click="handleUpdate"
       >修改</el-button>
       <el-button
+        v-permission="'P_STAFF:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelButton"
+      >删除</el-button>
+      <el-button
         v-permission="'P_STAFF:COPY_INSERT'"
         :disabled="!settings.btnShowStatus.showCopyInsert"
         type="primary"
@@ -151,6 +156,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
+      :columns-index-key="true"
       :canvas-auto-height="true"
       stripe
       border
@@ -214,11 +220,15 @@
         :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
-        min-width="80"
+        min-width="120"
         :sort-orders="settings.sortOrders"
         prop="birthday"
         label="生日"
-      />
+      >
+        <template v-slot="scope">
+          {{ formatDate(scope.row.birthday, 1) }}
+        </template>
+      </el-table-column>
       <el-table-column
         header-align="center"
         :auto-fit="true"
@@ -428,35 +438,6 @@
       </el-table-column>
       <el-table-column
         header-align="center"
-        min-width="80"
-        :auto-fit="true"
-        :sort-orders="settings.sortOrders"
-        label="删除"
-      >
-        <template v-slot:header>
-          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
-            placement="top"
-            :open-delay="500"
-          >
-            <el-switch
-              v-model="scope.row.is_del"
-              active-color="#ff4949"
-              inactive-color="#13ce66"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              :disabled="meDialogStatus"
-              @change="handleDel(scope.row)"
-            />
-          </el-tooltip>
-        </template>
-      </el-table-column>
-      <el-table-column
-        header-align="center"
         :auto-fit="true"
         show-overflow-tooltip
         sortable="custom"
@@ -563,9 +544,9 @@
     <!-- 员工角色设置弹窗 -->
     <staff-role-dialog
       v-if="popSettings.staffRole.visible"
+      :id="popSettings.staffRole.props.staffId"
       :visible="popSettings.staffRole.visible"
-      :staff-id="popSettings.staffRole.props.staffId"
-      :staff-data="popSettings.staffRole.props.staffData"
+      :data="popSettings.staffRole.props.staffData"
       :model="popSettings.staffRole.props.model"
       @closeMeOk="handleStaffRoleDialogOk"
       @closeMeCancel="handleStaffRoleDialogCancel"
@@ -640,11 +621,9 @@
 
 <script>
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/20_master/staff/staff'
+import { getListApi, exportSelectionApi, exportAllApi, deleteApi, saveStaffRoles } from '@/api/20_master/staff/staff'
 import Pagination from '@/components/Pagination'
-import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import FloatMenu from '@/components/FloatMenu/index.vue'
-import FieldHelp from '@/components/30_table/FieldHelp'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
@@ -662,9 +641,7 @@ export default {
   name: 'StaffList',
   components: {
     Pagination,
-    DeleteTypeNormal,
     FloatMenu,
-    FieldHelp,
     NewDialog,
     EditDialog,
     ViewDialog,
@@ -696,8 +673,7 @@ export default {
           name: '',
           id_card: '',
           is_enable: '',
-          c_name: '',
-          is_del: '0' // 未删除
+          c_name: ''
         },
         enableList: [
           { 'enable_name': '已开启', 'status': true },
@@ -722,7 +698,8 @@ export default {
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
-          showExport: false
+          showExport: false,
+          showDel: false
         },
         // loading 状态
         loading: true,
@@ -790,6 +767,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
     if (this.$route.params.name !== undefined) {
       this.dataJson.searchForm.name = this.$route.params.name
@@ -890,9 +869,11 @@ export default {
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnShowStatus.showUpdate = true
         this.settings.btnShowStatus.showCopyInsert = true
+        this.settings.btnShowStatus.showDel = true
       } else {
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showCopyInsert = false
+        this.settings.btnShowStatus.showDel = false
       }
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
@@ -971,6 +952,39 @@ export default {
       }
       this.dialogs.view = true
     },
+    // 删除按钮操作
+    handleDelButton () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$message.warning('请选择一条员工记录进行删除')
+        return
+      }
+
+      const staff = this.dataJson.currentJson
+      this.$confirm(`确认删除员工 "${staff.name}" 吗？删除后无法恢复。`, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.settings.loading = true
+        // 传递ID和乐观锁版本
+        const deleteData = {
+          id: staff.id,
+          dbversion: staff.dbversion
+        }
+        deleteApi(deleteData).then((_data) => {
+          this.$message.success('删除成功')
+          this.getDataList()
+          // 清空选择状态
+          this.$refs.multipleTable.clearSelection()
+          this.dataJson.currentJson = null
+          this.settings.btnShowStatus.showDel = false
+        }).catch((_error) => {
+          this.$message.error(_error.message || '删除失败')
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      })
+    },
     // 新增弹窗回调
     handleNewDialogOk (val) {
       if (val.return_flag) {
@@ -1047,8 +1061,7 @@ export default {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      // TODO: 实现设置角色功能
-      this.showErrorMsg('设置角色功能待实现')
+      this.handleEditStaffRole(this.dataJson.currentJson.id, this.dataJson.currentJson)
     },
     // 设置密码弹窗
     handleSetPassword () {
@@ -1074,47 +1087,6 @@ export default {
     },
     handlePasswordDialogCancel () {
       this.dialogs.password = false
-    },
-    // 删除操作
-    handleDel (row) {
-      let _message = ''
-      const _value = row.is_del
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (_value === true) {
-        _message = '是否要删除选择的数据？'
-      } else {
-        _message = '是否要复原该条数据？'
-      }
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        deleteApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.is_del = !row.is_del
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.is_del = !row.is_del
-      })
     },
     // 岗位点击
     handlePositionClick (val) {
@@ -1147,22 +1119,45 @@ export default {
       this.popSettings.staffRole.visible = true
     },
 
-    handleStaffRoleDialogOk (val) {
+    async handleStaffRoleDialogOk (val) {
       if (!val || !val.return_flag) {
         this.popSettings.staffRole.visible = false
         return
       }
 
-      this.$notify({
-        title: '角色设置成功',
-        message: `员工角色已成功设置`,
-        type: 'success',
-        duration: this.settings.duration
-      })
+      try {
+        this.settings.loading = true
 
-      this.popSettings.staffRole.visible = false
-      // 刷新列表数据以显示最新的角色信息
-      this.getDataList()
+        // 提取选中的角色ID列表
+        const selectedRoles = val.data || []
+        const roleIds = Array.isArray(selectedRoles) ? selectedRoles.map(role => role.id) : []
+        // 调用API保存员工角色关系
+        await saveStaffRoles({
+          staffId: this.popSettings.staffRole.props.staffId,
+          roleIds: roleIds
+        })
+
+        this.$notify({
+          title: '角色设置成功',
+          message: `员工角色已成功设置（${roleIds.length}个角色）`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+
+        this.popSettings.staffRole.visible = false
+        // 刷新列表数据以显示最新的角色信息
+        this.getDataList()
+      } catch (error) {
+        console.error('保存员工角色失败:', error)
+        this.$notify({
+          title: '角色设置失败',
+          message: error.message || '保存员工角色时发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      } finally {
+        this.settings.loading = false
+      }
     },
 
     handleStaffRoleDialogCancel () {
@@ -1282,6 +1277,11 @@ export default {
       // 清空权限详情数据
       this.popSettings.permissionDetail.permissionId = null
       this.popSettings.permissionDetail.headInfo = ''
+    },
+
+    // 错误提示
+    showErrorMsg (message) {
+      this.$message.error(message)
     }
   }
 }

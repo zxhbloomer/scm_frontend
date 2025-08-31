@@ -5,7 +5,7 @@
       ref="multipleTable"
       v-loading="settings.loading"
       :canvas-auto-height="true"
-      columns_index_key="true"
+      :columns-index-key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
@@ -143,7 +143,7 @@ import mixin from './mixin.js'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import urlUtil from '@/utils/urlUtil'
 import bpm_dialog from '@/components/60_bpm/designBpmDialog.vue'
 

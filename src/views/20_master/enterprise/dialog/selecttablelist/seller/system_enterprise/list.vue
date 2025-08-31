@@ -271,7 +271,7 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_dict from '@/common/constants/constants_dict'
 import { isEmpty } from '@/components/30_table/ExTable/util'

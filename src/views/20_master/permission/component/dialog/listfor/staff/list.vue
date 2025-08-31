@@ -98,8 +98,8 @@
         show-overflow-tooltip
         :auto-fit="true"
         sortable="custom"
-        min-width="100"
         :sort-orders="settings.sortOrders"
+        width="80"
         prop="u_name"
         label="更新人"
       />
@@ -108,34 +108,26 @@
         header-align="center"
         show-overflow-tooltip
         sortable="custom"
-        min-width="180"
-        :auto-fit="true"
         :sort-orders="settings.sortOrders"
+        width="160"
         prop="u_time"
         label="更新时间"
-      >
-        <template v-slot="scope">
-          {{ formatDateTime(scope.row.u_time) }}
-        </template>
-      </el-table-column>
-      <!-- 操作列 -->
+      />
+      <!-- 操作 -->
       <el-table-column
-        header-align="center"
-        align="center"
-        width="80"
         label="操作"
+        width="60"
+        align="center"
       >
         <template v-slot="scope">
           <el-button
             type="text"
             size="mini"
-            icon="el-icon-view"
             @click="handleViewPermission(scope.row)"
           >查看</el-button>
         </template>
       </el-table-column>
     </el-table>
-
   </div>
 </template>
 
@@ -144,38 +136,33 @@ import { getAllPermissionsApi } from '@/api/20_master/permission/permission'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
-  name: 'PermissionListSelect',
-  components: {},
+  name: 'StaffPermissionList',
   props: {
-    height: {
-      type: Number,
-      default: 400
-    },
+    // 传入的权限数据
     data: {
       type: Array,
-      default: () => {
-        return []
-      }
+      default: () => []
+    },
+    // 表格高度
+    height: {
+      type: [Number, String],
+      default: 400
     }
   },
   data () {
     return {
+      // 表单和数据json
       dataJson: {
-        // 查询使用的json
+        // 列表数据
+        listData: [],
+        // 查询表单数据
         searchForm: {
-          condition: null,
-          // 查询条件
-          name: '',
-          is_del: false // 固定查询未删除的数据
+          name: ''
         },
-        // table使用的json
-        listData: null,
-        // 单条数据 json
-        currentJson: null,
-        // 当前表格中的索引，第几条
-        rowIndex: 0,
-        // 当前选中的行（checkbox）
-        multipleSelection: []
+        // 多选数据
+        multipleSelection: [],
+        // 当前行数据
+        currentJson: {}
       },
       // 页面设置json
       settings: {
@@ -185,7 +172,9 @@ export default {
         sortOrders: ['ascending', 'descending', null]
       },
       // 防止死循环标志位
-      isInitializing: false
+      isInitializing: false,
+      // 待处理的选中数据
+      pendingSelectedData: []
     }
   },
   computed: {},
@@ -217,6 +206,7 @@ export default {
     EventBus.$off(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, this.handleDialogSelectEvent)
   },
   methods: {
+    // 初始化页面显示
     initShow () {
       // 初始化查询条件 - 固定查询未删除数据
       this.dataJson.searchForm.is_del = false
@@ -224,16 +214,19 @@ export default {
 
     // 处理EventBus选择事件
     handleDialogSelectEvent (selectedData) {
-      if (selectedData && selectedData.length > 0) {
-        this.$nextTick(() => {
-          this.initSelectedRows(selectedData)
-        })
-      }
+      // 存储选中数据，以备数据加载完成后使用
+      this.pendingSelectedData = selectedData
+
+      // 无论有无数据都要更新选中状态（包括清空的情况）
+      this.$nextTick(() => {
+        this.initSelectedRows(selectedData || [])
+      })
     },
 
     // 初始化已选中的行
     initSelectedRows (selectedData) {
-      if (!this.dataJson.listData || !selectedData) return
+      if (!this.dataJson.listData) return
+      if (!Array.isArray(selectedData)) return
 
       // 设置初始化标志位，防止死循环
       this.isInitializing = true
@@ -258,25 +251,14 @@ export default {
 
     // 获取行索引
     getRowIndex (row) {
-      if (this.dataJson.listData !== null) {
-        const _index = this.dataJson.listData.lastIndexOf(row)
-        return _index
-      }
+      return this.dataJson.listData.findIndex(item => item.id === row.id)
     },
 
-    // 行点击
-    handleRowClick (row) {
-      this.dataJson.rowIndex = this.getRowIndex(row)
-    },
-
-    // 搜索
-    handleSearch () {
-      this.getDataList()
-      // 清空选择
-      this.dataJson.multipleSelection = []
-      if (this.$refs.multipleTable) {
-        this.$refs.multipleTable.clearSelection()
-      }
+    // 单击行
+    handleRowClick (row, column, event) {
+      // 当前行变化
+      this.dataJson.currentJson = Object.assign({}, row)
+      this.dataJson.currentJson.index = this.getRowIndex(row)
     },
 
     // 当前行变化
@@ -304,6 +286,13 @@ export default {
             this.initSelectedRows(this.data)
           })
         }
+
+        // 如果有待处理的选中数据，应用它们
+        if (this.pendingSelectedData && this.pendingSelectedData.length > 0) {
+          this.$nextTick(() => {
+            this.initSelectedRows(this.pendingSelectedData)
+          })
+        }
       }).catch(error => {
         console.error('加载权限列表失败:', error)
         this.dataJson.listData = []
@@ -325,44 +314,30 @@ export default {
       this.$emit('emitSelect', arr)
     },
 
-    // 排序变化（无分页版本 - 前端排序）
+    // 表格排序变化
     handleSortChange (column) {
-      if (!this.dataJson.listData || this.dataJson.listData.length === 0) {
-        return
-      }
-
-      const prop = column.prop
-      const order = column.order
-
-      if (order === 'ascending') {
-        this.dataJson.listData.sort((a, b) => {
-          const aVal = a[prop] || ''
-          const bVal = b[prop] || ''
-          return aVal.toString().localeCompare(bVal.toString())
-        })
-      } else if (order === 'descending') {
-        this.dataJson.listData.sort((a, b) => {
-          const aVal = a[prop] || ''
-          const bVal = b[prop] || ''
-          return bVal.toString().localeCompare(aVal.toString())
-        })
-      }
+      const { prop, order } = column
+      console.log('排序变化:', prop, order)
+      // 这里可以添加排序逻辑
     },
 
-    // 重置查询区域
+    // 查询
+    handleSearch () {
+      this.getDataList()
+    },
+
+    // 重置搜索
     doResetSearch () {
-      this.dataJson.searchForm.name = ''
-      this.handleSearch()
+      this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+      this.dataJson.searchForm.is_del = false // 保持固定查询条件
+      this.getDataList()
     },
 
-    // 查看权限详情
+    // 查看权限
     handleViewPermission (row) {
-      // 通知父组件打开权限查看弹窗
       this.$emit('viewPermission', {
         permissionId: row.id,
-        permissionName: row.name,
-        permissionCode: row.code || '',
-        headInfo: `权限详情：${row.name}（${row.code || row.id}）`
+        headInfo: row.name
       })
     }
   }
@@ -371,19 +346,19 @@ export default {
 
 <style scoped>
 .permission-list-container {
-  margin: 0;
-  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .search-form {
-  margin-bottom: 15px;
-}
-
-.el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
 
-.el-button-group {
+.search-form .el-form-item {
   margin-bottom: 10px;
+}
+
+.search-form .el-form-item__label {
+  font-weight: 500;
 }
 </style>

@@ -103,6 +103,7 @@
         <template v-slot="scope">
           <el-button-group style="float: right">
             <el-button
+              v-permission="'P_ORG:EDIT'"
               type="primary"
               icon="el-icon-edit"
               style="padding:4px 4px; "
@@ -122,6 +123,7 @@
       >
         <template v-slot="scope">
           <el-link
+            v-permission="'P_ORG:ADD_ROLE'"
             type="primary"
             @click="handleEditRoleMember(scope.row.id, scope.row)"
           >
@@ -167,6 +169,7 @@
       >
         <template v-slot="scope">
           <el-link
+            v-permission="'P_ORG:ADD_PERMISSION'"
             type="primary"
             @click="handleEditPermissionMember(scope.row.id, scope.row)"
           >
@@ -355,10 +358,11 @@ import PermissionViewDialog from '@/views/20_master/permission/component/dialog/
 import deepCopy from 'deep-copy'
 import { getPositionListApi } from '@/api/20_master/org/org'
 import { savePositionRolesApi } from '@/api/20_master/position/position'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   components: { Pagination, FieldHelp, setPositionDialog, editDialog, viewDialog, setRoleDialog, setPermissionDialog, PermissionViewDialog },
-  directives: {},
+  directives: { permission },
   mixins: [],
   props: {
     height: {

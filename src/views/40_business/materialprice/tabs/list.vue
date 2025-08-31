@@ -71,7 +71,7 @@
       element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="settings.tableHeight"
       :default-sort="{prop: 'c_time', order: 'descending'}"
-      columns_index_key="true"
+      :columns-index-key="true"
       stripe
       border
       fit

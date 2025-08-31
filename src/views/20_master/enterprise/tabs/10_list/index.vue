@@ -542,7 +542,7 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import { getPageApi } from '@/api/10_system/pages/page'
 import constants_dict from '@/common/constants/constants_dict'
@@ -1001,7 +1001,6 @@ export default {
     handleExportOk () {
       this.settings.btnShowStatus.hidenExport = true
       this.settings.btnShowStatus.showExport = false
-      this.settings.exportModel = false
     },
     // 导出按钮
     handleExport () {

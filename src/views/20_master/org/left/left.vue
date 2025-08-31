@@ -24,6 +24,7 @@
           placement="top-start"
         >
           <el-button
+            v-permission="'P_ORG:ADD'"
             type="primary"
             icon="el-icon-plus"
             style="padding:7px 7px"
@@ -501,6 +502,14 @@
       @closeMeCancel="handleStaffExcludePermissionDialogCancel"
     />
 
+    <!-- 员工删除确认弹窗 -->
+    <StaffDeleteConfirmDialog
+      v-model="popSettingsData.staffDeleteDialogData.visible"
+      :staff-info="popSettingsData.staffDeleteDialogData.staffInfo"
+      @confirm="handleStaffDeleteConfirm"
+      @cancel="handleStaffDeleteCancel"
+    />
+
     <!-- 跟随鼠标的文字提示 -->
     <div
       v-show="mouseFollowTip.visible"
@@ -872,7 +881,7 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, deleteApi, dragsaveApi, getSubCountApi, getRootStatisticsApi, getEmployeesForTreeApi } from '@/api/20_master/org/org'
+import { getCorrectTypeByInsertStatusApi, getTreeListApi, insertApi, dragsaveApi, getSubCountApi, getRootStatisticsApi, getEmployeesForTreeApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
 import groupDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
 import companyDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
@@ -893,6 +902,8 @@ import staffEditDialog from '@/views/20_master/staff/dialog/30_edit/index.vue'
 import staffRoleDialog from '@/views/10_system/role/component/dialog/listfor/staff/index.vue'
 import staffPermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staff/index.vue'
 import staffExcludePermissionDialog from '@/views/20_master/permission/component/dialog/listfor/staffexclude/index.vue'
+// 新增：引入员工删除确认对话框组件
+import StaffDeleteConfirmDialog from '@/components/30_table/StaffDeleteConfirmDialog/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
 import { convertEmployeesToTreeNodes, isStaffNode, isPositionNode } from '@/utils/treeHelper'
 import { getDataByIdApi as getPositionByIdApi, getPositionAssignedRoleIdsApi } from '@/api/20_master/position/position'
@@ -901,7 +912,14 @@ import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
 import { getByIdApi as getCompanyByIdApi } from '@/api/20_master/company/company'
 import { getByIdApi as getDeptByIdApi } from '@/api/20_master/dept/dept'
 // 新增：引入员工相关API
-import { getApi as getStaffByIdApi, getStaffAssignedRoleIds, getStaffAssignedPermissionIds, getStaffExcludedPermissionIds } from '@/api/20_master/staff/staff'
+import { getApi as getStaffByIdApi, getStaffAssignedRoleIds, getStaffAssignedPermissionIds, getStaffExcludedPermissionIds, removeFromOrgTreeApi, deleteFromOrgApi } from '@/api/20_master/staff/staff'
+// 新增：引入各节点类型的删除API
+import { deleteOrgApi as deleteGroupApi } from '@/api/20_master/group/group'
+import { deleteOrgApi as deleteCompanyApi } from '@/api/20_master/company/company'
+import { deleteOrgApi as deleteDeptApi } from '@/api/20_master/dept/dept'
+import { deleteOrgApi as deletePositionApi } from '@/api/20_master/position/position'
+import { deleteApi as deleteStaffApi } from '@/api/20_master/staff/staff'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 // import '@/styles/org_png.scss' // 已改用el-tag，不再需要图片样式
 
 export default {
@@ -910,9 +928,10 @@ export default {
     groupDialog, companyDialog, deptDialog, positionDialog, setPositionDialog,
     groupListDialog, companyListDialog, deptListDialog, positionListDialog, staffListDialog,
     positionRoleDialog, positionPermissionDialog,
-    staffEditDialog, staffRoleDialog, staffPermissionDialog, staffExcludePermissionDialog
+    staffEditDialog, staffRoleDialog, staffPermissionDialog, staffExcludePermissionDialog,
+    StaffDeleteConfirmDialog
   },
-  directives: { elDragDialog },
+  directives: { elDragDialog, permission },
   props: {
     height: {
       type: Number,
@@ -965,6 +984,22 @@ export default {
         defaultProps: {
           children: 'children',
           label: 'label'
+        },
+        // 节点类型与删除API的映射关系
+        deleteApiMap: {
+          '20': deleteGroupApi, // 集团
+          '30': deleteCompanyApi, // 主体企业
+          '40': deleteDeptApi, // 部门
+          '50': deletePositionApi, // 岗位
+          '60': deleteStaffApi // 员工
+        },
+        // 节点类型中文名映射
+        nodeTypeNames: {
+          '20': '集团',
+          '30': '主体企业',
+          '40': '部门',
+          '50': '岗位',
+          '60': '员工'
         }
       },
       popSettingsData: {
@@ -1034,6 +1069,15 @@ export default {
         staffExcludePermissionDialogData: {
           visible: false,
           staffId: null
+        },
+        // 员工删除确认弹窗参数设置
+        staffDeleteDialogData: {
+          visible: false,
+          staffInfo: {
+            name: '',
+            code: '',
+            id: null
+          }
         },
         // 新增：10_list 弹窗状态管理
         listDialogData: {
@@ -1486,17 +1530,39 @@ export default {
       this.popSettingsData.listDialogData.visible = true
     },
     handleDelete () {
-      this.$confirm('请注意：即将删除当前选择结点以及【子结点】的数据，而且不能恢复。', '确认信息', {
+      const currentNode = this.dataJson.currentJson
+      if (!currentNode) {
+        this.$message.warning('请先选择要删除的节点')
+        return
+      }
+
+      const nodeType = currentNode.type
+      const typeName = this.settings.nodeTypeNames[nodeType] || '节点'
+      const nodeName = currentNode.label || currentNode.name || '未命名节点'
+
+      // 员工删除：显示专门的删除确认对话框
+      if (nodeType === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
+        // 设置员工信息并显示删除确认对话框
+        this.popSettingsData.staffDeleteDialogData.staffInfo = {
+          name: nodeName,
+          code: currentNode.code || '未知编码',
+          id: currentNode.serial_id,
+          dbversion: currentNode.dbversion
+        }
+        this.popSettingsData.staffDeleteDialogData.visible = true
+        return
+      }
+
+      // 其他节点类型：使用原有的删除确认逻辑
+      this.$confirm(`确定要删除${typeName}「${nodeName}」吗？此操作将同时删除所有子节点且不可恢复。`, '删除确认', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确定删除',
-        cancelButtonText: '取消'
+        cancelButtonText: '取消',
+        type: 'warning'
       }).then(() => {
         this.doDelete()
       }).catch(action => {
-        // 右上角X
-        // if (action !== 'close') {
-        //   //
-        // }
+        // 用户取消删除操作
       })
     },
     handleRefresh () {
@@ -1504,11 +1570,31 @@ export default {
       this.getDataList()
     },
     doDelete () {
-      // 删除当前结点和子结点
-      deleteApi(this.dataJson.tempJson).then((_data) => {
+      // 获取当前节点信息
+      const currentNode = this.dataJson.currentJson
+      if (!currentNode) {
+        this.$message.warning('请先选择要删除的节点')
+        return
+      }
+
+      // 获取节点类型
+      const nodeType = currentNode.type
+      const typeName = this.settings.nodeTypeNames[nodeType] || '节点'
+      const deleteApi = this.settings.deleteApiMap[nodeType]
+
+      if (!deleteApi) {
+        this.$message.error(`不支持的节点类型: ${nodeType}`)
+        return
+      }
+
+      // 调用对应的删除API - 使用实体ID而不是树节点ID
+      deleteApi({
+        id: currentNode.serial_id, // 使用实体ID (如：m_dept.id = 37)
+        dbversion: currentNode.dbversion
+      }).then((_data) => {
         this.$notify({
-          title: '新增处理成功',
-          message: _data.message,
+          title: '删除处理成功',
+          message: `${typeName}删除成功`,
           type: 'success',
           duration: this.settings.duration
         })
@@ -1519,12 +1605,12 @@ export default {
         this.settings.loading = false
       }, (_error) => {
         this.$notify({
-          title: '新增处理失败',
-          message: _error.message,
+          title: '删除处理失败',
+          message: `${typeName}删除失败: ${_error.message}`,
           type: 'error',
           duration: this.settings.duration
         })
-        // this.popSettingsData.dialogFormVisible = false
+        this.popSettingsData.dialogFormVisible = false
       }).finally(() => {
         this.settings.loading = false
       })
@@ -2316,15 +2402,15 @@ export default {
         const promises = staffNodes.map(async (staffNode) => {
           try {
             // 数据验证
-            if (!staffNode.staffData || !staffNode.staffData.id) {
+            if (!staffNode.serial_id) {
               return
             }
 
             // 并行获取员工的角色数、权限数和排除权限数
             const responses = await Promise.all([
-              getStaffAssignedRoleIds({ staff_id: staffNode.staffData.id }), // 角色数
-              getStaffAssignedPermissionIds({ staff_id: staffNode.staffData.id }), // 权限数
-              getStaffExcludedPermissionIds({ staff_id: staffNode.staffData.id }) // 排除权限数
+              getStaffAssignedRoleIds({ staff_id: staffNode.serial_id }), // 角色数
+              getStaffAssignedPermissionIds({ staff_id: staffNode.serial_id }), // 权限数
+              getStaffExcludedPermissionIds({ staff_id: staffNode.serial_id }) // 排除权限数
             ])
 
             // 使用this.$set确保响应式更新
@@ -2425,9 +2511,9 @@ export default {
             // 员工类型：并行获取角色数量、权限数量和排除权限数量统计
             this.$set(node, 'countLoading', true)
             Promise.all([
-              getStaffAssignedRoleIds({ staff_id: node.staffData.id }), // 角色数
-              getStaffAssignedPermissionIds({ staff_id: node.staffData.id }), // 权限数
-              getStaffExcludedPermissionIds({ staff_id: node.staffData.id }) // 排除权限数
+              getStaffAssignedRoleIds({ staff_id: node.serial_id }), // 角色数
+              getStaffAssignedPermissionIds({ staff_id: node.serial_id }), // 权限数
+              getStaffExcludedPermissionIds({ staff_id: node.serial_id }) // 排除权限数
             ]).then(responses => {
               // 使用this.$set确保响应式更新
               this.$set(node, 'role_count', Array.isArray(responses[0].data) ? responses[0].data.length : 0)
@@ -2553,9 +2639,9 @@ export default {
 
       // 并行获取员工的角色数、权限数和排除权限数
       Promise.all([
-        getStaffAssignedRoleIds({ staff_id: staffNode.staffData.id }), // 角色数
-        getStaffAssignedPermissionIds({ staff_id: staffNode.staffData.id }), // 权限数
-        getStaffExcludedPermissionIds({ staff_id: staffNode.staffData.id }) // 排除权限数
+        getStaffAssignedRoleIds({ staff_id: staffNode.serial_id }), // 角色数
+        getStaffAssignedPermissionIds({ staff_id: staffNode.serial_id }), // 权限数
+        getStaffExcludedPermissionIds({ staff_id: staffNode.serial_id }) // 排除权限数
       ]).then(responses => {
         const stats = {
           role_count: Array.isArray(responses[0].data) ? responses[0].data.length : 0,
@@ -3361,7 +3447,7 @@ export default {
       }
 
       // 数据验证
-      if (!nodeData.staffData || !nodeData.staffData.id) {
+      if (!nodeData.serial_id) {
         this.$message.error('员工数据不完整，无法编辑')
         return
       }
@@ -3375,7 +3461,7 @@ export default {
       })
 
       // 获取员工完整数据
-      getStaffByIdApi({ id: nodeData.staffData.id }).then(response => {
+      getStaffByIdApi({ id: nodeData.serial_id }).then(response => {
         // 关闭加载提示
         loadingMessage.close()
 
@@ -3429,14 +3515,14 @@ export default {
       }
 
       // 数据验证
-      if (!nodeData.staffData || !nodeData.staffData.id) {
+      if (!nodeData.serial_id) {
         this.$message.error('员工数据不完整，无法管理角色')
         return
       }
 
       try {
-        this.popSettingsData.staffRoleDialogData.staffId = nodeData.staffData.id
-        this.popSettingsData.staffRoleDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffRoleDialogData.staffId = nodeData.serial_id
+        this.popSettingsData.staffRoleDialogData.staffName = nodeData.name || nodeData.label
         this.popSettingsData.staffRoleDialogData.visible = true
         this.$message.success('打开员工角色管理弹窗')
       } catch (error) {
@@ -3453,14 +3539,14 @@ export default {
       }
 
       // 数据验证
-      if (!nodeData.staffData || !nodeData.staffData.id) {
+      if (!nodeData.serial_id) {
         this.$message.error('员工数据不完整，无法管理权限')
         return
       }
 
       try {
-        this.popSettingsData.staffPermissionDialogData.staffId = nodeData.staffData.id
-        this.popSettingsData.staffPermissionDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffPermissionDialogData.staffId = nodeData.serial_id
+        this.popSettingsData.staffPermissionDialogData.staffName = nodeData.name || nodeData.label
         this.popSettingsData.staffPermissionDialogData.visible = true
         this.$message.success('打开员工权限管理弹窗')
       } catch (error) {
@@ -3477,14 +3563,14 @@ export default {
       }
 
       // 数据验证
-      if (!nodeData.staffData || !nodeData.staffData.id) {
+      if (!nodeData.serial_id) {
         this.$message.error('员工数据不完整，无法排除权限')
         return
       }
 
       try {
-        this.popSettingsData.staffExcludePermissionDialogData.staffId = nodeData.staffData.id
-        this.popSettingsData.staffExcludePermissionDialogData.staffName = nodeData.staffData.name || nodeData.label
+        this.popSettingsData.staffExcludePermissionDialogData.staffId = nodeData.serial_id
+        this.popSettingsData.staffExcludePermissionDialogData.staffName = nodeData.name || nodeData.label
         this.popSettingsData.staffExcludePermissionDialogData.visible = true
         this.$message.success('打开员工权限排除弹窗')
       } catch (error) {
@@ -3812,6 +3898,69 @@ export default {
 
       // 如果有内容才返回带括号的文本，否则返回空字符串
       return parts.length > 0 ? `（${parts.join('、')}）` : ''
+    },
+
+    // ==================== 员工删除确认对话框处理方法 ====================
+
+    // 员工删除确认对话框 - 确认回调
+    handleStaffDeleteConfirm (confirmData) {
+      const { deleteType, staffInfo } = confirmData
+
+      this.settings.loading = true
+
+      // 构建API请求数据 - 需要传递组织上下文信息
+      const currentNode = this.dataJson.currentJson
+      const requestData = [{
+        id: staffInfo.id,
+        dbversion: staffInfo.dbversion,
+        // 添加组织上下文信息，用于精确删除关联关系
+        org_node_id: currentNode.id, // 当前组织节点ID
+        parent_org_id: currentNode.parent_id, // 父组织节点ID（岗位ID）
+        org_type: currentNode.type // 组织节点类型
+      }]
+
+      // 根据删除类型调用不同的API
+      const apiCall = deleteType === 'remove_only'
+        ? removeFromOrgTreeApi(requestData)
+        : deleteFromOrgApi(requestData)
+
+      const operationName = deleteType === 'remove_only'
+        ? '从组织架构移除'
+        : '删除'
+
+      apiCall.then((_data) => {
+        this.$notify({
+          title: `员工${operationName}成功`,
+          message: `员工「${staffInfo.name}」已${operationName}`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+
+        // 刷新树数据
+        this.dataJson.currentJson = null
+        this.getDataList()
+      }, (_error) => {
+        this.$notify({
+          title: `员工${operationName}失败`,
+          message: `员工${operationName}失败: ${_error.message}`,
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
+        this.settings.loading = false
+        this.popSettingsData.staffDeleteDialogData.visible = false
+      })
+    },
+
+    // 员工删除确认对话框 - 取消回调
+    handleStaffDeleteCancel () {
+      this.popSettingsData.staffDeleteDialogData.visible = false
+      // 清理员工信息
+      this.popSettingsData.staffDeleteDialogData.staffInfo = {
+        name: '',
+        code: '',
+        id: null
+      }
     }
   }
 }

@@ -65,8 +65,8 @@
       >复制新增</el-button>
       <el-button
         v-permission="'P_SYS_FUNCTIONS:REAL_DELETE'"
-        :disabled="!settings.btnShowStatus.showExport"
-        type="primary"
+        :disabled="!settings.btnShowStatus.showDelete"
+        type="danger"
         icon="el-icon-circle-close"
         :loading="settings.loading"
         @click="handleRealyDelete"
@@ -274,7 +274,8 @@ export default {
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
-          showExport: false
+          showExport: false,
+          showDelete: false
         },
         // loading 状态
         loading: true,
@@ -298,13 +299,15 @@ export default {
   },
   // 监听器
   watch: {
-    // 选中的数据，使得导出按钮可用，否则就不可使用
+    // 选中的数据，使得导出按钮和删除按钮可用，否则就不可使用
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
         if (newVal.length > 0) {
           this.settings.btnShowStatus.showExport = true
+          this.settings.btnShowStatus.showDelete = true
         } else {
           this.settings.btnShowStatus.showExport = false
+          this.settings.btnShowStatus.showDelete = false
         }
       }
     }

@@ -787,7 +787,6 @@ export default {
     handleExportOk () {
       this.settings.btnStatus.hidenExport = true
       this.settings.btnStatus.showExport = false
-      this.settings.exportModel = false
     },
     /**
      * 切换到导出模式

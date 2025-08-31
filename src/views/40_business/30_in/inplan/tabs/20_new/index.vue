@@ -517,7 +517,7 @@ import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import PoOrderListDialog from '@/views/40_business/10_po/poorder/dialog/listfor/inplan/index.vue'
 import WarehouseSetDialog from '@/views/40_business/30_in/inplan/dialog/warehouse/plan/index.vue'
 

@@ -341,7 +341,7 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="true"
+      :columns-index-key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
@@ -741,7 +741,7 @@ import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/sys
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import deepCopy from 'deep-copy'
 import { EventBus } from '@/common/eventbus/eventbus' // EventBus事件总线
 import constants_dict from '@/common/constants/constants_dict'

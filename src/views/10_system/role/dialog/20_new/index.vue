@@ -24,10 +24,8 @@
           <el-form-item label="角色编码：" prop="code">
             <el-input
               v-model.trim="formData.code"
-              clearable
-              show-word-limit
-              :maxlength="inputSettings.maxLength.code"
-              placeholder="请输入角色编码"
+              disabled
+              placeholder="系统自动生成"
             />
           </el-form-item>
         </el-col>
@@ -124,9 +122,7 @@ export default {
       },
       // 验证规则
       rules: {
-        code: [
-          { max: 10, message: '长度不能超过 10 个字符', trigger: 'blur' }
-        ],
+        code: [],
         name: [
           { required: true, message: '请输入角色名称', trigger: 'blur' },
           { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }

@@ -59,7 +59,6 @@
         <footer-selected
           ref="footerSelected"
           :data="selectedPermissions"
-          @emitButtonDisabledStatus="handleButtonDisabledStatus"
           @emitRemovePermission="handleRemovePermission"
         />
       </el-footer>
@@ -234,6 +233,8 @@ export default {
     handlePermissionSelect (selectedData) {
       // 更新已选权限数据
       this.selectedPermissions = selectedData || []
+      // 用户操作后启用保存按钮
+      this.settings.btnShowStatus.showSave = true
     },
 
     // 保存选择的权限
@@ -244,23 +245,21 @@ export default {
         return
       }
 
-      // 验证权限数据
-      if (!this.selectedPermissions || this.selectedPermissions.length === 0) {
-        this.showErrorMsg('请选择至少一个权限')
-        return
-      }
+      // 允许保存空权限选择（表示清空角色的所有权限）
 
-      // 验证权限数据格式
-      const invalidPermissions = this.selectedPermissions.filter(p => !p.id)
-      if (invalidPermissions.length > 0) {
-        this.showErrorMsg('权限数据格式异常，请重新选择')
-        console.error('无效的权限数据:', invalidPermissions)
-        return
+      // 验证权限数据格式（只在有权限时验证）
+      if (this.selectedPermissions && this.selectedPermissions.length > 0) {
+        const invalidPermissions = this.selectedPermissions.filter(p => !p.id)
+        if (invalidPermissions.length > 0) {
+          this.showErrorMsg('权限数据格式异常，请重新选择')
+          console.error('无效的权限数据:', invalidPermissions)
+          return
+        }
       }
 
       try {
         this.settings.loading = true
-        const permissionIds = this.selectedPermissions.map(p => p.id)
+        const permissionIds = this.selectedPermissions ? this.selectedPermissions.map(p => p.id) : []
 
         // 调用新的全删全插保存API，共通已处理响应判断
         await saveRolePermissionsApi({
@@ -272,7 +271,7 @@ export default {
           return_flag: true,
           data: {
             roleId: this.roleId,
-            permissions: this.selectedPermissions,
+            permissions: this.selectedPermissions || [],
             permissionCount: permissionIds.length
           }
         })
@@ -307,15 +306,17 @@ export default {
       }
     },
 
-    // 按钮状态控制
-    handleButtonDisabledStatus (status) {
-      this.settings.btnShowStatus.showSave = status
-    },
-
     // 处理FooterSelected组件删除权限事件
     handleRemovePermission (removedPermission) {
       // 从父组件的selectedPermissions数组中移除权限
       this.selectedPermissions = this.selectedPermissions.filter(permission => permission.id !== removedPermission.id)
+      // 用户删除操作后启用保存按钮（即使删除到空也要能保存）
+      this.settings.btnShowStatus.showSave = true
+
+      // 通过EventBus通知列表组件更新选中状态
+      this.$nextTick(() => {
+        EventBus.$emit(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, this.selectedPermissions)
+      })
     },
 
     // 关闭弹窗
@@ -339,6 +340,11 @@ export default {
         permissionId: null,
         headInfo: ''
       }
+    },
+
+    // 错误提示
+    showErrorMsg (message) {
+      this.$message.error(message)
     }
   }
 }

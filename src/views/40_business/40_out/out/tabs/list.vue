@@ -474,7 +474,7 @@
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="settings.tableHeight"
-      columns_index_key="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -1118,7 +1118,7 @@ import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin/listResizeHandlerMixin'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch.vue'
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import cancelConfirmDialog from '@/views/40_business/40_out/out/tabs/dialog/cancelconfirm.vue'

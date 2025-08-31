@@ -40,7 +40,7 @@
       :visible="visible"
       :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
       :close-on-press-escape="!PARAMETERS.DIALOG_CLOSE_BY_ESC"
-      :show-close="!PARAMETERS.DIALOG_SHOW_CLOSE"
+      :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
       :append-to-body="true"
       :modal-append-to-body="true"
       width="1200px"
@@ -61,7 +61,6 @@
         <footer-selected
           ref="footerSelected"
           :data="selectedExcludePermissions"
-          @emitButtonDisabledStatus="handleButtonDisabledStatus"
           @emitRemovePermission="handleRemovePermission"
         />
       </el-footer>
@@ -95,8 +94,8 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import PermissionList from '../role/list.vue'
-import FooterSelected from '../role/footerSelected.vue'
+import PermissionList from './list.vue'
+import FooterSelected from './footerSelected.vue'
 import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import { getStaffExcludedPermissionIds, saveStaffExcludePermissions } from '@/api/20_master/staff/staff'
 import { getAllPermissionsApi } from '@/api/20_master/permission/permission'
@@ -238,24 +237,29 @@ export default {
     // 权限选择事件
     handlePermissionSelect (selectedPermissions) {
       console.log('[员工排除权限弹窗] 排除权限选择变化:', selectedPermissions.length)
-      this.selectedExcludePermissions = selectedPermissions
+      this.selectedExcludePermissions = selectedPermissions || []
 
       // 更新底部已选权限展示
       if (this.$refs.footerSelected) {
-        this.$refs.footerSelected.updateSelectedData(selectedPermissions)
+        this.$refs.footerSelected.updateSelectedData(this.selectedExcludePermissions)
       }
 
-      // 检查是否可以保存
-      this.checkSaveButtonStatus()
+      // 用户操作后启用保存按钮
+      this.settings.btnShowStatus.showSave = true
     },
 
     // 移除权限事件
     handleRemovePermission (permissionToRemove) {
       console.log('[员工排除权限弹窗] 移除排除权限:', permissionToRemove)
-      // 从selectedExcludePermissions数组中移除权限，权限列表组件会通过响应式机制自动更新
       this.selectedExcludePermissions = this.selectedExcludePermissions.filter(permission => permission.id !== permissionToRemove.id)
 
-      this.checkSaveButtonStatus()
+      // 用户操作后启用保存按钮
+      this.settings.btnShowStatus.showSave = true
+
+      // 通过EventBus通知列表组件更新选中状态
+      this.$nextTick(() => {
+        EventBus.$emit(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, this.selectedExcludePermissions)
+      })
     },
 
     // 查看权限详情事件
@@ -265,17 +269,6 @@ export default {
         headInfo: permissionData.headInfo || permissionData.name || '权限详情'
       }
       this.viewDialogVisible = true
-    },
-
-    // 按钮状态更新
-    handleButtonDisabledStatus (status) {
-      this.settings.btnShowStatus.showSave = status
-    },
-
-    // 检查保存按钮状态
-    checkSaveButtonStatus () {
-      // 在编辑模式下，总是允许保存（即使选择为空也可以保存，表示清空所有排除权限）
-      this.settings.btnShowStatus.showSave = this.model === 'edit'
     },
 
     // 保存排除权限分配

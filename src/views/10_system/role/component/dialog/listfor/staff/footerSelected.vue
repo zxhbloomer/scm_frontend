@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <div class="header">已选权限:</div>
+    <div class="header">已选角色:</div>
     <div class="content">
       <el-tag
         v-for="(item, key) in dataJson.listData"
@@ -14,9 +14,9 @@
       </el-tag>
       <span
         v-if="!dataJson.listData || dataJson.listData.length === 0"
-        class="noPermission"
+        class="noRole"
       >
-        暂未选择权限
+        暂未选择角色
       </span>
     </div>
   </div>
@@ -26,13 +26,17 @@
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
-  name: 'FooterSelectedPermission',
+  name: 'FooterSelectedRole',
   props: {
     data: {
       type: Array,
       default: () => {
         return []
       }
+    },
+    multiple: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -43,7 +47,7 @@ export default {
     }
   },
   watch: {
-    // 监听props.data变化，实时更新已选权限显示
+    // 监听props.data变化，实时更新已选角色显示
     data: {
       handler (newVal) {
         if (newVal && Array.isArray(newVal)) {
@@ -69,14 +73,14 @@ export default {
     }
   },
   mounted () {
-    // 监听权限选择事件
-    EventBus.$on(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, _data => {
+    // 监听角色选择事件
+    EventBus.$on(this.EMITS.EMIT_ROLE_DIALOG_SELECT, _data => {
       this.doUpdateListData(_data)
     })
   },
   beforeDestroy () {
     // 清理EventBus监听
-    EventBus.$off(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT)
+    EventBus.$off(this.EMITS.EMIT_ROLE_DIALOG_SELECT)
   },
   methods: {
     doUpdateListData (_data) {
@@ -85,39 +89,41 @@ export default {
 
       // 遍历数组_data, 添加到listData中
       for (let i = 0; i < _data.length; i++) {
-        const permission = _data[i]
+        const role = _data[i]
         // 检查是否已存在，避免重复
-        const existingIndex = this.dataJson.listData.findIndex(item => item.id === permission.id)
+        const existingIndex = this.dataJson.listData.findIndex(item => item.id === role.id)
         if (existingIndex === -1) {
           this.dataJson.listData.push({
-            id: permission.id,
-            name: permission.name,
-            descr: permission.descr,
-            u_name: permission.u_name,
-            u_time: permission.u_time
+            id: role.id,
+            code: role.code,
+            name: role.name,
+            descr: role.descr,
+            permissionList: role.permissionList,
+            u_name: role.u_name,
+            u_time: role.u_time
           })
         }
       }
     },
 
     handleClose (key) {
-      // 删除指定索引的权限
+      // 删除指定索引的角色
       const removedItem = this.dataJson.listData[key]
       this.dataJson.listData.splice(key, 1)
 
       // 通知父组件更新表格选择状态
-      this.$emit('emitRemovePermission', removedItem)
+      this.$emit('emitRemoveRole', removedItem)
 
       // 通过EventBus通知列表组件取消选择
-      EventBus.$emit(this.EMITS.EMIT_PERMISSION_DIALOG_SELECT, this.dataJson.listData)
+      EventBus.$emit(this.EMITS.EMIT_ROLE_DIALOG_SELECT, this.dataJson.listData)
     },
 
-    // 获取已选权限数据
+    // 获取已选角色数据
     getSelectedData () {
       return this.dataJson.listData
     },
 
-    // 清空已选权限
+    // 清空已选角色
     clearSelected () {
       this.dataJson.listData = []
     }
@@ -145,7 +151,7 @@ export default {
   min-height: 40px;
 }
 
-.noPermission {
+.noRole {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -173,3 +179,4 @@ export default {
   background-color: #409eff;
 }
 </style>
+

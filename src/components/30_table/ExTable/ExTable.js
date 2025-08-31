@@ -6,6 +6,14 @@ import { getTableConfigApi } from '@/api/00_common/table_config'
 import { isNotEmpty } from '@/utils/index.js'
 import { EventBus } from '@/common/eventbus/eventbus'
 
+// 工具函数：判断列配置是否启用（只支持正式prop）
+const isColumnConfigEnabled = (component) => {
+  if (component && component.columnsIndexKey !== undefined) {
+    return Boolean(component.columnsIndexKey)
+  }
+  return false
+}
+
 export default {
   name: 'ElTable',
   extends: Table,
@@ -22,6 +30,11 @@ export default {
     page_code: {
       type: String,
       default: undefined
+    },
+    // 列配置功能开关（新增正式prop）
+    columnsIndexKey: {
+      type: Boolean,
+      default: false
     },
     // Canvas自动高度相关props
     canvasAutoHeight: {
@@ -95,7 +108,7 @@ export default {
   },
   mounted () {
     // 如果启用了列配置，先隐藏表格，添加过渡效果
-    if (this.$attrs.columns_index_key === 'true') {
+    if (isColumnConfigEnabled(this)) {
       this.$el.style.transition = 'opacity 0.3s ease-in-out'
       this.$el.style.opacity = '0'
     }
@@ -141,7 +154,7 @@ export default {
     }
 
     // 检查是否需要应用列配置
-    if ($table.$attrs.columns_index_key === 'true' && page_code && page_code !== 'ElMain') {
+    if (isColumnConfigEnabled($table) && page_code && page_code !== 'ElMain') {
       // 设置列属性，顺序、隐藏正式使用，读取数据库配置文件
       this.getTableConfig()
     } else {
@@ -373,7 +386,7 @@ export default {
         const page_code = $table.$parent.$options.name
 
         // 检查是否启用列配置功能
-        if (table_object.$attrs.columns_index_key !== 'true') {
+        if (!isColumnConfigEnabled(table_object)) {
           this.configLoading = false
           this.$el.style.opacity = '1'
           return

@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <FloatMenu />
     <!-- 搜索表单 -->
     <el-form
       ref="searchForm"
@@ -20,9 +21,6 @@
           clearable
           placeholder="角色编码"
         />
-      </el-form-item>
-      <el-form-item label="">
-        <delete-type-normal v-model="searchForm.is_del" />
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
@@ -53,20 +51,46 @@
       >新增</el-button>
       <el-button
         v-permission="'P_ROLE:UPDATE'"
-        :disabled="!selectedRow.id"
+        :disabled="!settings.btnShowStatus.showUpdate"
         type="primary"
         icon="el-icon-edit-outline"
         :loading="loading"
         @click="handleEdit"
       >修改</el-button>
       <el-button
+        v-permission="'P_ROLE:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="loading"
+        @click="handleDelButton"
+      >删除</el-button>
+      <!--      导出按钮 开始-->
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_ROLE:EXPORT'"
-        :disabled="multipleSelection.length === 0"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_ROLE:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_ROLE:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!--      导出按钮 结束-->
     </el-button-group>
 
     <!-- 数据表格 -->
@@ -91,9 +115,9 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column
+        v-if="settings.exportModel"
         type="selection"
-        width="38"
-        :reserve-selection="true"
+        width="45"
         prop="id"
       />
       <el-table-column
@@ -168,32 +192,6 @@
         label="备注"
       />
       <el-table-column
-        min-width="65"
-        :sort-orders="sortOrders"
-        label="删除"
-      >
-        <template v-slot:header>
-          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
-            placement="top"
-            :open-delay="500"
-          >
-            <el-switch
-              v-model="scope.row.is_del"
-              active-color="#ff4949"
-              inactive-color="#13ce66"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              @change="handleDelete(scope.row)"
-            />
-          </el-tooltip>
-        </template>
-      </el-table-column>
-      <el-table-column
         sortable="custom"
         min-width="180"
         :sort-orders="sortOrders"
@@ -227,10 +225,12 @@
     <!-- 编辑角色弹窗 -->
     <role-edit-dialog
       v-if="dialogVisible.edit"
+      ref="editDialog"
       :visible="dialogVisible.edit"
       :data="selectedRow"
       @closeMeOk="handleEditOk"
       @closeMeCancel="handleEditCancel"
+      @refreshData="handleRefreshData"
     />
 
     <!-- 查看角色弹窗 -->
@@ -259,16 +259,18 @@
       @closeMeCancel="handlePermissionDetailCancel"
     />
 
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
+
   </div>
 </template>
 
 <script>
 import { getListApi, deleteApi, exportAllApi, exportSelectionApi } from '@/api/10_system/role/role'
 import Pagination from '@/components/Pagination'
-import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import permission from '@/directive/permission/index.js'
 import deepCopy from 'deep-copy'
-import FieldHelp from '@/components/30_table/FieldHelp'
+import FloatMenu from '@/components/FloatMenu/index.vue'
 
 // 弹窗组件
 import RoleNewDialog from '../../dialog/20_new/index.vue'
@@ -282,14 +284,13 @@ import PermissionViewDialog from '@/views/20_master/permission/component/dialog/
 export default {
   name: 'RoleList',
   components: {
+    FloatMenu,
     Pagination,
-    DeleteTypeNormal,
-    FieldHelp,
-    RoleNewDialog,
-    RoleEditDialog,
-    RoleViewDialog,
     PermissionSelectDialog,
-    PermissionViewDialog
+    PermissionViewDialog,
+    RoleEditDialog,
+    RoleNewDialog,
+    RoleViewDialog
   },
   directives: { permission },
   data () {
@@ -298,8 +299,7 @@ export default {
       searchForm: {
         pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
         name: '',
-        code: '',
-        is_del: '0'
+        code: ''
       },
       // 表格数据
       tableData: [],
@@ -313,6 +313,18 @@ export default {
       selectedRow: {},
       // 多选数据
       multipleSelection: [],
+      // 设置参数
+      settings: {
+        // 导出模式
+        exportModel: false,
+        // 按钮状态
+        btnShowStatus: {
+          showUpdate: false,
+          showDel: false,
+          showExport: false,
+          hidenExport: true
+        }
+      },
       // 弹窗显示状态
       dialogVisible: {
         new: false,
@@ -325,10 +337,54 @@ export default {
       selectedPermission: {
         id: null,
         label: ''
+      },
+      // Vue Tours 引导配置
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
+    }
+  },
+  watch: {
+    // 监听导出模式变化
+    'settings.exportModel': {
+      handler (newVal, oldVal) {
+        if (newVal) {
+          console.log('进入导出模式')
+        } else {
+          console.log('退出导出模式')
+        }
+      }
+    },
+    // 监听加载状态
+    'settings.loading': {
+      handler (newVal, oldVal) {
+        this.loading = newVal
       }
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.loadData()
     // 处理路由查询参数
     if (this.$route.query.code !== undefined) {
@@ -370,8 +426,7 @@ export default {
       this.searchForm = {
         pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
         name: '',
-        code: '',
-        is_del: '0'
+        code: ''
       }
       this.handleSearch()
     },
@@ -413,6 +468,27 @@ export default {
     handleEditCancel () {
       this.dialogVisible.edit = false
     },
+
+    // 刷新编辑数据（权限变更后）
+    handleRefreshData (params) {
+      const roleId = params.roleId
+      // 刷新表格数据
+      this.loadData()
+      // 重新设置选中行为最新数据，并同步到编辑弹窗
+      this.$nextTick(() => {
+        const updatedRow = this.tableData.find(row => row.id === roleId)
+        if (updatedRow) {
+          this.selectedRow = Object.assign({}, updatedRow)
+          console.log('刷新后的角色数据:', this.selectedRow)
+
+          // 同步最新数据到编辑弹窗，解决乐观锁版本问题
+          if (this.$refs.editDialog && this.dialogVisible.edit) {
+            this.$refs.editDialog.updateFormData(updatedRow)
+          }
+        }
+      })
+    },
+
     // 查看
     handleView () {
       if (!this.selectedRow.id) {
@@ -424,34 +500,6 @@ export default {
 
     handleViewCancel () {
       this.dialogVisible.view = false
-    },
-
-    // 删除/恢复
-    handleDelete (row) {
-      const message = row.is_del === true ? '是否要删除选择的数据？' : '是否要复原该条数据？'
-      this.$confirm(message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        this.loading = true
-        const selectionJson = [{ id: row.id }]
-        deleteApi(selectionJson).then((response) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: response.message,
-            type: 'success',
-            duration: 4000
-          })
-          this.loading = false
-          this.loadData()
-        }).catch(() => {
-          row.is_del = !row.is_del
-          this.loading = false
-        })
-      }).catch(() => {
-        row.is_del = !row.is_del
-      })
     },
 
     // 导出
@@ -485,10 +533,8 @@ export default {
     // 全部数据导出
     handleExportAll () {
       this.loading = true
-      exportAllApi(this.searchForm).then(() => {
-        this.loading = false
-        this.$message.success('导出成功')
-      }).catch(() => {
+      exportAllApi(this.searchForm).then(response => {
+      }).finally(() => {
         this.loading = false
       })
     },
@@ -496,11 +542,13 @@ export default {
     // 部分数据导出
     handleExportSelection () {
       this.loading = true
-      const selectionJson = this.multipleSelection.map(item => ({ id: item.id }))
-      exportSelectionApi(selectionJson).then(() => {
-        this.loading = false
-        this.$message.success('导出成功')
-      }).catch(() => {
+      const selectionIds = []
+      this.multipleSelection.forEach(function (value, index, array) {
+        selectionIds.push(value.id) // 直接推送ID值，不是对象
+      })
+      const searchData = { ids: selectionIds }
+      exportSelectionApi(searchData).then(response => {
+      }).finally(() => {
         this.loading = false
       })
     },
@@ -555,6 +603,41 @@ export default {
       }
     },
 
+    // 删除按钮事件
+    handleDelButton () {
+      if (!this.selectedRow.id) {
+        this.$message.warning('请选择一条数据')
+        return
+      }
+      const message = '确定要删除选中的数据吗？'
+      this.$confirm(message, '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.loading = true
+        const selectionJson = [{ id: this.selectedRow.id }]
+        deleteApi(selectionJson).then((response) => {
+          this.$notify({
+            title: '删除处理成功',
+            message: response.message,
+            type: 'success',
+            duration: 4000
+          })
+          this.loadData()
+        }).catch((error) => {
+          this.$notify({
+            title: '删除处理失败',
+            message: error.message,
+            type: 'error',
+            duration: 4000
+          })
+        }).finally(() => {
+          this.loading = false
+        })
+      })
+    },
+
     // 表格事件
     handleRowClick (row) {
       this.selectedRow = Object.assign({}, row)
@@ -562,6 +645,14 @@ export default {
 
     handleCurrentChange (row) {
       this.selectedRow = Object.assign({}, row || {})
+
+      if (this.selectedRow.id !== undefined) {
+        this.settings.btnShowStatus.showUpdate = true
+        this.settings.btnShowStatus.showDel = true
+      } else {
+        this.settings.btnShowStatus.showUpdate = false
+        this.settings.btnShowStatus.showDel = false
+      }
     },
 
     handleSortChange (column) {
@@ -569,12 +660,36 @@ export default {
         this.searchForm.pageCondition.sort = column.prop
       } else if (column.order === 'descending') {
         this.searchForm.pageCondition.sort = '-' + column.prop
+      } else {
+        // 修复：处理取消排序情况
+        this.searchForm.pageCondition.sort = null
       }
       this.loadData()
     },
 
     handleSelectionChange (selection) {
       this.multipleSelection = selection
+    },
+
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+
+    /**
+     * 完成导出
+     */
+    handleExportOk () {
+      this.settings.exportModel = false
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
+      // 清空选中状态
+      this.multipleSelection = []
+      this.$refs.dataTable.clearSelection()
     },
 
     getRowKeys (row) {

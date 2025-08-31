@@ -197,3 +197,16 @@ export function getCollectionListApi (query) {
     data: query
   })
 }
+
+/**
+ * 获取根菜单节点列表
+ * @param query
+ * @returns {AxiosPromise}
+ */
+export function getRootMenuListApi (query = {}) {
+  return request({
+    url: '/api/v1/menus/root/list',
+    method: 'post',
+    data: query
+  })
+}

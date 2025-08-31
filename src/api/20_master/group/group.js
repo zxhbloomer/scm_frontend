@@ -54,7 +54,7 @@ export function insertApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/org/group/export_all',
+    url: '/api/v1/org/group/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -62,12 +62,12 @@ export function exportAllApi (data) {
 }
 
 /**
- * 导出逻辑，部分导出
+ * 导出逻辑，选中导出
  * @param {*} data
  */
 export function exportSelectionApi (data) {
   return request({
-    url: '/api/v1/org/group/export_selection',
+    url: '/api/v1/org/group/export',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -87,12 +87,24 @@ export function importExcelApi (data) {
 }
 
 /**
- * 删除逻辑
+ * 删除逻辑（集团信息管理页面使用）
  * @param {*} data
  */
 export function deleteApi (data) {
   return request({
     url: '/api/v1/org/group/delete',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 从组织架构删除集团（组织架构管理页面使用）
+ * @param {*} data
+ */
+export function deleteOrgApi (data) {
+  return request({
+    url: '/api/v1/org/group/delete/org',
     method: 'post',
     data
   })

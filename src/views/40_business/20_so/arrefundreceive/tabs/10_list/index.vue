@@ -161,7 +161,7 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="true"
+      :columns-index-key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
@@ -548,7 +548,7 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 import viewDialog from '@/views/40_business/20_so/arrefundreceive/dialog/view/index.vue'

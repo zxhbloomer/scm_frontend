@@ -282,7 +282,7 @@
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
-      columns_index_key="true"
+      :columns-index-key="true"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
@@ -858,7 +858,7 @@ import { getPageApi } from '@/api/10_system/pages/page'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import { EventBus } from '@/common/eventbus/eventbus'
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'

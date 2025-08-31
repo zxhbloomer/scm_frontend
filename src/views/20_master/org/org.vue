@@ -34,7 +34,7 @@
 </template>
 <script>
 // import constants_program from '@/common/constants/constants_program'
-import resizeMixin from './orgResizeHandlerMixin'
+import resizeMixin from './mixins/orgResizeHandlerMixin'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {

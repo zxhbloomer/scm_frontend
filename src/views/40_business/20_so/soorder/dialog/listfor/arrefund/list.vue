@@ -112,7 +112,7 @@
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="settings.tableHeight"
-      columns_index_key="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -770,7 +770,7 @@ import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import constants_dict from '@/common/constants/constants_dict'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
 import SelectCpCustomer from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/customer/index.vue'

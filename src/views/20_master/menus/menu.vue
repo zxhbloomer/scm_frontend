@@ -85,7 +85,7 @@
       <el-button
         v-permission="'P_MENUS:REAL_DELETE'"
         :disabled="!settings.btnShowStatus.showRealyDelete"
-        type="primary"
+        type="danger"
         icon="el-icon-circle-close"
         :loading="settings.loading"
         @click="handleRealyDelete"
@@ -105,7 +105,6 @@
       fit
       highlight-current-row
       style="width: 100%"
-      default-expand-all
       row-key="id"
       @row-click="handleRowClick"
       @current-change="handleCurrentChange"
@@ -391,6 +390,8 @@ export default {
           data: null,
           value: ''
         },
+        // 展开状态保存
+        expandedRowKeys: [],
         // 查询使用的json
         searchForm: {
           // 翻页条件
@@ -418,6 +419,8 @@ export default {
           data: undefined
         }
       },
+      // 首次加载标志
+      isFirstLoad: true,
       // 页面设置json
       settings: {
         // 表格排序规则
@@ -561,8 +564,25 @@ export default {
   methods: {
     initShow () {
       this.settings.btnShowStatus.showInsert = true
+      // 标记首次加载
+      this.isFirstLoad = true
       // 初始化查询
       this.getDataList()
+    },
+    // 展开所有节点（首次加载用）
+    expandAllNodes () {
+      if (this.$refs.multipleTable && this.dataJson.listData) {
+        this.expandNodesRecursively(this.dataJson.listData)
+      }
+    },
+    // 递归展开节点
+    expandNodesRecursively (data) {
+      data.forEach(item => {
+        if (item.children && item.children.length > 0) {
+          this.$refs.multipleTable.toggleRowExpansion(item, true)
+          this.expandNodesRecursively(item.children)
+        }
+      })
     },
     // 下拉选项控件事件
     handleSelectChange (val) {
@@ -580,6 +600,9 @@ export default {
       // 查询
       this.dataJson.searchForm.pageCondition.current = 1
       this.dataJson.paging.current = 1
+      // 重置查询时清空展开状态，重新展开所有
+      this.dataJson.expandedRowKeys = []
+      this.isFirstLoad = true
       this.getDataList()
       // 清空选择
       this.dataJson.multipleSelection = []
@@ -653,6 +676,9 @@ export default {
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
     },
     getDataList () {
+      // 保存当前展开状态
+      this.saveExpandState()
+
       this.dataJson.searchForm.pageCondition.current = this.dataJson.paging.current
       this.dataJson.searchForm.pageCondition.size = this.dataJson.paging.size
       // 查询逻辑
@@ -668,6 +694,9 @@ export default {
         // 设置重定向
         this.dataJson.redirect.data = deepCopy(response.data.menu_redirect)
         this.dataJson.redirect.name = this.dataJson.redirect.data.name
+
+        // 恢复展开状态
+        this.restoreExpandState()
       }).finally(() => {
         // if (this.dataJson.listData && this.dataJson.listData.length) {
         //   // 考虑当且仅当每个租户只能有一个系统菜单
@@ -681,10 +710,53 @@ export default {
     // 重置查询区域
     doResetSearch () {
       this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+      // 重置时也清空展开状态，重新展开所有
+      this.dataJson.expandedRowKeys = []
+      this.isFirstLoad = true
+      this.getDataList()
     },
     // 获取row-key
     getRowKeys (row) {
       return row.id
+    },
+    // 保存当前展开状态
+    saveExpandState () {
+      if (this.$refs.multipleTable && this.$refs.multipleTable.store) {
+        this.dataJson.expandedRowKeys = this.$refs.multipleTable.store.states.expandRows.map(row => row.id)
+      }
+    },
+    // 恢复展开状态
+    restoreExpandState () {
+      this.$nextTick(() => {
+        if (this.$refs.multipleTable) {
+          if (this.isFirstLoad) {
+            // 首次加载展开所有节点
+            this.expandAllNodes()
+            this.isFirstLoad = false
+          } else if (this.dataJson.expandedRowKeys.length > 0) {
+            // 恢复之前的展开状态
+            this.dataJson.expandedRowKeys.forEach(id => {
+              const row = this.findRowById(id)
+              if (row) {
+                this.$refs.multipleTable.toggleRowExpansion(row, true)
+              }
+            })
+          }
+        }
+      })
+    },
+    // 根据ID查找行数据
+    findRowById (id, data = this.dataJson.listData) {
+      for (const item of data || []) {
+        if (item.id === id) {
+          return item
+        }
+        if (item.children && item.children.length > 0) {
+          const found = this.findRowById(id, item.children)
+          if (found) return found
+        }
+      }
+      return null
     },
     // table选择框
     handleSelectionChange (arr) {

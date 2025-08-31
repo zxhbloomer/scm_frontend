@@ -692,7 +692,7 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi, auditInApi, auditOutApi, getMonitorFileApi } from '@/api/40_business/monitor/monitor'
-import permission from '@/directive/permission' // 权限判断指令
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import previewCard from '@/components/50_preview_card/preview_card_zl.vue'
 import ValidateLog from '@/views/40_business/monitor/tabs/dialog/validatelog.vue'
 import TrackLog from '@/views/40_business/monitor/tabs/dialog/tracklog.vue'

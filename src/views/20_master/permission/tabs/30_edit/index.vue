@@ -9,6 +9,31 @@
       style="margin-bottom: 20px;"
     />
 
+    <!-- 权限基本信息显示 -->
+    <el-card
+      v-if="dataJson.permissionInfo"
+      shadow="never"
+      style="margin-bottom: 20px;"
+    >
+      <div slot="header">
+        <span>权限基本信息</span>
+      </div>
+      <el-row>
+        <el-col :span="12">
+          <div class="permission-info-item">
+            <label>权限名称：</label>
+            <span>{{ dataJson.permissionInfo.name || '-' }}</span>
+          </div>
+        </el-col>
+        <el-col :span="12">
+          <div class="permission-info-item">
+            <label>关联菜单：</label>
+            <span>{{ dataJson.permissionInfo.menu_name || '-' }}</span>
+          </div>
+        </el-col>
+      </el-row>
+    </el-card>
+
     <!-- 操作按钮区域 -->
     <el-form
       ref="editForm"
@@ -194,6 +219,7 @@
 <script>
 import '@/styles/menu_png.scss'
 import { getOperationListApi, savePermissionApi, refreshPermissionApi } from '@/api/20_master/permission/operation'
+import { getListApi } from '@/api/20_master/permission/permission'
 import deepCopy from 'deep-copy'
 import FieldHelp from '@/components/30_table/FieldHelp'
 
@@ -242,6 +268,8 @@ export default {
           checked: false,
           indeterminate: false
         },
+        // 权限基本信息
+        permissionInfo: null,
         canEdit: this.canEdit
       },
       // 页面设置json
@@ -263,6 +291,7 @@ export default {
       handler (newVal) {
         if (newVal) {
           this.dataJson.searchForm.permission_id = newVal
+          this.getPermissionInfo()
           this.getDataList()
         }
       },
@@ -276,7 +305,24 @@ export default {
   methods: {
     initShow () {
       // 初始化查询
+      this.getPermissionInfo()
       this.getDataList()
+    },
+    // 获取权限基本信息
+    async getPermissionInfo () {
+      if (this.permissionId) {
+        try {
+          const response = await getListApi({
+            id: this.permissionId,
+            pageCondition: { current: 1, size: 1 }
+          })
+          if (response.data && response.data.length > 0) {
+            this.dataJson.permissionInfo = response.data[0]
+          }
+        } catch (error) {
+          console.error('获取权限详情失败:', error)
+        }
+      }
     },
     // 设置监听器
     setWatch () {
@@ -457,5 +503,20 @@ export default {
 }
 .bg-purple-light {
   background: #e5e9f2;
+}
+
+.permission-info-item {
+  margin-bottom: 15px;
+  line-height: 32px;
+}
+
+.permission-info-item label {
+  color: #606266;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.permission-info-item span {
+  color: #303133;
 }
 </style>

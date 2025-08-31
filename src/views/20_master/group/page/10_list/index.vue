@@ -32,9 +32,6 @@
           @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item label="">
-        <delete-type-normal v-model="dataJson.searchForm.is_del" />
-      </el-form-item>
       <el-form-item style="float:right">
         <el-button
           v-popover:popover
@@ -75,19 +72,37 @@
       <el-button
         v-permission="'P_GROUP:DELETE'"
         :disabled="!settings.btnShowStatus.showDel"
-        type="primary"
+        type="danger"
         icon="el-icon-delete"
         :loading="settings.loading"
         @click="handleDelButton"
       >删除</el-button>
+      <!--      导出按钮 开始-->
       <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_GROUP:EXPORT'"
-        :disabled="!settings.btnShowStatus.showExport"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_GROUP:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_GROUP:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!--      导出按钮 结束-->
       <el-button
         v-permission="'P_GROUP:INFO'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -105,6 +120,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
+      :columns-index-key="true"
       :canvas-auto-height="true"
       stripe
       border
@@ -118,6 +134,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column
+        v-if="settings.exportModel"
         type="selection"
         width="45"
         prop="id"
@@ -168,34 +185,6 @@
         prop="simple_name"
         label="集团简称"
       />
-      <el-table-column
-        header-align="center"
-        min-width="80"
-        :auto-fit="true"
-        :sort-orders="settings.sortOrders"
-        label="删除"
-      >
-        <template v-slot:header>
-          <field-help default-label="删除" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
-            placement="top"
-            :open-delay="500"
-          >
-            <el-switch
-              v-model="scope.row.is_del"
-              active-color="#ff4949"
-              inactive-color="#13ce66"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              @change="handleDel(scope.row)"
-            />
-          </el-tooltip>
-        </template>
-      </el-table-column>
       <el-table-column
         header-align="center"
         :auto-fit="true"
@@ -255,6 +244,9 @@
       @closeMeCancel="handleViewDialogCancel"
     />
 
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
+
     <iframe
       id="refIframe"
       ref="refIframe"
@@ -291,8 +283,6 @@
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import { getListApi, exportSelectionApi, exportAllApi, deleteApi } from '@/api/20_master/group/group'
 import Pagination from '@/components/Pagination'
-import FieldHelp from '@/components/30_table/FieldHelp'
-import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
@@ -303,8 +293,6 @@ export default {
   name: 'GroupList',
   components: {
     Pagination,
-    FieldHelp,
-    DeleteTypeNormal,
     FloatMenu,
     NewDialog,
     EditDialog,
@@ -321,8 +309,7 @@ export default {
           // 查询条件
           name: '',
           code: '',
-          parent_group_name: '',
-          is_del: '0' // 未删除
+          parent_group_name: ''
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -339,10 +326,14 @@ export default {
       settings: {
         // 表格排序规则
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式
+        exportModel: false,
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
-          showExport: false
+          showDel: false,
+          showExport: false,
+          hidenExport: true
         },
         // loading 状态
         loading: true,
@@ -353,7 +344,31 @@ export default {
         new: false,
         edit: false,
         view: false
-      }
+      },
+      // Vue Tours 引导配置
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {},
@@ -362,15 +377,28 @@ export default {
     // 选中的数据，使得导出按钮可用，否则就不可使用
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
-        if (newVal.length > 0) {
-          this.settings.btnShowStatus.showExport = true
-        } else {
+        if (this.settings.exportModel) {
+          if (newVal.length > 0) {
+            this.settings.btnShowStatus.showExport = true
+          } else {
+            this.settings.btnShowStatus.showExport = false
+          }
+        }
+      }
+    },
+    // 导出模式变化监听
+    'settings.exportModel': {
+      handler (newVal, oldVal) {
+        if (!newVal) {
+          // 退出导出模式时，重置导出按钮状态
           this.settings.btnShowStatus.showExport = false
         }
       }
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {
@@ -443,15 +471,31 @@ export default {
     handleExportSelectionData () {
       // loading
       this.settings.loading = true
-      const selectionJson = []
+      const selectionIds = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
+        selectionIds.push(value.id) // 直接推送ID值，不是对象
       })
+      const searchData = { ids: selectionIds }
       // 开始导出
-      exportSelectionApi(selectionJson).then(response => {
+      exportSelectionApi(searchData).then(response => {
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+    /**
+     * 完成导出
+     */
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
     },
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
@@ -459,8 +503,10 @@ export default {
 
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnShowStatus.showUpdate = true
+        this.settings.btnShowStatus.showDel = true
       } else {
         this.settings.btnShowStatus.showUpdate = false
+        this.settings.btnShowStatus.showDel = false
       }
     },
     handleSortChange (column) {
@@ -609,6 +655,41 @@ export default {
         })
       }).catch(action => {
         row.is_del = !row.is_del
+      })
+    },
+    // 删除按钮操作
+    handleDelButton () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.showErrorMsg('请选择一条数据')
+        return
+      }
+      this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        // loading
+        this.settings.loading = true
+        deleteApi({ id: this.dataJson.currentJson.id }).then((_data) => {
+          this.$notify({
+            title: '删除成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          // 刷新列表数据
+          this.getDataList()
+        }, (_error) => {
+          this.$notify({
+            title: '删除失败',
+            message: _error.message, // 后端返回的详细关联信息
+            type: 'error',
+            duration: 5000 // 5秒显示时长，让用户看清楚详细信息
+          })
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(action => {
       })
     }
   }

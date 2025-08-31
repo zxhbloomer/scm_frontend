@@ -24,77 +24,27 @@
       label-width="120px"
       status-icon
     >
-      <el-row>
-        <el-col :span="12">
-          <el-form-item
-            label="权限名称："
-            prop="name"
-          >
-            <el-input
-              ref="refFocus"
-              v-model.trim="dataJson.tempJson.name"
-              clearable
-              show-word-limit
-              :maxlength="dataJson.inputSettings.maxLength.name"
-              placeholder="请输入权限名称"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item
-            label="启用状态："
-            prop="is_enable"
-          >
-            <el-switch
-              v-model="dataJson.tempJson.is_enable"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              :active-value="true"
-              :inactive-value="false"
-              active-text="启用"
-              inactive-text="禁用"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
-      <el-row>
-        <el-col :span="12">
-          <el-form-item
-            label="删除状态："
-            prop="is_del"
-          >
-            <div class="switch">
-              <el-switch
-                v-model="dataJson.tempJson.is_del"
-                active-color="#ff4949"
-                inactive-color="#13ce66"
-                :active-value="true"
-                :inactive-value="false"
-                active-text="是"
-                inactive-text="否"
-              />
-            </div>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item
-            label="数据权限："
-            prop="is_admin"
-          >
-            <el-switch
-              v-model="dataJson.tempJson.is_admin"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              :active-value="true"
-              :inactive-value="false"
-              active-text="所有仓库"
-              inactive-text="按仓库"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
       <el-form-item
-        label="说明："
+        label="权限名称："
+        prop="name"
+      >
+        <el-input
+          ref="refFocus"
+          v-model.trim="dataJson.tempJson.name"
+          clearable
+          show-word-limit
+          :maxlength="dataJson.inputSettings.maxLength.name"
+          placeholder="请输入权限名称"
+        />
+      </el-form-item>
+      <el-form-item
+        label="关联菜单："
+        prop="menu_name"
+      >
+        <span style="color: #606266;">{{ dataJson.tempJson.menu_name || '-' }}</span>
+      </el-form-item>
+      <el-form-item
+        label="备注："
         prop="descr"
       >
         <el-input
@@ -103,7 +53,7 @@
           type="textarea"
           show-word-limit
           :maxlength="dataJson.inputSettings.maxLength.descr"
-          placeholder="请输入权限说明"
+          placeholder="请输入备注"
         />
       </el-form-item>
       <el-row v-if="dataJson.tempJson.id">
@@ -172,8 +122,8 @@ export default {
   },
   data () {
     return {
-      // 监听器
-      watch: {
+      // 监听器引用
+      watchRefs: {
         unwatch_tempJson: null
       },
       dataJson: {
@@ -183,14 +133,18 @@ export default {
           name: '',
           descr: '',
           dbversion: 0,
-          is_enable: true,
-          is_del: false,
-          is_admin: false,
           u_name: '',
           u_time: ''
         },
         // 单条数据 json
-        tempJson: null,
+        tempJson: {
+          id: undefined,
+          name: '',
+          descr: '',
+          dbversion: 0,
+          u_name: '',
+          u_time: ''
+        },
         inputSettings: {
           maxLength: {
             name: 20,
@@ -220,8 +174,19 @@ export default {
   watch: {
     visible (newVal) {
       if (newVal) {
-        this.initDialog()
+        this.$nextTick(() => {
+          this.initDialog()
+        })
       }
+    },
+    data: {
+      handler (newVal) {
+        if (this.visible && newVal && Object.keys(newVal).length > 0) {
+          this.initDialog()
+        }
+      },
+      deep: true,
+      immediate: true
     }
   },
   created () {},
@@ -242,15 +207,22 @@ export default {
      */
     initDialog () {
       // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
+      if (this.data && Object.keys(this.data).length > 0) {
+        this.dataJson.tempJson = deepCopy(this.data)
+        this.dataJson.tempJsonOriginal = deepCopy(this.data)
+      } else {
+        // 如果没有数据，使用默认值
+        this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      }
 
       // 设置监听器
       this.setWatch()
 
       // 控件focus
       this.$nextTick(() => {
-        this.$refs['refFocus'].focus()
+        if (this.$refs['refFocus']) {
+          this.$refs['refFocus'].focus()
+        }
       })
     },
 
@@ -260,7 +232,7 @@ export default {
     setWatch () {
       this.unWatch()
       // 监听页面上面是否有修改，有修改按钮高亮
-      this.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
+      this.watchRefs.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
         this.settings.btnDisabledStatus.disabledUpdate = false
       }, { deep: true })
     },
@@ -269,8 +241,8 @@ export default {
      * 取消监听器
      */
     unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
+      if (this.watchRefs.unwatch_tempJson) {
+        this.watchRefs.unwatch_tempJson()
       }
     },
 
@@ -327,26 +299,6 @@ export default {
 </script>
 
 <style scoped>
-.switch ::v-deep .el-switch__label {
-  position: absolute;
-  display: none;
-  color: #fff;
-}
-
-/*打开时文字位置设置*/
-.switch ::v-deep .el-switch__label--right {
-  z-index: 1;
-  right: 19px;
-}
-/*关闭时文字位置设置*/
-.switch ::v-deep .el-switch__label--left {
-  z-index: 1;
-  left: 19px;
-}
-/*显示文字*/
-.switch ::v-deep .el-switch__label.is-active {
-  display: block;
-}
 .floatRight {
   float: right;
 }

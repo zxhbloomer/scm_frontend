@@ -54,7 +54,7 @@ export function insertApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/org/position/export_all',
+    url: '/api/v1/org/position/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -67,7 +67,7 @@ export function exportAllApi (data) {
  */
 export function exportSelectionApi (data) {
   return request({
-    url: '/api/v1/org/position/export_selection',
+    url: '/api/v1/org/position/export',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -75,12 +75,24 @@ export function exportSelectionApi (data) {
 }
 
 /**
- * 删除逻辑
+ * 删除逻辑（岗位信息管理页面使用）
  * @param {*} data
  */
 export function deleteApi (data) {
   return request({
     url: '/api/v1/org/position/delete',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 从组织架构删除岗位（组织架构管理页面使用）
+ * @param {*} data
+ */
+export function deleteOrgApi (data) {
+  return request({
+    url: '/api/v1/org/position/delete/org',
     method: 'post',
     data
   })

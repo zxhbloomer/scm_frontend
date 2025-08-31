@@ -43,7 +43,7 @@
       :visible="visible"
       :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
       :close-on-press-escape="!PARAMETERS.DIALOG_CLOSE_BY_ESC"
-      :show-close="!PARAMETERS.DIALOG_SHOW_CLOSE"
+      :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
       :append-to-body="true"
       :modal-append-to-body="true"
       width="1000px"
@@ -67,7 +67,6 @@
           ref="footerSelected"
           :data="selectedRoles"
           :multiple="multiple"
-          @emitButtonDisabledStatus="handleButtonDisabledStatus"
           @emitRemoveRole="handleRemoveRole"
         />
       </el-footer>
@@ -228,28 +227,23 @@ export default {
     handleRoleSelect (selectedData) {
       // 更新已选角色数据
       this.selectedRoles = selectedData || []
+      // 用户操作后启用确定按钮
+      this.settings.btnShowStatus.showSave = true
     },
 
     // 保存选择的角色
     handleSave () {
-      // 验证角色数据
-      if (!this.multiple && this.selectedRoles.length === 0) {
-        this.showErrorMsg('请选择一个角色')
-        return
+      // 验证角色数据格式（只在有选择的情况下验证）
+      if (this.selectedRoles.length > 0) {
+        const invalidRoles = this.selectedRoles.filter(r => !r.id)
+        if (invalidRoles.length > 0) {
+          this.showErrorMsg('角色数据格式异常，请重新选择')
+          console.error('无效的角色数据:', invalidRoles)
+          return
+        }
       }
 
-      if (this.multiple && this.selectedRoles.length === 0) {
-        this.showErrorMsg('请选择至少一个角色')
-        return
-      }
-
-      // 验证角色数据格式
-      const invalidRoles = this.selectedRoles.filter(r => !r.id)
-      if (invalidRoles.length > 0) {
-        this.showErrorMsg('角色数据格式异常，请重新选择')
-        console.error('无效的角色数据:', invalidRoles)
-        return
-      }
+      // 允许保存空的选择（删除所有角色的情况）
 
       this.$emit('closeMeOk', {
         return_flag: true,
@@ -266,6 +260,13 @@ export default {
     handleRemoveRole (removedRole) {
       // 从父组件的selectedRoles数组中移除角色
       this.selectedRoles = this.selectedRoles.filter(role => role.id !== removedRole.id)
+      // 用户删除操作后启用确定按钮（即使删除到空也要能保存）
+      this.settings.btnShowStatus.showSave = true
+
+      // 通过EventBus通知列表组件更新选中状态
+      this.$nextTick(() => {
+        EventBus.$emit(this.EMITS.EMIT_ROLE_DIALOG_SELECT, this.selectedRoles)
+      })
     },
 
     // 关闭弹窗

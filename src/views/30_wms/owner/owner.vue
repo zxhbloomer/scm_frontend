@@ -89,7 +89,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      columns_index_key="true"
+      :columns-index-key="true"
       :height="settings.tableHeight"
       stripe
       border

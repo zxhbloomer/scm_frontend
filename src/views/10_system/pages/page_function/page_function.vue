@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <FloatMenu />
     <el-form
       ref="minusForm"
       :inline="true"
@@ -68,19 +69,37 @@
       <el-button
         v-permission="'P_SYS_PAGE_FUNCTIONS:REAL_DELETE'"
         :disabled="!settings.btnShowStatus.showExport"
-        type="primary"
+        type="danger"
         icon="el-icon-circle-close"
         :loading="settings.loading"
         @click="handleRealyDelete"
       >物理删除</el-button>
+      <!--      导出按钮 开始-->
       <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_SYS_PAGE_FUNCTIONS:EXPORT'"
-        :disabled="!settings.btnShowStatus.showExport"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SYS_PAGE_FUNCTIONS:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_SYS_PAGE_FUNCTIONS:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!--      导出按钮 结束-->
       <el-button
         v-permission="'P_SYS_PAGE_FUNCTIONS:INFO'"
         :disabled="!settings.btnShowStatus.showUpdate"
@@ -250,6 +269,9 @@
       @closeMeCancel="handleCloseDialogOneCancel"
     />
 
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
+
     <iframe
       id="refIframe"
       ref="refIframe"
@@ -287,13 +309,14 @@
 import { getListApi, realDeleteSelectionApi, exportApi } from '@/api/10_system/pages/page_function'
 import resizeMixin from './page_functionResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
+import FloatMenu from '@/components/FloatMenu/index.vue'
 import editDialog from '@/views/10_system/pages/page_function/dialog/edit'
 import deepCopy from 'deep-copy'
 import { updateAssignApi } from '@/api/10_system/pages/page_function'
 import permission from '@/directive/permission/index.js'
 
 export default {
-  components: { Pagination, editDialog },
+  components: { Pagination, FloatMenu, editDialog },
   directives: { permission },
   mixins: [resizeMixin],
   props: {
@@ -344,11 +367,14 @@ export default {
         // },
         // 表格排序规则
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式
+        exportModel: false,
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
-          showExport: false
+          showExport: false,
+          hidenExport: true
         },
         // loading 状态
         loading: true,
@@ -365,7 +391,31 @@ export default {
             dialogStatus: ''
           }
         }
-      }
+      },
+      // Vue Tours 引导配置
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的页面按钮数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {
@@ -375,15 +425,28 @@ export default {
     // 选中的数据，使得导出按钮可用，否则就不可使用
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
-        if (newVal.length > 0) {
-          this.settings.btnShowStatus.showExport = true
-        } else {
+        if (this.settings.exportModel) {
+          if (newVal.length > 0) {
+            this.settings.btnShowStatus.showExport = true
+          } else {
+            this.settings.btnShowStatus.showExport = false
+          }
+        }
+      }
+    },
+    // 导出模式变化监听
+    'settings.exportModel': {
+      handler (newVal, oldVal) {
+        if (!newVal) {
+          // 退出导出模式时，重置导出按钮状态
           this.settings.btnShowStatus.showExport = false
         }
       }
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {
@@ -458,9 +521,7 @@ export default {
     handleExportAllData () {
       // loading
       this.settings.loading = true
-      // 清空选择
-      this.dataJson.searchForm.ids = []
-      // 开始导出
+      // 开始导出 - 全量导出不需要ids参数
       exportApi(this.dataJson.searchForm).then(response => {
         this.settings.loading = false
       }).finally(() => {
@@ -471,14 +532,13 @@ export default {
     handleExportSelectionData () {
       // loading
       this.settings.loading = true
-      const selectionJson = []
+      const selectionIds = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
+        selectionIds.push(value.id)
       })
-      const param = {}
-      param.ids = selectionJson
+      const searchData = { ids: selectionIds }
       // 开始导出
-      exportApi(param).then(response => {
+      exportApi(searchData).then(response => {
         this.settings.loading = false
       }).finally(() => {
         this.settings.loading = false
@@ -591,10 +651,11 @@ export default {
     handleRealDeleteSelectionData () {
       // loading
       this.settings.loading = true
-      const selectionJson = []
+      const selectionIds = []
       this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
+        selectionIds.push(value.id)
       })
+      const deleteData = { ids: selectionIds }
       var _message = '是否要删除选择的数据？'
       // 选择全部的时候
       this.$confirm(_message, '确认信息', {
@@ -605,7 +666,7 @@ export default {
         // loading
         this.settings.loading = true
         // 开始删除
-        realDeleteSelectionApi(selectionJson).then((_data) => {
+        realDeleteSelectionApi(deleteData).then((_data) => {
           this.$notify({
             title: '删除成功',
             message: _data.message,
@@ -744,6 +805,21 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+    /**
+     * 完成导出
+     */
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
     }
   }
 }

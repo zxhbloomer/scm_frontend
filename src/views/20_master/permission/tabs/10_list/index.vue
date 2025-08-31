@@ -14,9 +14,6 @@
           placeholder="权限名称"
         />
       </el-form-item>
-      <el-form-item label="">
-        <delete-type-normal v-model="dataJson.searchForm.is_del" />
-      </el-form-item>
       <el-form-item style="float:right">
         <el-button
           type="primary"
@@ -51,6 +48,13 @@
         @click="handleUpdate"
       >修改</el-button>
       <el-button
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelete"
+      >删除</el-button>
+      <el-button
         :disabled="!settings.btnShowStatus.showUpdate"
         type="primary"
         icon="el-icon-info"
@@ -67,7 +71,7 @@
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
       :height="height"
-      columns_index_key="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -102,8 +106,26 @@
         :auto-fit="true"
         :sort-orders="settings.sortOrders"
         prop="name"
-        label="权限名称"
-      />
+        label="label"
+      >
+        <template v-slot="scope">
+          <span>{{ scope.row.name }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        header-align="center"
+        show-overflow-tooltip
+        sortable="custom"
+        min-width="120"
+        :auto-fit="true"
+        :sort-orders="settings.sortOrders"
+        prop="menu_name"
+        label="关联菜单"
+      >
+        <template v-slot="scope">
+          <span>{{ scope.row.menu_name }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         header-align="center"
         show-overflow-tooltip
@@ -114,38 +136,6 @@
         prop="descr"
         label="备注"
       />
-      <el-table-column
-        header-align="center"
-        min-width="80"
-        :auto-fit="true"
-        prop="is_del"
-        label="删除状态"
-        align="center"
-      >
-        <template v-slot:header>
-          <field-help default-label="删除状态" help="删除状态提示：<br>绿色：未删除<br>红色：已删除" />
-        </template>
-        <template v-slot:default="scope">
-          <div class="switch">
-            <el-tooltip
-              :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
-              placement="top"
-              :open-delay="500"
-            >
-              <el-switch
-                v-model="scope.row.is_del"
-                active-color="#ff4949"
-                inactive-color="#13ce66"
-                :active-value="true"
-                :inactive-value="false"
-                active-text="是"
-                inactive-text="否"
-                @change="handleDel(scope.row)"
-              />
-            </el-tooltip>
-          </div>
-        </template>
-      </el-table-column>
       <el-table-column
         header-align="center"
         :auto-fit="true"
@@ -206,13 +196,27 @@
 
     <!-- 编辑弹窗 -->
     <edit-dialog
-      v-if="popSettings.one.visible"
-      :id="popSettings.one.props.id"
-      :data="popSettings.one.props.data"
-      :visible="popSettings.one.visible"
-      :dialog-status="popSettings.one.props.dialogStatus"
-      @closeMeOk="handleCloseDialogOneOk"
-      @closeMeCancel="handleCloseDialogOneCancel"
+      v-if="popSettings.editDialog.visible"
+      :data="popSettings.editDialog.data"
+      :visible.sync="popSettings.editDialog.visible"
+      @onSuccess="handleEditDialogSuccess"
+      @onCancel="handleEditDialogCancel"
+    />
+
+    <!-- 新增弹窗 -->
+    <new-dialog
+      v-if="popSettings.newDialog.visible"
+      :visible.sync="popSettings.newDialog.visible"
+      @onSuccess="handleNewDialogSuccess"
+      @onCancel="handleNewDialogCancel"
+    />
+
+    <!-- 查看弹窗 -->
+    <view-dialog
+      v-if="popSettings.viewDialog.visible"
+      :visible.sync="popSettings.viewDialog.visible"
+      :permission-data="popSettings.viewDialog.data"
+      @onCancel="handleViewDialogCancel"
     />
   </div>
 </template>
@@ -221,14 +225,14 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import { getListApi, deleteApi } from '@/api/20_master/permission/permission'
 import deepCopy from 'deep-copy'
-import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal.vue'
 import Pagination from '@/components/Pagination/index.vue'
-import editDialog from '../30_edit/index.vue'
-import FieldHelp from '@/components/30_table/FieldHelp'
+import editDialog from '../../dialog/30_edit/index.vue'
+import newDialog from '../../dialog/20_new/index.vue'
+import viewDialog from '../../dialog/40_view/index.vue'
 
 export default {
   name: 'PermissionList',
-  components: { Pagination, DeleteTypeNormal, editDialog, FieldHelp },
+  components: { Pagination, editDialog, newDialog, viewDialog },
   directives: { elDragDialog },
   props: {
     height: {
@@ -249,8 +253,7 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
-          name: '',
-          is_del: '0' // 未删除
+          name: ''
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -268,7 +271,8 @@ export default {
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
-          showExport: false
+          showExport: false,
+          showDel: false
         },
         // loading 状态
         loading: false,
@@ -277,13 +281,18 @@ export default {
       },
       popSettings: {
         // 弹出编辑页面
-        one: {
+        editDialog: {
           visible: false,
-          props: {
-            id: undefined,
-            data: {},
-            dialogStatus: ''
-          }
+          data: {}
+        },
+        // 弹出新增页面
+        newDialog: {
+          visible: false
+        },
+        // 弹出查看页面
+        viewDialog: {
+          visible: false,
+          data: {}
         }
       }
     }
@@ -294,23 +303,13 @@ export default {
     // 选中的数据，使得导出按钮可用，否则就不可使用
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
-        if (newVal.length > 0) {
-          this.settings.btnShowStatus.showExport = true
-        } else {
-          this.settings.btnShowStatus.showExport = false
-        }
+        this.updateButtonStatus()
       }
     },
     // 当前行的选中
     'dataJson.currentJson': {
       handler (newVal, oldVal) {
-        if (this.dataJson.currentJson && this.dataJson.currentJson.id !== undefined) {
-          this.settings.btnShowStatus.showUpdate = true
-          this.settings.btnShowStatus.showExport = true
-        } else {
-          this.settings.btnShowStatus.showUpdate = false
-          this.settings.btnShowStatus.showExport = false
-        }
+        this.updateButtonStatus()
       },
       deep: true
     }
@@ -325,7 +324,20 @@ export default {
   mounted () {},
   methods: {
     initShow () {
-      this.dataJson.searchForm.is_del = this.CONSTANTS.DICT_SYS_DELETE_MAP_ALL
+    },
+    // 更新按钮状态，支持多选和单选
+    updateButtonStatus () {
+      const hasMultipleSelection = this.dataJson.multipleSelection && this.dataJson.multipleSelection.length > 0
+      const hasSingleSelection = this.dataJson.currentJson && this.dataJson.currentJson.id !== undefined
+
+      // 导出按钮：多选或单选任一有效时启用
+      this.settings.btnShowStatus.showExport = hasMultipleSelection || hasSingleSelection
+
+      // 修改按钮：只有单选且没有多选时启用（避免操作对象不一致）
+      this.settings.btnShowStatus.showUpdate = hasSingleSelection && !hasMultipleSelection
+
+      // 删除按钮：多选或单选任一有效时启用
+      this.settings.btnShowStatus.showDel = hasMultipleSelection || hasSingleSelection
     },
     // 获取行索引
     getRowIndex (row) {
@@ -363,8 +375,7 @@ export default {
         ...{ serial_type: this.dataJson.searchForm.condition !== null ? this.dataJson.searchForm.condition.serial_type : null },
         ...{ serial_id: this.dataJson.searchForm.condition !== null ? this.dataJson.searchForm.condition.serial_id : null },
         ...{ pageCondition: this.dataJson.searchForm.pageCondition },
-        ...{ name: this.dataJson.searchForm.name },
-        ...{ is_del: this.dataJson.searchForm.is_del }
+        ...{ name: this.dataJson.searchForm.name }
       }
       getListApi(condition).then(response => {
         this.dataJson.listData = response.data.records
@@ -390,132 +401,133 @@ export default {
     // 点击按钮 新增
     handleInsert () {
       // 新增
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_INSERT
-      this.popSettings.one.visible = true
+      this.popSettings.newDialog.visible = true
     },
     // 点击按钮 更新
     handleUpdate () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
+      if (!this.dataJson.currentJson || this.dataJson.currentJson.id === undefined) {
         this.showErrorMsg('请选择一条数据')
         return
       }
       // 更新
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_UPDATE
-      this.popSettings.one.visible = true
+      this.popSettings.editDialog.data = Object.assign({}, this.dataJson.currentJson)
+      this.popSettings.editDialog.visible = true
     },
     // 查看
     handleView () {
-      this.popSettings.one.props.data = Object.assign({}, this.dataJson.currentJson)
-      if (this.popSettings.one.props.data.id === undefined) {
+      if (!this.dataJson.currentJson || this.dataJson.currentJson.id === undefined) {
         this.showErrorMsg('请选择一条数据')
         return
       }
-      this.popSettings.one.props.dialogStatus = this.PARAMETERS.STATUS_VIEW
-      this.popSettings.one.visible = true
+      // 查看
+      this.popSettings.viewDialog.data = Object.assign({}, this.dataJson.currentJson)
+      this.popSettings.viewDialog.visible = true
     },
-    // 删除操作
-    handleDel (row) {
-      let _message = ''
-      const _value = row.is_del
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (_value === true) {
-        _message = '是否要删除选择的数据？'
-      } else {
-        _message = '是否要复原该条数据？'
+    // 删除
+    handleDelete () {
+      const hasMultipleSelection = this.dataJson.multipleSelection && this.dataJson.multipleSelection.length > 0
+      const hasSingleSelection = this.dataJson.currentJson && this.dataJson.currentJson.id !== undefined
+
+      // 检查是否有选择数据
+      if (!hasMultipleSelection && !hasSingleSelection) {
+        this.showErrorMsg('请选择要删除的数据')
+        return
       }
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
+
+      let confirmMessage = ''
+      if (hasMultipleSelection) {
+        // 多选删除
+        confirmMessage = `确定要删除选中的 ${this.dataJson.multipleSelection.length} 条权限记录吗？`
+      } else {
+        // 单选删除
+        confirmMessage = `确定要删除权限【${this.dataJson.currentJson.name}】吗？`
+      }
+
+      // 删除确认
+      this.$confirm(confirmMessage, '删除确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
       }).then(() => {
-        // loading
-        this.settings.loading = true
-        deleteApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.is_del = !row.is_del
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.is_del = !row.is_del
+        this.executeDelete()
+      }).catch(() => {
+        // 取消删除
       })
     },
+    // 执行删除操作
+    async executeDelete () {
+      try {
+        this.settings.loading = true
+        let deleteData = []
+
+        const hasMultipleSelection = this.dataJson.multipleSelection && this.dataJson.multipleSelection.length > 0
+
+        if (hasMultipleSelection) {
+          // 多选删除：使用多选框选中的数据
+          deleteData = this.dataJson.multipleSelection.map(item => ({
+            id: item.id,
+            dbversion: item.dbversion
+          }))
+        } else {
+          // 单选删除：使用当前选中行的数据
+          deleteData = [{
+            id: this.dataJson.currentJson.id,
+            dbversion: this.dataJson.currentJson.dbversion
+          }]
+        }
+
+        const response = await deleteApi(deleteData)
+        if (response.success) {
+          const count = deleteData.length
+          this.$message.success(`成功删除 ${count} 条权限记录`)
+
+          // 刷新列表数据
+          this.getDataList()
+
+          // 清空选择状态
+          this.dataJson.currentJson = null
+          this.dataJson.multipleSelection = []
+          this.$refs.multipleTable.setCurrentRow()
+          this.$refs.multipleTable.clearSelection()
+        } else {
+          this.showErrorMsg(response.message || '删除失败')
+        }
+      } catch (error) {
+        // 全局拦截器已处理错误显示，这里只记录日志
+        console.error('删除操作异常:', error)
+      } finally {
+        this.settings.loading = false
+      }
+    },
     // ------------------编辑弹出框 start--------------------
-    handleCloseDialogOneOk (val) {
-      switch (this.popSettings.one.props.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.doInsertModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_UPDATE:
-          this.doUpdateModelCallBack(val)
-          break
-        case this.PARAMETERS.STATUS_VIEW:
-          break
-      }
+    handleEditDialogSuccess (val) {
+      // 更新列表中的数据
+      this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
+      // 设置到currentjson中
+      this.dataJson.currentJson = Object.assign({}, val.data.data)
+      // 刷新列表以确保数据同步
+      this.getDataList()
     },
-    handleCloseDialogOneCancel () {
-      this.popSettings.one.visible = false
-    },
-    // 处理插入回调
-    doInsertModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
-        this.$notify({
-          title: '新增处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '新增处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
-    },
-    // 处理更新回调
-    doUpdateModelCallBack (val) {
-      if (val.return_flag) {
-        this.popSettings.one.visible = false
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
-        this.$notify({
-          title: '更新处理成功',
-          message: val.data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-      } else {
-        this.$notify({
-          title: '更新处理失败',
-          message: val.error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }
+    handleEditDialogCancel () {
+      // 对话框通过.sync自动关闭
     },
     // ------------------编辑弹出框 end--------------------
+    // ------------------新增弹出框 start--------------------
+    handleNewDialogSuccess (val) {
+      // 添加新数据到列表顶部
+      this.dataJson.listData.unshift(val.data.data)
+      // 刷新列表以确保数据同步
+      this.getDataList()
+    },
+    handleNewDialogCancel () {
+      // 对话框通过.sync自动关闭，这里可以处理其他逻辑
+    },
+    // ------------------新增弹出框 end--------------------
+    // ------------------查看弹出框 start--------------------
+    handleViewDialogCancel () {
+      // 对话框通过.sync自动关闭
+    },
+    // ------------------查看弹出框 end--------------------
     // 权限操作设置
     handleSetUpOperation (val) {
       this.openPermissionEditTab(val)

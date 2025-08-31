@@ -70,57 +70,21 @@
         <template v-slot="scope">
           <el-button-group style="float: right">
             <el-button
+              v-permission="'P_ORG:EDIT'"
               type="primary"
               icon="el-icon-edit"
               style="padding:4px 4px; "
               @click="handleEdit(scope.row)"
             />
+            <el-button
+              v-permission="'P_ORG:EDIT'"
+              type="primary"
+              icon="el-icon-delete"
+              style="padding:4px 4px; "
+              @click="handleDel(scope.row)"
+            />
           </el-button-group>
           {{ scope.row.code }}
-        </template>
-      </el-table-column>
-      <el-table-column
-        min-width="80"
-        :sort-orders="settings.sortOrders"
-        label="删除"
-      >
-        <template v-slot:header>
-          <span>
-            删除
-            <el-tooltip
-              class="item"
-              effect="dark"
-              placement="bottom"
-            >
-              <div slot="content">
-                删除状态提示：<br>
-                绿色：未删除 <br>
-                红色：已删除
-              </div>
-              <svg-icon
-                icon-class="perfect-icon-question1_btn"
-                style="margin-left: 5px"
-              />
-            </el-tooltip>
-          </span>
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
-            placement="top"
-            :open-delay="500"
-          >
-            <el-switch
-              v-model="scope.row.is_del"
-              active-color="#ff4949"
-              inactive-color="#13ce66"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              :disabled="true"
-              @change="handleDel(scope.row)"
-            />
-          </el-tooltip>
         </template>
       </el-table-column>
       <el-table-column
@@ -186,16 +150,17 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getGroupsListApi } from '@/api/20_master/org/org'
+import { getGroupsListApi, deleteApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import EditDialog from '@/views/20_master/group/dialog/30_edit/index.vue'
 import ViewDialog from '@/views/20_master/group/dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   components: { Pagination, EditDialog, ViewDialog },
-  directives: { elDragDialog },
+  directives: { elDragDialog, permission },
   mixins: [],
   props: {
     height: {
@@ -467,6 +432,48 @@ export default {
           duration: this.settings.duration
         })
       }
+    },
+    // 删除操作
+    handleDel (row) {
+      let message = ''
+      const value = row.is_del
+      const selectionJson = []
+      selectionJson.push({ 'id': row.id })
+      if (value === true) {
+        message = '是否要删除选择的数据？'
+      } else {
+        message = '是否要复原该条数据？'
+      }
+      // 确认对话框
+      this.$confirm(message, '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        // loading
+        this.settings.loading = true
+        deleteApi(selectionJson).then((data) => {
+          this.$notify({
+            title: '更新处理成功',
+            message: data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.getDataList()
+        }, (error) => {
+          this.$notify({
+            title: '删除失败',
+            message: error.message, // 后端返回的详细关联信息
+            type: 'error',
+            duration: 5000 // 5秒显示时长，让用户看清楚详细信息
+          })
+          row.is_del = !row.is_del
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(action => {
+        row.is_del = !row.is_del
+      })
     }
   }
 }

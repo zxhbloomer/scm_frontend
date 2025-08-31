@@ -61,7 +61,33 @@ export function getPageApi (data) {
 }
 
 /**
- *模板文件下载
+ * 导出逻辑，全部导出
+ * @param {*} data
+ */
+export function exportAllApi (data) {
+  return request({
+    url: '/api/v1/sys/pages/exportall',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
+/**
+ * 导出逻辑，选中导出
+ * @param {*} data
+ */
+export function exportSelectionApi (data) {
+  return request({
+    url: '/api/v1/sys/pages/export',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
+/**
+ *模板文件下载（保留向后兼容）
  * @param {*} data
  */
 export function exportApi (data) {

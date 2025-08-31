@@ -26,16 +26,15 @@
               <el-form-item label="角色编码：" prop="code">
                 <el-input
                   v-model.trim="formData.code"
-                  clearable
-                  show-word-limit
-                  :maxlength="inputSettings.maxLength.code"
-                  placeholder="请输入角色编码"
+                  disabled
+                  placeholder="角色编码（不可编辑）"
                 />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="角色名称：" prop="name">
                 <el-input
+                  ref="nameInput"
                   v-model.trim="formData.name"
                   clearable
                   show-word-limit
@@ -187,10 +186,7 @@ export default {
       },
       // 验证规则
       rules: {
-        code: [
-          { required: true, message: '请输入角色编码', trigger: 'blur' },
-          { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
-        ],
+        code: [],
         name: [
           { required: true, message: '请输入角色名称', trigger: 'blur' },
           { min: 1, max: 10, message: '长度在 1 到 10 个字符', trigger: 'blur' }
@@ -204,21 +200,18 @@ export default {
       // 状态
       loading: false,
       btnDisabled: true,
-      permissionDialogVisible: false,
-      // 监听器
-      unwatch: null
+      permissionDialogVisible: false
     }
   },
   watch: {
     visible (newVal) {
       if (newVal) {
         this.initForm()
-        this.setWatch()
         this.$nextTick(() => {
           this.$refs.dataForm && this.$refs.dataForm.clearValidate()
+          // 设置角色名称输入框自动聚焦
+          this.$refs.nameInput && this.$refs.nameInput.focus()
         })
-      } else {
-        this.unWatch()
       }
     },
     data: {
@@ -229,10 +222,19 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+    formData: {
+      handler () {
+        // 只有在弹窗打开时才检查表单变化
+        if (this.visible) {
+          this.$nextTick(() => {
+            this.checkFormChange()
+          })
+        }
+      },
+      deep: true,
+      immediate: true
     }
-  },
-  beforeDestroy () {
-    this.unWatch()
   },
   methods: {
     // 初始化表单
@@ -246,37 +248,26 @@ export default {
           descr: this.data.descr || '',
           simple_name: this.data.simple_name || '',
           is_del: this.data.is_del || false,
-          dbversion: this.data.dbversion || 0,
+          dbversion: this.data.dbversion !== undefined ? this.data.dbversion : 0,
           c_time: this.data.c_time || '',
           u_time: this.data.u_time || ''
         }
+
         this.originalData = Object.assign({}, this.formData)
         this.loadPermissionList()
-        this.checkFormChange()
-      }
-    },
 
-    // 设置监听器
-    setWatch () {
-      this.unwatch = this.$watch('formData', () => {
-        this.checkFormChange()
-      }, { deep: true })
-    },
-
-    // 清除监听器
-    unWatch () {
-      if (this.unwatch) {
-        this.unwatch()
-        this.unwatch = null
+        // 延迟执行 checkFormChange，确保数据完全初始化
+        this.$nextTick(() => {
+          this.checkFormChange()
+        })
       }
     },
 
     // 检查表单变化
     checkFormChange () {
-      const hasCode = this.formData.code && this.formData.code.trim() !== ''
       const hasName = this.formData.name && this.formData.name.trim() !== ''
       const formChanged = JSON.stringify(this.formData) !== JSON.stringify(this.originalData)
-      this.btnDisabled = !(hasCode && hasName && formChanged)
+      this.btnDisabled = !(hasName && formChanged)
     },
 
     // 加载权限列表
@@ -355,18 +346,43 @@ export default {
     handlePermissionDialogOk (result) {
       this.permissionDialogVisible = false
       if (result.return_flag) {
-        // 权限变更成功，需要重新加载角色数据以获取最新的权限信息
-        this.$emit('closeMeOk', {
-          return_flag: true,
-          data: result.data,
-          need_refresh: true // 通知父组件需要刷新数据
-        })
+        // 权限变更成功，重新获取最新数据更新当前表单
+        this.refreshCurrentData()
         this.$message.success('权限设置成功')
       }
     },
 
     handlePermissionDialogCancel () {
       this.permissionDialogVisible = false
+    },
+
+    // 刷新当前编辑数据
+    refreshCurrentData () {
+      // 通知父组件刷新数据，但不关闭弹窗
+      this.$emit('refreshData', { roleId: this.formData.id })
+    },
+
+    // 从父组件接收更新的数据（解决乐观锁版本问题）
+    updateFormData (newData) {
+      if (newData && newData.id === this.formData.id) {
+        console.log('同步最新数据版本:', newData)
+        // 只更新版本号和权限相关数据，保持用户正在编辑的内容不变
+        this.formData.dbversion = newData.dbversion
+        this.formData.c_time = newData.c_time
+        this.formData.u_time = newData.u_time
+        // 更新原始数据的版本号，但保持其他字段为用户编辑的内容
+        this.originalData.dbversion = newData.dbversion
+        this.originalData.c_time = newData.c_time
+        this.originalData.u_time = newData.u_time
+
+        // 重新加载权限列表
+        if (newData.permissionList) {
+          this.data.permissionList = newData.permissionList
+          this.loadPermissionList()
+        }
+
+        console.log('表单数据版本已同步:', this.formData.dbversion)
+      }
     }
 
   }

@@ -70,6 +70,7 @@
         <template v-slot="scope">
           <el-button-group style="float: right">
             <el-button
+              v-permission="'P_ORG:EDIT'"
               type="primary"
               icon="el-icon-edit"
               style="padding:4px 4px; "
@@ -213,10 +214,11 @@ import Pagination from '@/components/Pagination'
 import editDialog from '@/views/20_master/company/dialog/30_edit/index.vue'
 import viewDialog from '@/views/20_master/company/dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   components: { Pagination, editDialog, viewDialog },
-  directives: {},
+  directives: { permission },
   mixins: [],
   props: {
     height: {
