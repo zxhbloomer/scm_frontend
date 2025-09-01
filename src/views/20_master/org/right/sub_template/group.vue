@@ -143,7 +143,7 @@
 
 <script>
 import { EventBus } from '@/common/eventbus/eventbus'
-import { getGroupsListApi, deleteApi } from '@/api/20_master/org/org'
+import { getGroupsListApi } from '@/api/20_master/org/org'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import EditDialog from '@/views/20_master/group/dialog/30_edit/index.vue'

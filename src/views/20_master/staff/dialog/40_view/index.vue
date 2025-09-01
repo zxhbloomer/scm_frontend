@@ -268,7 +268,7 @@
               显示该员工在组织架构中的所有关联关系
             </span>
           </div>
-          
+
           <el-table
             :data="orgRelationData"
             border
@@ -291,12 +291,9 @@
             >
               <template slot-scope="scope">
                 <span>{{ scope.row.group_name || '-' }}</span>
-                <el-tag v-if="scope.row.group_code" size="mini" type="info" style="margin-left: 5px;">
-                  {{ scope.row.group_code }}
-                </el-tag>
               </template>
             </el-table-column>
-            
+
             <el-table-column
               prop="company_name"
               label="所属主体企业"
@@ -305,12 +302,9 @@
             >
               <template slot-scope="scope">
                 <span>{{ scope.row.company_name || '-' }}</span>
-                <el-tag v-if="scope.row.company_code" size="mini" type="success" style="margin-left: 5px;">
-                  {{ scope.row.company_code }}
-                </el-tag>
               </template>
             </el-table-column>
-            
+
             <el-table-column
               prop="dept_name"
               label="部门"
@@ -319,12 +313,9 @@
             >
               <template slot-scope="scope">
                 <span>{{ scope.row.dept_name || '-' }}</span>
-                <el-tag v-if="scope.row.dept_code" size="mini" type="warning" style="margin-left: 5px;">
-                  {{ scope.row.dept_code }}
-                </el-tag>
               </template>
             </el-table-column>
-            
+
             <el-table-column
               prop="position_name"
               label="岗位"
@@ -335,11 +326,11 @@
                 <span>{{ scope.row.position_name || '-' }}</span>
               </template>
             </el-table-column>
-            
+
           </el-table>
-          
+
           <div v-if="orgRelationData.length === 0 && !orgRelationLoading" style="text-align: center; padding: 20px; color: #909399;">
-            <i class="el-icon-info" style="font-size: 16px;"></i>
+            <i class="el-icon-info" style="font-size: 16px;" />
             <p style="margin: 10px 0 0 0;">该员工暂无组织关系数据</p>
           </div>
         </div>
@@ -510,7 +501,7 @@ export default {
       if (!this.dataJson.tempJson.id) {
         return
       }
-      
+
       this.orgRelationLoading = true
       getStaffOrgRelationApi({
         staffId: this.dataJson.tempJson.id

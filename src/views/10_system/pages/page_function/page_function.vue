@@ -344,7 +344,7 @@ export default {
         // 单条数据 json
         currentJson: null,
         // 当前表格中的索引，第几条
-        rowIndex: 0,
+        rowIndex: 0
       },
       // 页面设置json
       settings: {

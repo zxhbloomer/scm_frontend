@@ -622,103 +622,13 @@
                 type="danger"
               />
             </template>
-            <el-row>
-              <el-col :span="12">
-                <el-form-item
-                  label="所属主体企业："
-                  prop="company_name"
-                >
-                  <el-popover
-                    v-model="settings.popover.visible"
-                    placement="top"
-                    width="200"
-                    trigger="manual"
-                  >
-                    <p>您修改了所属主体企业，请您重新选择默认部门！</p>
-                    <div style="text-align: right; margin: 0">
-                      <el-button
-                        type="primary"
-                        size="mini"
-                        @click="settings.popover.visible = false"
-                      >确定</el-button>
-                    </div>
 
-                    <select-company-dept
-                      slot="reference"
-                      v-model.trim="dataJson.tempJson.company_name"
-                      :placeholder="isPlaceholderShow('请选择所属主体企业')"
-                      :type="CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY"
-                      :current-id="dataJson.tempJson.company_id"
-                      :disabled="isViewModel"
-                      @closeParentDialog="handleDialogClose"
-                      @onReturnData="handleCompanyReturnData"
-                    />
-                  </el-popover>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item
-                  label="默认部门："
-                  prop="dept_name"
-                >
-                  <select-company-dept
-                    v-model.trim="dataJson.tempJson.dept_name"
-                    :placeholder="isPlaceholderShow('请选择默认部门')"
-                    :type="CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT"
-                    :current-id="dataJson.tempJson.dept_id"
-                    :disabled="isViewModel"
-                    :parent-id="dataJson.tempJson.company_id"
-                    @closeParentDialog="handleDialogClose"
-                    @onReturnData="handleDeptReturnData"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="12">
-                <el-form-item label="岗位信息：">
-                  <template>
-                    <div
-                      v-show="positionIsShow()"
-                      class="el-input-tag input-tag-wrapper"
-                    >
-                      <el-popconfirm
-                        v-for="item in dataJson.tempJson.positions"
-                        :key="item.position_id"
-                        confirm-button-text="确定"
-                        cancel-button-text="取消"
-                        icon="el-icon-info"
-                        icon-color="red"
-                        title="点击确定后跳转到岗位页面，请注意保存当前数据。"
-                        @confirm="handlePositionClick(item.position_name)"
-                      >
-                        <el-tag
-                          slot="reference"
-                          class="position_tag"
-                        >
-                          {{ item.position_name }}
-                        </el-tag>
-                      </el-popconfirm>
-                    </div>
-                    <div v-show="!positionIsShow()">
-                      <el-input
-                        v-model.trim="dataJson.tempJson.user.last_login_date"
-                        disabled
-                        placeholder="[无]"
-                      />
-                    </div>
-                  </template>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12" />
-            </el-row>
-            
             <!-- 组织关系信息表格 -->
             <el-divider content-position="left">
-              <i class="el-icon-s-data"></i>
+              <i class="el-icon-s-data" />
               当前组织关系
             </el-divider>
-            
+
             <div v-loading="orgRelationLoading" element-loading-text="正在查询组织关系...">
               <div style="margin-bottom: 10px;">
                 <el-button type="primary" size="mini" icon="el-icon-refresh" @click="loadOrgRelationData">
@@ -728,7 +638,7 @@
                   显示该员工在组织架构中的所有关联关系
                 </span>
               </div>
-              
+
               <el-table
                 :data="orgRelationData"
                 border
@@ -746,12 +656,9 @@
                 >
                   <template slot-scope="scope">
                     <span>{{ scope.row.group_name || '-' }}</span>
-                    <el-tag v-if="scope.row.group_code" size="mini" type="info" style="margin-left: 5px;">
-                      {{ scope.row.group_code }}
-                    </el-tag>
                   </template>
                 </el-table-column>
-                
+
                 <el-table-column
                   prop="company_name"
                   label="所属主体企业"
@@ -760,12 +667,9 @@
                 >
                   <template slot-scope="scope">
                     <span>{{ scope.row.company_name || '-' }}</span>
-                    <el-tag v-if="scope.row.company_code" size="mini" type="success" style="margin-left: 5px;">
-                      {{ scope.row.company_code }}
-                    </el-tag>
                   </template>
                 </el-table-column>
-                
+
                 <el-table-column
                   prop="dept_name"
                   label="部门"
@@ -774,12 +678,9 @@
                 >
                   <template slot-scope="scope">
                     <span>{{ scope.row.dept_name || '-' }}</span>
-                    <el-tag v-if="scope.row.dept_code" size="mini" type="warning" style="margin-left: 5px;">
-                      {{ scope.row.dept_code }}
-                    </el-tag>
                   </template>
                 </el-table-column>
-                
+
                 <el-table-column
                   prop="position_name"
                   label="岗位"
@@ -788,28 +689,12 @@
                 >
                   <template slot-scope="scope">
                     <span>{{ scope.row.position_name || '-' }}</span>
-                    <el-tag v-if="scope.row.position_code" size="mini" type="danger" style="margin-left: 5px;">
-                      {{ scope.row.position_code }}
-                    </el-tag>
-                  </template>
-                </el-table-column>
-                
-                <el-table-column
-                  prop="serial_type"
-                  label="关系类型"
-                  width="80"
-                  align="center"
-                >
-                  <template slot-scope="scope">
-                    <el-tag :type="getSerialTypeTagType(scope.row.serial_type)" size="mini">
-                      {{ getSerialTypeText(scope.row.serial_type) }}
-                    </el-tag>
                   </template>
                 </el-table-column>
               </el-table>
-              
+
               <div v-if="orgRelationData.length === 0 && !orgRelationLoading" style="text-align: center; padding: 15px; color: #909399;">
-                <i class="el-icon-info" style="font-size: 14px;"></i>
+                <i class="el-icon-info" style="font-size: 14px;" />
                 <p style="margin: 5px 0 0 0; font-size: 12px;">该员工暂无组织关系数据</p>
               </div>
             </div>
@@ -970,16 +855,14 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import { updateApi, insertApi, getApi, getStaffOrgRelationApi } from '@/api/20_master/staff/staff'
 import RadioDict from '@/components/00_dict/redio'
 import SelectDict from '@/components/00_dict/select/SelectDict'
-import SelectCompanyDept from '@/views/20_master/staff/component/selectgrid/companyDept'
 import PasswordDialog from '../60_password/index.vue'
 import deepCopy from 'deep-copy'
-import { isNotEmpty } from '@/utils/index.js'
 import previewCard from '@/components/50_preview_card/preview_card_new'
 import OrgTree from '@/components/OrgTree/index.js'
 
 export default {
   // name: '', // 页面id，和router中的name需要一致，作为缓存
-  components: { previewCard, RadioDict, SelectDict, PasswordDialog, SelectCompanyDept, OrgTree },
+  components: { previewCard, RadioDict, SelectDict, PasswordDialog, OrgTree },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -1046,10 +929,7 @@ export default {
             login_name: null,
             login_type: '',
             pwd: ''
-          },
-          company_id: undefined,
-          company_name: '',
-          company_simple_name: ''
+          }
         },
         // 单条数据 json
         tempJson: {
@@ -1067,9 +947,6 @@ export default {
             login_name: null,
             pwd: ''
           },
-          company_id: undefined,
-          company_name: '',
-          company_simple_name: '',
           mobile_phone: null
         },
         inputSettings: {
@@ -1095,9 +972,6 @@ export default {
         }
       },
       settings: {
-        popover: {
-          visible: false
-        },
         // loading 状态
         loading: true,
         // 按钮是否显示，默认不显示，false：不显示，true：显示
@@ -1127,8 +1001,6 @@ export default {
           'user.login_name': [{ required: true, message: '请输入登录用户名', trigger: 'change' }]
         },
         rulesThree: {
-          dept_id: [{ required: true, message: '请选择默认部门', trigger: 'change' }],
-          company_name: [{ required: true, message: '请选择所属主体企业', trigger: 'change' }]
         },
         rulesFour: {
           mobile_phone: [{ required: true, message: '请输入手机号', trigger: 'change' }]
@@ -1398,7 +1270,7 @@ export default {
 
         // 默认全部展开
         this.toggleExpand(this.dataJson.tempJson.permissionTreeData, true)
-        
+
         // 加载组织关系数据
         this.loadOrgRelationData()
       }).finally(() => {
@@ -1410,7 +1282,7 @@ export default {
       if (!this.dataJson.tempJson.id) {
         return
       }
-      
+
       this.orgRelationLoading = true
       getStaffOrgRelationApi({
         staffId: this.dataJson.tempJson.id
@@ -1502,7 +1374,7 @@ export default {
           break
         case '3':
           // 所属信息
-          this.settings.rules = this.settings.rulesThree
+          this.settings.rules = {}
           break
         case '5':
           // 权限信息
@@ -1537,32 +1409,6 @@ export default {
     // 弹出框关闭
     handleDialogClose () {
       this.settings.visible = false
-      // 关闭页面
-      this.handleCancel()
-    },
-    // 返回数据后，并关闭弹出页面，企业
-    handleCompanyReturnData (val) {
-      if ((this.data.company_id !== val.serial_id) && isNotEmpty(this.dataJson.tempJson.dept_id)) {
-        this.settings.popover.visible = true
-        this.dataJson.tempJson.dept_id = null
-        this.dataJson.tempJson.dept_name = null
-        this.dataJson.tempJson.dept_simple_name = null
-      }
-      this.dataJson.tempJson.company_id = val.serial_id
-      this.dataJson.tempJson.company_name = val.name
-      this.dataJson.tempJson.company_simple_name = val.simple_name
-    },
-    // 返回数据后，并关闭弹出页面，部门
-    handleDeptReturnData (val) {
-      this.dataJson.tempJson.dept_id = val.serial_id
-      this.dataJson.tempJson.dept_name = val.name
-      this.dataJson.tempJson.dept_simple_name = val.simple_name
-    },
-    handlePositionClick (val) {
-      // 通知路由，打开岗位页面
-      this.$router.push({
-        name: this.PROGRAMS.P_POSITION, query: { name: val }
-      })
       // 关闭页面
       this.handleCancel()
     },
@@ -1619,10 +1465,6 @@ export default {
 
       this.$refs['dataSubmitForm'].rules = this.settings.rules
       this.$refs['dataSubmitForm'].clearValidate()
-    },
-    // 判断岗位信息是否已经设置
-    positionIsShow () {
-      return isNotEmpty(this.dataJson.tempJson.positions)
     },
 
     uploadSuccessOne (res) {

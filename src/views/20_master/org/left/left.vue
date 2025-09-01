@@ -109,7 +109,14 @@
           slot-scope="{ node, data }"
           class="custom-tree-node"
         >
-          <span>
+          <!-- he-tree机制：虚拟占位节点渲染 -->
+          <div v-if="Object.keys(data).length === 0" class="scm-virtual-placeholder">
+            <i class="el-icon-download" style="color: #409EFF; margin-right: 4px;" />
+            <span>拖拽到此处</span>
+          </div>
+
+          <!-- 正常节点渲染 -->
+          <span v-else>
             <svg-icon
               v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
               icon-class="perfect-icon-tenant"
@@ -730,6 +737,31 @@
     display: block;
   }
 
+  /* he-tree机制：虚拟占位节点样式 - 保持SCM红色风格 */
+  .scm-virtual-placeholder {
+    height: 32px;
+    width: 100%; /* 占满容器宽度，与正常节点保持一致 */
+    background: linear-gradient(90deg, #fff0f0 0%, #ffe8e8 100%);
+    border: 2px dashed #F56C6C;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #F56C6C;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 2px auto;
+    opacity: 0.9;
+    animation: placeholderPulse 1.5s ease-in-out infinite;
+    box-sizing: border-box;
+    white-space: nowrap;
+  }
+
+  @keyframes placeholderPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
   .el-icon--right {
     margin-left: 0px;
   }
@@ -907,7 +939,7 @@ import staffExcludePermissionDialog from '@/views/20_master/permission/component
 // 新增：引入员工删除确认对话框组件
 import StaffDeleteConfirmDialog from '@/components/30_table/StaffDeleteConfirmDialog/index.vue'
 import { isNotEmpty } from '@/utils/index.js'
-import { convertEmployeesToTreeNodes, isStaffNode, isPositionNode } from '@/utils/treeHelper'
+import { convertEmployeesToTreeNodes, isPositionNode } from '@/utils/treeHelper'
 import { getDataByIdApi as getPositionByIdApi, getPositionAssignedRoleIdsApi } from '@/api/20_master/position/position'
 import { getPositionAssignedPermissionIdsApi } from '@/api/20_master/permission/permission'
 import { getByIdApi as getGroupByIdApi } from '@/api/20_master/group/group'
@@ -1818,6 +1850,9 @@ export default {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
 
+      // he-tree机制：拖拽开始时清理虚拟节点
+      this.removeVirtualPlaceholder()
+
       // 拖拽开始时，初始化鼠标跟随提示状态
       this.hideMouseFollowTip()
     },
@@ -1826,15 +1861,16 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 清除之前的样式
-      this.clearDragStyles()
+      // he-tree机制：先移除旧虚拟节点
+      this.removeVirtualPlaceholder()
 
-      // 计算拖拽类型并应用样式
+      // 计算拖拽类型
       const dropType = this.calculateDropType(ev)
       const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
 
       if (allowDrop) {
-        this.applyDragStyle(ev.target, dropType)
+        // he-tree机制：插入虚拟占位节点
+        this.insertVirtualPlaceholder(dropNode, dropType)
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
@@ -1848,9 +1884,9 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 延迟清除样式，避免移动过程中的闪烁
+      // he-tree机制：离开节点时移除虚拟占位节点
       setTimeout(() => {
-        this.clearDragStyles()
+        this.removeVirtualPlaceholder()
       }, 50)
 
       // 离开节点时隐藏跟随鼠标的提示
@@ -1861,15 +1897,16 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随） - 这是最重要的事件
       this.updateMousePosition(ev)
 
-      // 清除之前的样式
-      this.clearDragStyles()
+      // he-tree机制：先移除旧虚拟节点
+      this.removeVirtualPlaceholder()
 
-      // 计算拖拽类型并应用样式
+      // 计算拖拽类型
       const dropType = this.calculateDropType(ev)
       const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
 
       if (allowDrop) {
-        this.applyDragStyle(ev.target, dropType)
+        // he-tree机制：插入虚拟占位节点
+        this.insertVirtualPlaceholder(dropNode, dropType)
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
@@ -1883,8 +1920,8 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       if (ev) this.updateMousePosition(ev)
 
-      // 清除所有拖拽样式
-      this.clearDragStyles()
+      // he-tree机制：拖拽结束时移除虚拟占位节点
+      this.removeVirtualPlaceholder()
 
       // 拖拽结束时确保隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -2838,22 +2875,18 @@ export default {
         case 'sub_group':
           // 跳转到集团页面
           this.$router.push(linkData.url)
-          console.log('跳转到集团页面:', linkData.url, '当前节点:', nodeData.simple_name)
           break
         case 'company':
           // 跳转到企业页面
           this.$router.push(linkData.url)
-          console.log('跳转到企业页面:', linkData.url, '当前节点:', nodeData.simple_name)
           break
         case 'sub_dept':
           // 跳转到部门页面
           this.$router.push(linkData.url)
-          console.log('跳转到部门页面:', linkData.url, '当前节点:', nodeData.simple_name)
           break
         case 'position':
           // 跳转到岗位页面
           this.$router.push(linkData.url)
-          console.log('跳转到岗位页面:', linkData.url, '当前节点:', nodeData.simple_name)
           break
         default:
           console.warn('未知的链接类型:', linkData.type)
@@ -3019,6 +3052,82 @@ export default {
       })
     },
 
+    // ===================== he-tree机制：虚拟占位节点管理 =====================
+
+    /**
+     * 插入虚拟占位节点
+     * @param {Object} dropNode - 目标节点
+     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
+     */
+    insertVirtualPlaceholder (dropNode, dropType) {
+      const placeholderData = {} // he-tree方式：空对象作为虚拟节点
+
+      if (dropType === 'inner') {
+        // 作为子节点：插入到目标节点的children开头
+        if (!dropNode.data.children) {
+          this.$set(dropNode.data, 'children', [])
+        }
+        dropNode.data.children.unshift(placeholderData)
+      } else if (dropType === 'before') {
+        // 插入前面：在父级中找到目标节点位置，插入到前面
+        this.insertPlaceholderInParent(dropNode, 0, placeholderData)
+      } else if (dropType === 'after') {
+        // 插入后面：在父级中找到目标节点位置，插入到后面
+        this.insertPlaceholderInParent(dropNode, 1, placeholderData)
+      }
+    },
+
+    /**
+     * 在父级节点中插入虚拟节点
+     */
+    insertPlaceholderInParent (targetNode, offset, placeholderData) {
+      const parent = targetNode.parent
+      if (parent && parent.data) {
+        // 有父节点的情况
+        if (!parent.data.children) {
+          this.$set(parent.data, 'children', [])
+        }
+        const parentChildren = parent.data.children
+        const index = parentChildren.indexOf(targetNode.data)
+        if (index !== -1) {
+          parentChildren.splice(index + offset, 0, placeholderData)
+        }
+      } else {
+        // 根级节点
+        const rootData = this.dataJson.treeData
+        const index = rootData.indexOf(targetNode.data)
+        if (index !== -1) {
+          rootData.splice(index + offset, 0, placeholderData)
+        }
+      }
+    },
+
+    /**
+     * 移除所有虚拟占位节点
+     */
+    removeVirtualPlaceholder () {
+      this.removeVirtualNodesFromArray(this.dataJson.treeData)
+    },
+
+    /**
+     * 递归移除数组中的虚拟节点
+     */
+    removeVirtualNodesFromArray (nodeArray) {
+      if (!Array.isArray(nodeArray)) return
+
+      for (let i = nodeArray.length - 1; i >= 0; i--) {
+        const node = nodeArray[i]
+
+        // he-tree机制：空对象就是虚拟节点
+        if (Object.keys(node).length === 0) {
+          nodeArray.splice(i, 1)
+        } else if (node.children && node.children.length > 0) {
+          // 递归处理子节点
+          this.removeVirtualNodesFromArray(node.children)
+        }
+      }
+    },
+
     /**
      * 树数据刷新方法
      * 保存当前选中状态，重新获取树数据，恢复选中状态
@@ -3069,8 +3178,6 @@ export default {
             }
           }
         })
-
-        console.log('树数据刷新成功')
       } catch (error) {
         console.error('树数据刷新失败:', error)
         this.$message.error('刷新组织架构数据失败')
@@ -3102,8 +3209,6 @@ export default {
           this.$message.warning('选中的树节点无效')
           return
         }
-
-        console.log('handleNodeContextMenu 参数:', { event, data, node, nodeComponent })
 
         // 存储当前右键的节点信息
         this.contextMenu.currentNode = node
@@ -3180,7 +3285,6 @@ export default {
     getContextMenuItems (nodeData) {
       // 检查nodeData是否有效
       if (!nodeData || !nodeData.type) {
-        console.log('getContextMenuItems: nodeData 无效', nodeData)
         return []
       }
 
@@ -3188,33 +3292,20 @@ export default {
 
       // 处理员工节点
       if (nodeData.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF) {
-        console.log('getContextMenuItems: 检测到员工节点', nodeData)
         items.push(
           { label: '修改员工', icon: 'el-icon-edit', action: 'edit_staff', enabled: true },
           { label: '维护员工角色', icon: 'el-icon-user-solid', action: 'manage_staff_role', enabled: true },
           { label: '维护员工权限', icon: 'el-icon-key', action: 'manage_staff_permission', enabled: true },
           { label: '排除权限', icon: 'el-icon-circle-close', action: 'exclude_staff_permission', enabled: true }
         )
-        console.log('getContextMenuItems: 生成的员工菜单项', items)
         return items
       }
 
       // 处理组织节点 (使用 type)
       const nodeType = nodeData.type
       if (!nodeType) {
-        console.log('getContextMenuItems: nodeData.type 无效', nodeData)
         return []
       }
-
-      // 调试信息：打印节点类型和常量
-      console.log('getContextMenuItems: nodeType =', nodeType)
-      console.log('getContextMenuItems: 常量值', {
-        TENANT: this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT,
-        GROUP: this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP,
-        COMPANY: this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY,
-        DEPT: this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT,
-        POSITION: this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION
-      })
 
       switch (nodeType) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT: // 租户节点
@@ -3257,14 +3348,12 @@ export default {
           break
 
         default:
-          console.log('getContextMenuItems: 未知节点类型，使用默认菜单项', nodeType)
           items.push(
             { label: '刷新节点', icon: 'el-icon-refresh', action: 'refresh_node', enabled: true }
           )
           break
       }
 
-      console.log('getContextMenuItems: 生成的菜单项', items)
       return items
     },
 
@@ -3817,24 +3906,6 @@ export default {
       }
     },
 
-    // 调试岗位显示信息
-    debugPositionInfo (data) {
-      if (data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
-        console.log('=== 前端显示调试 ===', {
-          nodeId: data.id,
-          nodeName: data.name,
-          nodeType: data.type,
-          staff_count: data.staff_count,
-          staff_count_type: typeof data.staff_count,
-          显示条件: data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION,
-          员工数量条件: data.staff_count > 0,
-          最终显示: data.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION && data.staff_count > 0
-        })
-        return ` [调试: id=${data.id}, count=${data.staff_count}]`
-      }
-      return ''
-    },
-
     // 获取岗位节点显示文本
     getPositionDisplayText (node) {
       if (node.type !== this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
@@ -3975,49 +4046,12 @@ export default {
   height: 2px !important;  /* 稍微粗一点 */
 }
 
-/* 在拖拽指示器上添加文字提示 */
+/* 屏蔽拖拽指示器上的文字提示 */
 ::v-deep .el-tree__drop-indicator::before {
-  content: "插入到此位置";
-  position: absolute;
-  right: 80px !important;
-  left: auto !important;
-  top: -20px;
-  color: #d73502;
-  font-size: 12px;
-  font-style: normal !important;  /* 强制正常字体样式，不倾斜 */
-  font-weight: normal !important;  /* 正常字重 */
-  text-transform: none !important;  /* 不变换文字 */
-  letter-spacing: normal !important;  /* 正常字间距 */
-  transform: none !important;  /* 强制不变形，确保文字水平显示 */
-  background: white !important;
-  padding: 2px 6px;
-  border-radius: 2px;
-  white-space: nowrap;
-  z-index: 1000;
-  /* 禁用选择和焦点状态 */
-  user-select: none !important;  /* 禁止文字被选中 */
-  outline: none !important;      /* 去除焦点轮廓 */
-  border: none !important;       /* 确保没有边框 */
-  box-shadow: none !important;   /* 去除阴影 */
+  display: none !important; /* 隐藏"插入到此位置"文字提示 */
 }
 
-/* 覆盖Element UI的is-drop-inner样式，使用自定义drag-drop-inner */
-::v-deep .el-tree-node.is-drop-inner > .el-tree-node__content {
-  background: transparent !important;
-  border: none !important;
-}
-
-::v-deep .el-tree-node.is-drop-inner > .el-tree-node__content .el-tree-node__label {
-  background: transparent !important;
-  color: inherit !important;
-}
-
-/* 自定义内嵌拖拽样式 - 成为子节点时的样式 */
-::v-deep .el-tree-node__content.drag-drop-inner {
-  background: rgba(215, 53, 2, 0.1) !important;
-  border: 2px dashed #d73502 !important;
-  border-radius: 4px;
-}
+/* 使用全局element-ui_tree.scss中的蓝色拖拽样式，不覆盖 */
 
 /* 跟随鼠标的文字提示样式 */
 .mouse-follow-tip {
@@ -4067,4 +4101,16 @@ export default {
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
 }
 
+/* 使用Element UI默认的拖拽和sortable-ghost样式，不自定义覆盖 */
+
+/* 修复拖拽过程中节点悬停状态的样式 */
+::v-deep .el-tree-node__content:hover {
+  background-color: rgba(215, 53, 2, 0.05) !important; /* 轻微的红色背景 */
+}
+
+/* 修复选中状态下的hover样式冲突 - 保持蓝色主题 */
+::v-deep .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content:hover {
+  background-color: rgba(0, 153, 255, 0.8) !important; /* 选中状态hover时稍微淡一些的蓝色 */
+  color: white !important;
+}
 </style>
