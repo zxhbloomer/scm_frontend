@@ -106,6 +106,14 @@
       <el-table-column
         show-overflow-tooltip
         sortable="custom"
+        min-width="100"
+        :sort-orders="settings.sortOrders"
+        prop="is_admin_text"
+        label="系统管理员"
+      />
+      <el-table-column
+        show-overflow-tooltip
+        sortable="custom"
         min-width="80"
         :sort-orders="settings.sortOrders"
         prop="birthday"

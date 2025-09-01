@@ -95,14 +95,7 @@
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
-      @selection-change="handleSelectionChange"
     >
-      <el-table-column
-        v-if="!meDialogStatus"
-        type="selection"
-        width="45"
-        prop="id"
-      />
       <el-table-column
         label="No"
         type="index"
@@ -265,8 +258,6 @@ export default {
         currentJson: null,
         // 当前表格中的索引，第几条
         rowIndex: 0,
-        // 当前选中的行（checkbox）
-        multipleSelection: []
       },
       // 页面设置json
       settings: {
@@ -274,7 +265,6 @@ export default {
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
-          showExport: false,
           showDelete: false
         },
         // loading 状态
@@ -299,18 +289,6 @@ export default {
   },
   // 监听器
   watch: {
-    // 选中的数据，使得导出按钮和删除按钮可用，否则就不可使用
-    'dataJson.multipleSelection': {
-      handler (newVal, oldVal) {
-        if (newVal.length > 0) {
-          this.settings.btnShowStatus.showExport = true
-          this.settings.btnShowStatus.showDelete = true
-        } else {
-          this.settings.btnShowStatus.showExport = false
-          this.settings.btnShowStatus.showDelete = false
-        }
-      }
-    }
   },
   created () {
     this.initShow()
@@ -348,39 +326,6 @@ export default {
       this.dataJson.searchForm.pageCondition.current = 1
       this.dataJson.paging.current = 1
       this.getDataList()
-      // 清空选择
-      this.dataJson.multipleSelection = []
-      this.$refs.multipleTable.clearSelection()
-    },
-    // 导出按钮
-    handleExport () {
-      // 没有选择任何数据的情况
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
-          confirmButtonText: '关闭',
-          type: 'error'
-        }).then(() => {
-          this.settings.btnShowStatus.showExport = false
-        })
-      } else if (this.dataJson.multipleSelection.length === this.dataJson.listData.length) {
-        // 选择全部的时候
-        this.$confirm('请选择：当前页数据导出，全数据导出？', '确认信息', {
-          distinguishCancelAndClose: true,
-          confirmButtonText: '全数据导出',
-          cancelButtonText: '当前页数据导出'
-        }).then(() => {
-          this.handleExportAllData()
-        }).catch(action => {
-          // 右上角X
-          if (action !== 'close') {
-            // 当前页所选择的数据导出
-            this.handleExportSelectionData()
-          }
-        })
-      } else {
-        // 部分数据导出
-        this.handleExportSelectionData()
-      }
     },
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
@@ -390,10 +335,12 @@ export default {
         // this.settings.btnShowStatus.doInsert = true
         this.settings.btnShowStatus.showUpdate = true
         this.settings.btnShowStatus.showCopyInsert = true
+        this.settings.btnShowStatus.showDelete = true
       } else {
         // this.settings.btnShowStatus.doInsert = false
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showCopyInsert = false
+        this.settings.btnShowStatus.showDelete = false
       }
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
@@ -416,10 +363,6 @@ export default {
     // 获取row-key
     getRowKeys (row) {
       return row.id
-    },
-    // table选择框
-    handleSelectionChange (val) {
-      this.dataJson.multipleSelection = val
     },
 
     // 点击按钮 新增
@@ -459,27 +402,22 @@ export default {
     },
     // 删除按钮
     handleRealyDelete () {
-      // 没有选择任何数据的情况
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行删除', '未选择数据错误', {
+      // 没有选择数据的情况
+      if (!this.dataJson.currentJson || this.dataJson.currentJson.id === undefined) {
+        this.$alert('请在表格中选择一条数据进行删除', '未选择数据错误', {
           confirmButtonText: '关闭',
           type: 'error'
-        }).then(() => {
-          this.settings.btnShowStatus.showDelete = false
         })
-      } else {
-        // 选中数据删除
-        this.handleRealDeleteSelectionData()
+        return
       }
+      // 选中数据删除
+      this.handleRealDeleteSelectionData()
     },
     // 选中数据删除
     handleRealDeleteSelectionData () {
       // loading
       this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
+      const selectionJson = [{ 'id': this.dataJson.currentJson.id }]
       var _message = '是否要删除选择的数据？'
       // 选择全部的时候
       this.$confirm(_message, '确认信息', {

@@ -146,6 +146,19 @@ export function setPositionStaff (data) {
   })
 }
 
+/**
+ * 获取员工组织关系信息
+ * @param {Object} data - 包含staffId的请求数据
+ * @returns {Promise} 返回员工组织关系列表
+ */
+export function getStaffOrgRelationApi (data) {
+  return request({
+    url: '/api/v1/staff/org/relation',
+    method: 'post',
+    data
+  })
+}
+
 // ===================【员工角色权限管理API】===================
 
 /**

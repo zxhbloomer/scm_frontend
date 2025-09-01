@@ -35,10 +35,11 @@
         <el-tooltip
           class="item"
           effect="dark"
-          content="更换当前选中的组织"
+          content="修改当前选中的组织"
           placement="top"
         >
           <el-button
+            v-permission="'P_ORG:EDIT'"
             type="primary"
             icon="el-icon-edit"
             style="padding:7px 7px"
@@ -53,6 +54,7 @@
           placement="top"
         >
           <el-button
+            v-permission="'P_ORG:DELETE'"
             type="danger"
             icon="el-icon-delete"
             style="padding:7px 7px"
@@ -1486,10 +1488,8 @@ export default {
           })
           break
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
-          // 员工节点：显示员工详情信息（可选择打开专门的员工编辑弹窗）
-          if (this.dataJson.currentJson && isStaffNode(this.dataJson.currentJson)) {
-            this.$message.info('员工信息详情，如需编辑请通过员工管理模块')
-          }
+          // 员工节点：调用员工编辑方法
+          this.handleStaffEdit(this.dataJson.currentJson)
           break
       }
     },
@@ -1787,13 +1787,8 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 如果是员工类型，只更新当前岗位节点的统计数据显示，不刷新整个树
-          if (this.popSettingsData.listDialogData.dialogType === 'staff') {
-            this.updatePositionStats(this.dataJson.currentJson)
-          } else {
-            // 其他类型刷新树数据，以便显示新增的节点和确保缓存同步
-            this.handleTreeRefresh()
-          }
+          // 统一刷新整个树，确保新增的节点能够正确显示
+          this.handleTreeRefresh()
         }, (_error) => {
           this.$notify({
             title: '新增处理失败',
@@ -3912,7 +3907,9 @@ export default {
       const currentNode = this.dataJson.currentJson
       const requestData = [{
         id: staffInfo.id,
-        dbversion: staffInfo.dbversion,
+        // 修复乐观锁版本不匹配问题：对于从组织架构移除操作，不传递dbversion
+        // 因为前端获取的是组织节点版本号，但后端检查的是员工实体版本号
+        dbversion: deleteType === 'remove_only' ? null : staffInfo.dbversion,
         // 添加组织上下文信息，用于精确删除关联关系
         org_node_id: currentNode.id, // 当前组织节点ID
         parent_org_id: currentNode.parent_id, // 父组织节点ID（岗位ID）

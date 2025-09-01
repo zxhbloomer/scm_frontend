@@ -712,6 +712,107 @@
               </el-col>
               <el-col :span="12" />
             </el-row>
+            
+            <!-- 组织关系信息表格 -->
+            <el-divider content-position="left">
+              <i class="el-icon-s-data"></i>
+              当前组织关系
+            </el-divider>
+            
+            <div v-loading="orgRelationLoading" element-loading-text="正在查询组织关系...">
+              <div style="margin-bottom: 10px;">
+                <el-button type="primary" size="mini" icon="el-icon-refresh" @click="loadOrgRelationData">
+                  刷新数据
+                </el-button>
+                <span style="margin-left: 10px; color: #909399; font-size: 12px;">
+                  显示该员工在组织架构中的所有关联关系
+                </span>
+              </div>
+              
+              <el-table
+                :data="orgRelationData"
+                border
+                stripe
+                style="width: 100%"
+                empty-text="暂无组织关系数据"
+                size="mini"
+                max-height="300"
+              >
+                <el-table-column
+                  prop="group_name"
+                  label="集团信息"
+                  min-width="130"
+                  show-overflow-tooltip
+                >
+                  <template slot-scope="scope">
+                    <span>{{ scope.row.group_name || '-' }}</span>
+                    <el-tag v-if="scope.row.group_code" size="mini" type="info" style="margin-left: 5px;">
+                      {{ scope.row.group_code }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column
+                  prop="company_name"
+                  label="所属主体企业"
+                  min-width="150"
+                  show-overflow-tooltip
+                >
+                  <template slot-scope="scope">
+                    <span>{{ scope.row.company_name || '-' }}</span>
+                    <el-tag v-if="scope.row.company_code" size="mini" type="success" style="margin-left: 5px;">
+                      {{ scope.row.company_code }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column
+                  prop="dept_name"
+                  label="部门"
+                  min-width="120"
+                  show-overflow-tooltip
+                >
+                  <template slot-scope="scope">
+                    <span>{{ scope.row.dept_name || '-' }}</span>
+                    <el-tag v-if="scope.row.dept_code" size="mini" type="warning" style="margin-left: 5px;">
+                      {{ scope.row.dept_code }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column
+                  prop="position_name"
+                  label="岗位"
+                  min-width="120"
+                  show-overflow-tooltip
+                >
+                  <template slot-scope="scope">
+                    <span>{{ scope.row.position_name || '-' }}</span>
+                    <el-tag v-if="scope.row.position_code" size="mini" type="danger" style="margin-left: 5px;">
+                      {{ scope.row.position_code }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                
+                <el-table-column
+                  prop="serial_type"
+                  label="关系类型"
+                  width="80"
+                  align="center"
+                >
+                  <template slot-scope="scope">
+                    <el-tag :type="getSerialTypeTagType(scope.row.serial_type)" size="mini">
+                      {{ getSerialTypeText(scope.row.serial_type) }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <div v-if="orgRelationData.length === 0 && !orgRelationLoading" style="text-align: center; padding: 15px; color: #909399;">
+                <i class="el-icon-info" style="font-size: 14px;"></i>
+                <p style="margin: 5px 0 0 0; font-size: 12px;">该员工暂无组织关系数据</p>
+              </div>
+            </div>
           </el-tab-pane>
 
           <el-tab-pane label="权限信息" name="tab5">
@@ -866,7 +967,7 @@
 
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
-import { updateApi, insertApi, getApi } from '@/api/20_master/staff/staff'
+import { updateApi, insertApi, getApi, getStaffOrgRelationApi } from '@/api/20_master/staff/staff'
 import RadioDict from '@/components/00_dict/redio'
 import SelectDict from '@/components/00_dict/select/SelectDict'
 import SelectCompanyDept from '@/views/20_master/staff/component/selectgrid/companyDept'
@@ -1111,7 +1212,10 @@ export default {
             model: ''
           }
         }
-      }
+      },
+      // 组织关系信息
+      orgRelationData: [],
+      orgRelationLoading: false
     }
   },
   computed: {
@@ -1294,8 +1398,30 @@ export default {
 
         // 默认全部展开
         this.toggleExpand(this.dataJson.tempJson.permissionTreeData, true)
+        
+        // 加载组织关系数据
+        this.loadOrgRelationData()
       }).finally(() => {
         this.settings.loading = false
+      })
+    },
+    // 加载员工组织关系数据
+    loadOrgRelationData () {
+      if (!this.dataJson.tempJson.id) {
+        return
+      }
+      
+      this.orgRelationLoading = true
+      getStaffOrgRelationApi({
+        staffId: this.dataJson.tempJson.id
+      }).then(response => {
+        this.orgRelationData = response.data || []
+      }).catch(error => {
+        console.error('获取组织关系数据失败:', error)
+        this.$message.error('获取组织关系数据失败')
+        this.orgRelationData = []
+      }).finally(() => {
+        this.orgRelationLoading = false
       })
     },
     // 插入逻辑
@@ -1602,6 +1728,36 @@ export default {
       // 如果是10, 手机号 默认是 登录名称
       if (this.dataJson.tempJson.user.login_type === '10') {
         this.dataJson.tempJson.mobile_phone = deepCopy(this.dataJson.tempJson.user.login_name)
+      }
+    },
+    // 获取关系类型文本
+    getSerialTypeText (serialType) {
+      switch (serialType) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return '集团'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return '主体企业'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return '部门'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return '岗位'
+        default:
+          return '未知'
+      }
+    },
+    // 获取关系类型标签类型
+    getSerialTypeTagType (serialType) {
+      switch (serialType) {
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
+          return 'primary'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
+          return 'success'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
+          return 'warning'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
+          return 'danger'
+        default:
+          return 'info'
       }
     }
 

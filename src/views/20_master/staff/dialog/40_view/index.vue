@@ -259,41 +259,90 @@
 
       <!-- 所属信息 -->
       <el-tab-pane name="tab4" label="所属信息">
-        <el-form
-          label-position="right"
-          label-width="120px"
-        >
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="所属主体企业">
-                <span>{{ dataJson.tempJson.company_name || '-' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="默认部门">
-                <span>{{ dataJson.tempJson.dept_name || '-' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="24">
-              <el-form-item label="岗位信息">
-                <div v-if="dataJson.tempJson.positions && dataJson.tempJson.positions.length > 0">
-                  <el-tag
-                    v-for="position in dataJson.tempJson.positions"
-                    :key="position.position_id"
-                    class="position-tag"
-                  >
-                    {{ position.position_name }}
-                  </el-tag>
-                </div>
-                <span v-else>-</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-form>
+        <div v-loading="orgRelationLoading" element-loading-text="正在查询组织关系...">
+          <div style="margin-bottom: 10px;">
+            <el-button type="primary" size="small" icon="el-icon-refresh" @click="loadOrgRelationData">
+              刷新数据
+            </el-button>
+            <span style="margin-left: 10px; color: #606266; font-size: 12px;">
+              显示该员工在组织架构中的所有关联关系
+            </span>
+          </div>
+          
+          <el-table
+            :data="orgRelationData"
+            border
+            stripe
+            style="width: 100%"
+            empty-text="暂无组织关系数据"
+            size="small"
+          >
+            <el-table-column
+              type="index"
+              label="No"
+              width="50"
+              align="center"
+            />
+            <el-table-column
+              prop="group_name"
+              label="集团信息"
+              min-width="150"
+              show-overflow-tooltip
+            >
+              <template slot-scope="scope">
+                <span>{{ scope.row.group_name || '-' }}</span>
+                <el-tag v-if="scope.row.group_code" size="mini" type="info" style="margin-left: 5px;">
+                  {{ scope.row.group_code }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            
+            <el-table-column
+              prop="company_name"
+              label="所属主体企业"
+              min-width="180"
+              show-overflow-tooltip
+            >
+              <template slot-scope="scope">
+                <span>{{ scope.row.company_name || '-' }}</span>
+                <el-tag v-if="scope.row.company_code" size="mini" type="success" style="margin-left: 5px;">
+                  {{ scope.row.company_code }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            
+            <el-table-column
+              prop="dept_name"
+              label="部门"
+              min-width="150"
+              show-overflow-tooltip
+            >
+              <template slot-scope="scope">
+                <span>{{ scope.row.dept_name || '-' }}</span>
+                <el-tag v-if="scope.row.dept_code" size="mini" type="warning" style="margin-left: 5px;">
+                  {{ scope.row.dept_code }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            
+            <el-table-column
+              prop="position_name"
+              label="岗位"
+              min-width="150"
+              show-overflow-tooltip
+            >
+              <template slot-scope="scope">
+                <span>{{ scope.row.position_name || '-' }}</span>
+              </template>
+            </el-table-column>
+            
+          </el-table>
+          
+          <div v-if="orgRelationData.length === 0 && !orgRelationLoading" style="text-align: center; padding: 20px; color: #909399;">
+            <i class="el-icon-info" style="font-size: 16px;"></i>
+            <p style="margin: 10px 0 0 0;">该员工暂无组织关系数据</p>
+          </div>
+        </div>
       </el-tab-pane>
 
       <!-- 权限信息 -->
@@ -366,7 +415,7 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import { getApi } from '@/api/20_master/staff/staff'
+import { getApi, getStaffOrgRelationApi } from '@/api/20_master/staff/staff'
 import deepCopy from 'deep-copy'
 import OrgTree from '@/components/OrgTree/index.js'
 
@@ -403,7 +452,10 @@ export default {
       scrollTreeStyle: 'width:100%;height:500px',
       horizontal: false,
       collapsable: true,
-      expandAll: true
+      expandAll: true,
+      // 组织关系信息
+      orgRelationData: [],
+      orgRelationLoading: false
     }
   },
   computed: {
@@ -447,8 +499,29 @@ export default {
         if (this.dataJson.tempJson.permissionTreeData && Array.isArray(this.dataJson.tempJson.permissionTreeData)) {
           this.toggleExpand(this.dataJson.tempJson.permissionTreeData, true)
         }
+        // 加载组织关系数据
+        this.loadOrgRelationData()
       }).finally(() => {
         this.settings.loading = false
+      })
+    },
+    // 加载员工组织关系数据
+    loadOrgRelationData () {
+      if (!this.dataJson.tempJson.id) {
+        return
+      }
+      
+      this.orgRelationLoading = true
+      getStaffOrgRelationApi({
+        staffId: this.dataJson.tempJson.id
+      }).then(response => {
+        this.orgRelationData = response.data || []
+      }).catch(error => {
+        console.error('获取组织关系数据失败:', error)
+        this.$message.error('获取组织关系数据失败')
+        this.orgRelationData = []
+      }).finally(() => {
+        this.orgRelationLoading = false
       })
     },
     // 获取性别文本

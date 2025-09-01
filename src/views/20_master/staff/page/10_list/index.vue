@@ -636,6 +636,7 @@ import StaffExcludePermissionDialog from '@/views/20_master/permission/component
 // 权限详情弹窗 - 用于查看具体权限信息
 import PermissionViewDialog from '@/views/20_master/permission/component/dialog/view/index.vue'
 import deepCopy from 'deep-copy'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
   name: 'StaffList',
@@ -974,6 +975,8 @@ export default {
         deleteApi(deleteData).then((_data) => {
           this.$message.success('删除成功')
           this.getDataList()
+          // 通知组织机构管理左边树刷新
+          EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
           // 清空选择状态
           this.$refs.multipleTable.clearSelection()
           this.dataJson.currentJson = null
@@ -998,6 +1001,8 @@ export default {
           duration: this.settings.duration
         })
         this.getDataList()
+        // 通知组织机构管理左边树刷新
+        EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
       } else {
         this.$notify({
           title: '新增处理失败',
@@ -1025,6 +1030,8 @@ export default {
           duration: this.settings.duration
         })
         this.getDataList()
+        // 通知组织机构管理左边树刷新
+        EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
       } else {
         this.$notify({
           title: '更新处理失败',

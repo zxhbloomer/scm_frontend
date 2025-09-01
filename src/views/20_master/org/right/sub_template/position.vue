@@ -671,7 +671,26 @@ export default {
       this.popSettings.two.visible = true
     },
     handleCloseDialogTwoOk (val) {
+      if (!val || !val.return_flag) {
+        this.popSettings.two.visible = false
+        return
+      }
+
+      this.$notify({
+        title: '员工设置成功',
+        message: val.message || `成功为岗位【${this.popSettings.two.props.data.name}】设置员工`,
+        type: 'success',
+        duration: this.settings.duration
+      })
+
+      // 关闭弹窗
       this.popSettings.two.visible = false
+
+      // 刷新岗位列表数据以显示最新的员工数量
+      this.getDataList()
+
+      // 通知组织树刷新
+      EventBus.$emit(this.EMITS.EMIT_ORG_LEFT)
     },
     handleCloseDialogTwoCancel () {
       this.popSettings.two.visible = false

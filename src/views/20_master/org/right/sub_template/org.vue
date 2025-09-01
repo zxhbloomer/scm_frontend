@@ -49,7 +49,7 @@
           <el-tag
             :type="getOrgTagType(scope.row.type)"
             size="mini"
-            effect="dark"
+            :effect="scope.row.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF ? 'plain' : 'dark'"
           >
             {{ getOrgTagText(scope.row.type) }}
           </el-tag>
@@ -633,6 +633,8 @@ export default {
           return 'success' // 绿色
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
           return 'info' // 灰色
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+          return 'success' // 绿色，与左边树保持一致
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
           return 'primary' // 蓝色
         default:
@@ -650,6 +652,8 @@ export default {
           return '部门'
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
           return '岗位'
+        case this.CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF:
+          return '员工'
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT:
           return '租户'
         default:

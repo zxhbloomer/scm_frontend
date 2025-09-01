@@ -76,13 +76,6 @@
               style="padding:4px 4px; "
               @click="handleEdit(scope.row)"
             />
-            <el-button
-              v-permission="'P_ORG:EDIT'"
-              type="primary"
-              icon="el-icon-delete"
-              style="padding:4px 4px; "
-              @click="handleDel(scope.row)"
-            />
           </el-button-group>
           {{ scope.row.code }}
         </template>
@@ -432,48 +425,6 @@ export default {
           duration: this.settings.duration
         })
       }
-    },
-    // 删除操作
-    handleDel (row) {
-      let message = ''
-      const value = row.is_del
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (value === true) {
-        message = '是否要删除选择的数据？'
-      } else {
-        message = '是否要复原该条数据？'
-      }
-      // 确认对话框
-      this.$confirm(message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        deleteApi(selectionJson).then((data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-          this.getDataList()
-        }, (error) => {
-          this.$notify({
-            title: '删除失败',
-            message: error.message, // 后端返回的详细关联信息
-            type: 'error',
-            duration: 5000 // 5秒显示时长，让用户看清楚详细信息
-          })
-          row.is_del = !row.is_del
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.is_del = !row.is_del
-      })
     }
   }
 }
