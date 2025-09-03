@@ -17,7 +17,7 @@
 </style>
 
 <script>
-import VueAutonumeric from 'vue-autonumeric/src/components/VueAutonumeric.vue'
+import VueAutonumeric from '@/components/99_util/autoNumeric/index.vue'
 
 export default {
   name: 'NumberCurrency',
