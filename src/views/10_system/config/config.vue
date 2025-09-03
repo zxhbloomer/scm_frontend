@@ -753,7 +753,7 @@ export default {
           duration: this.settings.duration
         })
       }
-    },
+    }
     // ------------------编辑弹出框 end--------------------
   }
 }

@@ -140,9 +140,16 @@
       <el-table-column
         min-width="45"
         :sort-orders="settings.sortOrders"
-        label="删除"
-        :render-header="renderHeaderIsDel"
+        prop="is_del"
+        align="center"
       >
+        <template v-slot:header>
+          <FieldHelp
+            default-label="删除状态"
+            help="删除状态提示：<br />绿色：未删除<br />红色：已删除"
+            placement="bottom"
+          />
+        </template>
         <template v-slot="scope">
           <el-tooltip
             :content="scope.row.is_del === 'false' ? '删除状态：已删除' : '删除状态：未删除' "
@@ -379,11 +386,12 @@ import { getListApi, updateApi, insertApi, exportAllApi, exportSelectionApi, del
 import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
+import FieldHelp from '@/components/30_table/FieldHelp'
 import deepCopy from 'deep-copy'
 
 export default {
   name: constants_program.P_RESOURCE, // 页面id，和router中的name需要一致，作为缓存
-  components: { Pagination },
+  components: { Pagination, FieldHelp },
   directives: { elDragDialog },
   mixins: [resizeMixin],
   data () {
@@ -950,24 +958,6 @@ export default {
         return callback()
       }
       return callback(new Error('现在只支持json配置，请选择“json配置”'))
-    },
-    renderHeaderIsDel: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              删除状态提示：<br />
-              绿色：未删除  <br />
-              红色：已删除
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
     }
   }
 }

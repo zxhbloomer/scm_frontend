@@ -1157,15 +1157,6 @@ export default {
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
     },
     // ------------------编辑弹出框 end--------------------
-    renderHeaderIsEnabled: function (h, { column }) {
-      return h('field-help', {
-        props: {
-          field: 'is_blacklist',
-          page: 'enterprise-list',
-          defaultLabel: column.label
-        }
-      })
-    },
     // 数据批量导入按钮
     handleOpenImportDialog () {
       this.popSettingsImport.dialogFormVisible = true

@@ -1111,7 +1111,7 @@ export default {
       }
     },
     isAccountLoginType () {
-      if (this.dataJson.tempJson.user.is_enable === {}) {
+      if (!this.dataJson.tempJson.user.is_enable || Object.keys(this.dataJson.tempJson.user.is_enable).length === 0) {
         return false
       } else {
         return this.dataJson.tempJson.user.is_enable

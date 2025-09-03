@@ -6,6 +6,8 @@ import requireContext from '@originjs/vite-plugin-require-context'
 import EnvironmentPlugin from 'vite-plugin-environment'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { resolve } from 'path'
+// 可选：自定义ESLint插件（在开发模式下检查代码质量）
+import viteEslintPlugin from './build/vite-eslint-plugin.js'
 
 export default defineConfig(() => {
   return {
@@ -38,7 +40,9 @@ export default defineConfig(() => {
       legacy({
         targets: ['defaults', 'not IE 11'],
         additionalLegacyPolyfills: ['regenerator-runtime/runtime']
-      })
+      }),
+      // 开发模式下运行ESLint检查（可选，如不需要可以注释掉）
+      ...(process.env.NODE_ENV === 'development' ? [viteEslintPlugin()] : [])
     ],
     resolve: {
       alias: {

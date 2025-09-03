@@ -322,7 +322,7 @@ export default {
       return (
         <span>
           {option.label}
-          <el-button type='primary' icon='el-icon-edit' plain style={{padding:'7px 7px', float: 'right'}} on-click={this.handleForward.bind(this, option.label)} />
+          <el-button type='primary' icon='el-icon-edit' plain style={{ padding: '7px 7px', float: 'right' }} on-click={this.handleForward.bind(this, option.label)} />
         </span>
       )
     }

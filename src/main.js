@@ -22,7 +22,6 @@ import store from './store'
 import router from './router'
 
 import './icons' // icon
-import 'virtual:svg-icons-register' // vite svg sprite
 import './permission' // permission control
 import './utils/error-log' // error log
 import '@/assets/iconfont/iconfont.css'

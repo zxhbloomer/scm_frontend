@@ -527,7 +527,7 @@ export default {
     },
     'popSettingsData.searchDialogDataOne.selectedDataJson': {
       handler (newVal, oldVal) {
-        if (newVal !== {}) {
+        if (newVal && Object.keys(newVal).length > 0) {
           this.dataJson.tempJson.handler_id = this.popSettingsData.searchDialogDataOne.selectedDataJson.id
         } else {
           this.popSettingsData.searchDialogDataOne.selectedDataJson.id = undefined
@@ -536,7 +536,7 @@ export default {
     },
     'popSettingsData.searchDialogDataTwo.selectedDataJson': {
       handler (newVal, oldVal) {
-        if (newVal !== {}) {
+        if (newVal && Object.keys(newVal).length > 0) {
           this.dataJson.tempJson.sub_handler_id = this.popSettingsData.searchDialogDataTwo.selectedDataJson.id
         } else {
           this.popSettingsData.searchDialogDataTwo.selectedDataJson.id = undefined
@@ -545,7 +545,7 @@ export default {
     },
     'popSettingsData.searchDialogDataThree.selectedDataJson': {
       handler (newVal, oldVal) {
-        if (newVal !== {}) {
+        if (newVal && Object.keys(newVal).length > 0) {
           this.dataJson.tempJson.leader_id = this.popSettingsData.searchDialogDataThree.selectedDataJson.id
         } else {
           this.popSettingsData.searchDialogDataThree.selectedDataJson.id = undefined
@@ -554,7 +554,7 @@ export default {
     },
     'popSettingsData.searchDialogDataFour.selectedDataJson': {
       handler (newVal, oldVal) {
-        if (newVal !== {}) {
+        if (newVal && Object.keys(newVal).length > 0) {
           this.dataJson.tempJson.leader_id = this.popSettingsData.searchDialogDataFour.selectedDataJson.id
         } else {
           this.popSettingsData.searchDialogDataFour.selectedDataJson.id = undefined

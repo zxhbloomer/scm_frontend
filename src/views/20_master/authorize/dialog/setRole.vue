@@ -316,12 +316,7 @@ export default {
     },
     // 穿梭框增加按钮
     renderTransfer (h, option) {
-      return (
-        <span>
-          {option.label}
-
-        </span>
-      )
+      return h('span', option.label)
     }
   }
 }

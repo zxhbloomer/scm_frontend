@@ -158,7 +158,7 @@ export default {
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
         // table使用的json
-        listData: null,
+        listData: [],
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
           id: undefined,
@@ -382,7 +382,7 @@ export default {
     },
     'popSettingsData.searchDialogDataTwo.selectedDataJson': {
       handler (newVal, oldVal) {
-        if (newVal === {}) {
+        if (!newVal || Object.keys(newVal).length === 0) {
           this.dataJson.tempJson.type = null
           this.dataJson.tempJson.name = null
           this.dataJson.tempJson.module_id = null

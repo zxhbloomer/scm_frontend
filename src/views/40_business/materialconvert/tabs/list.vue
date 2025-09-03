@@ -572,10 +572,9 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin/listResizeHandlerMixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 
 export default {
-  components: { Pagination, SelectDict, FieldHelp },
+  components: { Pagination, SelectDict },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {

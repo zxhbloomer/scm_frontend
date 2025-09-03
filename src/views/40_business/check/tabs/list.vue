@@ -740,24 +740,6 @@ export default {
       }
     },
     // ------------------编辑弹出框 end--------------------
-    renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              删除状态提示：<br />
-              绿色：已启用  <br />
-              红色：未启用
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
-    },
 
     handleCurrentChange (row) {
       this.dataJson.currentJson = Object.assign({}, row) // copy obj
