@@ -22,6 +22,13 @@ import store from './store'
 import router from './router'
 
 import './icons' // icon
+
+// Vite环境下的SVG图标虚拟模块导入
+if (typeof import.meta !== 'undefined') {
+  // Vite环境下导入SVG图标虚拟模块
+  import('virtual:svg-icons-register')
+}
+
 import './permission' // permission control
 import './utils/error-log' // error log
 import '@/assets/iconfont/iconfont.css'

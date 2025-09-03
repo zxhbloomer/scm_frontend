@@ -25,8 +25,8 @@
         <tr>
           <th v-for="col in config.props.columns" :key="col.id">{{ col.title }}</th>
         </tr>
-        <tr v-for="row in data">
-          <td v-for="column in config.props.columns">
+        <tr v-for="(row, rowIndex) in data" :key="rowIndex">
+          <td v-for="(column, colIndex) in config.props.columns" :key="colIndex">
             <default-print-item class="inner-item" :data="row[column.id]" :config="column" />
           </td>
         </tr>
@@ -42,9 +42,11 @@ export default {
   components: {},
   props: {
     config: {
+      type: Object,
       required: true
     },
     data: {
+      type: [Object, Array],
       required: true
     }
   },

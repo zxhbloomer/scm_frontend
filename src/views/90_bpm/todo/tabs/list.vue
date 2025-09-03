@@ -615,7 +615,7 @@ export default {
 
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
-    },
+    }
     // ------------------编辑弹出框 end--------------------
   }
 }

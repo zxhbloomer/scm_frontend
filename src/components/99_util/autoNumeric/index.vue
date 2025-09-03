@@ -70,6 +70,7 @@ export default {
   props: {
     value: {
       required: false,
+      default: '',
       validator (val) {
         return typeof val === 'number' || typeof val === 'string' || val === '' || val === null
       }
@@ -95,7 +96,8 @@ export default {
 
     placeholder: { // The <input> placeholder text. This is only used if the generated element is an <input>.
       type: String,
-      required: false
+      required: false,
+      default: ''
     },
 
     tag: {

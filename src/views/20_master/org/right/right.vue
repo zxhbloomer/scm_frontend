@@ -295,7 +295,7 @@ export default {
     // // 日期范围
     // 'dataJson.tempJson.enable_time_range': {
     //   handler(newVal, oldVal) {
-    //     if (newVal === undefined || newVal === null || newVal === []) {
+    //     if (newVal === undefined || newVal === null || (Array.isArray(newVal) && newVal.length === 0)) {
     //       this.dataJson.tempJson.enable_time = ''
     //       this.dataJson.tempJson.disable_time = ''
     //       this.dataJson.tempJson.show_enable_time_range = ''
@@ -312,7 +312,7 @@ export default {
     // },
     'dataJson.tempJson.enable_time': {
       handler (newVal, oldVal) {
-        if (newVal === undefined || newVal === null || newVal === []) {
+        if (newVal === undefined || newVal === null || (Array.isArray(newVal) && newVal.length === 0)) {
           // this.dataJson.tempJson.enable_time = ''
           // this.dataJson.tempJson.disable_time = ''
           // this.dataJson.tempJson.enable_time_range = []

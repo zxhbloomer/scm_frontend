@@ -29,8 +29,14 @@ export default defineConfig(() => {
       }),
       // 兼容 webpack 的 require.context
       requireContext(),
-      // 将 import.meta.env 暴露为 process.env（兼容现有代码）
-      EnvironmentPlugin('all'),
+      // 将关键环境变量暴露为 process.env（兼容现有代码，避免Windows系统变量干扰）
+      EnvironmentPlugin({
+        NODE_ENV: 'production',
+        VUE_APP_BASE_API: '/scm',
+        VUE_APP_Tenant: 'false', 
+        VUE_APP_FILE_UPLOAD_URL: 'http://file.xinyirunscm.com/',
+        VUE_APP_Version: '1.0.0'
+      }),
       // SVG 图标处理插件
       createSvgIconsPlugin({
         iconDirs: [resolve(__dirname, 'src/icons/svg')],

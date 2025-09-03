@@ -80,12 +80,13 @@ function decodeFieldVal (formData, item, val) {
       })
       break
     case 'TimeRangePicker':
-    case 'DateTimeRange':
+    case 'DateTimeRange': {
       const v = formData[item.id]
       if (Array.isArray(v) && v.length > 1) {
         value = v[0] + ' ~ ' + v[1]
       }
       break
+    }
     case 'DeptPicker':
     case 'UserPicker':
       value = String((formData[item.id] || []).map((v) => v.name))

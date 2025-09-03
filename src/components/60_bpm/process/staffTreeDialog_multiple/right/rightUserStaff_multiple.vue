@@ -289,10 +289,10 @@ export default {
     toggleSelection () {
       try {
         this.isLock = true
-        if (this.dataJson.multipleSelData === [] ||
+        if ((Array.isArray(this.dataJson.multipleSelData) && this.dataJson.multipleSelData.length === 0) ||
           this.dataJson.multipleSelData === null ||
           this.dataJson.multipleSelData === undefined ||
-          this.dataJson.multipleSelData.length === 0) {
+          (!Array.isArray(this.dataJson.multipleSelData) && this.dataJson.multipleSelData.length === 0)) {
           return
         }
 
