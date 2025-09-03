@@ -107,8 +107,6 @@ import resizeMixin from './syscodeResizeHandlerMixin'
 import elDragDialog from '@/directive/el-drag-dialog'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
-import 'kindeditor/kindeditor-all-min.js'
-import 'kindeditor/themes/default/default.css'
 import JsonEditor from '@/components/JsonEditor/index.vue'
 
 export default {

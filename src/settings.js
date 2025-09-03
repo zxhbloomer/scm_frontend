@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   title: '云物流系统',
 
   /**

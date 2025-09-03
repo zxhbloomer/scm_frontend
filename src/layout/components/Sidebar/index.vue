@@ -50,7 +50,7 @@
 import { mapGetters } from 'vuex'
 import Logo from './Logo'
 import SidebarItem from './SidebarItem'
-import variables from '@/styles/variables.scss'
+import variables from '@/styles/variables.module.scss'
 import CollapseTransition from 'element-ui/lib/transitions/collapse-transition'
 import deepCopy from 'deep-copy'
 

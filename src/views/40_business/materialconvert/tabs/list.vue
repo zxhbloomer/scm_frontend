@@ -572,9 +572,10 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin/listResizeHandlerMixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
+import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 
 export default {
-  components: { Pagination, SelectDict },
+  components: { Pagination, SelectDict, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [mixin],
   props: {
@@ -1153,24 +1154,6 @@ export default {
         this.settings.loading = false
       }, (_error) => {
       })
-    },
-    renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              启用状态提示：<br />
-              绿色：已启用  <br />
-              红色：未启用
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
     },
     // 启用/停用
     handledEnableOrDisAbleApi (row) {

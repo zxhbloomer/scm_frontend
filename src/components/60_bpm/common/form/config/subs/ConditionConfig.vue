@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
 // 设计思路，先定一个条件盒子，再连接
 import ConditionItem from './ConditionItem.vue'
 

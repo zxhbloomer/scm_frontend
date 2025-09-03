@@ -1,6 +1,9 @@
 import 'core-js/stable'
 // import 'regenerator-runtime/runtime'
 
+// 引入错误显示增强器（开发环境）
+import './utils/errorHandler'
+
 import Vue from 'vue'
 
 import Cookies from 'js-cookie'
@@ -8,15 +11,18 @@ import Cookies from 'js-cookie'
 import 'normalize.css/normalize.css' // a modern alternative to CSS resets
 
 import Element from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
 import './styles/element-variables.scss'
 
 import '@/styles/index.scss' // global css
+import 'vue-tour/dist/vue-tour.css' // vue-tour 样式
 
 import App from './App'
 import store from './store'
 import router from './router'
 
 import './icons' // icon
+import 'virtual:svg-icons-register' // vite svg sprite
 import './permission' // permission control
 import './utils/error-log' // error log
 import '@/assets/iconfont/iconfont.css'
@@ -34,14 +40,11 @@ import FloatMenu from '@/components/FloatMenu'
  * please remove it before going online! ! !
  */
 
-// 引入 vue-kikindeditor 需要的文件
-import VueKindEditor from 'vue-kindeditor'
-import 'kindeditor/kindeditor-all-min.js'
-import 'kindeditor/themes/default/default.css'
-import 'kindeditor/themes/simple/simple.css'
+// 引入 Monaco Editor 组件
+import MonacoEditor from '@/components/99_util/MonacoEditor'
 
-// 注册 vue-kikindeditor plugin
-Vue.use(VueKindEditor)
+// 注册 Monaco Editor 组件
+Vue.component('MonacoEditor', MonacoEditor)
 
 // add by zxh
 import commonFunction from './common/commonFunction'
@@ -87,8 +90,6 @@ Object.keys(filters).forEach(key => {
 
 // 全局组件
 Vue.component('FloatMenu', FloatMenu)
-
-require('vue-tour/dist/vue-tour.css')
 
 Vue.use(VueTour)
 

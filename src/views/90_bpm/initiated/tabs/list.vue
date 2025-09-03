@@ -265,7 +265,7 @@ a {
 }
 </style>
 
-<script>
+<script lang="jsx">
 import {
   formatBusinessStatus,
   getListApi

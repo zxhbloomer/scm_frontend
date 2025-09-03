@@ -147,16 +147,13 @@
         />
         <br>
         <br>
-        <editor
-          id="editor_id"
-          v-model.trim="dataJson.tempJson.content"
-          height="300px"
-          width="100%"
-          theme-type="simple"
-          :content="dataJson.tempJson.content"
-          plugins-path="/static/kindeditor/plugins/"
-          :load-style-mode="false"
-          @on-content-change="onContentChange"
+        <MonacoEditor
+          v-model="dataJson.tempJson.content"
+          :height="300"
+          language="html"
+          theme="vs"
+          :read-only="isViewModel"
+          @change="onContentChange"
         />
 
       </el-form>
@@ -228,8 +225,6 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { updateApi, insertApi } from '@/api/30_wms/notice/notice'
 import SelectDict from '@/components/00_dict/select/SelectDict'
-import 'kindeditor/kindeditor-all-min.js'
-import 'kindeditor/themes/default/default.css'
 import SimpleUpload from '@/components/10_file/SimpleApkUpload'
 
 export default {
@@ -315,7 +310,7 @@ export default {
           type: '1',
           url: undefined,
           title: undefined,
-          contet: undefined
+          content: undefined
         },
         // 单条数据 json
         tempJson: {
@@ -324,7 +319,7 @@ export default {
           type: '1',
           url: undefined,
           title: undefined,
-          contet: undefined
+          content: undefined
         },
         inputSettings: {
           maxLength: {

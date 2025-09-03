@@ -146,7 +146,7 @@
 // fuse is a lightweight fuzzy-search module
 // make search results more in line with expectations
 import Fuse from 'fuse.js'
-import path from 'path'
+import path from '@/utils/myPath'
 import {
   getSearchListApi,
   saveCacheApi,

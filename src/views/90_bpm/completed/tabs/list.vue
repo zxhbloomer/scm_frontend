@@ -264,7 +264,7 @@ a {
 }
 </style>
 
-<script>
+<script lang="jsx">
 import resizeMixin from './mixin/listResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'

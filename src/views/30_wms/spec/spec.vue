@@ -176,8 +176,13 @@
         :auto-fit="true"
         label="启用状态"
         prop="enable"
-        :render-header="renderHeaderIsEnabled"
       >
+        <template v-slot:header>
+          <field-help
+            default-label="启用状态"
+            help="启用状态提示：<br>绿色：已启用<br>红色：未启用"
+          />
+        </template>
         <template v-slot="scope">
           <el-tooltip
             :content="scope.row.enable === 'false' ? '启用状态：未启用' : '启用状态：已启用' "
@@ -307,9 +312,10 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/30_wms/spec/dialog/edit'
 import deepCopy from 'deep-copy'
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
+import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 
 export default {
-  components: { Pagination, editDialog, unitCalculatorDialog },
+  components: { Pagination, editDialog, unitCalculatorDialog, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [resizeMixin],
   props: {
@@ -729,24 +735,6 @@ export default {
       }
     },
     // ------------------编辑弹出框 end--------------------
-    renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              删除状态提示：<br />
-              绿色：已启用  <br />
-              红色：未启用
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
-    },
     // 启用/停用
     handledEnableOrDisAbleApi (row) {
       let _message = ''

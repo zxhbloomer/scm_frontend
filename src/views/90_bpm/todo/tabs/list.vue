@@ -227,7 +227,7 @@
   </div>
 </template>
 
-<script>
+<script lang="jsx">
 import {
   formatBusinessStatus,
   getListApi

@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
 import { addResizeListener, removeResizeListener } from 'element-ui/src/utils/resize-event'
 
 export default {

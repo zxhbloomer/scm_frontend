@@ -495,6 +495,7 @@ import deepCopy from 'deep-copy'
 import { updateApi, getApi, validateApi } from '@/api/40_business/30_in/in/in'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import { EventBus } from '@/common/eventbus/eventbus'
+import { isNotEmpty } from '@/utils'
 
 export default {
   name: 'InEdit',
@@ -803,8 +804,6 @@ export default {
      * 仓库选择控件返回数据事件
      */
     handleWLBReturnData (val) {
-      const { isNotEmpty } = require('@/utils')
-
       if (!isNotEmpty(val)) {
         this.dataJson.tempJson.wlb_data = null
         // 仓库

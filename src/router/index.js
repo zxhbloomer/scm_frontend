@@ -7,9 +7,6 @@ Vue.use(Router)
 import Layout from '@/layout'
 import { isNotEmpty } from '@/utils'
 
-/* Router Modules */
-// import subMenu from '@/views/10_system/submenu'
-
 /**
  * 解决Vue-Router升级导致的Uncaught (in promise)问题
  */
@@ -18,6 +15,12 @@ Router.prototype.push = function push (location, onResolve, onReject) {
   if (onResolve || onReject) return originalPush.call(this, location, onResolve, onReject)
   return originalPush.call(this, location).catch(err => err)
 }
+
+/**
+ * 使用 Vite 的 import.meta.glob 预注册 views 下的所有页面
+ * 注意：glob 的键必须是绝对的 /src 开头路径，不能用别名 @
+ */
+const viewModules = import.meta.glob('/src/views/**/*.vue')
 
 /**
  * Note: sub-menu only appear when route children.length >= 1
@@ -30,14 +33,14 @@ Router.prototype.push = function push (location, onResolve, onReject) {
  * redirect: noRedirect           if set noRedirect will no redirect in the breadcrumb
  * name:'router-name'             the name is used by <keep-alive> (must set!!!)
  * meta : {
-    roles: ['admin','editor']    control the page roles (you can set multiple roles)
-    title: 'title'               the name show in sidebar and breadcrumb (recommend set)
-    icon: 'svg-name'             the icon show in the sidebar
-    noCache: true                if set true, the page will no be cached(default is false)
-    affix: true                  if set true, the tag will affix in the tags-view
-    breadcrumb: false            if set false, the item will hidden in breadcrumb(default is true)
-    activeMenu: '/example/list'  if set path, the sidebar will highlight the path you set
-  }
+ roles: ['admin','editor']    control the page roles (you can set multiple roles)
+ title: 'title'               the name show in sidebar and breadcrumb (recommend set)
+ icon: 'svg-name'             the icon show in the sidebar
+ noCache: true                if set true, the page will no be cached(default is false)
+ affix: true                  if set true, the tag will affix in the tags-view
+ breadcrumb: false            if set false, the item will hidden in breadcrumb(default is true)
+ activeMenu: '/example/list'  if set path, the sidebar will highlight the path you set
+ }
  */
 
 /**
@@ -148,15 +151,23 @@ export function setAsyncRouters (_data) {
   return asyncRoutesConvertToOneRouter
 }
 
+/**
+ * 注意：Vite 环境下需要先声明 customerRouter，再创建 router
+ * 否则会触发 let 的 TDZ（临时性死区）错误
+ */
+let customerRouter = []
+
 const createRouter = () => new Router({
   // mode: 'history', // require service support
   scrollBehavior: () => ({ y: 0 }),
-  routes: customerRouter === undefined ? constantRoutes : constantRoutes.concat(customerRouter)
+  // 将动态路由（如果存在）拼接到常量路由后
+  routes: constantRoutes.concat(
+    customerRouter ? (Array.isArray(customerRouter) ? customerRouter : [customerRouter]) : []
+  )
 })
 
 const router = createRouter()
 
-let customerRouter = []
 /**
  * 重定向使用
  * @param {*} _data
@@ -237,15 +248,33 @@ function findChilds (children, _path, _parent, _childrens) {
 }
 
 /**
- * 懒加载页面 ()
- * @param {*} view
+ * 懒加载页面 (Vite 版)
+ * @param {*} view 例如 '/30_wms/preview/index' 或 '/10_system/config/config'
  */
 export const loadView = (view) => { // 路由懒加载
   if (view === 'Layout') {
     return Layout
   } else {
     if (isNotEmpty(view)) {
-      return (resolve) => require([`@/views${view}`], resolve)
+      // 统一成不以 / 结尾的路径
+      const v = String(view).replace(/\/+$/, '')
+
+      // 尝试两种常见文件：/path.vue 与 /path/index.vue
+      const candidates = [
+        `/src/views${v}.vue`,
+        `/src/views${v}/index.vue`
+      ]
+      const importer = candidates.map(p => viewModules[p]).find(Boolean)
+
+      if (!importer) {
+        console.error('[router] View not found for', view)
+        // 兜底，避免路由报错（可改为跳 404）
+        return () => Promise.resolve({ render: h => h('div', 'View not found') })
+      }
+
+      // import.meta.glob 返回 () => Promise<ComponentModule>
+      // 直接返回给 vue-router 作为异步组件使用
+      return importer
     }
   }
 }

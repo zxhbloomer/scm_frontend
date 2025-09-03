@@ -87,7 +87,7 @@
 }
 </style>
 
-<script>
+<script lang="jsx">
 
 import { getStaffTransferListApi, setStaffTransferApi } from '@/api/20_master/org/org'
 import constants_para from '@/common/constants/constants_para'
@@ -322,7 +322,7 @@ export default {
       return (
         <span>
           {option.label}
-          <el-button type='primary' icon='el-icon-edit' plain style='padding:7px 7px; float: right' on-click={() => this.handleForward(option.label)} />
+          <el-button type='primary' icon='el-icon-edit' plain style={{padding:'7px 7px', float: 'right'}} on-click={this.handleForward.bind(this, option.label)} />
         </span>
       )
     }

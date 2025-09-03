@@ -5,17 +5,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Essential Commands
 
 ```bash
-# Development
-npm run dev                 # Start development server on port 19528
+# Development (Vue CLI - Primary)
+npm run dev                 # Start Vue CLI development server on port 9528
+
+# Development (Vite - Alternative)
+npm run dev:vite           # Start Vite development server (faster)
+npm run dev:vite-debug     # Start Vite with debug logging
+npm run preview:vite       # Preview Vite build on port 5000
 
 # Build
-npm run build:stage        # Build for staging environment  
-npm run build:test1        # Build for test1 environment
+npm run build:stage        # Build for staging environment (Vue CLI)
+npm run build:test1        # Build for test1 environment (Vue CLI)
+npm run build:vite         # Build with Vite (alternative)
+npm run build:vite-debug   # Build with Vite debugging
+npm run analyze:vite       # Analyze Vite bundle size
 
-# Testing & Code Quality
-npm run test:unit          # Run unit tests with Jest
+# Code Quality
 npm run lint               # Run ESLint with Vue-specific rules
-npm run test:ci            # Run lint + unit tests (ALWAYS run before committing)
+                          # Note: No separate test commands exist - testing via Playwright
 
 # Code Generation
 npm run new                # Generate new components with Plop templates
@@ -24,14 +31,18 @@ npm run new                # Generate new components with Plop templates
 
 # Asset Optimization
 npm run svgo               # Optimize SVG icons in src/icons/svg/
+
+# Preview
+npm run preview            # Preview production build
 ```
 
 ## Important Development Notes
 
 ### Before Making Changes
-- Always run `npm run test:ci` before committing to ensure code quality
+- Always run `npm run lint` before committing to ensure code quality (Husky pre-commit hook)
 - Use `npm run new` to generate new components following project patterns
 - Follow the numerical domain organization (00_common, 10_system, 20_master, etc.)
+- Choose build system: Vue CLI (primary) or Vite (faster development)
 
 ### Common File Operations
 - API files: Located in `src/api/` following domain structure
@@ -48,7 +59,22 @@ This is a **Vue.js 2.7.16 enterprise warehouse management system (WMS)** with El
 - **State Management**: Vuex 3.1.0
 - **Routing**: Vue Router 3.1.3 (dynamic, permission-based)
 - **HTTP**: Axios 0.19.0
-- **Build**: Vue CLI 4.4.4
+- **Build**: Vue CLI 4.4.4 (primary) + Vite 5.3.0 (alternative)
+- **Testing**: Playwright 1.54.2 for E2E testing
+
+### Build System Options
+The project supports two build systems:
+
+1. **Vue CLI (Primary)**: Traditional Vue.js build system
+   - Development: `npm run dev` (port 9528)
+   - Build: `npm run build:stage` / `npm run build:test1`
+   - More stable, legacy browser support
+
+2. **Vite (Alternative)**: Modern build tool for faster development
+   - Development: `npm run dev:vite` 
+   - Build: `npm run build:vite`
+   - Faster HMR, modern ES modules support
+   - Preview: `npm run preview:vite` (port 5000)
 
 ### Code Organization
 
@@ -139,16 +165,21 @@ async loadData() {
 ```
 
 ### Critical Configuration Files
-- `vue.config.js` - Development server (port 19528) and build configuration
+- `vite.config.js` - Vite build configuration with Vue 2 support and legacy compatibility
 - `src/permission.js` - Route guards and authentication logic
 - `src/utils/request.js` - HTTP client with interceptors
 - `src/settings.js` - Application themes and settings
+- `.eslintrc.js` - ESLint configuration with Vue-specific rules
+- `.env.development` / `.env.staging` / `.env.test1` - Environment-specific variables
+- `package.json` - Dependencies and scripts configuration
+- `plopfile.js` - Code generation templates
 
 ### Testing and Quality
-- Always run `npm run test:ci` before committing (runs lint + tests)
-- Unit tests using Jest for business logic
-- ESLint with Vue-specific rules for code quality
-- Pre-commit hooks ensure code standards
+- **ESLint**: Run `npm run lint` for code quality checks (enforced by pre-commit hooks)
+- **E2E Testing**: Playwright 1.54.2 installed for end-to-end testing
+- **Pre-commit Hooks**: Husky + lint-staged automatically fix ESLint issues before commits
+- **Code Standards**: Strict ESLint rules with Vue-specific configuration
+- **Note**: No separate unit test commands exist - testing primarily via Playwright E2E
 
 ### API Communication
 - **Base URLs**: `/scm` for main API, `/fs` for file operations
@@ -204,9 +235,11 @@ npm run new
 ## Troubleshooting
 
 ### Development Server Issues
-- **Port 19528 in use**: Change port in `vue.config.js` or kill process
+- **Vue CLI Port 9528 in use**: Kill process or change port in configuration
+- **Vite Port conflicts**: Default Vite dev server runs on different port
 - **Proxy errors**: Check backend server at `http://127.0.0.1:8088/`
-- **Hot reload not working**: Restart dev server
+- **Hot reload not working**: Try switching between Vue CLI and Vite dev servers
+- **Build system selection**: Use Vite for faster development, Vue CLI for stable production builds
 
 ### Build Issues
 - **Memory errors**: Increase Node.js memory with `--max-old-space-size=4096`
@@ -253,16 +286,16 @@ VUE_APP_Version=1.0.0                    # Version for build files
 
 ## Testing Configuration
 
-### Jest Setup
-- **Config**: `jest.config.js` with Vue support
-- **Coverage**: Unit test coverage tracking
-- **Mocking**: MockJS for API mocking during tests
-- **Clearing Cache**: Auto-cache clearing before test runs
+### E2E Testing Setup
+- **Framework**: Playwright 1.54.2 for end-to-end testing
+- **Config**: Vue Test Utils 1.0.0-beta.29 for component testing
+- **Mocking**: MockJS 1.0.1-beta3 for API mocking during development
+- **Note**: No Jest configuration exists - testing focuses on E2E with Playwright
 
 ### Pre-commit Hooks
-- **Husky**: Pre-commit hook configuration
-- **Lint-staged**: Automatic ESLint fixing on staged files
-- **Quality Gates**: Must pass `npm run test:ci` before commits
+- **Husky**: Pre-commit hook configuration in package.json
+- **Lint-staged**: Automatic ESLint fixing on staged `.js` and `.vue` files
+- **Quality Gates**: Must pass ESLint checks before commits (enforced automatically)
 
 ## mysql数据库mcp链接定义
 ip：127.0.0.1
@@ -280,10 +313,11 @@ password:123456
 - Database connections and business rules are configured for Chinese business processes
 
 ### Code Quality Standards
-- Always run `npm run test:ci` before committing
+- Pre-commit hooks automatically run `npm run lint` and fix issues
 - Follow Vue.js and Element UI best practices
-- Use ESLint configuration provided in the project
-- Maintain consistent code formatting and naming conventions
+- Strict ESLint configuration with Vue-specific rules in `.eslintrc.js`
+- Husky + lint-staged ensures consistent code formatting before commits
+- No semicolons, single quotes, 2-space indentation (enforced by ESLint)
 
 ### Critical Development Best Practices
 

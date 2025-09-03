@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
 import componentMinxins from '../ComponentMinxins'
 
 export default {
@@ -161,4 +161,4 @@ export default {
   color: red;
 }
 </style>
- 
+

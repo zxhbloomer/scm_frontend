@@ -285,11 +285,12 @@ import resizeMixin from './configResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/10_system/config/dialog/edit'
+import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
-  components: { Pagination, editDialog },
+  components: { Pagination, editDialog, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [resizeMixin],
   data () {
@@ -754,24 +755,6 @@ export default {
       }
     },
     // ------------------编辑弹出框 end--------------------
-    renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              删除状态提示：<br />
-              绿色：已启用  <br />
-              红色：未启用
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
-    }
   }
 }
 </script>

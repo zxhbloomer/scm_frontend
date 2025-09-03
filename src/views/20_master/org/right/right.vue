@@ -132,7 +132,7 @@
   border-color: #f56c6c;
 }
 </style>
-<script>
+<script lang="jsx">
 import { getAllOrgDataCountApi } from '@/api/20_master/org/org'
 import elDragDialog from '@/directive/el-drag-dialog'
 import orgTemplate from '@/views/20_master/org/right/sub_template/org'
@@ -509,7 +509,7 @@ export default {
               绿色：未启用  <br />
               红色：已启用
             </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
+            <svg-icon icon-class='perfect-icon-question1_btn' style={{marginLeft: '5px'}} />
           </el-tooltip>
         </span>
       )
@@ -527,7 +527,7 @@ export default {
               绿色：未启用  <br />
               红色：已启用
             </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
+            <svg-icon icon-class='perfect-icon-question1_btn' style={{marginLeft: '5px'}} />
           </el-tooltip>
         </span>
       )

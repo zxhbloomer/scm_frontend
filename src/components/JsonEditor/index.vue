@@ -9,7 +9,9 @@ import CodeMirror from 'codemirror'
 import 'codemirror/addon/lint/lint.css'
 import 'codemirror/lib/codemirror.css'
 import 'codemirror/theme/rubyblue.css'
-require('script-loader!jsonlint')
+import jsonlint from 'jsonlint'
+// 将 jsonlint 设置为全局变量，供 CodeMirror 使用
+window.jsonlint = jsonlint
 import 'codemirror/mode/javascript/javascript'
 import 'codemirror/addon/lint/lint'
 import 'codemirror/addon/lint/json-lint'

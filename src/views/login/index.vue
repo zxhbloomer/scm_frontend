@@ -198,7 +198,7 @@ export default {
     }
     return {
       videoRatio: null,
-      source: require('@/assets/video/bg_video_steel.webm'),
+      source: '/src/assets/video/bg_video_steel.webm',
       loginForm: {
         username: '',
         password: '',

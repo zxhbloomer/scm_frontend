@@ -529,6 +529,7 @@ import constants_para from '@/common/constants/constants_para'
 import { insertApi, validateApi } from '@/api/40_business/30_in/in/in'
 import { getFlowProcessApi } from '@/api/40_business/bpmprocess/bpmprocess'
 import { EventBus } from '@/common/eventbus/eventbus'
+import { isNotEmpty } from '@/utils'
 
 // 导入组件
 import numeric from '@/components/40_input/numeric/index.vue'
@@ -1415,8 +1416,6 @@ export default {
      * 仓库选择控件返回数据事件
      */
     handleWLBReturnData (val) {
-      const { isNotEmpty } = require('@/utils')
-
       if (!isNotEmpty(val)) {
         this.dataJson.tempJson.wlb_data = null
         // 仓库

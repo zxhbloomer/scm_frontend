@@ -162,8 +162,13 @@
         :auto-fit="true"
         label="删除状态"
         prop="is_del"
-        :render-header="renderHeaderIsEnabled"
       >
+        <template v-slot:header>
+          <field-help
+            default-label="删除状态"
+            help="删除状态提示：<br>绿色：未删除<br>红色：已删除"
+          />
+        </template>
         <template v-slot="scope">
           <el-tooltip
             :content="scope.row.is_del === false ? '删除状态：未删除' : '删除状态：已删除' "
@@ -283,9 +288,10 @@ import editDialog from '@/views/30_wms/vehicle/dialog/edit'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import DeleteTypeNormal from '@/components/00_dict/select/SelectDeleteTypeNormal'
+import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 
 export default {
-  components: { Pagination, editDialog, DeleteTypeNormal },
+  components: { Pagination, editDialog, DeleteTypeNormal, FieldHelp },
   directives: { elDragDialog, permission },
   mixins: [resizeMixin],
   props: {
@@ -592,24 +598,6 @@ export default {
       }
     },
     // ------------------编辑弹出框 end--------------------
-    renderHeaderIsEnabled: function (h, { column }) {
-      return (
-        <span>{column.label}
-          <el-tooltip
-            class='item'
-            effect='dark'
-            placement='bottom'
-          >
-            <div slot='content'>
-              删除状态提示：<br />
-              绿色：未删除  <br />
-              红色：已删除
-            </div>
-            <svg-icon icon-class='perfect-icon-question1_btn' style='margin-left: 5px' />
-          </el-tooltip>
-        </span>
-      )
-    },
     // 启用/停用
     handledEnableOrDisAbleApi (row) {
       let _message = ''

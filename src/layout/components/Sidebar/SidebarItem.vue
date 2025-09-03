@@ -45,7 +45,7 @@
 </template>
 
 <script>
-import path from 'path'
+import path from '@/utils/myPath'
 import { isExternal } from '@/utils/validate'
 import Item from './Item'
 import AppLink from './Link'

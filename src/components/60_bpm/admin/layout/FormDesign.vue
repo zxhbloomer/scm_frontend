@@ -141,7 +141,7 @@
 </template>
 
 <script>
-import QRCode from 'qrcodejs2'
+import QRCode from 'qrcodejs2-fixes'
 import draggable from 'vuedraggable'
 import FormRender from '@/components/60_bpm/common/form/FormRender'
 import FormDesignRender from '@/components/60_bpm/admin/layout/form/FormDesignRender'
