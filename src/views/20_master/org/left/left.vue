@@ -1000,8 +1000,15 @@ export default {
           selectedNode: null, // 当前选中的树节点
           companyInfo: null, // 提取的公司信息
           departmentInfo: null // 提取的部门信息
+        },
+        // 高度增强状态管理
+        heightEnhancement: {
+          enhancedNode: null, // 当前高度增强的节点
+          originalHeight: 0 // 原始高度备份
         }
       },
+      // 红线位置监听器
+      dropIndicatorObserver: null,
       // 页面设置json
       settings: {
         para: this.CONSTANTS.DICT_ORG_SETTING_TYPE,
@@ -1277,6 +1284,9 @@ export default {
   beforeDestroy () {
     // 移除鼠标移动事件监听器，防止内存泄漏
     document.removeEventListener('mousemove', this.handleMouseMove)
+
+    // 🎯 清理红线位置监听器，防止内存泄漏
+    this.stopDropIndicatorWatcher()
   },
   methods: {
     // 选择or重置按钮的初始化
@@ -1850,8 +1860,8 @@ export default {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
 
-      // he-tree机制：拖拽开始时清理虚拟节点
-      this.removeVirtualPlaceholder()
+      // 🚧 临时禁用：he-tree机制：拖拽开始时清理虚拟节点
+      // this.removeVirtualPlaceholder()
 
       // 拖拽开始时，初始化鼠标跟随提示状态
       this.hideMouseFollowTip()
@@ -1861,16 +1871,20 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // he-tree机制：先移除旧虚拟节点
-      this.removeVirtualPlaceholder()
+      // 🚧 临时禁用：he-tree机制：先移除旧虚拟节点
+      // this.removeVirtualPlaceholder()
 
       // 计算拖拽类型
       const dropType = this.calculateDropType(ev)
       const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
 
       if (allowDrop) {
-        // he-tree机制：插入虚拟占位节点
-        this.insertVirtualPlaceholder(dropNode, dropType)
+        // 🏗️ Step 1: 增强节点高度（30px）
+        this.enhanceNodeHeight(dropNode)
+
+        // 🚧 临时禁用：he-tree机制：插入虚拟占位节点（会立即触发位置微调）
+        // this.insertVirtualPlaceholder(dropNode, dropType)
+
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
@@ -1884,29 +1898,36 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // he-tree机制：离开节点时移除虚拟占位节点
-      setTimeout(() => {
-        this.removeVirtualPlaceholder()
-      }, 50)
+      // 🚧 临时禁用：he-tree机制：离开节点时移除虚拟占位节点
+      // setTimeout(() => {
+      //   this.removeVirtualPlaceholder()
+      // }, 50)
 
       // 离开节点时隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
+
+      // 🏗️ Step 1: 恢复节点高度
+      this.restoreNodeHeight()
     },
 
     handleDragOver (draggingNode, dropNode, ev) {
       // 更新鼠标位置（拖拽时确保位置跟随） - 这是最重要的事件
       this.updateMousePosition(ev)
 
-      // he-tree机制：先移除旧虚拟节点
-      this.removeVirtualPlaceholder()
+      // 🚧 临时禁用：he-tree机制：移除旧虚拟节点
+      // this.removeVirtualPlaceholder()
 
       // 计算拖拽类型
       const dropType = this.calculateDropType(ev)
       const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
 
       if (allowDrop) {
-        // he-tree机制：插入虚拟占位节点
-        this.insertVirtualPlaceholder(dropNode, dropType)
+        // 🏗️ Step 1: 在drag-over中也确保高度增强（更稳定）
+        this.enhanceNodeHeight(dropNode)
+
+        // 🚧 临时禁用：he-tree机制：插入虚拟占位节点
+        // this.insertVirtualPlaceholder(dropNode, dropType)
+
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
@@ -1920,12 +1941,245 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       if (ev) this.updateMousePosition(ev)
 
-      // he-tree机制：拖拽结束时移除虚拟占位节点
-      this.removeVirtualPlaceholder()
+      // 🚧 临时禁用：he-tree机制：拖拽结束时移除虚拟占位节点
+      // this.removeVirtualPlaceholder()
 
       // 拖拽结束时确保隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
+
+      // 🏗️ Step 1: 确保拖拽结束时恢复高度
+      this.restoreNodeHeight()
     },
+
+    // ==================== 🏗️ Step 1: 高度增强管理方法（重新实现） ====================
+
+    /**
+     * 增强节点高度（增加30px）- 基于Element UI机制（优化：避免重复设置）
+     * @param {Object} dropNode - Element UI的tree node对象
+     */
+    enhanceNodeHeight (dropNode) {
+      try {
+        // 🎯 优化：如果是同一个节点，避免重复设置
+        const currentEnhanced = this.dataJson.heightEnhancement.enhancedNode
+        if (currentEnhanced && currentEnhanced.data.id === dropNode.data.id) {
+          // console.log('🔄 节点已增强，跳过重复设置:', dropNode.data.simple_name || dropNode.data.label)
+          return // 同一节点无需重复处理
+        }
+
+        console.log('🏗️ 开始增强节点高度:', dropNode)
+
+        // 先恢复之前的节点高度（如果存在且不同节点）
+        if (currentEnhanced) {
+          this.restoreNodeHeight()
+        }
+
+        // 关键：直接使用Vue组件实例来获取DOM
+        // 查找tree中的所有节点组件
+        const treeNodeComponents = this.$refs.treeObject.$children || []
+        const targetNodeComponent = this.findNodeComponentByData(treeNodeComponents, dropNode.data)
+
+        if (targetNodeComponent && targetNodeComponent.$el) {
+          // 保存当前增强的节点引用
+          this.dataJson.heightEnhancement.enhancedNode = dropNode
+
+          // 给整个tree-node元素添加高度增强类
+          targetNodeComponent.$el.classList.add('height-enhanced')
+
+          // 同时给content元素也添加高度增强类
+          const contentEl = targetNodeComponent.$el.querySelector('.el-tree-node__content')
+          if (contentEl) {
+            contentEl.classList.add('height-enhanced')
+          }
+
+          // 🔧 立即强制DOM重新计算，确保Element UI读取到正确的高度值
+          targetNodeComponent.$el.offsetHeight // 强制触发重排
+
+          // 🎯 启动红线位置监听，自动修正到增强边界
+          this.startDropIndicatorWatcher()
+
+          console.log('✅ 成功增强节点高度:', {
+            nodeId: dropNode.data.id,
+            nodeName: dropNode.data.simple_name || dropNode.data.label,
+            新高度: '56px'
+          })
+        } else {
+          console.warn('⚠️ 未找到目标节点DOM元素')
+        }
+      } catch (error) {
+        console.error('🚨 Height enhancement error:', error)
+      }
+    },
+
+    /**
+     * 递归查找节点组件
+     */
+    findNodeComponentByData (components, targetData) {
+      for (const component of components) {
+        // 检查当前组件的node.data是否匹配
+        if (component.node && component.node.data && component.node.data.id === targetData.id) {
+          return component
+        }
+
+        // 递归检查子组件
+        if (component.$children && component.$children.length > 0) {
+          const found = this.findNodeComponentByData(component.$children, targetData)
+          if (found) return found
+        }
+      }
+      return null
+    },
+
+    /**
+     * 恢复节点原始高度
+     */
+    restoreNodeHeight () {
+      try {
+        const enhancedNode = this.dataJson.heightEnhancement.enhancedNode
+
+        if (enhancedNode) {
+          // 查找并恢复节点
+          const treeNodeComponents = this.$refs.treeObject.$children || []
+          const targetNodeComponent = this.findNodeComponentByData(treeNodeComponents, enhancedNode.data)
+
+          if (targetNodeComponent && targetNodeComponent.$el) {
+            // 移除整个tree-node元素的高度增强样式类
+            targetNodeComponent.$el.classList.remove('height-enhanced')
+
+            // 同时移除content元素的高度增强样式类
+            const contentEl = targetNodeComponent.$el.querySelector('.el-tree-node__content')
+            if (contentEl) {
+              contentEl.classList.remove('height-enhanced')
+            }
+
+            console.log('🔄 成功恢复节点高度:', {
+              nodeId: enhancedNode.data.id,
+              nodeName: enhancedNode.data.simple_name || enhancedNode.data.label
+            })
+          }
+
+          // 🎯 停止红线位置监听器
+          this.stopDropIndicatorWatcher()
+
+          // 清理状态
+          this.dataJson.heightEnhancement.enhancedNode = null
+          this.dataJson.heightEnhancement.originalHeight = 0
+        }
+      } catch (error) {
+        console.error('🚨 Height restoration error:', error)
+      }
+    },
+
+    /**
+     * 🎯 启动红线位置监听器
+     * 监听Element UI设置红线位置，自动修正到增强边界
+     */
+    startDropIndicatorWatcher () {
+      // 停止之前的监听器（如果存在）
+      this.stopDropIndicatorWatcher()
+
+      const treeEl = this.$refs.treeObject?.$el
+      if (!treeEl) return
+
+      const dropIndicator = treeEl.querySelector('.el-tree__drop-indicator')
+      if (!dropIndicator) return
+
+      // 使用MutationObserver监听红线样式变化
+      this.dropIndicatorObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+            // Element UI刚设置了红线位置，立即进行修正
+            this.correctDropIndicatorPosition()
+          }
+        })
+      })
+
+      // 开始监听红线的style属性变化
+      this.dropIndicatorObserver.observe(dropIndicator, {
+        attributes: true,
+        attributeFilter: ['style']
+      })
+
+      console.log('🎯 红线位置监听器已启动')
+    },
+
+    /**
+     * 🎯 停止红线位置监听器
+     */
+    stopDropIndicatorWatcher () {
+      if (this.dropIndicatorObserver) {
+        this.dropIndicatorObserver.disconnect()
+        this.dropIndicatorObserver = null
+        console.log('🎯 红线位置监听器已停止')
+      }
+    },
+
+    /**
+     * 🎯 修正红线位置到增强边界
+     * 基于Element UI的算法缺陷进行智能修正
+     */
+    correctDropIndicatorPosition () {
+      try {
+        const enhancedNode = this.dataJson.heightEnhancement.enhancedNode
+        if (!enhancedNode) return // 没有增强节点时不处理
+
+        const treeEl = this.$refs.treeObject?.$el
+        if (!treeEl) return
+
+        const dropIndicator = treeEl.querySelector('.el-tree__drop-indicator')
+        if (!dropIndicator || !dropIndicator.style.top || dropIndicator.style.top === '-9999px') {
+          return // 红线不可见时不处理
+        }
+
+        // 查找增强节点的Vue组件实例
+        const treeNodeComponents = this.$refs.treeObject.$children || []
+        const targetNodeComponent = this.findNodeComponentByData(treeNodeComponents, enhancedNode.data)
+
+        if (targetNodeComponent && targetNodeComponent.$el) {
+          const contentEl = targetNodeComponent.$el.querySelector('.el-tree-node__content')
+
+          if (contentEl) {
+            const treeRect = treeEl.getBoundingClientRect()
+            const contentRect = contentEl.getBoundingClientRect()
+            const currentTop = parseFloat(dropIndicator.style.top) || 0
+
+            // 计算增强内容区域的边界
+            const enhancedTop = contentRect.top - treeRect.top
+            const enhancedBottom = contentRect.bottom - treeRect.top
+            const enhancedMiddle = (enhancedTop + enhancedBottom) / 2
+
+            let correctedTop = currentTop
+            let dropType = 'unknown'
+
+            // 智能判断拖拽类型并修正到正确边界
+            if (currentTop < enhancedMiddle) {
+              // before类型：修正到增强区域顶部
+              correctedTop = enhancedTop
+              dropType = 'before'
+            } else {
+              // after类型：修正到增强区域底部
+              correctedTop = enhancedBottom
+              dropType = 'after'
+            }
+
+            // 只有需要调整时才修改（避免无限循环）
+            if (Math.abs(correctedTop - currentTop) > 1) {
+              dropIndicator.style.top = correctedTop + 'px'
+
+              console.log('🎯 已修正红线位置:', {
+                节点: enhancedNode.data.simple_name || enhancedNode.data.label,
+                类型: dropType,
+                原位置: currentTop.toFixed(1) + 'px',
+                修正位置: correctedTop.toFixed(1) + 'px',
+                偏移: (correctedTop - currentTop).toFixed(1) + 'px'
+              })
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ 红线位置修正失败:', error)
+      }
+    },
+
     /**
      * 拖拽结束后事件
      * draggingNode:被拖拽结点对应的 Node
@@ -4112,5 +4366,90 @@ export default {
 ::v-deep .el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content:hover {
   background-color: rgba(0, 153, 255, 0.8) !important; /* 选中状态hover时稍微淡一些的蓝色 */
   color: white !important;
+}
+
+/* ==================== 🏗️ Step 1: 高度增强样式（重新实现） ==================== */
+
+/* 高度增强节点样式 - 作用于整个el-tree-node元素 */
+::v-deep .el-tree-node.height-enhanced > .el-tree-node__content {
+  /* 高度增强：原始26px + 30px = 56px */
+  height: 56px !important;
+
+  /* 移除动画，确保高度立即变化，避免与Element UI拖拽计算时机冲突 */
+  /* transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); */
+
+  /* 视觉反馈 - 淡蓝色背景表示可拖拽区域 */
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.08), rgba(135, 206, 250, 0.05)) !important;
+  border: 1px dashed rgba(64, 158, 255, 0.4);
+  border-radius: 4px;
+
+  /* 轻微阴影增强立体感 - 蓝色阴影 */
+  box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+
+  /* 确保内容居中 */
+  display: flex;
+  align-items: center;
+
+  /* 调整内边距以适应新高度 */
+  padding-top: 0;
+  padding-bottom: 0;
+
+  /* 保持原有字体颜色不变 */
+  color: inherit !important;
+}
+
+/* 高度增强时的悬停效果 */
+::v-deep .el-tree-node.height-enhanced > .el-tree-node__content:hover {
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.12), rgba(135, 206, 250, 0.08)) !important;
+  border-color: rgba(64, 158, 255, 0.6);
+  transform: scale(1.02);
+
+  /* 保持原有字体颜色不变 */
+  color: inherit !important;
+}
+
+/* 高度增强节点的呼吸动画提示 */
+::v-deep .el-tree-node.height-enhanced > .el-tree-node__content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(64, 158, 255, 0.08);
+  border-radius: 4px;
+  animation: heightEnhancedPulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 高度增强节点的所有子元素提升层级 */
+::v-deep .el-tree-node.height-enhanced > .el-tree-node__content > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 🔧 修复：确保expand-icon在高度增强时正确居中 */
+::v-deep .el-tree-node.height-enhanced > .el-tree-node__content > .el-tree-node__expand-icon {
+  /* 确保图标垂直居中 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 保持原有的padding设置 */
+  padding: 6px !important;
+}
+
+/* 呼吸动画关键帧 - 淡蓝色主题 */
+@keyframes heightEnhancedPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+    background: rgba(64, 158, 255, 0.06);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.01);
+    background: rgba(64, 158, 255, 0.12);
+  }
 }
 </style>
