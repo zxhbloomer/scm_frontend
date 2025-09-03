@@ -109,8 +109,8 @@
           slot-scope="{ node, data }"
           class="custom-tree-node"
         >
-          <!-- he-tree机制：虚拟占位节点渲染 -->
-          <div v-if="Object.keys(data).length === 0" class="scm-virtual-placeholder">
+          <!-- 🎯 he-tree机制：虚拟占位节点渲染（正确的检测方式） -->
+          <div v-if="data === dataJson.placeholderData" class="scm-virtual-placeholder">
             <i class="el-icon-download" style="color: #409EFF; margin-right: 4px;" />
             <span>拖拽到此处</span>
           </div>
@@ -1001,6 +1001,10 @@ export default {
           companyInfo: null, // 提取的公司信息
           departmentInfo: null // 提取的部门信息
         },
+        // 🎯 he-tree机制：虚拟占位节点数据标识
+        placeholderData: {},
+        // 虚拟节点延迟移除计时器
+        placeholderRemovalTimer: null,
         // 高度增强状态管理
         heightEnhancement: {
           enhancedNode: null, // 当前高度增强的节点
@@ -1860,8 +1864,8 @@ export default {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
 
-      // 🚧 临时禁用：he-tree机制：拖拽开始时清理虚拟节点
-      // this.removeVirtualPlaceholder()
+      // 🎯 智能虚拟节点系统：拖拽开始时清理虚拟节点
+      this.removeVirtualPlaceholder()
 
       // 拖拽开始时，初始化鼠标跟随提示状态
       this.hideMouseFollowTip()
@@ -1871,8 +1875,8 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 🚧 临时禁用：he-tree机制：先移除旧虚拟节点
-      // this.removeVirtualPlaceholder()
+      // 🎯 智能虚拟节点系统：先移除旧虚拟节点
+      this.removeVirtualPlaceholder()
 
       // 计算拖拽类型
       const dropType = this.calculateDropType(ev)
@@ -1882,8 +1886,8 @@ export default {
         // 🏗️ Step 1: 增强节点高度（30px）
         this.enhanceNodeHeight(dropNode)
 
-        // 🚧 临时禁用：he-tree机制：插入虚拟占位节点（会立即触发位置微调）
-        // this.insertVirtualPlaceholder(dropNode, dropType)
+        // 🎯 智能虚拟节点系统：基于红线位置插入虚拟节点（仅before/after类型）
+        this.insertSmartVirtualPlaceholder(dropNode, dropType)
 
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
@@ -1898,10 +1902,8 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 🚧 临时禁用：he-tree机制：离开节点时移除虚拟占位节点
-      // setTimeout(() => {
-      //   this.removeVirtualPlaceholder()
-      // }, 50)
+      // 🎯 智能虚拟节点系统：设置延迟移除标志，如果没有新的dragEnter会移除虚拟节点
+      this.scheduleVirtualPlaceholderRemoval()
 
       // 离开节点时隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -1914,25 +1916,26 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随） - 这是最重要的事件
       this.updateMousePosition(ev)
 
-      // 🚧 临时禁用：he-tree机制：移除旧虚拟节点
-      // this.removeVirtualPlaceholder()
-
-      // 计算拖拽类型
-      const dropType = this.calculateDropType(ev)
-      const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
+      // 🎯 增强计算拖拽类型（支持层级检测）
+      const dropInfo = this.calculateDropType(ev, dropNode)
+      const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo)
 
       if (allowDrop) {
         // 🏗️ Step 1: 在drag-over中也确保高度增强（更稳定）
         this.enhanceNodeHeight(dropNode)
 
-        // 🚧 临时禁用：he-tree机制：插入虚拟占位节点
-        // this.insertVirtualPlaceholder(dropNode, dropType)
+        // 🎯 智能虚拟节点系统：实时更新虚拟节点位置（支持层级变更）
+        this.updateVirtualPlaceholderPosition(dropNode, dropInfo)
 
-        // 允许拖拽时隐藏跟随鼠标的提示
-        this.hideMouseFollowTip()
+        // 🎯 显示层级变更提示
+        if (dropInfo.type === 'child-right') {
+          this.showMouseFollowTip(dropInfo.description, 'success')
+        } else {
+          this.hideMouseFollowTip()
+        }
       } else {
         // 不允许拖拽时显示具体的错误原因
-        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropType)
+        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo)
         this.showMouseFollowTip(failureReason)
       }
     },
@@ -1941,8 +1944,8 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       if (ev) this.updateMousePosition(ev)
 
-      // 🚧 临时禁用：he-tree机制：拖拽结束时移除虚拟占位节点
-      // this.removeVirtualPlaceholder()
+      // 🎯 智能虚拟节点系统：拖拽结束时移除虚拟占位节点
+      this.removeVirtualPlaceholder()
 
       // 拖拽结束时确保隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -3252,25 +3255,64 @@ export default {
     // 拖拽样式辅助方法
 
     /**
-     * 计算拖拽类型
+     * 🎯 增强计算拖拽类型 - 参考he-tree层级机制
      * @param {Event} ev - 事件对象
-     * @returns {String} dropType - 'inner', 'before', 'after'
+     * @param {Object} dropNode - 目标节点对象 (Element UI node)
+     * @returns {Object} 拖拽类型信息 { type, targetLevel, targetParent }
      */
-    calculateDropType (ev) {
+    calculateDropType (ev, dropNode = null) {
       const nodeContent = ev.target.closest('.el-tree-node__content')
       if (!nodeContent) return null
 
       const rect = nodeContent.getBoundingClientRect()
       const y = ev.clientY - rect.top
+      const x = ev.clientX - rect.left
       const height = rect.height
 
-      // 根据鼠标位置判断拖拽类型
+      // 🎯 Step 1: 基础垂直位置判断（保持原有逻辑）
+      let baseDropType
       if (y < height * 0.25) {
-        return 'before' // 上方25%区域 - 插入前面
+        baseDropType = 'before' // 上方25%区域
       } else if (y > height * 0.75) {
-        return 'after' // 下方25%区域 - 插入后面
+        baseDropType = 'after' // 下方25%区域
       } else {
-        return 'inner' // 中间50%区域 - 成为子节点
+        baseDropType = 'inner' // 中间50%区域
+      }
+
+      // 🎯 Step 2: he-tree风格层级计算（水平位置检测）
+      if (dropNode && (baseDropType === 'before' || baseDropType === 'after')) {
+        const indentSize = 24 // Element UI默认缩进大小
+        const nodeLevel = dropNode.level || 1
+        const baseIndent = (nodeLevel - 1) * indentSize
+        const rightZoneStart = baseIndent + 20 // 缩进右侧区域起点
+
+        // 🔍 检测水平位置以确定层级操作
+        if (x > rightZoneStart && x < rightZoneStart + 40) {
+          // 🎯 向右拖拽区域：成为前一个兄弟节点的子节点
+          const result = this.calculateChildRightDrop(dropNode, baseDropType)
+          if (result) {
+            return {
+              type: 'child-right',
+              baseType: baseDropType,
+              targetLevel: result.targetLevel,
+              targetParent: result.targetParent,
+              description: `向右拖拽：成为"${result.targetParent?.data?.simple_name || '未知节点'}"的子节点`
+            }
+          }
+        } else if (x < baseIndent - 20) {
+          // 🔍 向左拖拽区域：降低层级（可选扩展）
+          console.log('🔍 检测到向左拖拽区域，当前暂不实现')
+        }
+      }
+
+      // 🔄 返回标准拖拽类型（兼容现有逻辑）
+      return {
+        type: baseDropType,
+        baseType: baseDropType,
+        targetLevel: dropNode ? dropNode.level : 1,
+        targetParent: null,
+        description: baseDropType === 'before' ? '插入上方'
+          : baseDropType === 'after' ? '插入下方' : '成为子节点'
       }
     },
 
@@ -3309,7 +3351,278 @@ export default {
     // ===================== he-tree机制：虚拟占位节点管理 =====================
 
     /**
-     * 插入虚拟占位节点
+     * 🎯 智能虚拟节点系统：基于红线位置插入虚拟节点 (he-tree正确实现)
+     * @param {Object} dropNode - 目标节点
+     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
+     */
+    insertSmartVirtualPlaceholder (dropNode, dropType) {
+      // 📋 用户需求：只处理 before 和 after 类型，忽略 inner 类型
+      if (dropType === 'inner') {
+        console.log('🎯 智能虚拟节点系统: 忽略 inner 类型，按用户要求')
+        return
+      }
+
+      console.log(`🎯 智能虚拟节点系统: 首次插入 ${dropType} 类型虚拟节点`)
+
+      // 🚫 取消任何待处理的虚拟节点移除操作
+      this.cancelVirtualPlaceholderRemoval()
+
+      // 🗑️ 清理旧虚拟节点
+      this.removeVirtualPlaceholder()
+
+      // 等待红线位置修正完成后再插入虚拟节点
+      this.$nextTick(() => {
+        // 再次延迟确保MutationObserver已经修正了红线位置
+        setTimeout(() => {
+          this.insertVirtualPlaceholderByRedLine(dropNode, dropType)
+        }, 10)
+      })
+    },
+
+    /**
+     * 🎯 实时更新虚拟节点位置（用于handleDragOver）
+     * @param {Object} dropNode - 目标节点
+     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
+     */
+    updateVirtualPlaceholderPosition (dropNode, dropType) {
+      // 📋 用户需求：只处理 before 和 after 类型，忽略 inner 类型
+      if (dropType === 'inner') {
+        // 如果是inner类型但有虚拟节点，移除它
+        if (this.hasVirtualPlaceholder()) {
+          this.removeVirtualPlaceholder()
+        }
+        return
+      }
+
+      // 🔍 检查当前虚拟节点位置是否正确
+      const currentPlaceholder = this.findPlaceholderInTree(this.dataJson.treeData)
+      const needsUpdate = this.shouldUpdatePlaceholderPosition(currentPlaceholder, dropNode, dropType)
+
+      if (needsUpdate) {
+        console.log(`🎯 更新虚拟节点位置: ${dropType} 类型`)
+
+        // 🗑️ 移除旧位置的虚拟节点
+        this.removeVirtualPlaceholder()
+
+        // 🎯 在新位置插入虚拟节点
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.insertVirtualPlaceholderByRedLine(dropNode, dropType)
+          }, 5) // 更短延迟，提高响应速度
+        })
+      }
+    },
+
+    /**
+     * 判断是否需要更新虚拟节点位置
+     * @param {Object|null} currentPlaceholder - 当前虚拟节点位置信息
+     * @param {Object} dropNode - 目标节点
+     * @param {String} dropType - 拖拽类型
+     * @returns {Boolean} 是否需要更新
+     */
+    shouldUpdatePlaceholderPosition (currentPlaceholder, dropNode, dropType) {
+      // 如果没有虚拟节点，需要插入
+      if (!currentPlaceholder) {
+        return true
+      }
+
+      // 获取目标节点的正确位置信息
+      const parent = dropNode.parent
+      let expectedParent, expectedIndex
+
+      if (!parent || parent.data === undefined) {
+        // 根级别操作
+        expectedParent = null
+        const targetIndex = this.dataJson.treeData.findIndex(child => child === dropNode.data)
+        expectedIndex = dropType === 'before' ? targetIndex : targetIndex + 1
+      } else {
+        // 子级别操作
+        expectedParent = parent.data
+        const targetIndex = parent.data.children ? parent.data.children.findIndex(child => child === dropNode.data) : -1
+        expectedIndex = dropType === 'before' ? targetIndex : targetIndex + 1
+      }
+
+      // 检查位置是否匹配
+      const actualParent = currentPlaceholder.parent ? currentPlaceholder.parent : null
+      const actualIndex = currentPlaceholder.index
+
+      return actualParent !== expectedParent || actualIndex !== expectedIndex
+    },
+
+    /**
+     * 根据修正后的红线位置智能插入虚拟节点 (he-tree正确实现)
+     * @param {Object} dropNode - 目标节点
+     * @param {String} dropType - 拖拽类型 ('before', 'after')
+     */
+    insertVirtualPlaceholderByRedLine (dropNode, dropType) {
+      // 🎯 使用专用的placeholderData对象（he-tree方式）
+      const placeholderData = this.dataJson.placeholderData
+
+      // 🔍 获取红线当前位置来验证放置逻辑
+      const dropIndicator = this.$refs.treeObject.$refs.dropIndicator
+      if (dropIndicator) {
+        const indicatorTop = parseFloat(dropIndicator.style.top)
+        console.log(`🎯 红线位置: ${indicatorTop}px, 类型: ${dropType}`)
+      }
+
+      if (dropType === 'before') {
+        // 🔝 红线在上面时：在上面显示虚拟节点
+        console.log('🎯 在目标节点前面插入虚拟节点 (红线在上方)')
+        this.insertPlaceholderBefore(dropNode, placeholderData)
+      } else if (dropType === 'after') {
+        // 🔻 红线在下面时：在下面显示虚拟节点
+        console.log('🎯 在目标节点后面插入虚拟节点 (红线在下方)')
+        this.insertPlaceholderAfter(dropNode, placeholderData)
+      }
+    },
+
+    /**
+     * 检查是否已有虚拟占位符
+     */
+    hasVirtualPlaceholder () {
+      return this.findPlaceholderInTree(this.dataJson.treeData) !== null
+    },
+
+    /**
+     * 在树中查找虚拟占位符的位置
+     * @param {Array} treeData - 树数据
+     * @returns {Object|null} 包含parent, index的位置信息，未找到返回null
+     */
+    findPlaceholderInTree (treeData) {
+      for (let i = 0; i < treeData.length; i++) {
+        const node = treeData[i]
+        if (node === this.dataJson.placeholderData) {
+          return { parent: null, index: i, array: treeData }
+        }
+        if (node.children) {
+          const found = this.findPlaceholderInChildren(node.children, node)
+          if (found) return found
+        }
+      }
+      return null
+    },
+
+    /**
+     * 在子节点中查找虚拟占位符
+     * @param {Array} children - 子节点数组
+     * @param {Object} parent - 父节点
+     * @returns {Object|null} 位置信息
+     */
+    findPlaceholderInChildren (children, parent) {
+      for (let i = 0; i < children.length; i++) {
+        const child = children[i]
+        if (child === this.dataJson.placeholderData) {
+          return { parent, index: i, array: children }
+        }
+        if (child.children) {
+          const found = this.findPlaceholderInChildren(child.children, child)
+          if (found) return found
+        }
+      }
+      return null
+    },
+
+    /**
+     * 在指定节点前面插入虚拟节点 (he-tree正确实现)
+     * @param {Object} targetNode - 目标节点
+     * @param {Object} placeholderData - 虚拟节点数据
+     */
+    insertPlaceholderBefore (targetNode, placeholderData) {
+      const parent = targetNode.parent
+
+      // 🏠 处理根级别节点：直接操作树数据
+      if (!parent || parent.data === undefined) {
+        const targetIndex = this.dataJson.treeData.findIndex(child => child === targetNode.data)
+        if (targetIndex !== -1) {
+          this.dataJson.treeData.splice(targetIndex, 0, placeholderData)
+          console.log(`🎯 成功在根级别索引 ${targetIndex} 前插入虚拟节点`)
+          this.forceTreeUpdate()
+        }
+        return
+      }
+
+      // 🔧 确保父节点有children数组（响应式）
+      if (!parent.data.children) {
+        this.$set(parent.data, 'children', [])
+      }
+
+      const targetIndex = parent.data.children.findIndex(child => child === targetNode.data)
+      if (targetIndex !== -1) {
+        parent.data.children.splice(targetIndex, 0, placeholderData)
+        console.log(`🎯 成功在索引 ${targetIndex} 前插入虚拟节点`)
+        this.forceTreeUpdate()
+      }
+    },
+
+    /**
+     * 在指定节点后面插入虚拟节点 (he-tree正确实现)
+     * @param {Object} targetNode - 目标节点
+     * @param {Object} placeholderData - 虚拟节点数据
+     */
+    insertPlaceholderAfter (targetNode, placeholderData) {
+      const parent = targetNode.parent
+
+      // 🏠 处理根级别节点：直接操作树数据
+      if (!parent || parent.data === undefined) {
+        const targetIndex = this.dataJson.treeData.findIndex(child => child === targetNode.data)
+        if (targetIndex !== -1) {
+          this.dataJson.treeData.splice(targetIndex + 1, 0, placeholderData)
+          console.log(`🎯 成功在根级别索引 ${targetIndex + 1} 后插入虚拟节点`)
+          this.forceTreeUpdate()
+        }
+        return
+      }
+
+      // 🔧 确保父节点有children数组（响应式）
+      if (!parent.data.children) {
+        this.$set(parent.data, 'children', [])
+      }
+
+      const targetIndex = parent.data.children.findIndex(child => child === targetNode.data)
+      if (targetIndex !== -1) {
+        parent.data.children.splice(targetIndex + 1, 0, placeholderData)
+        console.log(`🎯 成功在索引 ${targetIndex + 1} 后插入虚拟节点`)
+        this.forceTreeUpdate()
+      }
+    },
+
+    /**
+     * 强制树组件更新
+     */
+    forceTreeUpdate () {
+      this.$nextTick(() => {
+        this.$forceUpdate()
+      })
+    },
+
+    /**
+     * 🕒 计划延迟移除虚拟节点（用于dragLeave事件）
+     */
+    scheduleVirtualPlaceholderRemoval () {
+      // 取消之前的计时器
+      this.cancelVirtualPlaceholderRemoval()
+
+      // 设置新的延迟移除计时器
+      this.dataJson.placeholderRemovalTimer = setTimeout(() => {
+        console.log('🎯 延迟移除虚拟节点（dragLeave触发）')
+        this.removeVirtualPlaceholder()
+        this.dataJson.placeholderRemovalTimer = null
+      }, 100) // 100ms延迟，给dragEnter事件足够时间取消
+    },
+
+    /**
+     * 🚫 取消计划中的虚拟节点移除
+     */
+    cancelVirtualPlaceholderRemoval () {
+      if (this.dataJson.placeholderRemovalTimer) {
+        clearTimeout(this.dataJson.placeholderRemovalTimer)
+        this.dataJson.placeholderRemovalTimer = null
+        console.log('🎯 取消虚拟节点延迟移除')
+      }
+    },
+
+    /**
+     * 插入虚拟占位节点（原始版本，保留备用）
      * @param {Object} dropNode - 目标节点
      * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
      */
@@ -3357,28 +3670,43 @@ export default {
     },
 
     /**
-     * 移除所有虚拟占位节点
+     * 移除所有虚拟占位节点 (he-tree正确实现)
      */
     removeVirtualPlaceholder () {
-      this.removeVirtualNodesFromArray(this.dataJson.treeData)
+      const placeholderLocation = this.findPlaceholderInTree(this.dataJson.treeData)
+      if (placeholderLocation) {
+        placeholderLocation.array.splice(placeholderLocation.index, 1)
+        console.log(`🎯 移除虚拟节点，位置: ${placeholderLocation.parent ? '子级' : '根级'}, 索引: ${placeholderLocation.index}`)
+        this.forceTreeUpdate()
+        return true
+      }
+      return false
     },
 
     /**
-     * 递归移除数组中的虚拟节点
+     * 递归移除数组中的虚拟节点（保留，备用）
      */
     removeVirtualNodesFromArray (nodeArray) {
       if (!Array.isArray(nodeArray)) return
 
+      let removed = false
       for (let i = nodeArray.length - 1; i >= 0; i--) {
         const node = nodeArray[i]
 
-        // he-tree机制：空对象就是虚拟节点
-        if (Object.keys(node).length === 0) {
+        // 🎯 he-tree机制：使用专用placeholderData检测虚拟节点
+        if (node === this.dataJson.placeholderData) {
           nodeArray.splice(i, 1)
+          removed = true
+          console.log(`🎯 移除虚拟节点，索引: ${i}`)
         } else if (node.children && node.children.length > 0) {
           // 递归处理子节点
           this.removeVirtualNodesFromArray(node.children)
         }
+      }
+
+      // 🔧 如果移除了虚拟节点，强制重新渲染
+      if (removed) {
+        this.forceTreeUpdate()
       }
     },
 
