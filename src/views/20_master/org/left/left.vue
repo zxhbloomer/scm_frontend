@@ -109,14 +109,8 @@
           slot-scope="{ node, data }"
           class="custom-tree-node"
         >
-          <!-- 🎯 he-tree机制：虚拟占位节点渲染（正确的检测方式） -->
-          <div v-if="data === dataJson.placeholderData" class="scm-virtual-placeholder">
-            <i class="el-icon-download" style="color: #409EFF; margin-right: 4px;" />
-            <span>拖拽到此处</span>
-          </div>
-
           <!-- 正常节点渲染 -->
-          <span v-else>
+          <span>
             <svg-icon
               v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT"
               icon-class="perfect-icon-tenant"
@@ -145,7 +139,7 @@
             <!-- 员工节点图标 -->
             <svg-icon
               v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF"
-              icon-class="perfect-icon-user"
+              icon-class="staff2"
               class="el-icon--right"
             />
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
@@ -287,6 +281,14 @@
           </el-tag>
         </span>
       </el-tree>
+
+      <!-- 🎯 红线提示文字 (参考Element UI红线实现方式) -->
+      <div
+        ref="dropIndicatorTip"
+        class="el-tree__drop-indicator-tip"
+      >
+        在此节点上方插入
+      </div>
     </div>
 
     <!-- 右键菜单 -->
@@ -720,31 +722,6 @@
     display: block;
   }
 
-  /* he-tree机制：虚拟占位节点样式 - 保持SCM红色风格 */
-  .scm-virtual-placeholder {
-    height: 32px;
-    width: 100%; /* 占满容器宽度，与正常节点保持一致 */
-    background: linear-gradient(90deg, #fff0f0 0%, #ffe8e8 100%);
-    border: 2px dashed #F56C6C;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #F56C6C;
-    font-size: 12px;
-    font-weight: bold;
-    margin: 2px auto;
-    opacity: 0.9;
-    animation: placeholderPulse 1.5s ease-in-out infinite;
-    box-sizing: border-box;
-    white-space: nowrap;
-  }
-
-  @keyframes placeholderPulse {
-    0%, 100% { opacity: 0.7; }
-    50% { opacity: 1; }
-  }
-
   .el-icon--right {
     margin-left: 0px;
   }
@@ -984,10 +961,6 @@ export default {
           companyInfo: null, // 提取的公司信息
           departmentInfo: null // 提取的部门信息
         },
-        // 🎯 he-tree机制：虚拟占位节点数据标识
-        placeholderData: {},
-        // 虚拟节点延迟移除计时器
-        placeholderRemovalTimer: null,
         // 高度增强状态管理
         heightEnhancement: {
           enhancedNode: null, // 当前高度增强的节点
@@ -1847,40 +1820,36 @@ export default {
       // 在拖拽开始时保存原始树状态，用于可能的撤销操作
       this.dragConfirmData.originalTreeData = JSON.parse(JSON.stringify(this.dataJson.treeData))
 
-      // 🎯 智能虚拟节点系统：拖拽开始时清理虚拟节点
-      this.removeVirtualPlaceholder()
-
-      // 拖拽开始时，初始化鼠标跟随提示状态
+      // 拖拽开始时，初始化鼠标跟随提示状态和红线提示状态
       this.hideMouseFollowTip()
+      this.hideDropIndicatorTip()
     },
 
     handleDragEnter (draggingNode, dropNode, ev) {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 🎯 智能虚拟节点系统：先移除旧虚拟节点
-      this.removeVirtualPlaceholder()
-
-      // 计算拖拽类型
-      const dropInfo = this.calculateDropType(ev, dropNode)
+      // 计算拖拽类型（传递draggingNode参数）
+      const dropInfo = this.calculateDropType(ev, dropNode, draggingNode)
       const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo.type)
 
       if (allowDrop) {
         // 🏗️ Step 1: 增强节点高度（30px）
         this.enhanceNodeHeight(dropNode)
 
-        // 🎯 智能虚拟节点系统：基于红线位置插入虚拟节点（仅before/after类型）
-        this.insertSmartVirtualPlaceholder(dropNode, dropInfo.type)
-
         // 🎨 Step 2: 添加拖拽样式反馈（处理inner类型）
         if (dropInfo.type === 'inner') {
           this.applyDragStyle(ev.target, dropInfo.type)
         }
 
+        // 🎯 Step 3: 显示拖拽提示（before/after/inner类型）
+        this.updateDropIndicatorTip(dropInfo.type, dropNode)
+
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
-        // 不允许拖拽时显示具体的错误原因
+        // 不允许拖拽时隐藏红线提示并显示错误原因
+        this.hideDropIndicatorTip()
         const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo.type)
         this.showMouseFollowTip(failureReason)
       }
@@ -1890,11 +1859,11 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       this.updateMousePosition(ev)
 
-      // 🎯 智能虚拟节点系统：设置延迟移除标志，如果没有新的dragEnter会移除虚拟节点
-      this.scheduleVirtualPlaceholderRemoval()
-
       // 🎨 清理拖拽样式
       this.clearDragStyles()
+
+      // 🎯 隐藏红线提示
+      this.hideDropIndicatorTip()
 
       // 离开节点时隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -1908,26 +1877,27 @@ export default {
       this.updateMousePosition(ev)
 
       // 🎯 增强计算拖拽类型（支持层级检测）
-      const dropInfo = this.calculateDropType(ev, dropNode)
+      const dropInfo = this.calculateDropType(ev, dropNode, draggingNode)
       const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo.type)
 
       if (allowDrop) {
         // 🏗️ Step 1: 在drag-over中也确保高度增强（更稳定）
         this.enhanceNodeHeight(dropNode)
 
-        // 🎯 智能虚拟节点系统：实时更新虚拟节点位置（支持层级变更）
-        this.updateVirtualPlaceholderPosition(dropNode, dropInfo)
-
         // 🎨 Step 2: 添加拖拽样式反馈（处理inner类型）
         if (dropInfo.type === 'inner') {
           this.applyDragStyle(ev.target, dropInfo.type)
         }
 
+        // 🎯 Step 3: 实时更新拖拽提示（before/after/inner类型）
+        this.updateDropIndicatorTip(dropInfo.type, dropNode)
+
         // 允许拖拽时隐藏提示，只在错误时显示
         this.hideMouseFollowTip()
       } else {
-        // 不允许拖拽时显示具体的错误原因
-        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo)
+        // 不允许拖拽时隐藏红线提示并显示错误原因
+        this.hideDropIndicatorTip()
+        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo.type)
         this.showMouseFollowTip(failureReason)
       }
     },
@@ -1936,14 +1906,12 @@ export default {
       // 更新鼠标位置（拖拽时确保位置跟随）
       if (ev) this.updateMousePosition(ev)
 
-      // 🎯 智能虚拟节点系统：拖拽结束时移除虚拟占位节点
-      this.removeVirtualPlaceholder()
-
       // 🎨 清理拖拽样式
       this.clearDragStyles()
 
-      // 拖拽结束时确保隐藏跟随鼠标的提示
+      // 拖拽结束时确保隐藏跟随鼠标的提示和红线提示
       this.hideMouseFollowTip()
+      this.hideDropIndicatorTip()
 
       // 🏗️ Step 1: 确保拖拽结束时恢复高度
       this.restoreNodeHeight()
@@ -1963,8 +1931,6 @@ export default {
           // console.log('🔄 节点已增强，跳过重复设置:', dropNode.data.simple_name || dropNode.data.label)
           return // 同一节点无需重复处理
         }
-
-        console.log('🏗️ 开始增强节点高度:', dropNode.data.simple_name || dropNode.data.label)
 
         // 先恢复之前的节点高度（如果存在且不同节点）
         if (currentEnhanced) {
@@ -1998,12 +1964,6 @@ export default {
 
           // 🎯 启动红线位置监听，自动修正到增强边界
           this.startDropIndicatorWatcher()
-
-          console.log('✅ 成功增强节点高度:', {
-            nodeId: dropNode.data.id,
-            nodeName: dropNode.data.simple_name || dropNode.data.label,
-            新高度: '56px'
-          })
         } else {
           console.warn('⚠️ 未找到目标节点DOM元素')
         }
@@ -2052,11 +2012,6 @@ export default {
             if (contentEl) {
               contentEl.classList.remove('height-enhanced')
             }
-
-            console.log('🔄 成功恢复节点高度:', {
-              nodeId: enhancedNode.data.id,
-              nodeName: enhancedNode.data.simple_name || enhancedNode.data.label
-            })
           }
 
           // 🎯 停止红线位置监听器
@@ -2100,8 +2055,6 @@ export default {
         attributes: true,
         attributeFilter: ['style']
       })
-
-      console.log('🎯 红线位置监听器已启动')
     },
 
     /**
@@ -2111,7 +2064,6 @@ export default {
       if (this.dropIndicatorObserver) {
         this.dropIndicatorObserver.disconnect()
         this.dropIndicatorObserver = null
-        console.log('🎯 红线位置监听器已停止')
       }
     },
 
@@ -2150,30 +2102,19 @@ export default {
             const enhancedMiddle = (enhancedTop + enhancedBottom) / 2
 
             let correctedTop = currentTop
-            let dropType = 'unknown'
 
             // 智能判断拖拽类型并修正到正确边界
             if (currentTop < enhancedMiddle) {
               // before类型：修正到增强区域顶部
               correctedTop = enhancedTop
-              dropType = 'before'
             } else {
               // after类型：修正到增强区域底部
               correctedTop = enhancedBottom
-              dropType = 'after'
             }
 
             // 只有需要调整时才修改（避免无限循环）
             if (Math.abs(correctedTop - currentTop) > 1) {
               dropIndicator.style.top = correctedTop + 'px'
-
-              console.log('🎯 已修正红线位置:', {
-                节点: enhancedNode.data.simple_name || enhancedNode.data.label,
-                类型: dropType,
-                原位置: currentTop.toFixed(1) + 'px',
-                修正位置: correctedTop.toFixed(1) + 'px',
-                偏移: (correctedTop - currentTop).toFixed(1) + 'px'
-              })
             }
           }
         }
@@ -2526,6 +2467,172 @@ export default {
      */
     hideMouseFollowTip () {
       this.mouseFollowTip.visible = false
+    },
+
+    // ==================== 🎯 红线提示系统 ====================
+
+    /**
+     * 更新红线提示状态
+     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
+     * @param {Object} dropNode - 目标节点
+     */
+    updateDropIndicatorTip (dropType, dropNode) {
+      // 获取提示框元素
+      const dropIndicatorTip = this.$refs.dropIndicatorTip
+      if (!dropIndicatorTip) return
+
+      if (dropType === 'before' || dropType === 'after' || dropType === 'inner') {
+        // 设置提示文字
+        let tipText = ''
+        switch (dropType) {
+          case 'before':
+            tipText = '在此节点上方插入'
+            break
+          case 'after':
+            tipText = '在此节点下方插入'
+            break
+          case 'inner':
+            tipText = '作为子节点插入'
+            break
+        }
+        dropIndicatorTip.textContent = tipText
+
+        // 分别处理不同类型的位置计算
+        if (dropType === 'before') {
+          this.calculateBeforePosition(dropIndicatorTip, dropNode)
+        } else if (dropType === 'after') {
+          this.calculateAfterPosition(dropIndicatorTip, dropNode)
+        } else if (dropType === 'inner') {
+          this.calculateInnerPosition(dropIndicatorTip, dropNode)
+        }
+      } else {
+        // 隐藏提示框
+        dropIndicatorTip.style.display = 'none'
+      }
+    },
+
+    /**
+     * 🎯 计算"上方插入"提示位置（before类型）
+     */
+    calculateBeforePosition (dropIndicatorTip, dropNode) {
+      const position = this.findNodeElement(dropNode)
+      if (!position.success) {
+        dropIndicatorTip.style.display = 'none'
+        return
+      }
+
+      const { treeRect, expandIcon } = position
+      const iconRect = expandIcon.getBoundingClientRect()
+
+      // before类型：红线在图标顶部，提示框在红线上方
+      const indicatorTop = iconRect.top - treeRect.top
+      const indicatorLeft = iconRect.right - treeRect.left
+
+      // 显示并定位提示框
+      dropIndicatorTip.style.display = 'block'
+      dropIndicatorTip.style.top = (indicatorTop + 5) + 'px' // 红线上方30px
+      dropIndicatorTip.style.left = (indicatorLeft + 10) + 'px'
+      dropIndicatorTip.className = 'el-tree__drop-indicator-tip tip-before'
+    },
+
+    /**
+     * 🎯 计算"下方插入"提示位置（after类型）
+     */
+    calculateAfterPosition (dropIndicatorTip, dropNode) {
+      const position = this.findNodeElement(dropNode)
+      if (!position.success) {
+        dropIndicatorTip.style.display = 'none'
+        return
+      }
+
+      const { treeRect, expandIcon } = position
+      const iconRect = expandIcon.getBoundingClientRect()
+
+      // after类型：红线在图标底部，提示框在红线下方（箭头朝上）
+      const indicatorTop = iconRect.bottom - treeRect.top
+      const indicatorLeft = iconRect.right - treeRect.left
+
+      // 显示并定位提示框
+      dropIndicatorTip.style.display = 'block'
+      dropIndicatorTip.style.top = (indicatorTop + 70) + 'px' // 红线下方5px
+      dropIndicatorTip.style.left = (indicatorLeft + 10) + 'px'
+      dropIndicatorTip.className = 'el-tree__drop-indicator-tip tip-after'
+    },
+
+    /**
+     * 🔧 查找节点对应的DOM元素（公共方法）
+     */
+    findNodeElement (dropNode) {
+      const treeEl = this.$refs.treeObject?.$el
+
+      // 🔧 修复：dropNode是TreeStore的Node对象，需要找到对应的Vue组件
+      let nodeEl = dropNode?.$el
+      if (!nodeEl && dropNode?.key !== undefined) {
+        const nodeSelector = `[data-key="${dropNode.key}"]`
+        nodeEl = treeEl?.querySelector(nodeSelector)
+      }
+
+      if (!nodeEl && dropNode?.data) {
+        const allNodes = treeEl?.querySelectorAll('.el-tree-node')
+        for (const node of allNodes || []) {
+          const vueInstance = node.__vue__
+          if (vueInstance?.node?.data === dropNode.data) {
+            nodeEl = node.querySelector('.el-tree-node__content')
+            break
+          }
+        }
+      }
+
+      if (!treeEl || !nodeEl) {
+        return { success: false }
+      }
+
+      const treeRect = treeEl.getBoundingClientRect()
+      const expandIcon = nodeEl.querySelector('.el-tree-node__expand-icon')
+      if (!expandIcon) {
+        return { success: false }
+      }
+
+      return {
+        success: true,
+        treeRect,
+        expandIcon,
+        nodeEl
+      }
+    },
+
+    /**
+     * 🎯 计算"作为子节点插入"提示位置（inner类型）
+     */
+    calculateInnerPosition (dropIndicatorTip, dropNode) {
+      const position = this.findNodeElement(dropNode)
+      if (!position.success) {
+        dropIndicatorTip.style.display = 'none'
+        return
+      }
+
+      const { treeRect, nodeEl } = position
+      const nodeRect = nodeEl.getBoundingClientRect()
+
+      // inner类型：提示框在节点中央，无箭头（因为整个节点都会有背景高亮）
+      const centerTop = nodeRect.top - treeRect.top + (nodeRect.height / 2)
+      const centerLeft = nodeRect.left - treeRect.left + (nodeRect.width / 2)
+
+      // 显示并定位提示框到节点中央
+      dropIndicatorTip.style.display = 'block'
+      dropIndicatorTip.style.top = (centerTop - 12) + 'px' // 减去提示框高度的一半
+      dropIndicatorTip.style.left = centerLeft + 'px' // CSS中使用transform: translateX(-50%)自动居中
+      dropIndicatorTip.className = 'el-tree__drop-indicator-tip tip-inner'
+    },
+
+    /**
+     * 隐藏红线提示（参考Element UI红线实现）
+     */
+    hideDropIndicatorTip () {
+      const dropIndicatorTip = this.$refs.dropIndicatorTip
+      if (dropIndicatorTip) {
+        dropIndicatorTip.style.display = 'none'
+      }
     },
 
     // 获取组织类型标签颜色
@@ -3254,32 +3361,71 @@ export default {
     // 拖拽样式辅助方法
 
     /**
-     * 🎯 增强计算拖拽类型 - 参考he-tree层级机制
+     * 🎯 Element UI完整拖拽算法 - 4层渐进式验证架构
      * @param {Event} ev - 事件对象
      * @param {Object} dropNode - 目标节点对象 (Element UI node)
+     * @param {Object} draggingNode - 拖拽节点对象 (Element UI node)
      * @returns {Object} 拖拽类型信息 { type, targetLevel, targetParent }
      */
-    calculateDropType (ev, dropNode = null) {
+    calculateDropType (ev, dropNode = null, draggingNode = null) {
       const nodeContent = ev.target.closest('.el-tree-node__content')
-      if (!nodeContent) return null
+      if (!nodeContent || !dropNode || !draggingNode) return null
 
       const rect = nodeContent.getBoundingClientRect()
-      const y = ev.clientY - rect.top
-      const x = ev.clientX - rect.left
+      const distance = ev.clientY - rect.top
       const height = rect.height
+      const x = ev.clientX - rect.left
 
-      // 🎯 Step 1: 基础垂直位置判断（保持原有逻辑）
-      let baseDropType
-      if (y < height * 0.25) {
-        baseDropType = 'before' // 上方25%区域
-      } else if (y > height * 0.75) {
-        baseDropType = 'after' // 下方25%区域
-      } else {
-        baseDropType = 'inner' // 中间50%区域
+      // 🏗️ **第1层：用户权限过滤** (默认全部允许)
+      let dropPrev = true
+      let dropInner = true
+      let dropNext = true
+
+      // 🎯 调用用户自定义权限函数
+      if (this.allowDrop && typeof this.allowDrop === 'function') {
+        dropPrev = this.allowDrop(draggingNode, dropNode, 'before')
+        dropInner = this.allowDrop(draggingNode, dropNode, 'inner')
+        dropNext = this.allowDrop(draggingNode, dropNode, 'after')
       }
 
-      // 🎯 Step 2: he-tree风格层级计算（水平位置检测）
-      if (dropNode && (baseDropType === 'before' || baseDropType === 'after')) {
+      // 🔒 **第2层：结构冲突检测** (防止树形结构破坏)
+
+      // 防止拖拽到相邻兄弟节点
+      if (dropNode.nextSibling === draggingNode) {
+        dropNext = false // 不能拖到下一个兄弟前面
+      }
+      if (dropNode.previousSibling === draggingNode) {
+        dropPrev = false // 不能拖到上一个兄弟后面
+      }
+
+      // 防止循环引用 - 不能拖到子节点内部
+      if (this.nodeContains(dropNode, draggingNode)) {
+        dropInner = false
+      }
+
+      // 防止自引用 - 不能拖到自己或父节点
+      if (draggingNode === dropNode || this.nodeContains(draggingNode, dropNode)) {
+        dropPrev = false
+        dropInner = false
+        dropNext = false
+      }
+
+      // 🧮 **第3层：Element UI动态百分比算法** (精妙的8种组合逻辑)
+      const prevPercent = dropPrev ? (dropInner ? 0.25 : (dropNext ? 0.45 : 1)) : -1
+      const nextPercent = dropNext ? (dropInner ? 0.75 : (dropPrev ? 0.55 : 0)) : 1
+
+      // 🎯 **第4层：最终拖拽类型判断** (基于动态百分比)
+      let dropType = 'none'
+      if (distance < height * prevPercent) {
+        dropType = 'before'
+      } else if (distance > height * nextPercent) {
+        dropType = 'after'
+      } else if (dropInner) {
+        dropType = 'inner'
+      }
+
+      // 🎯 保留原有的层级拖拽功能（兼容性扩展）
+      if (dropType === 'before' || dropType === 'after') {
         const indentSize = 24 // Element UI默认缩进大小
         const nodeLevel = dropNode.level || 1
         const baseIndent = (nodeLevel - 1) * indentSize
@@ -3288,31 +3434,52 @@ export default {
         // 🔍 检测水平位置以确定层级操作
         if (x > rightZoneStart && x < rightZoneStart + 40) {
           // 🎯 向右拖拽区域：成为前一个兄弟节点的子节点
-          const result = this.calculateChildRightDrop(dropNode, baseDropType)
+          const result = this.calculateChildRightDrop(dropNode, dropType)
           if (result) {
             return {
               type: 'child-right',
-              baseType: baseDropType,
+              baseType: dropType,
               targetLevel: result.targetLevel,
               targetParent: result.targetParent,
               description: `向右拖拽：成为"${result.targetParent?.data?.simple_name || '未知节点'}"的子节点`
             }
           }
-        } else if (x < baseIndent - 20) {
-          // 🔍 向左拖拽区域：降低层级（可选扩展）
-          console.log('🔍 检测到向左拖拽区域，当前暂不实现')
         }
       }
 
       // 🔄 返回标准拖拽类型（兼容现有逻辑）
       return {
-        type: baseDropType,
-        baseType: baseDropType,
+        type: dropType,
+        baseType: dropType,
         targetLevel: dropNode ? dropNode.level : 1,
         targetParent: null,
-        description: baseDropType === 'before' ? '插入上方'
-          : baseDropType === 'after' ? '插入下方' : '成为子节点'
+        description: dropType === 'before' ? '插入上方'
+          : dropType === 'after' ? '插入下方'
+            : dropType === 'inner' ? '成为子节点' : '禁止拖拽'
       }
+    },
+
+    /**
+     * 🔒 检查节点包含关系 (替代Element UI的node.contains方法)
+     * @param {Object} parentNode - 父节点
+     * @param {Object} childNode - 子节点
+     * @returns {Boolean} 是否包含
+     */
+    nodeContains (parentNode, childNode) {
+      if (!parentNode || !childNode) return false
+
+      // 递归检查childNode是否在parentNode的子树中
+      function checkChildren (node, target) {
+        if (!node.childNodes) return false
+
+        for (const child of node.childNodes) {
+          if (child === target) return true
+          if (checkChildren(child, target)) return true
+        }
+        return false
+      }
+
+      return checkChildren(parentNode, childNode)
     },
 
     /**
@@ -3330,10 +3497,8 @@ export default {
       // 应用对应的样式类
       if (dropType === 'inner') {
         nodeContent.classList.add('drag-drop-inner')
-        console.log('🎨 应用inner类型样式:', nodeContent)
       } else if (dropType === 'before') {
         nodeContent.classList.add('drag-drop-before')
-        console.log('🎨 应用before类型样式:', nodeContent)
       }
       // 'after' 类型使用Element UI内置指示器，不需要额外样式
     },
@@ -3344,378 +3509,9 @@ export default {
     clearDragStyles () {
       // 清除所有节点的拖拽样式类
       const allNodes = this.$el.querySelectorAll('.el-tree-node__content')
-      let clearedCount = 0
       allNodes.forEach(node => {
-        if (node.classList.contains('drag-drop-inner') || node.classList.contains('drag-drop-before')) {
-          clearedCount++
-        }
         node.classList.remove('drag-drop-inner', 'drag-drop-before')
       })
-      if (clearedCount > 0) {
-        console.log('🧹 清理了', clearedCount, '个节点的拖拽样式')
-      }
-    },
-
-    // ===================== he-tree机制：虚拟占位节点管理 =====================
-
-    /**
-     * 🎯 智能虚拟节点系统：基于红线位置插入虚拟节点 (he-tree正确实现)
-     * @param {Object} dropNode - 目标节点
-     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
-     */
-    insertSmartVirtualPlaceholder (dropNode, dropType) {
-      // 📋 用户需求：只处理 before 和 after 类型，忽略 inner 类型
-      if (dropType === 'inner') {
-        console.log('🎯 智能虚拟节点系统: 忽略 inner 类型，按用户要求')
-        return
-      }
-
-      console.log(`🎯 智能虚拟节点系统: 首次插入 ${dropType} 类型虚拟节点`)
-
-      // 🚫 取消任何待处理的虚拟节点移除操作
-      this.cancelVirtualPlaceholderRemoval()
-
-      // 🗑️ 清理旧虚拟节点
-      this.removeVirtualPlaceholder()
-
-      // 等待红线位置修正完成后再插入虚拟节点
-      this.$nextTick(() => {
-        // 再次延迟确保MutationObserver已经修正了红线位置
-        setTimeout(() => {
-          this.insertVirtualPlaceholderByRedLine(dropNode, dropType)
-        }, 10)
-      })
-    },
-
-    /**
-     * 🎯 实时更新虚拟节点位置（用于handleDragOver）
-     * @param {Object} dropNode - 目标节点
-     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
-     */
-    updateVirtualPlaceholderPosition (dropNode, dropType) {
-      // 📋 用户需求：只处理 before 和 after 类型，忽略 inner 类型
-      if (dropType === 'inner') {
-        // 如果是inner类型但有虚拟节点，移除它
-        if (this.hasVirtualPlaceholder()) {
-          this.removeVirtualPlaceholder()
-        }
-        return
-      }
-
-      // 🔍 检查当前虚拟节点位置是否正确
-      const currentPlaceholder = this.findPlaceholderInTree(this.dataJson.treeData)
-      const needsUpdate = this.shouldUpdatePlaceholderPosition(currentPlaceholder, dropNode, dropType)
-
-      if (needsUpdate) {
-        console.log(`🎯 更新虚拟节点位置: ${dropType} 类型`)
-
-        // 🗑️ 移除旧位置的虚拟节点
-        this.removeVirtualPlaceholder()
-
-        // 🎯 在新位置插入虚拟节点
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.insertVirtualPlaceholderByRedLine(dropNode, dropType)
-          }, 5) // 更短延迟，提高响应速度
-        })
-      }
-    },
-
-    /**
-     * 判断是否需要更新虚拟节点位置
-     * @param {Object|null} currentPlaceholder - 当前虚拟节点位置信息
-     * @param {Object} dropNode - 目标节点
-     * @param {String} dropType - 拖拽类型
-     * @returns {Boolean} 是否需要更新
-     */
-    shouldUpdatePlaceholderPosition (currentPlaceholder, dropNode, dropType) {
-      // 如果没有虚拟节点，需要插入
-      if (!currentPlaceholder) {
-        return true
-      }
-
-      // 获取目标节点的正确位置信息
-      const parent = dropNode.parent
-      let expectedParent, expectedIndex
-
-      if (!parent || parent.data === undefined) {
-        // 根级别操作
-        expectedParent = null
-        const targetIndex = this.dataJson.treeData.findIndex(child => child === dropNode.data)
-        expectedIndex = dropType === 'before' ? targetIndex : targetIndex + 1
-      } else {
-        // 子级别操作
-        expectedParent = parent.data
-        const targetIndex = parent.data.children ? parent.data.children.findIndex(child => child === dropNode.data) : -1
-        expectedIndex = dropType === 'before' ? targetIndex : targetIndex + 1
-      }
-
-      // 检查位置是否匹配
-      const actualParent = currentPlaceholder.parent ? currentPlaceholder.parent : null
-      const actualIndex = currentPlaceholder.index
-
-      return actualParent !== expectedParent || actualIndex !== expectedIndex
-    },
-
-    /**
-     * 根据修正后的红线位置智能插入虚拟节点 (he-tree正确实现)
-     * @param {Object} dropNode - 目标节点
-     * @param {String} dropType - 拖拽类型 ('before', 'after')
-     */
-    insertVirtualPlaceholderByRedLine (dropNode, dropType) {
-      // 🎯 使用专用的placeholderData对象（he-tree方式）
-      const placeholderData = this.dataJson.placeholderData
-
-      // 🔍 获取红线当前位置来验证放置逻辑
-      const dropIndicator = this.$refs.treeObject.$refs.dropIndicator
-      if (dropIndicator) {
-        const indicatorTop = parseFloat(dropIndicator.style.top)
-        console.log(`🎯 红线位置: ${indicatorTop}px, 类型: ${dropType}`)
-      }
-
-      if (dropType === 'before') {
-        // 🔝 红线在上面时：在上面显示虚拟节点
-        console.log('🎯 在目标节点前面插入虚拟节点 (红线在上方)')
-        this.insertPlaceholderBefore(dropNode, placeholderData)
-      } else if (dropType === 'after') {
-        // 🔻 红线在下面时：在下面显示虚拟节点
-        console.log('🎯 在目标节点后面插入虚拟节点 (红线在下方)')
-        this.insertPlaceholderAfter(dropNode, placeholderData)
-      }
-    },
-
-    /**
-     * 检查是否已有虚拟占位符
-     */
-    hasVirtualPlaceholder () {
-      return this.findPlaceholderInTree(this.dataJson.treeData) !== null
-    },
-
-    /**
-     * 在树中查找虚拟占位符的位置
-     * @param {Array} treeData - 树数据
-     * @returns {Object|null} 包含parent, index的位置信息，未找到返回null
-     */
-    findPlaceholderInTree (treeData) {
-      for (let i = 0; i < treeData.length; i++) {
-        const node = treeData[i]
-        if (node === this.dataJson.placeholderData) {
-          return { parent: null, index: i, array: treeData }
-        }
-        if (node.children) {
-          const found = this.findPlaceholderInChildren(node.children, node)
-          if (found) return found
-        }
-      }
-      return null
-    },
-
-    /**
-     * 在子节点中查找虚拟占位符
-     * @param {Array} children - 子节点数组
-     * @param {Object} parent - 父节点
-     * @returns {Object|null} 位置信息
-     */
-    findPlaceholderInChildren (children, parent) {
-      for (let i = 0; i < children.length; i++) {
-        const child = children[i]
-        if (child === this.dataJson.placeholderData) {
-          return { parent, index: i, array: children }
-        }
-        if (child.children) {
-          const found = this.findPlaceholderInChildren(child.children, child)
-          if (found) return found
-        }
-      }
-      return null
-    },
-
-    /**
-     * 在指定节点前面插入虚拟节点 (he-tree正确实现)
-     * @param {Object} targetNode - 目标节点
-     * @param {Object} placeholderData - 虚拟节点数据
-     */
-    insertPlaceholderBefore (targetNode, placeholderData) {
-      const parent = targetNode.parent
-
-      // 🏠 处理根级别节点：直接操作树数据
-      if (!parent || parent.data === undefined) {
-        const targetIndex = this.dataJson.treeData.findIndex(child => child === targetNode.data)
-        if (targetIndex !== -1) {
-          this.dataJson.treeData.splice(targetIndex, 0, placeholderData)
-          console.log(`🎯 成功在根级别索引 ${targetIndex} 前插入虚拟节点`)
-          this.forceTreeUpdate()
-        }
-        return
-      }
-
-      // 🔧 确保父节点有children数组（响应式）
-      if (!parent.data.children) {
-        this.$set(parent.data, 'children', [])
-      }
-
-      const targetIndex = parent.data.children.findIndex(child => child === targetNode.data)
-      if (targetIndex !== -1) {
-        parent.data.children.splice(targetIndex, 0, placeholderData)
-        console.log(`🎯 成功在索引 ${targetIndex} 前插入虚拟节点`)
-        this.forceTreeUpdate()
-      }
-    },
-
-    /**
-     * 在指定节点后面插入虚拟节点 (he-tree正确实现)
-     * @param {Object} targetNode - 目标节点
-     * @param {Object} placeholderData - 虚拟节点数据
-     */
-    insertPlaceholderAfter (targetNode, placeholderData) {
-      const parent = targetNode.parent
-
-      // 🏠 处理根级别节点：直接操作树数据
-      if (!parent || parent.data === undefined) {
-        const targetIndex = this.dataJson.treeData.findIndex(child => child === targetNode.data)
-        if (targetIndex !== -1) {
-          this.dataJson.treeData.splice(targetIndex + 1, 0, placeholderData)
-          console.log(`🎯 成功在根级别索引 ${targetIndex + 1} 后插入虚拟节点`)
-          this.forceTreeUpdate()
-        }
-        return
-      }
-
-      // 🔧 确保父节点有children数组（响应式）
-      if (!parent.data.children) {
-        this.$set(parent.data, 'children', [])
-      }
-
-      const targetIndex = parent.data.children.findIndex(child => child === targetNode.data)
-      if (targetIndex !== -1) {
-        parent.data.children.splice(targetIndex + 1, 0, placeholderData)
-        console.log(`🎯 成功在索引 ${targetIndex + 1} 后插入虚拟节点`)
-        this.forceTreeUpdate()
-      }
-    },
-
-    /**
-     * 强制树组件更新
-     */
-    forceTreeUpdate () {
-      this.$nextTick(() => {
-        this.$forceUpdate()
-      })
-    },
-
-    /**
-     * 🕒 计划延迟移除虚拟节点（用于dragLeave事件）
-     */
-    scheduleVirtualPlaceholderRemoval () {
-      // 取消之前的计时器
-      this.cancelVirtualPlaceholderRemoval()
-
-      // 设置新的延迟移除计时器
-      this.dataJson.placeholderRemovalTimer = setTimeout(() => {
-        console.log('🎯 延迟移除虚拟节点（dragLeave触发）')
-        this.removeVirtualPlaceholder()
-        this.dataJson.placeholderRemovalTimer = null
-      }, 100) // 100ms延迟，给dragEnter事件足够时间取消
-    },
-
-    /**
-     * 🚫 取消计划中的虚拟节点移除
-     */
-    cancelVirtualPlaceholderRemoval () {
-      if (this.dataJson.placeholderRemovalTimer) {
-        clearTimeout(this.dataJson.placeholderRemovalTimer)
-        this.dataJson.placeholderRemovalTimer = null
-        console.log('🎯 取消虚拟节点延迟移除')
-      }
-    },
-
-    /**
-     * 插入虚拟占位节点（原始版本，保留备用）
-     * @param {Object} dropNode - 目标节点
-     * @param {String} dropType - 拖拽类型 ('before', 'after', 'inner')
-     */
-    insertVirtualPlaceholder (dropNode, dropType) {
-      const placeholderData = {} // he-tree方式：空对象作为虚拟节点
-
-      if (dropType === 'inner') {
-        // 作为子节点：插入到目标节点的children开头
-        if (!dropNode.data.children) {
-          this.$set(dropNode.data, 'children', [])
-        }
-        dropNode.data.children.unshift(placeholderData)
-      } else if (dropType === 'before') {
-        // 插入前面：在父级中找到目标节点位置，插入到前面
-        this.insertPlaceholderInParent(dropNode, 0, placeholderData)
-      } else if (dropType === 'after') {
-        // 插入后面：在父级中找到目标节点位置，插入到后面
-        this.insertPlaceholderInParent(dropNode, 1, placeholderData)
-      }
-    },
-
-    /**
-     * 在父级节点中插入虚拟节点
-     */
-    insertPlaceholderInParent (targetNode, offset, placeholderData) {
-      const parent = targetNode.parent
-      if (parent && parent.data) {
-        // 有父节点的情况
-        if (!parent.data.children) {
-          this.$set(parent.data, 'children', [])
-        }
-        const parentChildren = parent.data.children
-        const index = parentChildren.indexOf(targetNode.data)
-        if (index !== -1) {
-          parentChildren.splice(index + offset, 0, placeholderData)
-        }
-      } else {
-        // 根级节点
-        const rootData = this.dataJson.treeData
-        const index = rootData.indexOf(targetNode.data)
-        if (index !== -1) {
-          rootData.splice(index + offset, 0, placeholderData)
-        }
-      }
-    },
-
-    /**
-     * 移除所有虚拟占位节点 (he-tree正确实现)
-     */
-    removeVirtualPlaceholder () {
-      const placeholderLocation = this.findPlaceholderInTree(this.dataJson.treeData)
-      if (placeholderLocation) {
-        placeholderLocation.array.splice(placeholderLocation.index, 1)
-        console.log(`🎯 移除虚拟节点，位置: ${placeholderLocation.parent ? '子级' : '根级'}, 索引: ${placeholderLocation.index}`)
-        this.forceTreeUpdate()
-        return true
-      }
-      return false
-    },
-
-    /**
-     * 递归移除数组中的虚拟节点（保留，备用）
-     */
-    removeVirtualNodesFromArray (nodeArray) {
-      if (!Array.isArray(nodeArray)) return
-
-      let removed = false
-      for (let i = nodeArray.length - 1; i >= 0; i--) {
-        const node = nodeArray[i]
-
-        // 🎯 he-tree机制：使用专用placeholderData检测虚拟节点
-        if (node === this.dataJson.placeholderData) {
-          nodeArray.splice(i, 1)
-          removed = true
-          console.log(`🎯 移除虚拟节点，索引: ${i}`)
-        } else if (node.children && node.children.length > 0) {
-          // 递归处理子节点
-          this.removeVirtualNodesFromArray(node.children)
-        }
-      }
-
-      // 🔧 如果移除了虚拟节点，强制重新渲染
-      if (removed) {
-        this.forceTreeUpdate()
-      }
     },
 
     /**
@@ -4028,7 +3824,6 @@ export default {
           break
 
         default:
-          console.log('未知的右键菜单操作:', menuItem.action)
       }
     },
 
@@ -4427,8 +4222,6 @@ export default {
 
     // 新增：直接打开列表选择弹窗
     openDirectListDialog (dialogType, parentNodeData) {
-      console.log('openDirectListDialog', dialogType, parentNodeData)
-
       // 设置弹窗数据并直接显示列表选择弹窗
       this.popSettingsData.listDialogData = {
         visible: true,
@@ -4446,8 +4239,6 @@ export default {
 
     // 新增：直接编辑处理
     handleDirectEdit (entityType, nodeData) {
-      console.log('handleDirectEdit', entityType, nodeData)
-
       // 根据实体类型调用相应的API获取完整数据并打开编辑弹窗
       switch (entityType) {
         case 'group':
@@ -4491,7 +4282,6 @@ export default {
           break
 
         default:
-          console.log('未知的实体类型:', entityType)
           this.$message.warning('未支持的编辑类型: ' + entityType)
       }
     },
@@ -4639,6 +4429,61 @@ export default {
 /* 屏蔽拖拽指示器上的文字提示 */
 ::v-deep .el-tree__drop-indicator::before {
   display: none !important; /* 隐藏"插入到此位置"文字提示 */
+}
+
+/* 🎯 自定义红线提示文字容器 (参考Element UI红线实现) */
+.el-tree__drop-indicator-tip {
+  position: absolute;
+  display: none; /* 初始隐藏，类似Element UI红线 */
+  background: rgba(64, 158, 255, 0.3); /* Element UI蓝色，70%透明 */
+  border: 1px solid #409EFF;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #409EFF;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10001;
+  box-shadow: 0 2px 6px rgba(64, 158, 255, 0.2);
+  backdrop-filter: blur(2px);
+}
+
+/* 🎯 上方插入提示（before类型）- 箭头朝下指向红线 */
+.el-tree__drop-indicator-tip.tip-before::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  border: 4px solid transparent;
+  border-top-color: #409EFF;
+  border-bottom: none;
+}
+
+/* 🎯 下方插入提示（after类型）- 箭头朝上指向红线 */
+.el-tree__drop-indicator-tip.tip-after::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 12px;
+  border: 4px solid transparent;
+  border-bottom-color: #409EFF;
+  border-top: none;
+}
+
+/* 🎯 内部插入提示（inner类型）- 无箭头，居中显示 */
+.el-tree__drop-indicator-tip.tip-inner {
+  background: rgba(103, 194, 58, 0.3); /* 使用绿色表示内部插入 */
+  border: 1px solid #67C23A;
+  color: #67C23A;
+  box-shadow: 0 2px 6px rgba(103, 194, 58, 0.2);
+  font-weight: 600;
+  transform: translateX(-50%); /* 水平居中 */
+}
+
+/* inner类型无箭头 */
+.el-tree__drop-indicator-tip.tip-inner::after {
+  display: none;
 }
 
 /* 使用全局element-ui_tree.scss中的蓝色拖拽样式，不覆盖 */
