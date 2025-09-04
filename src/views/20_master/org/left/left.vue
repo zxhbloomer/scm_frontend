@@ -145,8 +145,8 @@
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               组织机构根节点
               <!-- 显示根节点统计信息 -->
-              <span v-if="data.countLoading" style="font-size: 12px; color: #606266;">（加载中...）</span>
-              <span v-else-if="data.root_stats" style="font-size: 12px; color: #606266;">
+              <span v-if="data.countLoading" style="font-size: 12px; color: #606266; margin-left: 8px;">（加载中...）</span>
+              <span v-else-if="data.root_stats" style="font-size: 12px; color: #606266; margin-left: 8px;">
                 {{ data.root_stats }}
               </span>
             </span>
@@ -157,7 +157,7 @@
                 {{ getStaffDisplayText(data) }}
               </span>
             </span>
-            <span v-else-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
+            <span v-else>
               {{ data.simple_name }}
               <!-- 集团类型显示子节点数量 -->
               <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP" style="font-size: 12px;">

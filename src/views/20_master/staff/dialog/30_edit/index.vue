@@ -8,7 +8,7 @@
 
       element-loading-text="拼命加载中，请稍后..."
       element-loading-background="rgba(255, 255, 255, 0.7)"
-      :title="PARAMETERS.STATUS_TEXT_MAP[dialogStatus]"
+      title="修改员工"
       :visible="visible"
       :close-on-click-modal="PARAMETERS.DIALOG_CLOSE_BY_CLICK"
       :close-on-press-escape="PARAMETERS.DIALOG_CLOSE_BY_ESC"
@@ -54,7 +54,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.name"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -69,7 +68,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.name_py"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -87,7 +85,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.id_card"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -102,7 +99,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.passport"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -120,7 +116,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.nation"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -136,7 +131,6 @@
                     clearable
                     :placeholder="isPlaceholderShow('请输入')"
                     style="width: 100%"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -151,7 +145,6 @@
                   <radio-dict
                     v-model="dataJson.tempJson.sex"
                     :para="CONSTANTS.DICT_SYS_SEX_TYPE"
-                    :disabled="isViewModel"
                     @change="handleSexDictChange"
                   />
                 </el-form-item>
@@ -165,7 +158,6 @@
                     v-model="dataJson.tempJson.service"
                     :para="CONSTANTS.DICT_USR_SERVICE_TYPE"
                     init-placeholder="请选择在职情况"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -180,7 +172,6 @@
                   <radio-dict
                     v-model="dataJson.tempJson.is_wed"
                     :para="CONSTANTS.DICT_USR_WED_TYPE"
-                    :disabled="isViewModel"
                     @change="handleWedDictChange"
                   />
                 </el-form-item>
@@ -194,7 +185,6 @@
                     v-model="dataJson.tempJson.degree"
                     :para="CONSTANTS.DICT_USR_DEGREE_TYPE"
                     init-placeholder="请选择学历情况"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -206,7 +196,7 @@
                 prop="descr"
               >
                 <previewCard
-                  :show-update="!isViewModel"
+                  :show-update="true"
                   :data="dataJson.tempJson.one_fileVo"
                   :title="'身份证正面照片'"
                   @upload-success="uploadSuccessOne"
@@ -217,7 +207,7 @@
                 prop="descr"
               >
                 <previewCard
-                  :show-update="!isViewModel"
+                  :show-update="true"
                   :title="'身份证背面照片'"
                   :data="dataJson.tempJson.two_fileVo"
                   @upload-success="uploadSuccessTwo"
@@ -247,7 +237,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.home_phone"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -262,7 +251,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.office_phone"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -280,7 +268,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.mobile_phone"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                     @blur="handleChangePhone"
                   />
                 </el-form-item>
@@ -298,7 +285,6 @@
                       dataJson.inputSettings.maxLength.mobile_phone_backup
                     "
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -316,7 +302,6 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.email"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -331,13 +316,12 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.maxLength.email_backup"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
             </el-row>
 
-            <el-row v-show="settings.dialogStatus === PARAMETERS.STATUS_UPDATE">
+            <el-row>
               <el-col :span="12">
                 <el-form-item
                   label="更新人："
@@ -381,7 +365,6 @@
                     v-model="dataJson.tempJson.user.is_enable"
                     active-text="开启"
                     inactive-text="关闭"
-                    :disabled="isViewModel"
                   />
                 </el-form-item>
               </el-col>
@@ -396,7 +379,7 @@
                   <radio-dict
                     v-model="dataJson.tempJson.user.login_type"
                     :para="CONSTANTS.DICT_SYS_LOGIN_TYPE"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                     @change="handleSysLoginTypeChange"
                   />
                 </el-form-item>
@@ -415,7 +398,7 @@
                     show-word-limit
                     :maxlength="dataJson.inputSettings.user.maxLength.login_name"
                     :placeholder="isPlaceholderShow('请输入')"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                     @blur="handleChangeLoginName"
                   />
                 </el-form-item>
@@ -428,7 +411,7 @@
                   <el-button
                     type="primary"
                     icon="el-icon-unlock"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                     @click="handleSetPassword"
                   >设置密码</el-button>
                   <el-tag
@@ -469,7 +452,7 @@
                   end-placeholder="生效结束日期"
                   align="right"
                   style="width: 100%"
-                  :disabled="!isAccountLoginType || isViewModel"
+                  :disabled="!isAccountLoginType"
                 />
               </el-form-item>
             </el-row>
@@ -484,7 +467,7 @@
                     v-model="dataJson.tempJson.user.type"
                     :para="CONSTANTS.DICT_USR_LOGIN_TYPE"
                     init-placeholder="请选择登录用户类型"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                   />
                 </el-form-item>
               </el-col>
@@ -499,7 +482,7 @@
                     inactive-color="#dcdfe6"
                     active-text="已删除"
                     inactive-text="未删除"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                   />
                 </el-form-item>
               </el-col>
@@ -518,7 +501,7 @@
                     clearable
                     :placeholder="isPlaceholderShow('选择日期')"
                     style="width: 100%"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                   />
                 </el-form-item>
               </el-col>
@@ -533,7 +516,7 @@
                     inactive-color="#dcdfe6"
                     active-text="已锁定"
                     inactive-text="未锁定"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                   />
                 </el-form-item>
               </el-col>
@@ -563,7 +546,7 @@
                     inactive-color="#dcdfe6"
                     active-text="已修改"
                     inactive-text="未修改"
-                    :disabled="!isAccountLoginType || isViewModel"
+                    :disabled="!isAccountLoginType"
                   />
                 </el-form-item>
               </el-col>
@@ -609,7 +592,6 @@
                 type="textarea"
                 :maxlength="dataJson.inputSettings.maxLength.descr"
                 :placeholder="isPlaceholderShow('选择日期')"
-                :disabled="isViewModel"
               />
             </el-form-item>
           </el-tab-pane>
@@ -755,31 +737,12 @@
         <el-divider />
 
         <el-button
-          v-show="settings.btnShowStatus.showInsert"
-          plain
-          type="primary"
-          :disabled="
-            settings.loading || settings.btnDisabledStatus.disabledInsert
-          "
-          @click="doInsert()"
-        >确定</el-button>
-        <el-button
-          v-show="settings.btnShowStatus.showUpdate && !isViewModel"
           plain
           type="primary"
           :disabled="
             settings.loading || settings.btnDisabledStatus.disabledUpdate
           "
           @click="doUpdate()"
-        >确定</el-button>
-        <el-button
-          v-show="settings.btnShowStatus.showCopyInsert"
-          plain
-          type="primary"
-          :disabled="
-            settings.loading || settings.btnDisabledStatus.disabledCopyInsert
-          "
-          @click="doCopyInsert()"
         >确定</el-button>
         <el-button
           plain
@@ -850,9 +813,8 @@
 
 <script>
 
-import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
-import { updateApi, insertApi, getApi, getStaffOrgRelationApi } from '@/api/20_master/staff/staff'
+import { updateApi, getApi, getStaffOrgRelationApi } from '@/api/20_master/staff/staff'
 import RadioDict from '@/components/00_dict/redio'
 import SelectDict from '@/components/00_dict/select/SelectDict'
 import PasswordDialog from '../60_password/index.vue'
@@ -877,10 +839,6 @@ export default {
     data: {
       type: Object,
       default: null
-    },
-    dialogStatus: {
-      type: String,
-      default: constants_para.STATUS_VIEW
     },
     // 选中的标签页
     tabName: {
@@ -976,20 +934,14 @@ export default {
         loading: true,
         // 按钮是否显示，默认不显示，false：不显示，true：显示
         btnShowStatus: {
-          showInsert: false,
-          showUpdate: false,
-          showCopyInsert: false
+          showUpdate: true
         },
         // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
-          disabledReset: true,
-          disabledInsert: true,
-          disabledUpdate: true,
-          disabledCopyInsert: true
+          disabledUpdate: true
         },
         // 以下为pop的内容：数据弹出框
         selection: [],
-        dialogStatus: this.dialogStatus,
         // pop的check内容
         rules: {},
         // 基本信息栏目check
@@ -1102,14 +1054,6 @@ export default {
         return true
       }
     },
-    // 是否为更新模式
-    isUpdateModel () {
-      if (this.settings.dialogStatus === this.PARAMETERS.STATUS_INSERT || this.settings.dialogStatus === this.PARAMETERS.STATUS_COPY_INSERT) {
-        return false
-      } else {
-        return true
-      }
-    },
     isAccountLoginType () {
       if (!this.dataJson.tempJson.user.is_enable || Object.keys(this.dataJson.tempJson.user.is_enable).length === 0) {
         return false
@@ -1119,14 +1063,6 @@ export default {
     },
     isLoginEnabled () {
       if (this.dataJson.tempJson.user.is_enable === true) {
-        return true
-      } else {
-        return false
-      }
-    },
-    // 是否为查看模式
-    isViewModel () {
-      if (this.settings.dialogStatus === this.PARAMETERS.STATUS_VIEW) {
         return true
       } else {
         return false
@@ -1149,20 +1085,7 @@ export default {
     async init () {
       this.initButtonShowStatus()
       this.initButtonDisabledStatus()
-      switch (this.dialogStatus) {
-        case this.PARAMETERS.STATUS_INSERT:
-          this.initInsertModel()
-          break
-        case this.PARAMETERS.STATUS_UPDATE:
-          await this.initUpdateModel()
-          break
-        case this.PARAMETERS.STATUS_COPY_INSERT:
-          await this.initCopyInsertModel()
-          break
-        case this.PARAMETERS.STATUS_VIEW:
-          await this.initViewModel()
-          break
-      }
+      await this.initUpdateModel()
       // 初始化watch
       this.setWatch()
       // 初始化tabs的rules
@@ -1174,39 +1097,12 @@ export default {
       this.dataJson.tempJsonOriginal = this.$options.data.call(this).dataJson.tempJsonOriginal
     },
     initButtonShowStatus () {
-      // 初始化按钮状态：默认都隐藏
-      this.settings.btnShowStatus = this.$options.data.call(this).settings.btnShowStatus
+      // 初始化按钮状态：只显示修改按钮
+      this.settings.btnShowStatus = { showUpdate: true }
     },
     initButtonDisabledStatus () {
       // 按钮状态初始化：默认不可用
-      this.settings.btnDisabledStatus = this.$options.data.call(this).settings.btnDisabledStatus
-    },
-    // 新增时的初始化
-    initInsertModel () {
-      // 数据初始化
-      this.initTempJsonOriginal()
-      // this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
-      // 设置按钮
-      this.settings.btnShowStatus.showInsert = true
-      // 控件focus
-      this.$nextTick(() => {
-        this.$refs['refFocusOne'].focus()
-      })
-    },
-    // 复制新增时的初始化
-    async initCopyInsertModel () {
-      // 数据初始化
-      // this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.tempJson.code = ''
-      this.dataJson.tempJsonOriginal = deepCopy(this.data)
-      // var userData = await this.getUserBeanById()
-      // this.dataJson.tempJson.user = Object.assign({}, userData)
-      // 设置按钮
-      this.settings.btnShowStatus.showCopyInsert = true
-      // 控件focus
-      this.$nextTick(() => {
-        this.$refs['refFocusOne'].focus()
-      })
+      this.settings.btnDisabledStatus = { disabledUpdate: true }
     },
     // 修改时的初始化
     async initUpdateModel () {
@@ -1223,24 +1119,12 @@ export default {
         this.$refs['refFocusOne'].focus()
       })
     },
-    // 查看时的初始化
-    async initViewModel () {
-      // 数据初始化
-      this.getData()
-      this.settings.btnShowStatus.showUpdate = false
-      // this.dataJson.tempJson = deepCopy(this.data)
-      // var userData = await this.getUserBeanById()
-      // this.dataJson.tempJson.user = Object.assign({}, userData)
-    },
     // 设置监听器
     setWatch () {
       this.unWatch()
       // 监听页面上面是否有修改，有修改按钮高亮
       this.watch.unwatch_tempJson = this.$watch('dataJson.tempJson', (newVal, oldVal) => {
-        this.settings.btnDisabledStatus.disabledReset = false
-        this.settings.btnDisabledStatus.disabledInsert = false
         this.settings.btnDisabledStatus.disabledUpdate = false
-        this.settings.btnDisabledStatus.disabledCopyInsert = false
       }, { deep: true }
       )
     },
@@ -1296,26 +1180,6 @@ export default {
         this.orgRelationLoading = false
       })
     },
-    // 插入逻辑
-    doInsert () {
-      // 开始综合验证
-      this.doValidateByTabs()
-      this.$refs['dataSubmitForm'].validate((valid) => {
-        if (valid) {
-          // const tempData = Object.assign({}, this.dataJson.tempJson)
-          const tempData = deepCopy(this.dataJson.tempJson)
-          this.settings.loading = true
-
-          insertApi(tempData).then((_data) => {
-            this.$emit('closeMeOk', { return_flag: true, data: _data })
-          }, (_error) => {
-            this.$emit('closeMeOk', { return_flag: false, error: _error })
-          }).finally(() => {
-            this.settings.loading = false
-          })
-        }
-      })
-    },
     // 更新逻辑
     doUpdate () {
       // 开始综合验证
@@ -1327,25 +1191,6 @@ export default {
           this.settings.loading = true
 
           updateApi(tempData).then((_data) => {
-            // this.dataJson.tempJson = Object.assign({}, _data.data)
-            this.dataJson.tempJson = deepCopy(_data.data)
-            this.$emit('closeMeOk', { return_flag: true, data: _data })
-          }, (_error) => {
-            this.$emit('closeMeOk', { return_flag: false, error: _error })
-          }).finally(() => {
-            this.settings.loading = false
-          })
-        }
-      })
-    },
-    // 复制新增逻辑
-    doCopyInsert () {
-      this.$refs['dataSubmitForm'].validate((valid) => {
-        if (valid) {
-          // const tempData = Object.assign({}, this.dataJson.tempJson)
-          const tempData = deepCopy(this.dataJson.tempJson)
-          this.settings.loading = true
-          insertApi(tempData).then((_data) => {
             // this.dataJson.tempJson = Object.assign({}, _data.data)
             this.dataJson.tempJson = deepCopy(_data.data)
             this.$emit('closeMeOk', { return_flag: true, data: _data })
