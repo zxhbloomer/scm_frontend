@@ -1,4 +1,3 @@
-<script src="index_mixin.js"></script>
 <template>
   <div class="app-container">
     <div>
@@ -337,16 +336,17 @@ import deepCopy from 'deep-copy'
 import { getApi } from '@/api/40_business/project/project'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
 import DataChangeLogDialog from '@/views/30_wms/datachangelogorder/tabs/dialog/info/index.vue'
+import indexMixin from './index_mixin'
 
 export default {
   directives: { elDragDialog },
   components: { PreviewDescription, DataChangeLogDialog },
-  mixins: [],
+  mixins: [indexMixin],
   props: {
     data: {
       type: Object,
       default: null
-    },
+    }
   },
   data () {
     return {
@@ -375,7 +375,7 @@ export default {
       // 页面设置json
       settings: {
         // loading 状态
-        loading: true,
+        loading: true
       }
     }
   },

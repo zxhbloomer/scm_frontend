@@ -674,29 +674,12 @@
 
   /* 拖拽样式优化 - 简单明显的区分 */
 
-  /* 子级拖拽样式 - 红色背景+文字 */
+  /* 子级拖拽样式 - 蓝色背景+虚线框 */
   .drag-drop-inner {
-    background: linear-gradient(90deg, #fff0f0 0%, #ffe8e8 100%) !important;
-    border: 3px solid #F56C6C !important;
+    background: linear-gradient(90deg, #f0f6ff 0%, #e8f2ff 100%) !important;
+    border: 2px dashed #409EFF !important;
     border-radius: 8px !important;
     position: relative !important;
-    box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3) !important;
-  }
-
-  .drag-drop-inner::after {
-    content: '📁 成为子节点';
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #F56C6C;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: bold;
-    z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
   /* 平级拖拽样式 - 优化版本 */
@@ -1879,21 +1862,26 @@ export default {
       this.removeVirtualPlaceholder()
 
       // 计算拖拽类型
-      const dropType = this.calculateDropType(ev)
-      const allowDrop = dropType && this.allowDrop(draggingNode, dropNode, dropType)
+      const dropInfo = this.calculateDropType(ev, dropNode)
+      const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo.type)
 
       if (allowDrop) {
         // 🏗️ Step 1: 增强节点高度（30px）
         this.enhanceNodeHeight(dropNode)
 
         // 🎯 智能虚拟节点系统：基于红线位置插入虚拟节点（仅before/after类型）
-        this.insertSmartVirtualPlaceholder(dropNode, dropType)
+        this.insertSmartVirtualPlaceholder(dropNode, dropInfo.type)
+
+        // 🎨 Step 2: 添加拖拽样式反馈（处理inner类型）
+        if (dropInfo.type === 'inner') {
+          this.applyDragStyle(ev.target, dropInfo.type)
+        }
 
         // 允许拖拽时隐藏跟随鼠标的提示
         this.hideMouseFollowTip()
       } else {
         // 不允许拖拽时显示具体的错误原因
-        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropType)
+        const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo.type)
         this.showMouseFollowTip(failureReason)
       }
     },
@@ -1904,6 +1892,9 @@ export default {
 
       // 🎯 智能虚拟节点系统：设置延迟移除标志，如果没有新的dragEnter会移除虚拟节点
       this.scheduleVirtualPlaceholderRemoval()
+
+      // 🎨 清理拖拽样式
+      this.clearDragStyles()
 
       // 离开节点时隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -1918,7 +1909,7 @@ export default {
 
       // 🎯 增强计算拖拽类型（支持层级检测）
       const dropInfo = this.calculateDropType(ev, dropNode)
-      const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo)
+      const allowDrop = dropInfo && this.allowDrop(draggingNode, dropNode, dropInfo.type)
 
       if (allowDrop) {
         // 🏗️ Step 1: 在drag-over中也确保高度增强（更稳定）
@@ -1927,12 +1918,13 @@ export default {
         // 🎯 智能虚拟节点系统：实时更新虚拟节点位置（支持层级变更）
         this.updateVirtualPlaceholderPosition(dropNode, dropInfo)
 
-        // 🎯 显示层级变更提示
-        if (dropInfo.type === 'child-right') {
-          this.showMouseFollowTip(dropInfo.description, 'success')
-        } else {
-          this.hideMouseFollowTip()
+        // 🎨 Step 2: 添加拖拽样式反馈（处理inner类型）
+        if (dropInfo.type === 'inner') {
+          this.applyDragStyle(ev.target, dropInfo.type)
         }
+
+        // 允许拖拽时隐藏提示，只在错误时显示
+        this.hideMouseFollowTip()
       } else {
         // 不允许拖拽时显示具体的错误原因
         const failureReason = this.getDropFailureReason(draggingNode, dropNode, dropInfo)
@@ -1946,6 +1938,9 @@ export default {
 
       // 🎯 智能虚拟节点系统：拖拽结束时移除虚拟占位节点
       this.removeVirtualPlaceholder()
+
+      // 🎨 清理拖拽样式
+      this.clearDragStyles()
 
       // 拖拽结束时确保隐藏跟随鼠标的提示
       this.hideMouseFollowTip()
@@ -1969,7 +1964,7 @@ export default {
           return // 同一节点无需重复处理
         }
 
-        console.log('🏗️ 开始增强节点高度:', dropNode)
+        console.log('🏗️ 开始增强节点高度:', dropNode.data.simple_name || dropNode.data.label)
 
         // 先恢复之前的节点高度（如果存在且不同节点）
         if (currentEnhanced) {
@@ -1980,6 +1975,10 @@ export default {
         // 查找tree中的所有节点组件
         const treeNodeComponents = this.$refs.treeObject.$children || []
         const targetNodeComponent = this.findNodeComponentByData(treeNodeComponents, dropNode.data)
+
+        if (!targetNodeComponent || !targetNodeComponent.$el) {
+          console.warn('⚠️ 未找到目标节点组件:', dropNode.data.simple_name || dropNode.data.label)
+        }
 
         if (targetNodeComponent && targetNodeComponent.$el) {
           // 保存当前增强的节点引用
@@ -3331,8 +3330,10 @@ export default {
       // 应用对应的样式类
       if (dropType === 'inner') {
         nodeContent.classList.add('drag-drop-inner')
+        console.log('🎨 应用inner类型样式:', nodeContent)
       } else if (dropType === 'before') {
         nodeContent.classList.add('drag-drop-before')
+        console.log('🎨 应用before类型样式:', nodeContent)
       }
       // 'after' 类型使用Element UI内置指示器，不需要额外样式
     },
@@ -3343,9 +3344,16 @@ export default {
     clearDragStyles () {
       // 清除所有节点的拖拽样式类
       const allNodes = this.$el.querySelectorAll('.el-tree-node__content')
+      let clearedCount = 0
       allNodes.forEach(node => {
+        if (node.classList.contains('drag-drop-inner') || node.classList.contains('drag-drop-before')) {
+          clearedCount++
+        }
         node.classList.remove('drag-drop-inner', 'drag-drop-before')
       })
+      if (clearedCount > 0) {
+        console.log('🧹 清理了', clearedCount, '个节点的拖拽样式')
+      }
     },
 
     // ===================== he-tree机制：虚拟占位节点管理 =====================

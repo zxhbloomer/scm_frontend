@@ -81,6 +81,21 @@ export default defineConfig(() => {
       overlay: true, // 开启浏览器错误遮罩层
       clearScreen: false, // 不清除终端内容，保留错误信息
       logLevel: 'info', // 详细日志级别
+      // HMR热模块替换配置 - 核心优化
+      hmr: {
+        overlay: true, // HMR错误覆盖层
+        clientPort: 9528, // 客户端HMR端口，与服务端保持一致
+        port: 9528 // WebSocket端口
+      },
+      // 文件监听优化配置
+      watch: {
+        // 忽略大文件夹，提升性能
+        ignored: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/.vscode/**'],
+        // 启用轮询模式（适用于某些文件系统或Docker环境）
+        usePolling: false,
+        // 防抖延迟（毫秒）
+        interval: 100
+      },
       // 代理配置，与原Vue CLI保持一致
       proxy: {
         // SCM后台端代理
