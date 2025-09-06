@@ -97,3 +97,15 @@ export function exportApi (data) {
   })
 }
 
+/**
+ * 删除选择数据
+ * @param {*} data
+ */
+export function deleteApi (data) {
+  return request({
+    url: '/api/v1/bin/delete',
+    method: 'post',
+    data
+  })
+}
+
