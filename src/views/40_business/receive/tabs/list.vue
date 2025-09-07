@@ -988,7 +988,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin/listResizeHandlerMixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch'
 import cancelConfirmDialog from '@/views/40_business/40_out/out/tabs/dialog/cancelconfirm'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 import urlUtil from '@/utils/urlUtil'

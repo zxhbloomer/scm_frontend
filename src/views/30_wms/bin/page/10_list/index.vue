@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div>
     <FloatMenu />
     <el-form
       v-if="searchsetting.visible"
@@ -79,14 +79,32 @@
         :loading="settings.loading"
         @click="handleDisAbled"
       >停用</el-button>
+      <!-- 导出按钮 开始 -->
       <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_BIN:EXPORT'"
-        :disabled="!settings.btnShowStatus.showExport"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_BIN:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_BIN:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!-- 导出按钮 结束 -->
       <el-button
         v-permission="'P_BIN:DELETE'"
         :disabled="!settings.btnShowStatus.showDel"
@@ -118,6 +136,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column
+        v-if="settings.exportModel"
         type="selection"
         width="45"
         prop="id"
@@ -155,7 +174,7 @@
       <el-table-column
         :auto-fit="true"
         min-width="80"
-        align="center"
+        align="left"
         prop="enable"
         label="状态"
       >
@@ -163,8 +182,11 @@
           <span
             :style="{
               color: scope.row.enable ? '#67C23A' : '#F56C6C',
-              fontWeight: 'bold'
+              fontWeight: 'bold',
+              cursor: 'pointer'
             }"
+            :title="scope.row.enable ? '点击停用' : '点击启用'"
+            @click="handleEnableDisableRow(scope.row)"
           >
             {{ scope.row.enable ? '启用' : '停用' }}
           </span>
@@ -246,16 +268,13 @@
       @closeMeOk="handleViewDialogOk"
       @closeMeCancel="handleViewDialogCancel"
     />
+
+    <!--    vue-tour组件-->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
   </div>
 </template>
 
 <style scoped>
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
-}
 .el-form-item .el-select {
   width: 100%;
 }
@@ -281,7 +300,7 @@
 </style>
 
 <script>
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportApi, deleteApi } from '@/api/30_wms/bin/bin'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportApi, deleteApi } from '@/api/30_wms/bin/bin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import newDialog from '@/views/30_wms/bin/dialog/20_new'
@@ -294,21 +313,6 @@ export default {
   name: 'BinList',
   components: { Pagination, newDialog, editDialog, viewDialog },
   directives: { elDragDialog, permission },
-  props: {
-    // 自己作为弹出框时的参数
-    meDialogStatus: {
-      type: Boolean,
-      default: false
-    },
-    dataModel: {
-      type: String,
-      default: ''
-    },
-    data: {
-      type: Object,
-      default: null
-    }
-  },
   data () {
     return {
       searchsetting: {
@@ -330,14 +334,6 @@ export default {
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
         // table使用的json
         listData: null,
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          config_key: '',
-          value: '',
-          descr: ''
-        },
         // 单条数据 json
         currentJson: null,
         tempJson: null,
@@ -354,20 +350,21 @@ export default {
         // 当前选中的行（checkbox）
         multipleSelection: []
       },
-      popSettingsData: {
-        dialogFormVisible: false
-      },
       // 页面设置json
       settings: {
         // 表格排序规则
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式（控制多选框显示）
+        exportModel: false,
         // 按钮状态
         btnShowStatus: {
           showUpdate: false,
           showCopyInsert: false,
           showExport: false,
           showEnable: false,
-          showDisable: false
+          showDisable: false,
+          showDel: false,
+          hidenExport: true
         },
         // loading 状态
         loading: true,
@@ -389,60 +386,51 @@ export default {
           visible: false,
           data: null
         }
-      }
+      },
+      // Vue Tours 引导配置
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        },
+        highlight: false // 是否高亮显示激活的的target项
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          },
+          // 在进行下一步时处理UI渲染或异步操作，例如打开弹窗，调用api等。当执行reject时，指引不会执行下一步
+          before: type => new Promise((resolve, reject) => {
+            // 耗时的UI渲染或异步操作
+            resolve('foo')
+          })
+        }
+      ]
     }
   },
   computed: {
-    // 是否为查看模式
-    isViewModel () {
-      if ((this.popSettingsData.dialogStatus === 'view') && (this.popSettingsData.dialogFormVisible === true)) {
-        // 查看模式
-        return true
-      } else {
-        // 非查看模式
-        return false
-      }
-    }
   },
   // 监听器
   watch: {
-    // 选中的数据，使得导出按钮可用，否则就不可使用
+    // 多选数据监听（仅用于导出按钮控制）
     'dataJson.multipleSelection': {
       handler (newVal, oldVal) {
-        if (newVal.length > 0) {
-          this.settings.btnShowStatus.showUpdate = true
-          this.settings.btnShowStatus.showDelete = true
-          this.settings.btnShowStatus.showEnable = true
-          this.settings.btnShowStatus.showDisable = true
-          this.settings.btnShowStatus.showExport = true
-        } else {
-          this.settings.btnShowStatus.showUpdate = false
-          this.settings.btnShowStatus.showDelete = false
-          this.settings.btnShowStatus.showEnable = false
-          this.settings.btnShowStatus.showExport = false
-        }
+        // 导出按钮基于多选状态控制
+        this.settings.btnShowStatus.showExport = newVal.length > 0
       }
     }
   },
   created () {
-    // 设置页面的name 页面id，和router中的name需要一致，作为缓存
-    if (this.meDialogStatus) {
-      // 作为弹出框时
-      // this.$options.name = this.PROGRAMS.D_GROUP_DIALOG
-    } else {
-      // 作为独立页面，通过route路由打开时
-      this.$options.name = this.$route.meta.page_code
-    }
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
 
     // 初始化查询
     this.getDataList()
-    // 数据初始化
-    this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-    if (this.meDialogStatus) {
-      this.searchsetting.visible = false
-    }
-  },
-  beforeMount () {
   },
   mounted () {
     // 标准化：使用canvas-auto-height，无需手动高度计算和resize监听
@@ -451,9 +439,6 @@ export default {
     initShow () {
       // 初始化查询
       this.getDataList()
-    },
-    // 弹出框设置初始化
-    initDialogStatus () {
     },
     // 获取行索引
     getRowIndex (row) {
@@ -464,13 +449,9 @@ export default {
     handleRowClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
     },
-    // 行双点击，仅在dialog中有效
+    // 行双点击
     handleRowDbClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
-      var _data = deepCopy(row)
-      if (this.meDialogStatus) {
-        this.$emit('rowDbClick', _data)
-      }
     },
     handleSearch () {
       // 查询
@@ -552,93 +533,76 @@ export default {
       this.popSettings.view.data = Object.assign({}, this.dataJson.currentJson)
       this.popSettings.view.visible = true
     },
-    // 启用按钮
+    // 统一的启用/停用操作处理方法（基于单行选择）
+    handleEnableDisableOperation ({
+      action, // 'enable' | 'disable'
+      row = null // 单行操作时传入行数据，否则使用当前行
+    }) {
+      // 确定操作的行数据
+      const targetRow = row || this.dataJson.currentJson
+
+      // 检查是否有选中的行
+      if (!targetRow || !targetRow.id) {
+        const actionText = action === 'enable' ? '启用' : '停用'
+        this.$alert(`请在表格中选择数据进行${actionText}`, '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        })
+        return
+      }
+
+      // 构建确认消息和API调用
+      const confirmMessage = action === 'enable' ? '是否要启用该条数据？' : '是否要停用该条数据？'
+      const apiCall = action === 'enable' ? enabledSelectionApi : disAbledSelectionApi
+      const successTitle = action === 'enable' ? '启用成功' : '停用成功'
+      const failureTitle = action === 'enable' ? '启用失败' : '停用失败'
+
+      // 显示确认对话框
+      this.$confirm(confirmMessage, '操作确认', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        // 构建请求数据（单行操作）
+        const selectionJson = [{ 'id': targetRow.id }]
+
+        // 执行API调用
+        this.settings.loading = true
+        apiCall(selectionJson).then((_data) => {
+          this.$notify({
+            title: successTitle,
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.getDataList()
+        }, (_error) => {
+          this.$notify({
+            title: failureTitle,
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      })
+    },
+
+    // 启用选中项
     handleEnabled () {
-      // 没有选择任何数据的情况
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行启用', '未选择数据错误', {
-          confirmButtonText: '关闭',
-          type: 'error'
-        }).then(() => {
-          this.settings.btnShowStatus.showDelete = false
-        })
-      } else {
-        // 选中数据删除
-        this.handleEnabledSelectionData()
-      }
+      this.handleEnableDisableOperation({ action: 'enable' })
     },
-    // 选中数据启用
-    handleEnabledSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
-      // 开始启用
-      enabledSelectionApi(selectionJson).then((_data) => {
-        this.$notify({
-          title: '启用成功',
-          message: _data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-        // loading
-      }, (_error) => {
-        this.$notify({
-          title: '启用错误',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-    // 停用按钮
+
+    // 停用选中项
     handleDisAbled () {
-      // 没有选择任何数据的情况
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行停用', '未选择数据错误', {
-          confirmButtonText: '关闭',
-          type: 'error'
-        }).then(() => {
-          this.settings.btnShowStatus.showDelete = false
-        })
-      } else {
-        // 选中数据停用
-        this.handleDisAbledSelectionData()
-      }
+      this.handleEnableDisableOperation({ action: 'disable' })
     },
-    // 停用数据删除
-    handleDisAbledSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
-      // 开始停用
-      disAbledSelectionApi(selectionJson).then((_data) => {
-        this.$notify({
-          title: '停用成功',
-          message: _data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-        // loading
-      }, (_error) => {
-        this.$notify({
-          title: '停用错误',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
+
+    // 启用/停用单行
+    handleEnableDisableRow (row) {
+      const action = row.enable ? 'disable' : 'enable'
+      this.handleEnableDisableOperation({ action, row })
     },
     // ------------------编辑弹出框 start--------------------
     // 新增对话框回调
@@ -717,6 +681,7 @@ export default {
       if (this.dataJson.currentJson.id !== undefined) {
         // 基础按钮状态
         this.settings.btnShowStatus.showUpdate = true
+        this.settings.btnShowStatus.showDel = true
 
         // 智能按钮控制：根据当前行的启用状态控制启用/停用按钮
         if (row.enable) {
@@ -733,6 +698,7 @@ export default {
         this.settings.btnShowStatus.showUpdate = false
         this.settings.btnShowStatus.showEnable = false
         this.settings.btnShowStatus.showDisable = false
+        this.settings.btnShowStatus.showDel = false
       }
       // 设置dialog的返回
       this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
@@ -771,10 +737,8 @@ export default {
     handleExportAllData () {
       // loading
       this.settings.loading = true
-      // 清空选择
-      this.dataJson.searchForm.ids = []
-      // 开始导出
-      exportApi(this.dataJson.searchForm).then(response => {
+      // 开始导出 - 使用全部导出API
+      exportAllApi(this.dataJson.searchForm).then(response => {
         this.settings.loading = false
       })
     },
@@ -792,6 +756,27 @@ export default {
         this.settings.loading = false
       })
     },
+
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.$tours['myTour'].start()
+    },
+
+    /**
+     * 完成导出，退出导出模式
+     */
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
+      this.settings.exportModel = false
+      // 清空已选择的数据，确保完全退出导出模式
+      this.$refs.multipleTable.clearSelection()
+    },
+
     // 删除按钮操作
     handleDelButton () {
       if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {

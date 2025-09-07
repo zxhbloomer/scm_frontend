@@ -36,7 +36,7 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import currentDialog from '@/views/10_system/dicttype/dicttype'
+import currentDialog from '@/views/10_system/dicttype/page/10_list/index'
 
 export default {
   name: 'COM000010',

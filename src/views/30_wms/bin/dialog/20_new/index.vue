@@ -14,7 +14,7 @@
       :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
       :append-to-body="true"
       :modal-append-to-body="true"
-      width="850px"
+      :width="dialogConfig.width"
       destroy-on-close
     >
       <el-form
@@ -22,7 +22,7 @@
         :rules="settings.rules"
         :model="dataJson.tempJson"
         label-position="right"
-        label-width="150px"
+        :label-width="dialogConfig.labelWidth"
         status-icon
       >
         <br>
@@ -93,15 +93,15 @@
         <el-divider />
         <el-button
           plain
-          :disabled="settings.loading"
-          @click="handleCancel()"
-        >取消</el-button>
-        <el-button
-          plain
           type="primary"
           :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert"
           @click="doInsert()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
       </div>
     </el-dialog>
 
@@ -122,14 +122,11 @@
 </template>
 
 <style scoped>
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
-}
 .el-form-item .el-select {
   width: 100%;
+}
+.dialog-footer {
+  text-align: center;
 }
 </style>
 <style >
@@ -164,11 +161,17 @@ export default {
   },
   data () {
     return {
+      // 对话框配置常量
+      dialogConfig: {
+        width: '850px',
+        labelWidth: '150px'
+      },
       popSettingsData: {
         // 弹出的查询框参数设置
         searchDialogDataOne: {
           // 弹出框显示参数
           visible: false,
+          data: null,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null
@@ -186,15 +189,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          warehouse_id: undefined,
-          warehouse_name: '',
-          location_id: undefined,
-          location_name: ''
-        },
         // 单条数据 json
         tempJson: {
           name: '',
@@ -239,7 +233,18 @@ export default {
     // 监听表单数据变化
     'dataJson.tempJson': {
       handler (newVal, oldVal) {
-        this.settings.btnDisabledStatus.disabledInsert = false
+        // 检查是否有实际的表单内容变化（相对于初始状态）
+        if (newVal) {
+          const original = this.$options.data.call(this).dataJson.tempJson
+          const hasChanged = newVal.warehouse_name !== original.warehouse_name ||
+                           newVal.location_name !== original.location_name ||
+                           newVal.name !== original.name
+          // 有变化时启用按钮，无变化时禁用按钮
+          this.settings.btnDisabledStatus.disabledInsert = !hasChanged
+        } else {
+          // 初始化时保持按钮禁用
+          this.settings.btnDisabledStatus.disabledInsert = true
+        }
       },
       deep: true
     },
@@ -255,8 +260,8 @@ export default {
   methods: {
     // 初始化处理
     init () {
-      // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      // 数据初始化 - 重置为组件初始状态
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
 
       // 如果有复制数据，使用复制数据
       if (this.data) {
@@ -312,7 +317,6 @@ export default {
       this.dataJson.tempJson.warehouse_name = val.name
       this.popSettingsData.searchDialogDataTwo.data = val
       this.popSettingsData.searchDialogDataOne.visible = false
-      this.settings.btnDisabledStatus.disabledInsert = false
     },
     // 仓库：关闭对话框：取消
     handleWarehouseCloseCancel () {
@@ -330,7 +334,6 @@ export default {
     handleLocationCloseOk (val) {
       this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
       this.popSettingsData.searchDialogDataTwo.visible = false
-      this.settings.btnDisabledStatus.disabledInsert = false
       this.dataJson.tempJson.location_name = val.name
     },
     // 库区：关闭对话框：取消

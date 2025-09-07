@@ -33,7 +33,7 @@ export default defineConfig(() => {
       EnvironmentPlugin({
         NODE_ENV: 'production',
         VUE_APP_BASE_API: '/scm',
-        VUE_APP_Tenant: 'false', 
+        VUE_APP_Tenant: 'false',
         VUE_APP_FILE_UPLOAD_URL: 'http://file.xinyirunscm.com/',
         VUE_APP_Version: '1.0.0'
       }),
@@ -52,7 +52,9 @@ export default defineConfig(() => {
     ],
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src')
+        '@': resolve(__dirname, 'src'),
+        // 让项目直接使用你 fork 的源码（而不是发布包）
+        'x-data-spreadsheet': resolve(__dirname, 'libs/x-spreadsheet/src')
       },
       // 允许省略 .vue 扩展名
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue']

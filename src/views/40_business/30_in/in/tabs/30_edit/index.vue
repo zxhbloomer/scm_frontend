@@ -485,7 +485,7 @@
 import numeric from '@/components/40_input/numeric/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
-import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin.vue'
 import BpmDialog from '@/components/60_bpm/submitBpmDialog.vue'
 
 import constants_dict from '@/common/constants/constants_dict'

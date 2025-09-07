@@ -307,19 +307,19 @@ export const router_five = [
         children: [
           {
             path: '/master/warehouse',
-            component: () => import('@/views/30_wms/warehouse/warehouse'),
+            component: () => import('@/views/30_wms/warehouse/index'),
             name: 'P00000025', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
             meta: { title: '仓库管理', icon: 'warehouse' }
           },
           {
             path: '/master/location',
-            component: () => import('@/views/30_wms/location/location'),
+            component: () => import('@/views/30_wms/location/index'),
             name: 'P00000026', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
             meta: { title: '库区管理', icon: 'location' }
           },
           {
             path: '/master/bin',
-            component: () => import('@/views/30_wms/bin/bin'),
+            component: () => import('@/views/30_wms/bin/index'),
             name: 'P00000027', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
             meta: { title: '库位管理', icon: 'bin' }
           }
@@ -351,19 +351,19 @@ export const router_five = [
           },
           {
             path: '/master/category',
-            component: () => import('@/views/30_wms/category/category'),
+            component: () => import('@/views/30_wms/category/index'),
             name: 'P00000030',
             meta: { title: '类别管理', icon: 'category' }
           },
           {
             path: '/master/goods',
-            component: () => import('@/views/30_wms/goods/goods'),
+            component: () => import('@/views/30_wms/goods'),
             name: 'P00000031',
             meta: { title: '物料管理', icon: 'goods' }
           },
           {
             path: '/master/spec',
-            component: () => import('@/views/30_wms/spec/spec'),
+            component: () => import('@/views/30_wms/spec/index'),
             name: 'P00000032',
             meta: { title: '规格管理', icon: 'spec' }
           }
@@ -417,7 +417,7 @@ export const router_five = [
     children: [
       {
         path: '/dic/dicttype',
-        component: () => import('@/views/10_system/dicttype/dicttype'),
+        component: () => import('@/views/10_system/dicttype/index'),
         name: 'P00000035',
         meta: { title: '字典类型维护', closable: false }
       },

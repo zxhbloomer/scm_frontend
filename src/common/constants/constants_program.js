@@ -66,6 +66,10 @@ const P_MATERIALCONVERT_DETAIL = 'P00000078'
 const P_CONVERT_RECORD = 'P00000106'
 /** 岗位 */
 const P_POSITION = 'P00000022'
+/** 库位 */
+const P_BIN = 'P00000023'
+/** 类别 */
+const P_CATEGORY = 'P00000025'
 /** 角色 */
 const P_ROLE = 'P00000045'
 /** 权限 */
@@ -153,6 +157,10 @@ export default {
   P_CONVERT_RECORD,
   /** 岗位 */
   P_POSITION,
+  /** 库位 */
+  P_BIN,
+  /** 类别 */
+  P_CATEGORY,
   /** 角色 */
   P_ROLE,
   /** 权限 */

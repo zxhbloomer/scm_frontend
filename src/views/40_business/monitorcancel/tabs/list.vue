@@ -990,8 +990,8 @@ import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import SelectOutWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
-import SelectInWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
+import SelectOutWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch'
+import SelectInWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch'
 import urlUtil from '@/utils/urlUtil'
 import ExportFileSettings from '@/views/40_business/monitor/tabs/dialog/exportFileSettings.vue'
 

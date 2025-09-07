@@ -14,7 +14,7 @@
       :show-close="PARAMETERS.DIALOG_SHOW_CLOSE"
       :append-to-body="true"
       :modal-append-to-body="true"
-      width="850px"
+      :width="dialogConfig.width"
       destroy-on-close
     >
       <el-form
@@ -22,7 +22,7 @@
         :rules="settings.rules"
         :model="dataJson.tempJson"
         label-position="right"
-        label-width="150px"
+        :label-width="dialogConfig.labelWidth"
         status-icon
       >
         <br>
@@ -93,15 +93,15 @@
         <el-divider />
         <el-button
           plain
-          :disabled="settings.loading"
-          @click="handleCancel()"
-        >取消</el-button>
-        <el-button
-          plain
           type="primary"
           :disabled="settings.loading || settings.btnDisabledStatus.disabledUpdate"
           @click="doUpdate()"
         >确定</el-button>
+        <el-button
+          plain
+          :disabled="settings.loading"
+          @click="handleCancel()"
+        >取消</el-button>
       </div>
     </el-dialog>
 
@@ -122,12 +122,6 @@
 </template>
 
 <style scoped>
-.floatRight {
-  float: right;
-}
-.floatLeft {
-  float: left;
-}
 .el-form-item .el-select {
   width: 100%;
 }
@@ -164,11 +158,17 @@ export default {
   },
   data () {
     return {
+      // 对话框配置常量
+      dialogConfig: {
+        width: '850px',
+        labelWidth: '150px'
+      },
       popSettingsData: {
         // 弹出的查询框参数设置
         searchDialogDataOne: {
           // 弹出框显示参数
           visible: false,
+          data: null,
           // 点击确定以后返回的值
           selectedDataJson: {
             id: null
@@ -186,15 +186,6 @@ export default {
         }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          id: undefined,
-          name: '',
-          warehouse_id: undefined,
-          warehouse_name: '',
-          location_id: undefined,
-          location_name: ''
-        },
         // 单条数据 json
         tempJson: {
           name: '',
@@ -258,7 +249,6 @@ export default {
       // 数据初始化 - 编辑模式使用传入的data
       if (this.data) {
         this.dataJson.tempJson = deepCopy(this.data)
-        this.dataJson.tempJsonOriginal = deepCopy(this.data)
         this.popSettingsData.searchDialogDataOne.selectedDataJson.id = this.data.warehouse_id
         this.popSettingsData.searchDialogDataTwo.selectedDataJson.id = this.data.location_id
       }

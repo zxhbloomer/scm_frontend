@@ -489,13 +489,13 @@ import deepCopy from 'deep-copy'
 import { insertApi, updateApi, getApi } from '@/api/40_business/materialconvert/materialconvert'
 import InputSearch from '@/components/40_input/inputSearch'
 import ownerDialog from '@/views/30_wms/owner/dialog/dialog'
-import warehouseDialog from '@/views/30_wms/warehouse/dialog/dialog'
+import warehouseDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
 import goodsDialog from '@/views/40_business/materialconvert/tabs/dialog/goodsEdit'
 import mixin from './mixin/editResizeHandlerMixin'
-import newSpecDialog from '@/views/30_wms/spec/dialog/dialog'
+import newSpecDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
 import SelectDict from '@/components/00_dict/select/SelectDict'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { SelectDict, newSpecDialog, InputSearch, ownerDialog, goodsDialog, warehouseDialog, SelectWarehouse },

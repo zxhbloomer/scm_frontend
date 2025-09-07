@@ -73,10 +73,10 @@ export function insertApi (data) {
 }
 
 /**
- * 物理删除选择数据
+ * 删除选择数据
  * @param {*} data
  */
-export function realDeleteSelectionApi (data) {
+export function deleteApi (data) {
   return request({
     url: '/api/v1/warehouse/delete',
     method: 'post',
@@ -126,7 +126,7 @@ export function enableOrDisAbleApi (data) {
  */
 export function exportAllApi (data) {
   return request({
-    url: '/api/v1/warehouse/export_all',
+    url: '/api/v1/warehouse/exportall',
     method: 'post',
     data,
     responseType: 'arraybuffer'
@@ -134,10 +134,10 @@ export function exportAllApi (data) {
 }
 
 /**
- * 导出数据 部分导出
+ * 导出数据 选中导出
  * @param {*} data
  */
-export function exportApi (data) {
+export function exportSelectionApi (data) {
   return request({
     url: '/api/v1/warehouse/export',
     method: 'post',

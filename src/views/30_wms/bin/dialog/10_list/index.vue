@@ -72,7 +72,8 @@
         :data="dataJson.listData"
         :element-loading-text="'正在拼命加载中...'"
         element-loading-background="rgba(255, 255, 255, 0.5)"
-        :height="settings.tableHeight"
+        :canvas-auto-height="true"
+        :columns-index-key="true"
         stripe
         border
         fit
@@ -170,7 +171,6 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import { addResizeListener, removeResizeListener } from 'element-ui/lib/utils/resize-event'
 import { getListApi } from '@/api/30_wms/bin/bin'
 
 export default {
@@ -213,7 +213,6 @@ export default {
       // 页面设置
       settings: {
         loading: false,
-        tableHeight: 350,
         // 排序设置
         sortOrders: ['ascending', 'descending']
       },
@@ -267,13 +266,7 @@ export default {
     this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
   },
   mounted () {
-    this.$nextTick(() => {
-      this.calcTableHeight()
-      addResizeListener(this.$el, this.calcTableHeight)
-    })
-  },
-  beforeDestroy () {
-    removeResizeListener(this.$el, this.calcTableHeight)
+    // 使用canvas-auto-height，无需手动计算表格高度
   },
   methods: {
     // 初始化弹窗状态
@@ -285,14 +278,6 @@ export default {
     initShow () {
       this.doResetSearch()
       this.loadData()
-    },
-
-    // 计算表格高度
-    calcTableHeight () {
-      this.$nextTick(() => {
-        const windowHeight = window.innerHeight
-        this.settings.tableHeight = windowHeight - 280
-      })
     },
 
     // 获取标签位置

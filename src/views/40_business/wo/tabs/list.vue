@@ -673,7 +673,7 @@ import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch'
 import cancelConfirmDialog from '@/views/40_business/wo/tabs/dialog/cancelconfirm'
 import { mapState } from 'vuex'
 

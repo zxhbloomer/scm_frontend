@@ -275,8 +275,8 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import numeric from '@/components/40_input/numeric'
 import deepCopy from 'deep-copy'
-import oldSpecDialog from '@/views/30_wms/spec/dialog/dialog'
-import newSpecDialog from '@/views/30_wms/spec/dialog/dialog'
+import oldSpecDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
+import newSpecDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
 import InputSearch from '@/components/40_input/inputSearch'
 
 export default {

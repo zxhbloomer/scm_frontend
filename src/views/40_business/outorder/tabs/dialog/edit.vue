@@ -255,7 +255,7 @@
 </style>
 
 <script>
-import specDialog from '@/views/30_wms/spec/dialog/dialog'
+import specDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
 import constants_para from '@/common/constants/constants_para'
 import InputSearch from '@/components/40_input/inputSearch'
 import elDragDialog from '@/directive/el-drag-dialog'

@@ -323,8 +323,8 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi } from '@/api/40_business/30_in/in/in'
 import previewCard from '@/components/50_preview_card/preview_card'
-import locationDialog from '@/views/30_wms/location/dialog/dialog'
-import binDialog from '@/views/30_wms/bin/dialog/dialog'
+import locationDialog from '@/views/30_wms/location/dialog/10_list/index'
+import binDialog from '@/views/30_wms/bin/dialog/10_list/index'
 
 // import InputSearch from '@/components/40_input/inputSearch'
 

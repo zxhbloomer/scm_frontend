@@ -1,7 +1,7 @@
 // 简单的Vite ESLint插件
-const { exec } = require('child_process')
+import { exec } from 'child_process'
 
-function viteEslintPlugin() {
+export default function viteEslintPlugin() {
   return {
     name: 'vite-eslint',
     buildStart() {
@@ -18,5 +18,3 @@ function viteEslintPlugin() {
     }
   }
 }
-
-module.exports = viteEslintPlugin

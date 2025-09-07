@@ -257,7 +257,7 @@ import numeric from '@/components/40_input/numeric'
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
 import { isNotEmpty } from '@/utils/index.js'
 import { getDetailApi, getCountApi } from '@/api/30_wms/spec/unit/unitCalc'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { InputSearch, specDialog, numeric, selectUnit, unitCalculatorDialog, SelectWarehouse },

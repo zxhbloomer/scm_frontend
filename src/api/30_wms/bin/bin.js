@@ -85,7 +85,20 @@ export function enableOrDisAbleApi (data) {
 }
 
 /**
- * 导出
+ * 导出数据 全部导出
+ * @param {*} data
+ */
+export function exportAllApi (data) {
+  return request({
+    url: '/api/v1/bin/exportall',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
+/**
+ * 导出数据 选中导出
  * @param {*} data
  */
 export function exportApi (data) {

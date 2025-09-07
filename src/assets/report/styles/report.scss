@@ -1,0 +1,220 @@
+/**
+ * 报表系统全局样式
+ * @description JimuReport集成SCM系统的全局样式定义
+ */
+
+/* 报表主题色彩定义 */
+:root {
+  /* 主色调 */
+  --report-primary-color: #409EFF;
+  --report-success-color: #67C23A;
+  --report-warning-color: #E6A23C;
+  --report-danger-color: #F56C6C;
+  --report-info-color: #909399;
+  
+  /* 文本颜色 */
+  --report-text-primary: #303133;
+  --report-text-regular: #606266;
+  --report-text-secondary: #909399;
+  --report-text-placeholder: #C0C4CC;
+  
+  /* 边框颜色 */
+  --report-border-light: #EBEEF5;
+  --report-border-base: #DCDFE6;
+  --report-border-dark: #D4D7DE;
+  
+  /* 背景色 */
+  --report-bg-light: #F5F7FA;
+  --report-bg-lighter: #FAFAFA;
+  --report-bg-white: #FFFFFF;
+}
+
+/* 报表容器基础样式 */
+.report-container {
+  background: var(--report-bg-white);
+  border-radius: 4px;
+  border: 1px solid var(--report-border-light);
+  
+  &.no-padding {
+    padding: 0;
+  }
+  
+  &.with-padding {
+    padding: 20px;
+  }
+}
+
+/* 报表页面布局 */
+.report-page {
+  min-height: 100vh;
+  background: var(--report-bg-light);
+  
+  .page-header {
+    padding: 16px 20px;
+    background: var(--report-bg-white);
+    border-bottom: 1px solid var(--report-border-light);
+    margin-bottom: 16px;
+    
+    .header-title {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--report-text-primary);
+      margin: 0;
+    }
+    
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+  
+  .page-content {
+    padding: 0 20px 20px;
+  }
+}
+
+/* 报表工具栏样式 */
+.report-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--report-bg-white);
+  border: 1px solid var(--report-border-light);
+  border-radius: 4px;
+  margin-bottom: 16px;
+  
+  .toolbar-left,
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .toolbar-title {
+    font-weight: 500;
+    color: var(--report-text-primary);
+    margin-right: 16px;
+  }
+}
+
+/* 报表状态标签 */
+.report-status-tag {
+  &.status-draft {
+    background-color: #F4F4F5;
+    color: var(--report-text-regular);
+  }
+  
+  &.status-published {
+    background-color: #F0F9FF;
+    color: var(--report-success-color);
+  }
+  
+  &.status-offline {
+    background-color: #FEF0F0;
+    color: var(--report-danger-color);
+  }
+}
+
+/* 报表类型图标 */
+.report-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  
+  &.type-table {
+    background-color: #E6F7FF;
+    color: var(--report-primary-color);
+  }
+  
+  &.type-chart {
+    background-color: #F6FFED;
+    color: var(--report-success-color);
+  }
+  
+  &.type-complex {
+    background-color: #FFF7E6;
+    color: var(--report-warning-color);
+  }
+}
+
+/* 报表加载状态 */
+.report-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--report-text-secondary);
+}
+
+/* 报表空状态 */
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--report-text-secondary);
+  
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+  
+  .empty-text {
+    font-size: 14px;
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .report-page {
+    .page-header {
+      padding: 12px 16px;
+      
+      .header-actions {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+    }
+    
+    .page-content {
+      padding: 0 16px 16px;
+    }
+  }
+  
+  .report-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    
+    .toolbar-left,
+    .toolbar-right {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .report-page {
+    background: white;
+    
+    .page-header,
+    .report-toolbar {
+      display: none;
+    }
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}

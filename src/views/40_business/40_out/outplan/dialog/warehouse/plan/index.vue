@@ -190,7 +190,7 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+import SelectWarehouseLocationBin from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin.vue'
 import constants_para from '@/common/constants/constants_para'
 import { isNotEmpty } from '@/utils'
 import numeric from '@/components/40_input/numeric/index.vue'

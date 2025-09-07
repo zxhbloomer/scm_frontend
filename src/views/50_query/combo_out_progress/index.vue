@@ -365,7 +365,7 @@ import deepCopy from 'deep-copy'
 import resizeMixin from './mixin/resizeHandlerMixin'
 import permission from '@/directive/permission/index.js'
 import constants_program from '@/common/constants/constants_program'
-import WarehouseSelect from '@/views/30_wms/warehouse/components/warehouseSelect.vue'
+import WarehouseSelect from '@/views/30_wms/warehouse/components/warehouseselect'
 import SelectDict from '@/components/00_dict/select/SelectDict.vue'
 import { mapState } from 'vuex'
 

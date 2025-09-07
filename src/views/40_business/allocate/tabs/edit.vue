@@ -447,13 +447,13 @@ import { insertApi, getApi } from '@/api/40_business/allocate/allocate'
 import InputSearch from '@/components/40_input/inputSearch'
 import ownerInDialog from '@/views/30_wms/owner/dialog/dialog'
 import ownerOutDialog from '@/views/30_wms/owner/dialog/dialog'
-import warehouseInDialog from '@/views/30_wms/warehouse/dialog/dialog'
-import warehouseOutDialog from '@/views/30_wms/warehouse/dialog/dialog'
+import warehouseInDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
+import warehouseOutDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
 import orderDialog from '@/views/40_business/allocateorder/dialog/dialog'
 import goodsDialog from '@/views/40_business/allocate/tabs/dialog/goodsEdit'
 import mixin from './mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { InputSearch, ownerOutDialog, ownerInDialog, orderDialog, goodsDialog, warehouseInDialog, warehouseOutDialog, SelectWarehouse },

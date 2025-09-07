@@ -472,7 +472,7 @@ import mixin from './mixin/editResizeHandlerMixin'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile'
 import previewCard from '@/components/50_preview_card/preview_card'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { previewCard, SimpleUploadMutilFile, InputSearch, ownerOutDialog, ownerInDialog, orderDialog, goodsDialog, SelectWarehouse },

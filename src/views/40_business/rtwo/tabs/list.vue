@@ -614,7 +614,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js'
 import cancelConfirmDialog from '@/views/40_business/rtwo/tabs/dialog/cancelconfirm'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch'
 import { mapState } from 'vuex'
 
 export default {

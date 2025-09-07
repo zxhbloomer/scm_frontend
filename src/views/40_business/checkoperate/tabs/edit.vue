@@ -254,7 +254,7 @@ import deepCopy from 'deep-copy'
 import { getDetailInfo, updateApi } from '@/api/40_business/checkoperate/checkoperate'
 import mixin from './mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { SelectWarehouse },

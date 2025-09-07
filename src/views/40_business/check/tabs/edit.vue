@@ -253,7 +253,7 @@ import { getAllListApi } from '@/api/40_business/inventory/inventory'
 import ownerDialog from '@/views/30_wms/owner/dialog/dialog'
 import mixin from './mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { ownerDialog, SelectWarehouse },

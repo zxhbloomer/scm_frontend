@@ -739,7 +739,7 @@ import CancelDialog from '../../dialog/cancel'
 import SelectGoodsDialog from '../../dialog/select_goods/index.vue'
 import SelectSeCustomer from '@/views/20_master/enterprise/dialog/selectgrid/system_enterprise/customer/index.vue'
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin.vue'
 import SelectDicts from '@/components/00_dict/select/SelectDicts.vue'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import deepCopy from 'deep-copy'

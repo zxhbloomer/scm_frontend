@@ -718,6 +718,9 @@ export default {
     handleExportOk () {
       this.settings.btnShowStatus.hidenExport = true
       this.settings.btnShowStatus.showExport = false
+      this.settings.exportModel = false
+      // 清空已选择的数据，确保完全退出导出模式
+      this.$refs.multipleTable.clearSelection()
     },
     // 导出按钮
     handleExport () {

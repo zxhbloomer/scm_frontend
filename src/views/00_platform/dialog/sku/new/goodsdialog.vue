@@ -202,7 +202,7 @@
 </style>
 
 <script>
-import specDialog from '@/views/30_wms/spec/dialog/dialog.vue'
+import specDialog from '@/views/30_wms/spec/dialog/10_list'
 import InputSearch from '@/components/40_input/inputSearch/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'

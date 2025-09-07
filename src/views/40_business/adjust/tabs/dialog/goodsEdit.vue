@@ -296,10 +296,10 @@ import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import numeric from '@/components/40_input/numeric'
-import specDialog from '@/views/30_wms/spec/dialog/dialog'
+import specDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
 import InputSearch from '@/components/40_input/inputSearch'
 import { getInventoryApi } from '@/api/40_business/inventory/inventory'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 import RadioDict from '@/components/00_dict/redio'
 
 export default {

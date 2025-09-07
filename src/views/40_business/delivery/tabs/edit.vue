@@ -785,7 +785,7 @@ import { getApi, updateApi } from '@/api/40_business/delivery/delivery'
 import consignorDialog from '@/views/30_wms/customer/dialog/dialog'
 import ownerDialog from '@/views/30_wms/owner/dialog/dialog'
 import orderDialog from '@/views/40_business/inorder/dialog/dialog'
-import specDialog from '@/views/30_wms/spec/dialog/dialog'
+import specDialog from '@/views/30_wms/spec/dialog/10_list/index.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile'
 import previewCard from '@/components/50_preview_card/preview_card'
 import numeric from '@/components/40_input/numeric'
@@ -795,7 +795,7 @@ import { getCountApi, getDetailApi, getOnlyOneUnitCalcApi } from '@/api/30_wms/s
 import unitCalculatorDialog from '@/views/30_wms/spec/unit/unitCalculator/unitCalculator'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 // import { getWeightControlConfigApi } from '@/api/40_business/inplan/inplan'
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBin.vue'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin.vue'
 export default {
   components: { SelectWarehouse, InputSearch, orderDialog, SelectDict, consignorDialog, ownerDialog, specDialog, previewCard, SimpleUploadMutilFile, numeric, unitCalculatorDialog },
   directives: { elDragDialog },

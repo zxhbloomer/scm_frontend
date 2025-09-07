@@ -1119,7 +1119,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import mixin from './mixin/listResizeHandlerMixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import SelectWarehouse from '@/views/30_wms/warehouse/selectgrid/selectWarehouseLocationBinForSearch.vue'
+import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBinForSearch.vue'
 import SimpleUpload from '@/components/10_file/SimpleUpload/index.vue'
 import cancelConfirmDialog from '@/views/40_business/40_out/out/tabs/dialog/cancelconfirm.vue'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
