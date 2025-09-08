@@ -408,7 +408,7 @@ import deepCopy from 'deep-copy'
 import { getApi } from '@/api/40_business/10_po/pocontract/pocontract'
 import PreviewCard from '@/components/50_preview_card/preview_card.vue'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
-import DataChangeLogDialog from '@/views/30_wms/datachangelogorder/tabs/dialog/info/index.vue'
+import DataChangeLogDialog from '@/views/10_system/datachangelogorder/tabs/dialog/info/index.vue'
 export default {
   directives: { elDragDialog },
   components: { PreviewDescription, PreviewCard, DataChangeLogDialog },

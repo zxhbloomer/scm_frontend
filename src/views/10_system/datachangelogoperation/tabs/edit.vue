@@ -51,7 +51,8 @@
             :data="dataJson.detailListData"
             :element-loading-text="'正在拼命加载中...'"
             element-loading-background="rgba(255, 255, 255, 0.5)"
-            :height="settings.tableHeight"
+            :canvas-auto-height="true"
+            :columns-index-key="true"
             stripe
             border
             highlight-current-row
@@ -196,14 +197,12 @@ br {
 import constants_para from '@/common/constants/constants_para'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import { getApi } from '@/api/30_wms/datachangelogoperation/datachangelogoperation'
-import mixin from './mixin/editResizeHandlerMixin'
+import { getApi } from '@/api/10_system/datachangelogoperation/datachangelogoperation'
 import constants_program from '@/common/constants/constants_program'
 
 export default {
   components: { },
   directives: { elDragDialog },
-  mixins: [mixin],
   props: {
     visible: {
       type: Boolean,
@@ -364,7 +363,6 @@ export default {
         loading: true,
         // 是否开启超收配置
         over_receive: false,
-        tableHeight: 650,
         duration: 4000,
         // 按钮状态：是否可用，false:可用，true不可用
         btnTableDisabledStatus: {
@@ -421,6 +419,8 @@ export default {
   // 监听器
   watch: {},
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.init()
   },
   mounted () {

@@ -35,7 +35,8 @@ export default defineConfig(() => {
         VUE_APP_BASE_API: '/scm',
         VUE_APP_Tenant: 'false',
         VUE_APP_FILE_UPLOAD_URL: 'http://file.xinyirunscm.com/',
-        VUE_APP_Version: '1.0.0'
+        VUE_APP_Version: '1.0.0',
+        VUE_APP_WEBSOCKET_NOTICE: '/scm/notice'
       }),
       // SVG 图标处理插件
       createSvgIconsPlugin({

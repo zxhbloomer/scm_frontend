@@ -40,18 +40,12 @@
         <!--          />-->
         <!--        </el-form-item>-->
         <el-form-item style="float:right">
-          <el-badge
-            :value="screenNum"
-            class="item"
-          >
-            <el-button
-              v-popover:popover
-              type="primary"
-              plain
-              icon="el-icon-search"
-              :loading="settings.loading"
-            >高级查询</el-button>
-          </el-badge>
+          <el-button
+            type="primary"
+            plain
+            icon="perfect-icon-reset"
+            @click="doResetSearch"
+          >重置</el-button>
         </el-form-item>
         <el-form-item style="float:right">
           <el-button
@@ -68,7 +62,6 @@
 
     <el-button-group v-if="!meDialogStatus">
       <el-button
-        v-permission="'P_INPLAN:INFO'"
         :disabled="!settings.btnStatus.showView"
         type="primary"
         icon="el-icon-zoom-in"
@@ -84,7 +77,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :default-sort="{prop: 'u_time', order: 'descending'}"
       :columns-index-key="true"
       stripe
@@ -96,13 +89,7 @@
       @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
       @sort-change="handleSortChange"
-      @selection-change="handleSelectionChange"
     >
-      <el-table-column
-        type="selection"
-        width="45"
-        prop="id"
-      />
       <el-table-column
         type="index"
         width="45"
@@ -138,7 +125,7 @@
         min-width="200"
         :sort-orders="settings.sortOrders"
         prop="u_time"
-        label="最后更新时间"
+        label="操作时间"
       >
         <template v-slot="scope">
           {{ formatDateTime(scope.row.u_time) }}
@@ -257,18 +244,15 @@ a {
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import constants_program from '@/common/constants/constants_program'
 import constants_para from '@/common/constants/constants_para'
-import constants_type from '@/common/constants/constants_dict'
 import { getListApi } from '@/api/30_wms/datachangelogcode/datachangelogcode'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin/listResizeHandlerMixin'
 // import urlUtil from '@/utils/urlUtil'
 
 export default {
   components: { Pagination },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -393,9 +377,7 @@ export default {
           }
         },
         // 当前表格中的索引，第几条
-        rowIndex: 0,
-        // 当前选中的行（checkbox）
-        multipleSelection: []
+        rowIndex: 0
       },
       popSettingsData: {
         dialogFormVisible: false
@@ -411,24 +393,12 @@ export default {
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
         // 按钮状态
         btnStatus: {
-          showEnable: false,
-          showDisable: false,
-          showUpdate: false,
-          showOperate: false,
-          showView: false,
-          showSubmit: false,
-          showAudit: false,
-          showReject: false,
-          showCancel: false,
-          showFinish: false,
-          showSync: false,
-          showExport: false
+          showView: false
         },
         // 分页插件骨架 loading 状态
         skeletonLoading: true,
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       popSettings: {
@@ -512,6 +482,9 @@ export default {
     }
   },
   created () {
+    // 作为独立页面，通过route路由打开时
+    this.$options.name = this.$route.meta.page_code
+
     // 默认查询近一个月内的数据
     // 接收url参数
     // 获取url参数
@@ -563,54 +536,6 @@ export default {
     setWatch () {
       this.unWatch()
       // 监听页面上面是否有修改，有修改按钮高亮
-      const _this = this
-      _this.watch.unwatch_tempJson = _this.$watch('dataJson.multipleSelection', (newVal, oldVal) => {
-        if (newVal.length > 0) {
-          _this.settings.btnStatus.showEnable = true
-          _this.settings.btnStatus.showDisable = true
-          _this.settings.btnStatus.showSubmit = true
-          _this.settings.btnStatus.showAudit = true
-          _this.settings.btnStatus.showReject = true
-          _this.settings.btnStatus.showFinish = true
-          _this.settings.btnStatus.showSync = true
-          _this.settings.btnStatus.showExport = true
-        } else {
-          _this.settings.btnStatus.showEnable = false
-          _this.settings.btnStatus.showDisable = false
-          _this.settings.btnStatus.showSubmit = false
-          _this.settings.btnStatus.showAudit = false
-          _this.settings.btnStatus.showReject = false
-          _this.settings.btnStatus.showFinish = false
-          _this.settings.btnStatus.showSync = false
-          _this.settings.btnStatus.showExport = false
-        }
-
-        _this.dataJson.multipleSelection.forEach(function (value, index, array) {
-          // console.log(constants_type.DICT_B_IN_PLAN_STATUS_ZERO)
-          // console.log(value.status)
-          // console.log(value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZERO)
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ZERO) {
-            if (value.status === constants_type.DICT_B_IN_PLAN_STATUS_THREE) {
-              // 审核驳回状态可再次提交
-              _this.settings.btnStatus.showSubmit = true
-            } else {
-              // 非制单状态不可提交
-              _this.settings.btnStatus.showSubmit = false
-            }
-          }
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_ONE && value.status !== constants_type.DICT_B_IN_PLAN_STATUS_FOUR) {
-            // 非已提交状态不可审核/驳回
-            _this.settings.btnStatus.showAudit = false
-            _this.settings.btnStatus.showReject = false
-          }
-
-          if (value.status !== constants_type.DICT_B_IN_PLAN_STATUS_TWO) {
-            // 非审核通过状态不可完成
-            _this.settings.btnStatus.showFinish = false
-          }
-        })
-      }, { deep: true }
-      )
 
       this.watch.unwatch_tempJson1 = this.$watch('dataJson.searchForm.daterange', (newVal, oldVal) => {
         if (this.dataJson.searchForm.daterange === null) {
@@ -621,9 +546,6 @@ export default {
       )
     },
     unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
       if (this.watch.unwatch_tempJson1) {
         this.watch.unwatch_tempJson1()
       }
@@ -658,9 +580,6 @@ export default {
       this.dataJson.searchForm.pageCondition.current = 1
       this.dataJson.paging.current = 1
       this.getDataList()
-      // 清空选择
-      this.dataJson.multipleSelection = []
-      this.$refs.multipleTable.clearSelection()
     },
     handleSortChange (column) {
       // 服务器端排序
@@ -714,10 +633,6 @@ export default {
     // 获取row-key
     getRowKeys (row) {
       return row.id
-    },
-    // table选择框
-    handleSelectionChange (val) {
-      this.dataJson.multipleSelection = val
     },
 
     // 点击按钮 查看

@@ -63,6 +63,23 @@
         :loading="settings.loading"
         @click="handleUpdate"
       >修改</el-button>
+      <!-- 导出按钮 结束 -->
+      <el-button
+        v-permission="'P_BIN:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelButton"
+      >删除</el-button>
+      <el-button
+        v-permission="'P_BIN:INFO'"
+        :disabled="!settings.btnShowStatus.showUpdate"
+        type="primary"
+        icon="el-icon-info"
+        :loading="settings.loading"
+        @click="handleView"
+      >查看</el-button>
       <el-button
         v-permission="'P_BIN:ENABLE'"
         :disabled="!settings.btnShowStatus.showEnable"
@@ -104,15 +121,7 @@
         :loading="settings.loading"
         @click="handleModelOpen"
       >导出</el-button>
-      <!-- 导出按钮 结束 -->
-      <el-button
-        v-permission="'P_BIN:DELETE'"
-        :disabled="!settings.btnShowStatus.showDel"
-        type="danger"
-        icon="el-icon-delete"
-        :loading="settings.loading"
-        @click="handleDelButton"
-      >删除</el-button>
+
     </el-button-group>
 
     <el-table

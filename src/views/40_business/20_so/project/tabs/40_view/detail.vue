@@ -338,7 +338,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi } from '@/api/40_business/project/project'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
-import DataChangeLogDialog from '@/views/30_wms/datachangelogorder/tabs/dialog/info/index.vue'
+import DataChangeLogDialog from '@/views/10_system/datachangelogorder/tabs/dialog/info/index.vue'
 
 export default {
   components: { PreviewDescription, DataChangeLogDialog },

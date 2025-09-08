@@ -106,29 +106,21 @@
 </style>
 
 <script>
-import SockJS from 'sockjs-client'
-import Stomp from 'stompjs'
 import store from '@/store'
 import AlarmHeader from '@/views/10_system/websocketnotice/header/alarmHeader'
 import SyncPopup from '@/views/10_system/websocketnotice/dialog/alarmDialog'
 import ResetPwdDialog from '@/views/10_system/websocketnotice/dialog/resetPwdDialog.vue'
 import { getUserPwdWarningApi } from '@/api/user'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import Pcnotice from '@/views/10_system/pcnotice/dialog/header.vue'
 // import { getCountApiApi } from '@/api/10_system/log/headerNotice'
 import todo from '@/views/90_bpm/todo/dialog/index.vue'
 import { EventBus } from '@/common/eventbus/eventbus'
 
-const headers = {}
-
 export default {
   components: { AlarmHeader, SyncPopup, Pcnotice, ResetPwdDialog, todo },
   data () {
     return {
-      socketUrl: process.env.VUE_APP_WEBSOCKET_NOTICE, // ws://localhost:8080/websocket/ws
-      reconnecting: false,
-      socket: null,
-      stompClient: null,
       tabs: {
         active: 'first',
         // 显示预警
@@ -147,7 +139,8 @@ export default {
     }
   },
   computed: {
-    ...mapState('headNotice', ['alarmCount', 'toDoCount'])
+    ...mapState('headNotice', ['alarmCount', 'toDoCount']),
+    ...mapGetters('websocket', ['isConnected', 'isReconnecting', 'connectionStatus'])
   },
   created () {
     // 设置默认打开页面el-tabs默认下划线不显示的问题
@@ -163,226 +156,150 @@ export default {
     this.init()
   },
   beforeDestroy () {
-    this.closeSocket()
+    // 使用store的disconnect action断开WebSocket连接
+    this.$store.dispatch('websocket/WEBSOCKET_DISCONNECT')
   },
   methods: {
     /**
      * 初始化
      */
-    init () {
+    async init () {
       // 通过vuex调用api，获取todocount，待办条数
       this.$store.dispatch('headNotice/todoCount', null)
       this.$store.dispatch('headNotice/alarmCount', null)
       this.getUserPwdWarning()
-      this.initWebsocket()
+
+      // 初始化WebSocket连接和订阅
+      await this.initWebSocket()
     },
     click () {
       // 通过vuex调用api，获取todocount，待办条数
       this.$store.dispatch('headNotice/todoCount', null)
     },
-    initWebsocket () {
-      /*
-      ① 创建sockJS对象；
-      ② 创建stomp客户端
-      ③ stompClient客户端 连接 stomp服务器
-      */
-      this.socket = new SockJS(this.socketUrl)
-      // const ws = new WebSocket('ws://localhost:8088/notice')
-      this.stompClient = Stomp.over(this.socket)
+    /**
+     * 初始化WebSocket连接和订阅
+     */
+    async initWebSocket () {
+      try {
+        // 使用store初始化WebSocket连接
+        await this.$store.dispatch('websocket/WEBSOCKET_INIT')
 
-      this.stompClient.connect(
-        headers,
-        frame => {
-          // 连接成功： 订阅服务器的地址。为了浏览器可以接收到消息，必须先订阅服务器的地址
-          this.connectSucceed()
-        }, err => {
-          console.log(err)
-          // 连接失败的回调
-          this.reconnect(this.socketUrl, this.connectSucceed)
-        })
-    },
-    /* 连接成功的回调：订阅服务器的地址。为了浏览器可以接收到消息，必须先订阅服务器的地址 */
-    connectSucceed () {
-      // 设置心跳发送接受频率（ms）默认为10000ms。 heart-beating是利用window.setInterval()去规律地发送heart-beats或者检查服务端的heart-beats。
-      this.stompClient.heartbeat.outgoing = 10000
-      this.stompClient.heartbeat.incoming = 0 // 客户端不从服务端接收心跳包
+        // 设置所有必要的订阅
+        this.setupWebSocketSubscriptions()
 
-      // 订阅：1、该路由专门用于心跳检测
-      this.stompClient.subscribe('/topic/beating', res => {
-        console.log('ping!' + res)
-      })
-
-      // 订阅：1、同步错误通知
-      // this.stompClient.subscribe('/topic/syncLog', res => {
-      //   if (res.body) {
-      //     this.tabs.showAlarm = true
-      //     this.tabs.active = '1'
-      //     window.localStorage.setItem('WMS_HEADER_NOTICE_DEFAULT_PAGE', this.tabs.active)
-      //     // 弹窗
-      //     // this.$syncError.show()
-      //     // 点击显示
-      //     this.$refs.popover.doShow()
-      //     // 重新查询数量
-      //     this.getNoticeNumber()
-      //     this.$refs.syncAlarm.getDataList(true)
-      //   }
-      // })
-
-      // 订阅：2、广播
-      // this.stompClient.subscribe('/topic/broadcast/message', res => {
-      //   // debugger
-      //   // alert('订阅：2、广播--/topic/broadcast/message')
-      // })
-      // 订阅：3、一对一通知
-      // this.stompClient.subscribe('/user/subscribe/message', res => {
-      //   debugger
-      //   alert('订阅：3、一对一通知--/user/message')
-      // })
-      /**
-       * 预警的消息通知：/syncLog
-       */
-      this.stompClient.subscribe('/user/' + store.getters.staff_id + '/topic/syncLog', res => {
-        console.log('/topic/syncLog!' + res)
-        const data = JSON.parse(res.body)
-        /**
-         * 是否启用
-         */
-        if (data.is_using) {
-          /**
-           *  notice_type:0消息通知, 1弹窗显示, 2用户密码过期
-           */
-          if (data.notice_type === '1') {
-            this.tabs.showAlarmPopup = true
-          } else if (data.notice_type === '0') {
-            this.tabs.showAlarm = true
-            // 点击显示
-            this.$refs.popover.doShow()
-            this.$refs.syncAlarm.handleParentReturn()
-            this.tabs.active = 'third'
-            window.localStorage.setItem('WMS_HEADER_NOTICE_DEFAULT_PAGE', this.tabs.active)
-          } else if (data.notice_type === '2') {
-            this.tabs.showResetPwd = true
-          }
-          // 重新查询数量
-          // this.getNoticeNumber()
-          // this.$refs.syncAlarm.getDataList(true)
-        }
-      })
-
-      /**
-       * 待办的消息通知：/bpm
-       * notice_type:0消息通知, 1弹窗显示
-       */
-      this.stompClient.subscribe('/user/' + store.getters.staff_id + '/topic/bpm/approve', res => {
-        console.log('websocket消息通知：/topic/bpm/approve!' + res)
-        const data = JSON.parse(res.body)
-        // 显示消息通知
-        this.$notify({
-          title: '消息通知',
-          dangerouslyUseHTMLString: true,
-          message: data.html,
-          customClass: 'custom-notify',
-          duration: 0
-        })
-        // 通过vuex调用api，获取todocount，待办条数
-        this.$store.dispatch('headNotice/todoCount', null)
-        // 发起全局的bussevent，总线
-        EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
-        if (data.type === '1') {
-          // 弹窗显示
-          this.tabs.showAlarmPopup = true
-        } else if (data.type === '0') {
-          // 消息通知
-          this.handleTabsClick('first')
-          // 点击显示
-          this.$refs.popover.doShow()
-          this.tabs.active = '0'
-        }
-      })
-
-      /**
-       * 审批流拒绝，消息通知
-       */
-      this.stompClient.subscribe('/user/' + store.getters.staff_id + '/topic/bpm/refuse', res => {
-        console.log('websocket消息通知：/topic/bpm/refuse!' + res)
-        const data = JSON.parse(res.body)
-        // 显示消息通知
-        this.$notify({
-          title: '消息通知',
-          dangerouslyUseHTMLString: true,
-          message: data.html,
-          customClass: 'custom-notify',
-          duration: 0
-        })
-        // 通过vuex调用api，获取todocount，待办条数
-        this.$store.dispatch('headNotice/todoCount', null)
-        // 发起全局的bussevent，总线
-        EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
-      })
-
-      /**
-       * 审批流撤销，消息通知
-       */
-      this.stompClient.subscribe('/user/' + store.getters.staff_id + '/topic/bpm/cancel', res => {
-        console.log('websocket消息通知：/topic/bpm/cancel!' + res)
-        const data = JSON.parse(res.body)
-        // 显示消息通知
-        this.$notify({
-          title: '消息通知',
-          dangerouslyUseHTMLString: true,
-          message: data.html,
-          customClass: 'custom-notify',
-          duration: 0
-        })
-        // 通过vuex调用api，获取todocount，待办条数
-        this.$store.dispatch('headNotice/todoCount', null)
-        // 发起全局的bussevent，总线
-        EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
-      })
-    },
-
-    reconnect (socketUrl, callback) {
-      this.reconnecting = true
-      let connected = false
-      let retryCount = 0 // 添加计数器
-      const maxRetry = 3 // 最大重试次数
-
-      const timer = setInterval(() => {
-        retryCount++ // 重试次数加1
-        if (retryCount >= maxRetry) {
-          clearInterval(timer)
-          console.log('websocket达到重试上限制3次，退出')
-          return
-        }
-        this.socket = new SockJS(socketUrl)
-        this.stompClient = Stomp.over(this.socket)
-        var _transportClose = this.socket._transportClose
-        this.socket._transportClose = function (code, reason) {
-          if (this._transport && this._transport.close) {
-            this._transport.close()
-          }
-          _transportClose.call(this, code, reason)
-        }
-        this.stompClient.connect(headers, frame => {
-          this.reconnectting = false
-          connected = true
-          clearInterval(timer)
-          callback()
-        }, err => {
-          console.log('Reconnect failed！')
-          if (!connected) console.log(err)
-          console.log('retryCount:' + retryCount)
-        })
-      }, 10000)
-    },
-    closeSocket () {
-      if (this.stompClient != null) {
-        this.stompClient.disconnect()
+        console.log('WebSocket连接和订阅设置完成')
+      } catch (error) {
+        console.error('WebSocket初始化失败:', error)
       }
     },
-    send (flag) {
-      this.stompCLient.send('/topic/dashboard/send', {}, flag)
+    /**
+     * 设置WebSocket订阅
+     */
+    setupWebSocketSubscriptions () {
+      // 订阅：心跳检测
+      this.$store.dispatch('websocket/WEBSOCKET_SUBSCRIBE', {
+        topic: '/topic/beating',
+        callback: (res) => {
+          console.log('ping!' + res)
+        }
+      })
+
+      // 订阅：预警消息通知
+      this.$store.dispatch('websocket/WEBSOCKET_SUBSCRIBE', {
+        topic: `/user/${store.getters.staff_id}/topic/syncLog`,
+        callback: (res) => {
+          console.log('/topic/syncLog!' + res)
+          const data = JSON.parse(res.body)
+
+          if (data.is_using) {
+            // notice_type:0消息通知, 1弹窗显示, 2用户密码过期
+            if (data.notice_type === '1') {
+              this.tabs.showAlarmPopup = true
+            } else if (data.notice_type === '0') {
+              this.tabs.showAlarm = true
+              this.$refs.popover.doShow()
+              this.$refs.syncAlarm.handleParentReturn()
+              this.tabs.active = 'third'
+              window.localStorage.setItem('WMS_HEADER_NOTICE_DEFAULT_PAGE', this.tabs.active)
+            } else if (data.notice_type === '2') {
+              this.tabs.showResetPwd = true
+            }
+          }
+        }
+      })
+
+      // 订阅：审批消息通知
+      this.$store.dispatch('websocket/WEBSOCKET_SUBSCRIBE', {
+        topic: `/user/${store.getters.staff_id}/topic/bpm/approve`,
+        callback: (res) => {
+          console.log('websocket消息通知：/topic/bpm/approve!' + res)
+          const data = JSON.parse(res.body)
+
+          // 显示消息通知
+          this.$notify({
+            title: '消息通知',
+            dangerouslyUseHTMLString: true,
+            message: data.html,
+            customClass: 'custom-notify',
+            duration: 0
+          })
+
+          // 更新待办条数
+          this.$store.dispatch('headNotice/todoCount', null)
+          // 发起全局事件
+          EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
+
+          if (data.type === '1') {
+            this.tabs.showAlarmPopup = true
+          } else if (data.type === '0') {
+            this.handleTabsClick('first')
+            this.$refs.popover.doShow()
+            this.tabs.active = '0'
+          }
+        }
+      })
+
+      // 订阅：审批拒绝消息通知
+      this.$store.dispatch('websocket/WEBSOCKET_SUBSCRIBE', {
+        topic: `/user/${store.getters.staff_id}/topic/bpm/refuse`,
+        callback: (res) => {
+          console.log('websocket消息通知：/topic/bpm/refuse!' + res)
+          const data = JSON.parse(res.body)
+
+          this.$notify({
+            title: '消息通知',
+            dangerouslyUseHTMLString: true,
+            message: data.html,
+            customClass: 'custom-notify',
+            duration: 0
+          })
+
+          this.$store.dispatch('headNotice/todoCount', null)
+          EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
+        }
+      })
+
+      // 订阅：审批撤销消息通知
+      this.$store.dispatch('websocket/WEBSOCKET_SUBSCRIBE', {
+        topic: `/user/${store.getters.staff_id}/topic/bpm/cancel`,
+        callback: (res) => {
+          console.log('websocket消息通知：/topic/bpm/cancel!' + res)
+          const data = JSON.parse(res.body)
+
+          this.$notify({
+            title: '消息通知',
+            dangerouslyUseHTMLString: true,
+            message: data.html,
+            customClass: 'custom-notify',
+            duration: 0
+          })
+
+          this.$store.dispatch('headNotice/todoCount', null)
+          EventBus.$emit(this.EMITS.EMIT_NOTISE_BPM)
+        }
+      })
     },
+
     // 切换页签
     handleTabsClick (name, event) {
       switch (name) {

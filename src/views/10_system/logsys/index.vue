@@ -11,34 +11,38 @@
           v-model.trim="dataJson.searchForm.type"
           clearable
           placeholder="类型"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item>
-        <el-date-picker
-          v-model="dataJson.searchForm.start_time"
-          value-format="yyyy-MM-dd HH:mm:ss"
-          type="date"
+      <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.user_name"
           clearable
-          :placeholder="isPlaceholderShow('创建时间起')"
+          placeholder="用户名"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item>
-        <el-date-picker
-          v-model="dataJson.searchForm.over_time"
-          value-format="yyyy-MM-dd HH:mm:ss"
-          type="date"
+      <el-form-item label="">
+        <el-input
+          v-model.trim="dataJson.searchForm.staff_name"
           clearable
-          :placeholder="isPlaceholderShow('创建时间止')"
+          placeholder="员工姓名"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
-      <el-form-item style="float:right">
-        <el-button
-          v-popover:popover
-          type="primary"
-          plain
-          icon="perfect-icon-reset"
-          @click="doResetSearch"
-        >重置</el-button>
+      <el-form-item style="float: right">
+        <el-badge
+          :value="screenNum"
+          class="item"
+        >
+          <el-button
+            v-popover:popover
+            type="primary"
+            plain
+            icon="el-icon-search"
+            :loading="settings.loading"
+          >高级查询</el-button>
+        </el-badge>
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
@@ -49,6 +53,90 @@
         >查询</el-button>
       </el-form-item>
     </el-form>
+
+    <el-popover
+      ref="popover"
+      placement="top"
+      width="600"
+      title="高级查询"
+      popper-class="perfect_popper"
+    >
+      <el-form
+        :inline="true"
+        :model="dataJson.searchForm"
+        label-position="top"
+        class="search-form-senior"
+      >
+        <el-form-item label="">
+          <el-input
+            v-model.trim="dataJson.searchForm.class_name"
+            clearable
+            placeholder="类名"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="">
+          <el-input
+            v-model.trim="dataJson.searchForm.class_method"
+            clearable
+            placeholder="方法名"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="">
+          <el-input
+            v-model.trim="dataJson.searchForm.url"
+            clearable
+            placeholder="url"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+
+        <el-form-item label="">
+          <el-input
+            v-model.trim="dataJson.searchForm.operation"
+            clearable
+            placeholder="操作"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
+        <el-row>
+          <el-col :span="12">
+            <el-form-item>
+              <el-date-picker
+                v-model="dataJson.searchForm.start_time"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                type="date"
+                clearable
+                :placeholder="isPlaceholderShow('创建时间起')"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-date-picker
+                v-model="dataJson.searchForm.over_time"
+                value-format="yyyy-MM-dd HH:mm:ss"
+                type="date"
+                clearable
+                :placeholder="isPlaceholderShow('创建时间止')"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-divider />
+        <div style="text-align: right; margin: 0">
+          <el-button
+            type="text"
+            @click="doResetSearch"
+          >重置</el-button>
+          <el-button
+            type="primary"
+            :loading="settings.loading"
+            @click="handleSearch"
+          >提交</el-button>
+        </div>
+      </el-form>
+    </el-popover>
+
     <el-button-group>
       <el-button
         v-permission="'P_SYSCODE:INFO'"
@@ -70,7 +158,6 @@
       border
       fit
       highlight-current-row
-      :default-sort="{prop: 'id', order: 'descending'}"
       style="width: 100%"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
@@ -99,6 +186,12 @@
         min-width="80"
         prop="user_name"
         label="用户名"
+      />
+      <el-table-column
+        show-overflow-tooltip
+        min-width="80"
+        prop="staff_name"
+        label="员工姓名"
       />
       <el-table-column
         show-overflow-tooltip
@@ -191,7 +284,7 @@
 
 <script>
 import constants_program from '@/common/constants/constants_program'
-import { getListApi } from '@/api/10_system/log/logsys'
+import { getListApi } from '@/api/10_system/lognew/logsys'
 import resizeMixin from './syscodeResizeHandlerMixin'
 import Pagination from '@/components/Pagination_no_count'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -243,6 +336,7 @@ export default {
         // 当前选中的行（checkbox）
         multipleSelection: []
       },
+      screenNum: 0,
       // 页面设置json
       settings: {
         popSettings: {
@@ -302,7 +396,24 @@ export default {
   },
   // 监听器
   watch: {
-
+    'dataJson.multipleSelection': {
+      deep: true,
+      handler (newVal, oldVal) {
+        const screenKeys = ['class_name', 'class_method', 'url', 'operation', 'start_time', 'over_time']
+        const { searchForm } = this.dataJson
+        const data = Object.keys(searchForm).map(item => {
+          if (screenKeys.includes(item)) {
+            if (Array.isArray(searchForm[item])) {
+              return searchForm[item].length > 0 ? searchForm[item] : undefined
+            } else {
+              return searchForm[item]
+            }
+          }
+        })
+        const len = data.filter(x => x).length || 0
+        this.screenNum = len
+      }
+    }
   },
   created () {
     this.initShow()
