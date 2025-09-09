@@ -1134,7 +1134,9 @@ export default {
   mounted () {
   },
   activated () {
-    this.doResize()
+    this.$nextTick(() => {
+      this.$refs.multipleTable.doLayout()
+    })
     this.handleUrlParams()
   },
   destroyed () {

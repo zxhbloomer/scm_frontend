@@ -235,7 +235,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :default-sort="{prop: 'u_time', order: 'descending'}"
       :columns-index-key="true"
       stripe
@@ -490,7 +490,6 @@ import { getListApi, auditApi, deleteApi, submitApi } from '@/api/40_business/ad
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin/listResizeHandlerMixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import urlUtil from '@/utils/urlUtil'
 import { mapState } from 'vuex'
@@ -498,7 +497,6 @@ import { mapState } from 'vuex'
 export default {
   components: { Pagination, SelectDict },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     height: {
       type: Number,
@@ -673,6 +671,8 @@ export default {
     // }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     if (this.$route.query.goods_name !== null && this.$route.query.goods_name !== undefined) {
       this.dataJson.searchForm.goods_name = this.$route.query.goods_name
       this.dataJson.searchForm.status = '2'

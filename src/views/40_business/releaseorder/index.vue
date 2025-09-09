@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <el-tabs
 
@@ -96,12 +96,10 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import listTemplate from './table/list'
 import editTemplate from './table/edit'
 import detailTemplate from './table/detail'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   components: { listTemplate, editTemplate, detailTemplate },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     height: {
       type: Number,
@@ -218,3 +216,4 @@ export default {
   }
 }
 </script>
+

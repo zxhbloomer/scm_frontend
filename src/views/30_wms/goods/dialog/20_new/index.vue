@@ -205,7 +205,7 @@ import deepCopy from 'deep-copy'
 import elDragDialog from '@/directive/el-drag-dialog'
 import InputSearch from '@/components/40_input/inputSearch'
 import BusinessDialog from '@/views/20_master/business/dialog/dialog'
-import IndustryDialog from '@/views/20_master/industry/dialog/dialog'
+// import IndustryDialog from '@/views/20_master/industry/dialog/dialog' // 文件不存在，需要实现或移除
 import CategoryDialog from '@/views/30_wms/category/dialog/10_list/index'
 
 export default {
@@ -214,7 +214,7 @@ export default {
   components: {
     InputSearch,
     BusinessDialog,
-    IndustryDialog,
+    // IndustryDialog, // 组件不存在，暂时注释
     CategoryDialog
   },
   props: {

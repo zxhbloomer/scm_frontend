@@ -34,6 +34,13 @@
           <el-descriptions-item label="操作时间">
             {{ formatDateTime(dataJson.tempJson.operate_time) }}
           </el-descriptions-item>
+          <el-descriptions-item label="URL">
+            {{ dataJson.tempJson.url || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="IP">
+            {{ dataJson.tempJson.ip || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item />
 
         </el-descriptions>
 

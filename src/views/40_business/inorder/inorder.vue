@@ -76,12 +76,10 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import inTemplate from './tabs/list'
 import editTemplate from './tabs/edit'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   components: { inTemplate, editTemplate },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -141,6 +139,8 @@ export default {
     })
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   },
   methods: {
     handleTabsClick (tab, event) {

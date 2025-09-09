@@ -83,7 +83,7 @@
 
         <el-form-item label="">
           <select-warehouse
-            v-model.trim="dataJson.searchForm.warehouse_name"
+            :value="dataJson.searchForm.warehouse_name"
             placeholder="请选择仓库"
             placement="left"
             @keyup.enter.native="handleSearch"

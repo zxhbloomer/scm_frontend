@@ -994,6 +994,18 @@ export default {
     // 查看关闭弹窗
     handleCloseViewDialogOk (val) {
       this.popView.dialogVisible = false
+    },
+    // 客户选择组件返回数据处理
+    handleCustomerReturnDataName (data) {
+      if (data && data.name) {
+        this.dataJson.searchForm.purchaser_name = data.name
+      }
+    },
+    // 供应商选择组件返回数据处理
+    handleSupplierReturnDataName (data) {
+      if (data && data.name) {
+        this.dataJson.searchForm.supplier_name = data.name
+      }
     }
   }
 }

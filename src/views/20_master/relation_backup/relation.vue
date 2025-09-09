@@ -36,14 +36,12 @@
   </div>
 </template>
 <script>
-import resizeMixin from './relationResizeHandlerMixin'
 
 export default {
   components: {
     left: () => import('./left/left'), // 左侧tree
     right: () => import('./right/right') // 右侧list
   },
-  mixins: [resizeMixin],
   props: {
     dataModel: {
       type: String,
@@ -82,6 +80,8 @@ export default {
   watch: {
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   },
   mounted () {
   },

@@ -138,12 +138,10 @@ import approve_template from './tabs/50_approve/index.vue'
 import inplan_new_template from '@/views/40_business/30_in/inplan/component/push/bypoorder/index.vue'
 import settlement_new_template from '@/views/40_business/10_po/settlement/component/push/bypoorder/index.vue'
 import cargo_right_transfer_new_template from '@/views/40_business/10_po/cargo_right_transfer/component/push/index.vue'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   components: { list_template, new_template, update_template, detail_template, approve_template, inplan_new_template, settlement_new_template, cargo_right_transfer_new_template },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     height: {
       type: Number,
@@ -204,6 +202,8 @@ export default {
     })
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   },
   methods: {
     handleTabsClick (tab, event) {

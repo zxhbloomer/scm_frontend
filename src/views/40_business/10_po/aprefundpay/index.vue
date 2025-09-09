@@ -25,12 +25,10 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import list_template from './tabs/10_list/index.vue'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   components: { list_template },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     height: {
       type: Number,
@@ -80,6 +78,8 @@ export default {
     })
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   },
   methods: {
     // 状态到标题扩展的映射

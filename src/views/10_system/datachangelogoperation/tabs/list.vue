@@ -145,8 +145,8 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="120"
-        prop="operation"
-        label="操作说明"
+        prop="operate_time"
+        label="操作日期"
       />
     </el-table>
     <el-skeleton

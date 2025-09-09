@@ -91,7 +91,7 @@
 
         <el-form-item label="">
           <select-warehouse
-            v-model.trim="dataJson.searchForm.warehouse_name"
+            :value="dataJson.searchForm.warehouse_name"
             placeholder="请选择仓库"
             placement="left"
             @keyup.enter.native="handleSearch"
@@ -709,6 +709,7 @@ import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/sele
 import SelectCpSupplier from '@/views/20_master/enterprise/dialog/selectgrid/counterparty/supplier/index.vue'
 import CancelDialog from '../../dialog/cancel/index.vue'
 import { getListApi, getListSumApi, delApi, getApi, exportApi } from '@/api/40_business/30_in/in/in.js'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
 import constants_para from '@/common/constants/constants_para'
@@ -725,6 +726,7 @@ export default {
     SelectCpSupplier,
     CancelDialog
   },
+  directives: { permission },
   props: {
     data: {
       type: Object,

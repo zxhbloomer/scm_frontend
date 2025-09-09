@@ -287,8 +287,6 @@ export default {
      */
     init () {
       this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
 

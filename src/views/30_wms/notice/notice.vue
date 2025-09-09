@@ -55,7 +55,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -229,7 +229,6 @@
 
 <script>
 import { getListApi } from '@/api/30_wms/notice/notice'
-import resizeMixin from './mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/30_wms/notice/dialog/edit'
@@ -239,7 +238,6 @@ import permission from '@/directive/permission/index.js' // 权限判断指令
 export default {
   components: { Pagination, editDialog },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -360,6 +358,8 @@ export default {
     // }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 初始化watch
     this.setWatch()
     // 初始化查询

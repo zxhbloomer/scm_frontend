@@ -73,7 +73,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
+      :columns-index-key="true"
       stripe
       border
       highlight-current-row
@@ -238,7 +239,6 @@
 import { getListApi } from '@/api/10_system/inventorymonitor/inventorymonitor.js'
 import { getWarehouseComboListApi } from '@/api/30_wms/warehouse/warehouse'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
-import resizeMixin from './mixin/resizeHandlerMixin'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
@@ -247,7 +247,6 @@ import Pagination from '@/components/Pagination'
 export default {
   components: { Pagination },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   data () {
     return {
       dataJson: {
@@ -293,7 +292,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       }
     }
@@ -304,6 +302,8 @@ export default {
   watch: {
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {

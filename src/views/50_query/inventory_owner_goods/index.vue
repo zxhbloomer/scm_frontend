@@ -50,7 +50,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -209,7 +209,6 @@
 
 <script>
 import { queryInventoryOwnerGoods } from '@/api/50_query/inventory_owner_goods'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -219,7 +218,6 @@ import { getWarehouseComboListApi } from '@/api/30_wms/warehouse/warehouse'
 export default {
   components: { Pagination, SelectOwner },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -296,7 +294,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       popSettings: {
@@ -344,6 +341,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 初始化仓库下拉框
     this.getWarehouseData()
     // 初始化查询

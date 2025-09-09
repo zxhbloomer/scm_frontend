@@ -365,7 +365,6 @@ export default {
     // 描绘完成
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化处理
@@ -383,8 +382,6 @@ export default {
           this.initViewModel()
           break
       }
-      // 初始化watch
-      this.setWatch()
       this.settings.loading = false
     },
     initTempJsonOriginal () {
@@ -441,11 +438,6 @@ export default {
       // 数据初始化
       this.dataJson.tempJsonOriginal = deepCopy(this.data)
       this.dataJson.tempJson = deepCopy(this.data)
-    },
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
     },
 
     // 取消按钮

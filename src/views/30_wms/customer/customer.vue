@@ -92,7 +92,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :columns-index-key="true"
       stripe
       border
@@ -290,7 +290,6 @@
 
 <script>
 import { getListApi, enableOrDisAbleApi, enabledSelectionApi, disAbledSelectionApi, exportApi } from '@/api/30_wms/customer/customer'
-import resizeMixin from './mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/30_wms/customer/dialog/edit'
@@ -302,7 +301,6 @@ import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 export default {
   components: { Pagination, editDialog, DeleteTypeNormal, FieldHelp },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -424,6 +422,8 @@ export default {
     // }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 初始化watch
     this.setWatch()
     // 初始化查询

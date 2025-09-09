@@ -255,14 +255,14 @@ export default {
           amount: 0,
           sku_code: null,
           tax_amount: 0,
-          tax_rate: 0
+          tax_rate: '0'
         },
         // 单条数据 json
         tempJson: {
           amount: 0,
           sku_code: null,
           tax_amount: 0,
-          tax_rate: 0
+          tax_rate: '0'
         },
         inputSettings: {
           maxLength: {

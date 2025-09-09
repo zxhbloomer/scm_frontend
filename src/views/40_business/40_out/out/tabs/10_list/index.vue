@@ -91,7 +91,7 @@
 
         <el-form-item label="">
           <select-warehouse
-            v-model.trim="dataJson.searchForm.warehouse_name"
+            :value="dataJson.searchForm.warehouse_name"
             placeholder="请选择仓库"
             placement="left"
             @keyup.enter.native="handleSearch"
@@ -713,6 +713,7 @@ import deepCopy from 'deep-copy'
 import constants_dict from '@/common/constants/constants_dict'
 import constants_para from '@/common/constants/constants_para'
 import { EventBus } from '@/common/eventbus/eventbus'
+import permission from '@/directive/permission/index.js' // 权限判断指令
 
 export default {
   name: 'OutList',
@@ -725,6 +726,7 @@ export default {
     SelectCpSupplier,
     CancelDialog
   },
+  directives: { permission },
   props: {
     data: {
       type: Object,

@@ -26,12 +26,10 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import myPage from './edit.vue'
-import mixin from './mixin'
 
 export default {
   components: { myPage },
   directives: { elDragDialog },
-  mixins: [mixin],
   props: {
     // 页面是否显示参数
     visible: {

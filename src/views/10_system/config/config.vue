@@ -96,7 +96,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -281,7 +282,6 @@
 
 <script>
 import { getListApi, exportAllApi, exportSelectionApi, realDeleteSelectionApi, enabledApi } from '@/api/10_system/config/config'
-import resizeMixin from './configResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/10_system/config/dialog/edit'
@@ -291,7 +291,6 @@ import permission from '@/directive/permission/index.js' // 权限判断指令
 export default {
   components: { Pagination, editDialog },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   data () {
     return {
       dataJson: {
@@ -343,7 +342,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       // 导入窗口的状态
@@ -394,6 +392,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 初始化查询
     this.getDataList()
     // 数据初始化

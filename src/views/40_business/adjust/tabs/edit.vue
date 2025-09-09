@@ -175,7 +175,7 @@
           :data="dataJson.detailListData"
           :element-loading-text="'正在拼命加载中...'"
           element-loading-background="rgba(255, 255, 255, 0.5)"
-          :height="settings.tableHeight"
+          :canvas-auto-height="true"
           stripe
           border
           fit
@@ -365,7 +365,6 @@ import consignorDialog from '@/views/30_wms/customer/dialog/dialog'
 import ownerDialog from '@/views/30_wms/owner/dialog/dialog'
 import orderDialog from '@/views/40_business/inorder/dialog/dialog'
 import goodsDialog from '@/views/40_business/adjust/tabs/dialog/goodsEdit'
-import mixin from './mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 import previewCard from '@/components/50_preview_card/preview_card.vue'
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
@@ -373,7 +372,6 @@ import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/in
 export default {
   components: { SimpleUploadMutilFile, previewCard, consignorDialog, ownerDialog, orderDialog, goodsDialog, SelectDict },
   directives: { elDragDialog },
-  mixins: [mixin],
   props: {
     visible: {
       type: Boolean,
@@ -585,6 +583,8 @@ export default {
   // 监听器
   watch: {},
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.init()
     this.getOwnerData()
   },

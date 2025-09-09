@@ -55,7 +55,7 @@
           :data="dataJson.unitListData"
           :element-loading-text="'正在拼命加载中...'"
           element-loading-background="rgba(255, 255, 255, 0.5)"
-          :height="settings.tableHeight"
+          :canvas-auto-height="true"
           stripe
           border
           fit
@@ -136,7 +136,6 @@ export default {
   name: 'UnitCalculator',
   components: { calculatorEditDialog },
   directives: { elDragDialog },
-  mixins: [],
   props: {
     visible: {
       type: Boolean,

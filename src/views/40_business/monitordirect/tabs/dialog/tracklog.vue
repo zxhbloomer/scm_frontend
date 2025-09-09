@@ -195,15 +195,8 @@ export default {
   },
   mounted () {},
   destroyed () {
-    this.unWatch()
   },
   methods: {
-    // 设置监听器
-    setWatch () {
-    },
-    unWatch () {
-    },
-
     // 取消按钮
     handleCancel () {
       this.$emit('closeMeCancel')

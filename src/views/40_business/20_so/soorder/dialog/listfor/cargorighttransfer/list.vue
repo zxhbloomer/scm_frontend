@@ -995,15 +995,12 @@ export default {
     this.init()
   },
   destroyed () {
-    this.unWatch()
   },
   methods: {
     // 初始化页面
     init (parm) {
       // 处理传入的data参数
       this.handleInitData()
-
-      this.setWatch()
 
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
@@ -1028,9 +1025,6 @@ export default {
           this.dataJson.searchForm.seller_id = this.data.seller_id
         }
       }
-    },
-    setWatch () {},
-    unWatch () {
     },
     // 获取行索引
     getRowIndex (row) {

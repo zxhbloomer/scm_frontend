@@ -58,7 +58,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -194,7 +194,6 @@
 <script>
 import constants_program from '@/common/constants/constants_program'
 import { getListApi, realDeleteSelectionApi } from '@/api/20_master/address/address'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import deepCopy from 'deep-copy'
 import editDialog from '@/views/20_master/address/dialog/edit'
@@ -203,7 +202,6 @@ export default {
   name: constants_program.P_ADDRESS, // 页面id，和router中的name需要一致，作为缓存
   components: { Pagination, editDialog },
   directives: {},
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -287,6 +285,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {

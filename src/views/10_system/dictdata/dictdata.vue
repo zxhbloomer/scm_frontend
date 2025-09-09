@@ -100,7 +100,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :columns-index-key="true"
       :default-sort="{prop: 'u_time', order: 'descending'}"
       stripe
@@ -621,7 +621,6 @@
 
 <script>
 import { getListApi, updateApi, insertApi, exportAllApi, exportSelectionApi, importExcelApi, deleteApi, saveListApi, sortUpApi, sortDownApi } from '@/api/10_system/dictdata/dictdata'
-import resizeMixin from './dictdataResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import SimpleUpload from '@/components/10_file/SimpleUpload'
@@ -634,7 +633,6 @@ import permission from '@/directive/permission/index.js' // 权限判断指令
 export default {
   components: { Pagination, SimpleUpload, dicttypeDialog, DeleteTypeNormal, FieldHelp },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   data () {
     return {
       dataJson: {
@@ -818,6 +816,9 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
+
     if (this.$route.query.dictTypeCode !== undefined) {
       this.dataJson.searchForm.dictTypeCode = this.$route.query.dictTypeCode
     } else {

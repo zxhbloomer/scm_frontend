@@ -767,18 +767,12 @@ export default {
     },
     // 初始化查询页面
     init (parm) {
-      // 初始化watch
-      this.setWatch()
       // 初始化查询
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
       // 获取模板文件
       this.getTemplate()
-    },
-    setWatch () {
-    },
-    unWatch () {
     },
     // 获取行索引
     getRowIndex (row) {

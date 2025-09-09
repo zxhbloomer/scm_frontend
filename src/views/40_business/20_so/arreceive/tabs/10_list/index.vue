@@ -53,7 +53,7 @@
             :placeholder="'请选择主体企业'"
             placement="left"
             @keyup.enter.native="handleSearch"
-            @onReturnData="handleCustomerReturnDataName"
+            @onReturnData="handleSellerReturnDataName"
           />
         </el-form-item>
         <el-form-item>
@@ -586,8 +586,15 @@ export default {
           status: '',
           status_list: [],
           active_tabs_index: '',
-          code: '',
+          code: '', // 收款单编号
           plan_code: '',
+          so_contract_code: '', // 合同编号
+          so_order_code: '', // 订单编号
+          seller_name: '', // 主体企业名称
+          seller_id: '', // 主体企业ID
+          customer_name: '', // 客户名称
+          customer_id: '', // 客户ID
+          ar_code: '', // 应收账款编号
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION)
         },
@@ -724,7 +731,6 @@ export default {
 
     // 描绘完成
     this.init()
-    this.setWatch()
   },
   beforeUpdate () {
     // 重新布局表格
@@ -997,6 +1003,26 @@ export default {
     // 查看关闭弹窗
     handleCloseViewDialogOk (val) {
       this.popView.dialogVisible = false
+    },
+    // 主体企业选择回调方法
+    handleSellerReturnDataName (data) {
+      if (data && data.length > 0) {
+        this.dataJson.searchForm.seller_id = data[0].id
+        this.dataJson.searchForm.seller_name = data[0].name
+      } else {
+        this.dataJson.searchForm.seller_id = ''
+        this.dataJson.searchForm.seller_name = ''
+      }
+    },
+    // 客户选择回调方法
+    handleCustomerReturnDataName (data) {
+      if (data && data.length > 0) {
+        this.dataJson.searchForm.customer_id = data[0].id
+        this.dataJson.searchForm.customer_name = data[0].name
+      } else {
+        this.dataJson.searchForm.customer_id = ''
+        this.dataJson.searchForm.customer_name = ''
+      }
     }
   }
 }

@@ -974,7 +974,6 @@ export default {
       // 处理传入的data参数
       this.handleInitData()
 
-      this.setWatch()
       // 将props.data参数合并到searchForm中，保留原有的pageCondition等结构
       if (this.data) {
         Object.assign(this.dataJson.searchForm, deepCopy(this.data))
@@ -1002,7 +1001,6 @@ export default {
         }
       }
     },
-    setWatch () {},
     unWatch () {
       if (this.watch.unwatch_tempJson) {
         this.watch.unwatch_tempJson()

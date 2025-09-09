@@ -17,7 +17,6 @@ const getters = {
   permission_topNav_code: state => state.permission.topNavActiveCode,
   /** 菜单权限和操作权限信息 */
   userPermissionData: state => state.permission.permission_data,
-  errorLogs: state => state.errorLog.logs,
   staff_id: state => state.permission.staff_id,
   session_id: state => state.permission.session_id,
   /** add by zxh */

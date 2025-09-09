@@ -93,12 +93,10 @@ import new_template from '@/views/20_master/enterprise/tabs/20_new/index.vue'
 import update_template from '@/views/20_master/enterprise/tabs/30_edit/index.vue'
 import detail_template from '@/views/20_master/enterprise/tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 
 export default {
   components: { list_template, new_template, update_template, detail_template, approve_template },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   props: {
     height: {
       type: Number,

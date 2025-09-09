@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-container">
     <FloatMenu />
     <div>
@@ -206,7 +206,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :columns-index-key="true"
       stripe
       border
@@ -491,7 +491,6 @@ a {
 
 <script>
 import { getAccountListApi, exportAccountApi, getAccountListSumApi } from '@/api/40_business/inventory/inventory'
-import resizeMixin from './mixin/listResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
@@ -504,7 +503,6 @@ import permission from '@/directive/permission/index.js'
 export default {
   components: { Pagination, SelectDicts, SelectDict },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -876,3 +874,4 @@ export default {
   }
 }
 </script>
+

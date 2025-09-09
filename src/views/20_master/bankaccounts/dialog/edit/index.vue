@@ -26,12 +26,10 @@
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
 import myPage from './edit.vue'
-import mixin from './mixin'
 
 export default {
   components: { myPage },
   directives: { elDragDialog },
-  mixins: [mixin],
   props: {
     // 页面是否显示参数
     visible: {
@@ -86,6 +84,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 设置dialog的返回
     this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
   },

@@ -1,9 +1,6 @@
 import 'core-js/stable'
 // import 'regenerator-runtime/runtime'
 
-// 引入错误显示增强器（开发环境）
-import './utils/errorHandler'
-
 import Vue from 'vue'
 
 import Cookies from 'js-cookie'
@@ -16,6 +13,7 @@ import './styles/element-variables.scss'
 
 import '@/styles/index.scss' // global css
 import 'vue-tour/dist/vue-tour.css' // vue-tour 样式
+import '@/assets/bpm/theme.less' // BPM主题变量
 
 import App from './App'
 import store from './store'
@@ -24,13 +22,20 @@ import router from './router'
 import './icons' // icon
 
 // Vite环境下的SVG图标虚拟模块导入
-if (typeof import.meta !== 'undefined') {
-  // Vite环境下导入SVG图标虚拟模块
-  import('virtual:svg-icons-register')
+try {
+  if (typeof require === 'undefined') {
+    // 可能是Vite环境，尝试导入SVG图标虚拟模块
+    import('virtual:svg-icons-register').catch(() => {
+      // 忽略导入失败的情况
+      console.debug('SVG icons register not available')
+    })
+  }
+} catch (e) {
+  // webpack环境下会忽略这个错误
+  console.debug('SVG icons register not available in webpack environment')
 }
 
 import './permission' // permission control
-import './utils/error-log' // error log
 import '@/assets/iconfont/iconfont.css'
 
 import * as filters from './filters' // global filters

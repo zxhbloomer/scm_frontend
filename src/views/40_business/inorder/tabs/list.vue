@@ -220,7 +220,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       :columns-index-key="true"
       stripe
       border
@@ -529,7 +529,6 @@ a {
 
 <script>
 import { getListApi, getListSumApi, exportApi, deleteApi } from '@/api/40_business/30_in/inorder/inorder'
-import resizeMixin from '@/views/40_business/inorder/tabs/mixin/listResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import editDialog from '@/views/40_business/inorder/dialog/edit'
@@ -548,7 +547,6 @@ import { mapState } from 'vuex'
 export default {
   components: { SelectDict, Pagination, editDialog, deliveryDialog, SelectSupplier, SelectDicts },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -639,7 +637,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000,
         reset1: false,
         reset2: false
@@ -742,6 +739,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     if (this.$route.query.supplier_name !== null && this.$route.query.supplier_name !== undefined) {
       this.dataJson.searchForm.supplier_name = this.$route.query.supplier_name
       this.dataJson.searchForm.status_list.push('0')

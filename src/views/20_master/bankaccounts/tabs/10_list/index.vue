@@ -130,7 +130,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -408,7 +408,6 @@ import constants_para from '@/common/constants/constants_para'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
-import mixin from './mixin'
 import permission from '@/directive/permission/index.js' // 权限判断指令
 import { EventBus } from '@/common/eventbus/eventbus'
 import new_template from '@/views/20_master/bankaccounts/dialog/new'
@@ -419,7 +418,6 @@ import FieldHelp from '@/components/30_table/FieldHelp'
 export default {
   components: { SelectDicts, edit_template, new_template, Pagination, FieldHelp },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
     // 自己作为弹出框时的参数
     meDialogStatus: {
@@ -516,7 +514,7 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
+        tableHeight: 400, // 使用canvas-auto-height属性自动计算高度
         duration: 4000
       },
       // vue-tour组件
@@ -591,6 +589,8 @@ export default {
     EventBus.$off(this.EMITS.EMIT_MST_BANK_ACCOUNTS_NEW_OK)
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 描绘完成
     this.init()
 

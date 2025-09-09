@@ -91,7 +91,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -383,7 +384,6 @@
 <script>
 import constants_program from '@/common/constants/constants_program'
 import { getListApi, updateApi, insertApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/10_system/resource/resource'
-import resizeMixin from '@/mixin/resizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import FieldHelp from '@/components/30_table/FieldHelp'
@@ -393,7 +393,6 @@ export default {
   name: constants_program.P_RESOURCE, // 页面id，和router中的name需要一致，作为缓存
   components: { Pagination, FieldHelp },
   directives: { elDragDialog },
-  mixins: [resizeMixin],
   data () {
     return {
       dataJson: {
@@ -453,7 +452,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000,
         // 资源类型下拉选项json
         codeOptions: [{
@@ -585,6 +583,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   methods: {

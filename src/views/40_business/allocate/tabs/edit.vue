@@ -283,7 +283,7 @@
           :data="dataJson.detailListData"
           :element-loading-text="'正在拼命加载中...'"
           element-loading-background="rgba(255, 255, 255, 0.5)"
-          :height="settings.tableHeight"
+          :canvas-auto-height="true"
           stripe
           border
           fit
@@ -451,14 +451,12 @@ import warehouseInDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue
 import warehouseOutDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
 import orderDialog from '@/views/40_business/allocateorder/dialog/dialog'
 import goodsDialog from '@/views/40_business/allocate/tabs/dialog/goodsEdit'
-import mixin from './mixin/editResizeHandlerMixin'
 import { getOwnerComboListApi } from '@/api/30_wms/owner/owner'
 import SelectWarehouse from '@/views/30_wms/warehouse/components/selectgrid/selectWarehouseLocationBin'
 
 export default {
   components: { InputSearch, ownerOutDialog, ownerInDialog, orderDialog, goodsDialog, warehouseInDialog, warehouseOutDialog, SelectWarehouse },
   directives: { elDragDialog },
-  mixins: [mixin],
   props: {
     visible: {
       type: Boolean,
@@ -696,6 +694,8 @@ export default {
   // 监听器
   watch: {},
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.init()
     this.getOwnerData()
   },

@@ -8,7 +8,7 @@
         :lg="6"
         :xl="6"
       >
-        <org-tree :height="treeHeight" />
+        <org-tree />
       </el-col>
       <el-col
         :xs="18"
@@ -23,10 +23,10 @@
           tab-position="bottom"
         >
           <el-tab-pane label="显示用户列表">
-            <User-List :height="tableHeight" />
+            <User-List />
           </el-tab-pane>
           <el-tab-pane label="显示组织列表">
-            <Org-List :height="tableHeight" />
+            <Org-List />
           </el-tab-pane>
         </el-tabs>
       </el-col>
@@ -34,9 +34,6 @@
   </div>
 </template>
 <script>
-
-import resizeMixin from '@/mixin/resizeHandlerMixin'
-
 export default {
   name: 'P00000010', // 页面id，和router中的name需要一致，作为缓存
   components: {
@@ -44,12 +41,14 @@ export default {
     OrgList: () => import('./orgList'), // 右侧list
     UserList: () => import('./userList') // 右侧list
   },
-  mixins: [resizeMixin],
   data () {
     return {
-      treeHeight: this.setUIheight().leftHeigh,
-      tableHeight: this.setUIheight().rightHeigh
+      // 移除高度计算，子组件使用 canvas-auto-height 自适应
     }
+  },
+  created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   }
 }
 </script>

@@ -405,7 +405,7 @@ export default {
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
         // table使用的json
-        listData: null,
+        listData: [],
         // 按钮json
         menu_buttons: null,
         // 单条数据 json

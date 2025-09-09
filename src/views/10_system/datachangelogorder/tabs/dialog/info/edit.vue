@@ -44,7 +44,8 @@
             :data="dataJson.detailListData"
             :element-loading-text="'正在拼命加载中...'"
             element-loading-background="rgba(255, 255, 255, 0.5)"
-            :height="settings.tableHeight"
+            :canvas-auto-height="true"
+            :columns-index-key="true"
             stripe
             border
             highlight-current-row
@@ -258,12 +259,11 @@
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { getApi } from '@/api/30_wms/datachangelogcode/datachangelogcode'
-import mixin from './mixin'
 
 export default {
   components: { },
   directives: { elDragDialog },
-  mixins: [mixin],
+  mixins: [],
   props: {
     data: {
       type: Object,
@@ -323,7 +323,6 @@ export default {
         loading: true,
         // 是否开启超收配置
         over_receive: false,
-        tableHeight: this.setUIheight(),
         duration: 4000
       }
     }

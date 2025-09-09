@@ -145,7 +145,8 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
+      :columns-index-key="true"
       stripe
       border
       fit
@@ -267,7 +268,6 @@
 <script>
 import constants_program from '@/common/constants/constants_program'
 import { getListApi } from '@/api/10_system/lognew/logapi'
-import resizeMixin from './syscodeResizeHandlerMixin'
 import Pagination from '@/components/Pagination_no_count'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -278,7 +278,6 @@ export default {
   name: constants_program.P_SYSCODE, // 页面id，和router中的name需要一致，作为缓存
   components: { Pagination, editDialog },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   data () {
     return {
       dataJson: {
@@ -342,7 +341,6 @@ export default {
         },
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       },
       popSettingsData: {
@@ -398,6 +396,8 @@ export default {
     }
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     this.initShow()
   },
   mounted () {

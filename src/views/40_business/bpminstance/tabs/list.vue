@@ -43,7 +43,7 @@
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
+      :canvas-auto-height="true"
       stripe
       border
       fit
@@ -268,7 +268,6 @@ import {
   formatBusinessStatus,
   getListApi
 } from '@/api/40_business/bpmprocess/bpmprocess'
-import resizeMixin from './mixin/listResizeHandlerMixin'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -282,7 +281,6 @@ import constants_para from '@/common/constants/constants_para'
 export default {
   components: { bpmDialog, Pagination },
   directives: { elDragDialog, permission },
-  mixins: [resizeMixin],
   props: {
     data: {
       type: Object,
@@ -389,6 +387,8 @@ export default {
   watch: {
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
     // 获取url参数
     const p1 = urlUtil.getHashQueryVariable(window.location.href, 'p1')
     this.dataJson.searchForm.batch = this.dict_value

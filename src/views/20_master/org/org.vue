@@ -34,7 +34,6 @@
 </template>
 <script>
 // import constants_program from '@/common/constants/constants_program'
-import resizeMixin from './mixins/orgResizeHandlerMixin'
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
@@ -44,7 +43,6 @@ export default {
     right: () => import('./right/right') // 右侧list
     // UserList: () => import('./userList') // 右侧list
   },
-  mixins: [resizeMixin],
   props: {
   },
   data () {
@@ -61,8 +59,8 @@ export default {
       },
       // 页面设置json
       settings: {
-        leftHeight: this.setUIheight(),
-        rightHeight: this.setUIheight()
+        leftHeight: 'calc(100vh - 160px)',
+        rightHeight: 'calc(100vh - 160px)'
       }
     }
   },
@@ -78,6 +76,8 @@ export default {
   watch: {
   },
   created () {
+    // 设置页面标识，让FloatMenu组件能够正确管理列配置
+    this.$options.name = this.$route.meta.page_code
   },
   mounted () {
     // 监听树节点选择变化事件

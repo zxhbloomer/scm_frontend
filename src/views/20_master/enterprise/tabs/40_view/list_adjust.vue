@@ -332,20 +332,10 @@ export default {
   methods: {
     // 初始化查询页面
     init_List (para) {
-      // 初始化watch
-      this.setWatch()
       // 初始化查询
       this.getDataList()
       // 数据初始化
       this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJsonOriginal)
-    },
-    setWatch () {
-      this.unWatch()
-    },
-    unWatch () {
-      if (this.watch.unwatch_tempJson) {
-        this.watch.unwatch_tempJson()
-      }
     },
     // 获取行索引
     getRowIndex (row) {
