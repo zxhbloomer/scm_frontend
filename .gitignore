@@ -10,11 +10,16 @@ tests/**/coverage/
 tests/e2e/reports
 selenium-debug.log
 
-# Test folders and all subfolders
+# Test results and reports
 test-results/
 test-results/**
-tests/
-tests/**
+playwright-report/
+test-results/**
+coverage/
+
+# 保留测试源码文件，只忽略测试结果
+# tests/ - 注释掉，允许测试源码被追踪
+# tests/** - 注释掉，允许测试源码被追踪
 
 # Editor directories and files
 .idea
