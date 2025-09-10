@@ -18,7 +18,8 @@
     "build:vite": "vite build",
     "build:vite-debug": "vite build --logLevel info --sourcemap",
     "preview:vite": "vite preview --port 5000",
-    "analyze:vite": "vite build --logLevel info --reportCompressedSize"
+    "analyze:vite": "vite build --logLevel info --reportCompressedSize",
+    "test:warehouse": "playwright test tests/wms/warehouse.spec.js --headed --workers=1"
   },
   "husky": {
     "hooks": {

@@ -38,46 +38,9 @@
             slot="label"
             class="label-text"
           >
-            所属板块
-          </div>
-          <el-form-item
-            label-width="0"
-          >
-            <el-input
-              v-model.trim="dataJson.tempJson.business_name"
-              :disabled="true"
-            />
-          </el-form-item>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div
-            slot="label"
-            class="label-text"
-          >
-            所属行业：
-          </div>
-          <el-form-item
-            label-width="0"
-          >
-            <el-input
-              v-model.trim="dataJson.tempJson.industry_name"
-              :disabled="true"
-            />
-          </el-form-item>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div
-            slot="label"
-            class="label-text"
-          >
             类别名称：
           </div>
-          <el-form-item>
-            <el-input
-              v-model.trim="dataJson.tempJson.name"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ dataJson.tempJson.name }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -86,12 +49,7 @@
           >
             类别编号：
           </div>
-          <el-form-item>
-            <el-input
-              v-model.trim="dataJson.tempJson.code"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ dataJson.tempJson.code }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -100,17 +58,7 @@
           >
             启用状态：
           </div>
-          <el-form-item>
-            <el-switch
-              v-model="dataJson.tempJson.enable"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ dataJson.tempJson.enable ? '启用' : '禁用' }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -119,12 +67,7 @@
           >
             创建人：
           </div>
-          <el-form-item>
-            <el-input
-              v-model.trim="dataJson.tempJson.c_name"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ dataJson.tempJson.c_name }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -133,12 +76,7 @@
           >
             创建时间：
           </div>
-          <el-form-item>
-            <el-input
-              :value="formatDateTime(dataJson.tempJson.c_time)"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ formatDateTime(dataJson.tempJson.c_time) }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -147,12 +85,7 @@
           >
             更新人：
           </div>
-          <el-form-item>
-            <el-input
-              v-model.trim="dataJson.tempJson.u_name"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ dataJson.tempJson.u_name }}</span>
         </el-descriptions-item>
         <el-descriptions-item>
           <div
@@ -161,12 +94,7 @@
           >
             更新时间：
           </div>
-          <el-form-item>
-            <el-input
-              :value="formatDateTime(dataJson.tempJson.u_time)"
-              :disabled="true"
-            />
-          </el-form-item>
+          <span>{{ formatDateTime(dataJson.tempJson.u_time) }}</span>
         </el-descriptions-item>
         <el-descriptions-item />
       </el-descriptions>
@@ -218,8 +146,6 @@ export default {
       dataJson: {
         // 单条数据 json
         tempJson: {
-          business_name: '',
-          industry_name: '',
           name: '',
           code: '',
           enable: false,

@@ -35,36 +35,16 @@
         style="padding-right: 10px;padding-left: 10px;"
       >
         <el-descriptions-item>
-          <div
-            slot="label"
-            class="required-mark"
-          >
-            所属板块
+          <div slot="label">
+            类别编号：
           </div>
-          <el-form-item
-            prop="business_name"
-            label-width="0"
-          >
-            <input-search
-              v-model.trim="dataJson.tempJson.business_name"
-              @onInputSearch="handleBusinessDialog"
-            />
-          </el-form-item>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div
-            slot="label"
-            class="required-mark"
-          >
-            所属行业：
-          </div>
-          <el-form-item
-            prop="industry_name"
-            label-width="0"
-          >
-            <input-search
-              v-model.trim="dataJson.tempJson.industry_name"
-              @onInputSearch="handleIndustryDialog"
+          <el-form-item prop="code">
+            <el-input
+              v-model.trim="dataJson.tempJson.code"
+              clearable
+              show-word-limit
+              :maxlength="dataJson.inputSettings.maxLength.code"
+              placeholder="请输入（可选）"
             />
           </el-form-item>
         </el-descriptions-item>
@@ -77,6 +57,7 @@
           </div>
           <el-form-item prop="name">
             <el-input
+              ref="categoryNameInput"
               v-model.trim="dataJson.tempJson.name"
               clearable
               show-word-limit
@@ -85,7 +66,6 @@
             />
           </el-form-item>
         </el-descriptions-item>
-        <el-descriptions-item />
       </el-descriptions>
     </el-form>
     <div
@@ -95,30 +75,17 @@
       <el-divider />
       <el-button
         plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
-      <el-button
-        plain
         type="primary"
         :disabled="settings.loading || settings.btnDisabledStatus.disabledInsert"
         @click="doInsert()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >取消</el-button>
     </div>
 
-    <business-dialog
-      v-if="popSettingsData.searchDialogDataOne.visible"
-      :visible="popSettingsData.searchDialogDataOne.visible"
-      @closeMeOk="handleCompanyCloseOk"
-      @closeMeCancel="handleCompanyCloseCancel"
-    />
-    <industry-dialog
-      v-if="popSettingsData.searchDialogDataTwo.visible"
-      :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data="popSettingsData.searchDialogDataOne.selectedDataJson"
-      @closeMeOk="handleIndustryCloseOk"
-      @closeMeCancel="handleIndustryCloseCancel"
-    />
   </el-dialog>
 </template>
 
@@ -127,11 +94,9 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import InputSearch from '@/components/40_input/inputSearch'
 import deepCopy from 'deep-copy'
 import { insertApi } from '@/api/30_wms/category/category'
-import businessDialog from '@/views/30_wms/businesstype/dialog/dialog'
-import industryDialog from '@/views/30_wms/industry/dialog/dialog'
 
 export default {
-  components: { businessDialog, industryDialog, InputSearch },
+  components: { InputSearch },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -150,36 +115,12 @@ export default {
         'text-align': 'right'
       },
       popSettingsData: {
-        // 弹出的查询框参数设置
-        searchDialogDataOne: {
-          // 弹出框显示参数
-          visible: false,
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        },
-        // 弹出的行业查询框参数设置
-        searchDialogDataTwo: {
-          // 弹出框显示参数
-          visible: false,
-          data: null,
-          // 点击确定以后返回的值
-          selectedDataJson: {
-            id: null
-          }
-        }
       },
       dataJson: {
-        // 单条数据 json的，初始化原始数据
-        tempJsonOriginal: {
-          business_name: '',
-          industry_name: ''
-        },
         // 单条数据 json
         tempJson: {
-          business_name: '',
-          industry_name: ''
+          code: '',
+          name: ''
         },
         inputSettings: {
           maxLength: {
@@ -192,6 +133,8 @@ export default {
       settings: {
         // loading 状态
         loading: false,
+        // 初始化完成标志
+        initialized: false,
         // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
           disabledInsert: true
@@ -201,22 +144,30 @@ export default {
           name: [
             { required: true, message: '请输入类别名称', trigger: 'change' }
           ],
-          business_name: [
-            { required: true, message: '请选择板块', trigger: 'change' }
-          ],
-          industry_name: [
-            { required: true, message: '请选择行业', trigger: 'change' }
-          ]
         }
       }
     }
   },
   // 监听器
   watch: {
-    // 监听页面上面是否有修改，有修改按钮高亮
+    // 监听弹窗显示状态，显示时自动设置焦点
+    visible (newVal) {
+      if (newVal) {
+        // 弹窗显示时，设置焦点到类别名称输入框
+        this.$nextTick(() => {
+          if (this.$refs.categoryNameInput) {
+            this.$refs.categoryNameInput.focus()
+          }
+        })
+      }
+    },
+    // 监听表单数据变化，有变化时启用确定按钮
     'dataJson.tempJson': {
       handler (newVal, oldVal) {
-        this.settings.btnDisabledStatus.disabledInsert = false
+        // 只有在初始化完成后才响应用户变化
+        if (this.settings.initialized) {
+          this.settings.btnDisabledStatus.disabledInsert = false
+        }
       },
       deep: true
     }
@@ -232,7 +183,13 @@ export default {
     // 新增时的初始化
     initInsertModel () {
       // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.dataJson.tempJsonOriginal)
+      this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
+      
+      // 确保按钮初始状态为禁用，并标记初始化完成
+      this.$nextTick(() => {
+        this.settings.btnDisabledStatus.disabledInsert = true
+        this.settings.initialized = true
+      })
     },
     // 取消按钮
     handleCancel () {
@@ -243,8 +200,6 @@ export default {
       this.$refs['dataSubmitForm'].validate(valid => {
         if (valid) {
           const tempData = deepCopy(this.dataJson.tempJson)
-          tempData.business_id = this.popSettingsData.searchDialogDataOne.selectedDataJson.id
-          tempData.industry_id = this.popSettingsData.searchDialogDataTwo.selectedDataJson.id
           this.settings.loading = true
           insertApi(tempData)
             .then(
@@ -260,41 +215,6 @@ export default {
             })
         }
       })
-    },
-    // 板块
-    handleBusinessDialog () {
-      this.popSettingsData.searchDialogDataOne.visible = true
-    },
-    // 板块：关闭对话框：确定
-    handleCompanyCloseOk (val) {
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = val
-      this.dataJson.tempJson.business_name = val.name
-      this.popSettingsData.searchDialogDataTwo.data = val
-      this.popSettingsData.searchDialogDataOne.visible = false
-      this.settings.btnDisabledStatus.disabledInsert = false
-    },
-    // 板块：关闭对话框：取消
-    handleCompanyCloseCancel () {
-      this.popSettingsData.searchDialogDataOne.visible = false
-    },
-    // 行业
-    handleIndustryDialog () {
-      if (this.popSettingsData.searchDialogDataOne.selectedDataJson.id == null) {
-        this.showErrorMsg('请先选择板块')
-        return
-      }
-      this.popSettingsData.searchDialogDataTwo.visible = true
-    },
-    // 行业：关闭对话框：确定
-    handleIndustryCloseOk (val) {
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
-      this.popSettingsData.searchDialogDataTwo.visible = false
-      this.settings.btnDisabledStatus.disabledInsert = false
-      this.dataJson.tempJson.industry_name = val.name
-    },
-    // 行业：关闭对话框：取消
-    handleIndustryCloseCancel () {
-      this.popSettingsData.searchDialogDataTwo.visible = false
     }
   }
 }

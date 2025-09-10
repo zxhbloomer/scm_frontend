@@ -40,41 +40,6 @@
         border
         style="padding-right: 10px;padding-left: 10px;"
       >
-        <el-descriptions-item>
-          <div
-            slot="label"
-            class="required-mark"
-          >
-            所属板块
-          </div>
-          <el-form-item
-            prop="business_name"
-            label-width="0"
-          >
-            <input-search
-              v-model.trim="dataJson.tempJson.business_name"
-              @onInputSearch="handleBusinessDialog"
-            />
-          </el-form-item>
-        </el-descriptions-item>
-
-        <el-descriptions-item>
-          <div
-            slot="label"
-            class="required-mark"
-          >
-            所属行业
-          </div>
-          <el-form-item
-            prop="industry_name"
-            label-width="0"
-          >
-            <input-search
-              v-model.trim="dataJson.tempJson.industry_name"
-              @onInputSearch="handleIndustryDialog"
-            />
-          </el-form-item>
-        </el-descriptions-item>
 
         <el-descriptions-item>
           <div
@@ -159,23 +124,9 @@
     </div>
 
     <!-- 级联选择对话框 -->
-    <business-dialog
-      v-if="popSettingsData.searchDialogDataOne.visible"
-      :visible="popSettingsData.searchDialogDataOne.visible"
-      @closeMeOk="handleBusinessCloseOk"
-      @closeMeCancel="handleBusinessCloseCancel"
-    />
-    <industry-dialog
-      v-if="popSettingsData.searchDialogDataTwo.visible"
-      :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data="popSettingsData.searchDialogDataOne.selectedDataJson"
-      @closeMeOk="handleIndustryCloseOk"
-      @closeMeCancel="handleIndustryCloseCancel"
-    />
     <category-dialog
       v-if="popSettingsData.searchDialogDataThree.visible"
       :visible="popSettingsData.searchDialogDataThree.visible"
-      :data="popSettingsData.searchDialogDataTwo.selectedDataJson"
       @closeMeOk="handleCategoryCloseOk"
       @closeMeCancel="handleCategoryCloseCancel"
     />
@@ -204,8 +155,6 @@ import { insertApi } from '@/api/30_wms/goods/goods'
 import deepCopy from 'deep-copy'
 import elDragDialog from '@/directive/el-drag-dialog'
 import InputSearch from '@/components/40_input/inputSearch'
-import BusinessDialog from '@/views/20_master/business/dialog/dialog'
-// import IndustryDialog from '@/views/20_master/industry/dialog/dialog' // 文件不存在，需要实现或移除
 import CategoryDialog from '@/views/30_wms/category/dialog/10_list/index'
 
 export default {
@@ -213,8 +162,6 @@ export default {
   directives: { elDragDialog },
   components: {
     InputSearch,
-    BusinessDialog,
-    // IndustryDialog, // 组件不存在，暂时注释
     CategoryDialog
   },
   props: {
@@ -231,12 +178,6 @@ export default {
     return {
       dataJson: {
         tempJson: {
-          business_id: '',
-          business_code: '',
-          business_name: '',
-          industry_id: '',
-          industry_code: '',
-          industry_name: '',
           category_id: '',
           category_code: '',
           category_name: '',
@@ -260,12 +201,6 @@ export default {
           disabledInsert: false
         },
         rules: {
-          business_name: [
-            { required: true, message: '请选择所属板块', trigger: 'blur' }
-          ],
-          industry_name: [
-            { required: true, message: '请选择所属行业', trigger: 'blur' }
-          ],
           category_name: [
             { required: true, message: '请选择所属类别', trigger: 'blur' }
           ],
@@ -280,14 +215,6 @@ export default {
       },
       // 级联选择对话框状态
       popSettingsData: {
-        searchDialogDataOne: {
-          visible: false,
-          selectedDataJson: {}
-        },
-        searchDialogDataTwo: {
-          visible: false,
-          selectedDataJson: {}
-        },
         searchDialogDataThree: {
           visible: false,
           selectedDataJson: {}
@@ -345,63 +272,8 @@ export default {
       })
     },
 
-    // 板块选择对话框
-    handleBusinessDialog () {
-      this.popSettingsData.searchDialogDataOne.visible = true
-    },
-    handleBusinessCloseOk (data) {
-      this.popSettingsData.searchDialogDataOne.visible = false
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = data
-
-      // 设置板块信息
-      this.dataJson.tempJson.business_id = data.id
-      this.dataJson.tempJson.business_code = data.code
-      this.dataJson.tempJson.business_name = data.name
-
-      // 清空下级选择
-      this.dataJson.tempJson.industry_id = ''
-      this.dataJson.tempJson.industry_code = ''
-      this.dataJson.tempJson.industry_name = ''
-      this.dataJson.tempJson.category_id = ''
-      this.dataJson.tempJson.category_code = ''
-      this.dataJson.tempJson.category_name = ''
-    },
-    handleBusinessCloseCancel () {
-      this.popSettingsData.searchDialogDataOne.visible = false
-    },
-
-    // 行业选择对话框
-    handleIndustryDialog () {
-      if (!this.dataJson.tempJson.business_id) {
-        this.showErrorMsg('请先选择所属板块')
-        return
-      }
-      this.popSettingsData.searchDialogDataTwo.visible = true
-    },
-    handleIndustryCloseOk (data) {
-      this.popSettingsData.searchDialogDataTwo.visible = false
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson = data
-
-      // 设置行业信息
-      this.dataJson.tempJson.industry_id = data.id
-      this.dataJson.tempJson.industry_code = data.code
-      this.dataJson.tempJson.industry_name = data.name
-
-      // 清空下级选择
-      this.dataJson.tempJson.category_id = ''
-      this.dataJson.tempJson.category_code = ''
-      this.dataJson.tempJson.category_name = ''
-    },
-    handleIndustryCloseCancel () {
-      this.popSettingsData.searchDialogDataTwo.visible = false
-    },
-
     // 类别选择对话框
     handleCategoryDialog () {
-      if (!this.dataJson.tempJson.industry_id) {
-        this.showErrorMsg('请先选择所属行业')
-        return
-      }
       this.popSettingsData.searchDialogDataThree.visible = true
     },
     handleCategoryCloseOk (data) {

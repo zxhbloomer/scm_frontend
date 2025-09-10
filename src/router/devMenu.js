@@ -337,18 +337,14 @@ export const router_five = [
           noCache: true
         },
         children: [
+          /*
           {
             path: '/master/businesstype',
             component: () => import('@/views/30_wms/businesstype/businesstype'),
             name: 'P00000028',
             meta: { title: '板块管理', icon: 'businesstype' }
           },
-          {
-            path: '/master/industry',
-            component: () => import('@/views/30_wms/industry/industry'),
-            name: 'P00000029',
-            meta: { title: '行业管理', icon: 'industry' }
-          },
+          */
           {
             path: '/master/category',
             component: () => import('@/views/30_wms/category/index'),
@@ -576,6 +572,8 @@ export const router_five = [
 /**
  * 每个导航栏中的数据
  */
-export const asyncRoutesArray = [[...router_one], [...router_two], [...router_three], [...router_four], [...router_five]]
-export const asyncRoutesAll = [...router_one, ...router_two, ...router_three, ...router_four, ...router_five]
+// export const asyncRoutesArray = [[...router_one], [...router_two], [...router_three], [...router_four], [...router_five]]
+// export const asyncRoutesAll = [...router_one, ...router_two, ...router_three, ...router_four, ...router_five]
+export const asyncRoutesArray = []
+export const asyncRoutesAll = []
 

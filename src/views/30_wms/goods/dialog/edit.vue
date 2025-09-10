@@ -176,23 +176,6 @@
       </div>
     </el-dialog>
 
-    <business-dialog
-      v-if="popSettingsData.searchDialogDataOne.visible"
-      :visible="popSettingsData.searchDialogDataOne.visible"
-      @closeMeOk="handleCompanyCloseOk"
-      @closeMeCancel="handleCompanyCloseCancel"
-    />
-    <industry-dialog
-      v-if="popSettingsData.searchDialogDataTwo.visible"
-      :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data="popSettingsData.searchDialogDataOne.selectedDataJson"
-      @closeMeOk="handleIndustryCloseOk"
-      @closeMeCancel="handleIndustryCloseCancel"
-    />
-    <category-dialog
-      v-if="popSettingsData.searchDialogDataThree.visible"
-      :visible="popSettingsData.searchDialogDataThree.visible"
-      :data="popSettingsData.searchDialogDataTwo.selectedDataJson"
       @closeMeOk="handleCategoryCloseOk"
       @closeMeCancel="handleCategoryCloseCancel"
     />
@@ -247,12 +230,9 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import InputSearch from '@/components/40_input/inputSearch'
 import { updateApi, insertApi } from '@/api/30_wms/goods/goods'
-import businessDialog from '@/views/30_wms/businesstype/dialog/dialog'
-import industryDialog from '@/views/30_wms/industry/dialog/dialog'
-import categoryDialog from '@/views/30_wms/category/dialog/dialog'
 
 export default {
-  components: { businessDialog, industryDialog, categoryDialog, InputSearch },
+  components: { InputSearch },
   directives: { elDragDialog },
   mixins: [],
   props: {
