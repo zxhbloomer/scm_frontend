@@ -49,8 +49,8 @@ export function insertApi (data) {
 }
 
 /**
- * 启用选择数据
- * @param {*} data
+ * 启用库位数据
+ * @param {Object} data 库位对象
  */
 export function enabledSelectionApi (data) {
   return request({
@@ -61,24 +61,12 @@ export function enabledSelectionApi (data) {
 }
 
 /**
- * 停用选择数据
- * @param {*} data
+ * 停用库位数据
+ * @param {Object} data 库位对象
  */
 export function disAbledSelectionApi (data) {
   return request({
     url: '/api/v1/bin/disabled',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 停用/停用 选择数据
- * @param {*} data
- */
-export function enableOrDisAbleApi (data) {
-  return request({
-    url: '/api/v1/bin/enable',
     method: 'post',
     data
   })

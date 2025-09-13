@@ -9,22 +9,6 @@
     >
       <el-form-item label="">
         <el-input
-          v-model.trim="dataJson.searchForm.business_name"
-          clearable
-          placeholder="所属板块"
-          @keyup.enter.native="handleSearch"
-        />
-      </el-form-item>
-      <el-form-item label="">
-        <el-input
-          v-model.trim="dataJson.searchForm.industry_name"
-          clearable
-          placeholder="所属行业"
-          @keyup.enter.native="handleSearch"
-        />
-      </el-form-item>
-      <el-form-item label="">
-        <el-input
           v-model.trim="dataJson.searchForm.category_name"
           clearable
           placeholder="所属类别"
@@ -38,6 +22,20 @@
           placeholder="物料名称"
           @keyup.enter.native="handleSearch"
         />
+      </el-form-item>
+      <el-form-item label="">
+        <el-select
+          v-model="dataJson.searchForm.enable"
+          placeholder="启用状态"
+          clearable
+        >
+          <el-option
+            v-for="item in dataJson.enableList"
+            :key="item.id"
+            :label="item.value"
+            :value="item.id"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item style="float:right">
         <el-button
@@ -74,10 +72,18 @@
         @click="handleUpdate"
       >修改</el-button>
       <el-button
-        v-permission="'P_GOODS:VIEW'"
+        v-permission="'P_GOODS:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelButton"
+      >删除</el-button>
+      <el-button
+        v-permission="'P_GOODS:INFO'"
         :disabled="!settings.btnShowStatus.showView"
         type="primary"
-        icon="el-icon-view"
+        icon="el-icon-info"
         :loading="settings.loading"
         @click="handleView"
       >查看</el-button>
@@ -97,14 +103,32 @@
         :loading="settings.loading"
         @click="handleDisAbled"
       >停用</el-button>
+      <!-- 导出按钮 开始 -->
       <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
         v-permission="'P_GOODS:EXPORT'"
-        :disabled="!settings.btnShowStatus.showExport"
         type="primary"
-        icon="el-icon-s-management"
+        icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_GOODS:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
+        v-permission="'P_GOODS:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleModelOpen"
       >导出</el-button>
+      <!-- 导出按钮 结束 -->
     </el-button-group>
 
     <el-table
@@ -128,6 +152,7 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column
+        v-if="settings.exportModel"
         type="selection"
         width="45"
         prop="id"
@@ -137,22 +162,6 @@
         width="45"
         label="No"
         prop="No"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
-        prop="business_name"
-        label="板块名称"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
-        prop="industry_name"
-        label="行业名称"
       />
       <el-table-column
         sortable="custom"
@@ -179,34 +188,21 @@
         label="物料编号"
       />
       <el-table-column
-        min-width="100"
-        :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        label="启用状态"
+        min-width="80"
+        align="left"
         prop="enable"
+        label="状态"
       >
-        <template v-slot:header>
-          <field-help
-            default-label="启用状态"
-            help="启用状态提示：<br>绿色：已启用<br>红色：未启用"
-          />
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.enable === 'false' ? '启用状态：未启用' : '启用状态：已启用' "
-            placement="top"
-            :open-delay="500"
+        <template slot-scope="{row}">
+          <span
+            :style="{
+              color: row.enable ? '#67C23A' : '#F56C6C',
+              fontWeight: 'bold'
+            }"
           >
-            <el-switch
-              v-model="scope.row.enable"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              @change="handledEnableOrDisAbleApi(scope.row)"
-            />
-          </el-tooltip>
+            {{ row.enable ? '启用' : '停用' }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column
@@ -280,17 +276,19 @@
     <!-- 查看弹窗 -->
     <view-dialog
       v-if="popSettings.view.visible"
-      :visible="popSettings.view.visible"
+      :visible.sync="popSettings.view.visible"
       :data="popSettings.view.data"
       @closeMeCancel="handleViewDialogCancel"
     />
+
+    <!-- 用户引导 -->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
   </div>
 </template>
 
 <script>
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, enableOrDisAbleApi, exportApi } from '@/api/30_wms/goods/goods'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/goods/goods'
 import Pagination from '@/components/Pagination'
-import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
@@ -301,22 +299,12 @@ export default {
   name: 'GoodsList',
   components: {
     Pagination,
-    FieldHelp,
     NewDialog,
     EditDialog,
     ViewDialog
   },
   directives: { permission },
   props: {
-    // 作为选择对话框时的属性
-    meDialogStatus: {
-      type: Boolean,
-      default: false
-    },
-    dataModel: {
-      type: String,
-      default: ''
-    }
   },
   data () {
     return {
@@ -326,10 +314,9 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
-          business_name: '',
-          industry_name: '',
           category_name: '',
-          name: ''
+          name: '',
+          enable: true
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -340,19 +327,28 @@ export default {
         // 当前行索引
         rowIndex: 0,
         // 选中的多行数据
-        multipleSelection: []
+        multipleSelection: [],
+        // 启用状态选项
+        enableList: [
+          { id: true, value: '启用' },
+          { id: false, value: '停用' }
+        ]
       },
       // 页面设置
       settings: {
         // 表格排序规则
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式
+        exportModel: false,
         // 按钮显示状态
         btnShowStatus: {
           showUpdate: false,
           showView: false,
           showEnable: false,
           showDisable: false,
-          showExport: false
+          showExport: false,
+          showDel: false,
+          hidenExport: true
         },
         // 加载状态
         loading: true,
@@ -375,18 +371,25 @@ export default {
           visible: false,
           data: null
         }
-      }
-    }
-  },
-  watch: {
-    // 选中数据变化时更新按钮状态
-    'dataJson.multipleSelection': {
-      handler (newVal) {
-        const hasSelection = newVal.length > 0
-        this.settings.btnShowStatus.showEnable = hasSelection
-        this.settings.btnShowStatus.showDisable = hasSelection
-        this.settings.btnShowStatus.showExport = hasSelection
-      }
+      },
+      // Vue Tour 用户引导配置
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        }
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的物料数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          }
+        }
+      ]
     }
   },
   created () {
@@ -425,6 +428,8 @@ export default {
     // 重置查询
     doResetSearch () {
       this.dataJson.searchForm = this.$options.data.call(this).dataJson.searchForm
+      // 确保enable默认值为启用状态
+      this.dataJson.searchForm.enable = true
     },
 
     // 表格排序变化
@@ -450,9 +455,6 @@ export default {
     // 行双击
     handleRowDbClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
-      if (this.meDialogStatus) {
-        this.$emit('rowDbClick', deepCopy(row))
-      }
     },
 
     // 当前行变化
@@ -462,16 +464,39 @@ export default {
 
       if (this.dataJson.currentJson.id !== undefined) {
         this.settings.btnShowStatus.showUpdate = true
+        this.settings.btnShowStatus.showDel = true
         this.settings.btnShowStatus.showView = true
+        this.settings.btnShowStatus.showExport = true
+
+        // 智能控制启用/停用按钮：根据当前行状态决定哪个按钮可用
+        if (row.enable) {
+          // 当前行已启用，只能点击"停用"按钮
+          this.settings.btnShowStatus.showEnable = false
+          this.settings.btnShowStatus.showDisable = true
+        } else {
+          // 当前行已停用，只能点击"启用"按钮
+          this.settings.btnShowStatus.showEnable = true
+          this.settings.btnShowStatus.showDisable = false
+        }
       } else {
+        // 处理null行的情况（表格排序、数据清空等）
+        this.dataJson.currentJson = {}
         this.settings.btnShowStatus.showUpdate = false
+        this.settings.btnShowStatus.showDel = false
         this.settings.btnShowStatus.showView = false
+        this.settings.btnShowStatus.showExport = false
+        this.settings.btnShowStatus.showEnable = false
+        this.settings.btnShowStatus.showDisable = false
+        this.$store.dispatch('popUpSearchDialog/selectedDataJson', null)
       }
+      // 设置dialog的返回数据
+      this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
     },
 
     // 选择变化
     handleSelectionChange (val) {
       this.dataJson.multipleSelection = val
+      // 保存多选数据，删除按钮状态由行选中事件控制
     },
 
     // 新增按钮
@@ -490,10 +515,13 @@ export default {
       this.popSettings.edit.visible = true
     },
 
-    // 查看按钮
+    // 查看
     handleView () {
-      if (!this.dataJson.currentJson || this.dataJson.currentJson.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
+      if (this.dataJson.currentJson === null || this.dataJson.currentJson.id === undefined) {
+        this.$alert('请在表格中选择数据进行查看', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        })
         return
       }
       this.popSettings.view.data = Object.assign({}, this.dataJson.currentJson)
@@ -502,14 +530,17 @@ export default {
 
     // 启用按钮
     handleEnabled () {
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行启用', '未选择数据错误', {
+      // 检查是否有选中的当前行
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$alert('请先选择一条数据进行启用操作', '未选择数据错误', {
           confirmButtonText: '关闭',
           type: 'error'
         })
-      } else {
-        this.handleEnabledSelectionData()
+        return
       }
+
+      // 单条启用操作
+      this.handleEnabledSingleData()
     },
 
     // 启用选中数据
@@ -539,14 +570,17 @@ export default {
 
     // 停用按钮
     handleDisAbled () {
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行停用', '未选择数据错误', {
+      // 检查是否有选中的当前行
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$alert('请先选择一条数据进行停用操作', '未选择数据错误', {
           confirmButtonText: '关闭',
           type: 'error'
         })
-      } else {
-        this.handleDisAbledSelectionData()
+        return
       }
+
+      // 单条停用操作
+      this.handleDisAbledSingleData()
     },
 
     // 停用选中数据
@@ -574,41 +608,71 @@ export default {
       })
     },
 
-    // 启用/停用开关
-    handledEnableOrDisAbleApi (row) {
-      const message = row.enable === true ? '是否要启用该条数据？' : '是否要停用该条数据？'
+    // 单条数据启用
+    handleEnabledSingleData () {
+      const row = this.dataJson.currentJson
       const selectionJson = [{ id: row.id }]
 
-      this.$confirm(message, '确认信息', {
+      this.$confirm('是否要启用该条数据？', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
         this.settings.loading = true
-        enableOrDisAbleApi(selectionJson).then((response) => {
+        enabledSelectionApi(selectionJson).then((response) => {
           this.$notify({
-            title: '更新处理成功',
+            title: '启用成功',
             message: response.message,
             type: 'success',
             duration: this.settings.duration
           })
+          this.getDataList()
         }).catch((error) => {
           this.$notify({
-            title: '更新处理失败',
+            title: '启用错误',
             message: error.message,
             type: 'error',
             duration: this.settings.duration
           })
-          row.enable = !row.enable
         }).finally(() => {
           this.settings.loading = false
         })
-      }).catch(() => {
-        row.enable = !row.enable
       })
     },
 
-    // 导出按钮
+    // 单条数据停用
+    handleDisAbledSingleData () {
+      const row = this.dataJson.currentJson
+      const selectionJson = [{ id: row.id }]
+
+      this.$confirm('是否要停用该条数据？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.settings.loading = true
+        disAbledSelectionApi(selectionJson).then((response) => {
+          this.$notify({
+            title: '停用成功',
+            message: response.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.getDataList()
+        }).catch((error) => {
+          this.$notify({
+            title: '停用错误',
+            message: error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      })
+    },
+
+    // 导出按钮（导出模式下）
     handleExport () {
       if (this.dataJson.multipleSelection.length <= 0) {
         this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
@@ -631,24 +695,87 @@ export default {
         this.handleExportSelectionData()
       }
     },
-
-    // 全部数据导出
+    // 全部数据导出 - 与类别管理完全一致
     handleExportAllData () {
+      // loading
       this.settings.loading = true
-      this.dataJson.searchForm.ids = []
-      exportApi(this.dataJson.searchForm).then(() => {
+      // 开始导出
+      exportAllApi(this.dataJson.searchForm).then(response => {
+        this.downloadExcelFile(response, '物料信息全部导出')
+        this.$notify({
+          title: '导出成功',
+          message: '物料数据已成功导出到Excel文件',
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
+        this.settings.loading = false
+      })
+    },
+    // 选中行数据导出（多选模式）
+    handleExportSelectionData () {
+      // loading
+      this.settings.loading = true
+      // 多选模式：构造选中行ID数组
+      const selectionIds = this.dataJson.multipleSelection.map(item => item.id)
+      const searchData = { ids: selectionIds }
+      // 开始导出
+      exportSelectionApi(searchData).then(response => {
+        this.downloadExcelFile(response, `物料信息选中导出_${selectionIds.length}条`)
+        this.$notify({
+          title: '导出成功',
+          message: `已成功导出${selectionIds.length}条物料数据到Excel文件`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
         this.settings.loading = false
       })
     },
 
-    // 部分数据导出
-    handleExportSelectionData () {
-      this.settings.loading = true
-      const selectionIds = this.dataJson.multipleSelection.map(item => item.id)
-      this.dataJson.searchForm.ids = selectionIds
-      exportApi(this.dataJson.searchForm).then(() => {
-        this.settings.loading = false
-      })
+    // 文件下载处理方法
+    downloadExcelFile (response, fileName) {
+      try {
+        // 创建blob对象
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${fileName}_${new Date().getTime()}.xlsx`
+
+        // 触发下载
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 释放URL对象
+        URL.revokeObjectURL(link.href)
+      } catch (error) {
+        console.error('文件下载失败:', error)
+        this.$notify({
+          title: '下载失败',
+          message: '文件下载过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
     },
 
     // 新增对话框确认
@@ -708,6 +835,80 @@ export default {
     // 查看对话框取消
     handleViewDialogCancel () {
       this.popSettings.view.visible = false
+    },
+
+    /**
+     * 切换到导出模式
+     */
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      // 启动用户引导
+      this.$tours['myTour'].start()
+    },
+
+    /**
+     * 完成导出
+     */
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
+      this.settings.exportModel = false
+      // 清空已选择的数据，确保完全退出导出模式
+      this.$refs.multipleTable.clearSelection()
+    },
+
+    /**
+     * 删除按钮点击处理
+     */
+    handleDelButton () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$notify({
+          title: '操作提示',
+          message: '请先选择要删除的物料记录',
+          type: 'warning',
+          duration: this.settings.duration
+        })
+        return
+      }
+
+      this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.settings.loading = true
+        // 构造与类别管理一致的请求参数
+        const searchCondition = {
+          id: this.dataJson.currentJson.id
+        }
+
+        deleteApi(searchCondition).then((_data) => {
+          this.$notify({
+            title: '删除成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.handleSearch() // 与类别管理保持一致
+        }).catch((_error) => {
+          this.$notify({
+            title: '删除失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(() => {
+        this.$notify({
+          title: '操作提示',
+          message: '已取消删除',
+          type: 'info',
+          duration: this.settings.duration
+        })
+      })
     }
   }
 }

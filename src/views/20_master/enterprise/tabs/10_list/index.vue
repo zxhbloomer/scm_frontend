@@ -1,6 +1,6 @@
 <template>
   <div class="app-container">
-    <FloatMenu />
+    <FloatMenu bpm-manage-permission="P_ENTERPRISE:BPM_MANAGE" />
     <el-tabs
       ref="minusTabs"
       v-model="dataJson.tabs.active"
@@ -1352,5 +1352,8 @@ a {
 .el-link.el-link--default {
   font-size: 16px;
   vertical-align: top;
+}
+.dialog-footer {
+  text-align: center;
 }
 </style>

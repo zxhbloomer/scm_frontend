@@ -202,6 +202,16 @@
         </template>
       </el-table-column>
       <el-table-column
+        prop="is_default"
+        label="默认库位"
+        min-width="80"
+        align="center"
+      >
+        <template slot-scope="{row}">
+          {{ row.is_default ? '是' : '否' }}
+        </template>
+      </el-table-column>
+      <el-table-column
         sortable="custom"
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
@@ -572,19 +582,44 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        // 构建请求数据（单行操作）
-        const selectionJson = [{ 'id': targetRow.id }]
+        // 构建请求数据（单条操作）
+        const requestData = {
+          'id': targetRow.id,
+          'dbversion': targetRow.dbversion
+        }
 
         // 执行API调用
         this.settings.loading = true
-        apiCall(selectionJson).then((_data) => {
+        apiCall(requestData).then((_data) => {
           this.$notify({
             title: successTitle,
             message: _data.message,
             type: 'success',
             duration: this.settings.duration
           })
-          this.getDataList()
+
+          // 直接更新列表中的对应行数据，而不是重新加载整个列表
+          const updatedRowData = _data.data
+          // 使用ID查找索引，更可靠的方式（参考库区管理实现）
+          const rowIndex = this.dataJson.listData.findIndex(item => item.id === updatedRowData.id)
+          if (rowIndex >= 0) {
+            // 使用Vue的$set方法确保响应式更新
+            this.$set(this.dataJson.listData, rowIndex, updatedRowData)
+
+            // 如果更新的是当前选中行，同时更新currentJson
+            if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRowData.id) {
+              this.dataJson.currentJson = Object.assign({}, updatedRowData)
+
+              // 更新按钮状态以反映新的启用/停用状态
+              if (updatedRowData.enable) {
+                this.settings.btnShowStatus.showEnable = false
+                this.settings.btnShowStatus.showDisable = true
+              } else {
+                this.settings.btnShowStatus.showEnable = true
+                this.settings.btnShowStatus.showDisable = false
+              }
+            }
+          }
         }, (_error) => {
           this.$notify({
             title: failureTitle,
@@ -688,19 +723,30 @@ export default {
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
-        // 基础按钮状态
-        this.settings.btnShowStatus.showUpdate = true
-        this.settings.btnShowStatus.showDel = true
+        // 检查是否为默认库位 - 默认库位不允许修改、删除、启用、停用操作
+        const isDefaultBin = row.is_default === true
 
-        // 智能按钮控制：根据当前行的启用状态控制启用/停用按钮
-        if (row.enable) {
-          // 当前行是启用状态，显示停用按钮，隐藏启用按钮
+        if (isDefaultBin) {
+          // 默认库位：禁用所有修改操作按钮
+          this.settings.btnShowStatus.showUpdate = false
+          this.settings.btnShowStatus.showDel = false
           this.settings.btnShowStatus.showEnable = false
-          this.settings.btnShowStatus.showDisable = true
-        } else {
-          // 当前行是停用状态，显示启用按钮，隐藏停用按钮
-          this.settings.btnShowStatus.showEnable = true
           this.settings.btnShowStatus.showDisable = false
+        } else {
+          // 非默认库位：正常的按钮控制逻辑
+          this.settings.btnShowStatus.showUpdate = true
+          this.settings.btnShowStatus.showDel = true
+
+          // 智能按钮控制：根据当前行的启用状态控制启用/停用按钮
+          if (row.enable) {
+            // 当前行是启用状态，显示停用按钮，隐藏启用按钮
+            this.settings.btnShowStatus.showEnable = false
+            this.settings.btnShowStatus.showDisable = true
+          } else {
+            // 当前行是停用状态，显示启用按钮，隐藏停用按钮
+            this.settings.btnShowStatus.showEnable = true
+            this.settings.btnShowStatus.showDisable = false
+          }
         }
       } else {
         // 未选择任何行时的状态

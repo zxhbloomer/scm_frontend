@@ -209,6 +209,10 @@
 .el-form-item .el-select {
   width: 100%;
 }
+
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

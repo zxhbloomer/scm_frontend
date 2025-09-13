@@ -411,6 +411,9 @@
   margin-bottom: 2px;
   font-size: 12px;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

@@ -417,7 +417,9 @@ export default {
         }
       }).finally(() => {
         this.$nextTick(() => {
-          this.$refs.input.focus()
+          if (this.$refs.input && this.$refs.input.focus) {
+            this.$refs.input.focus()
+          }
         })
       })
       // 查询收藏
@@ -442,7 +444,9 @@ export default {
         }
       }).finally(() => {
         this.$nextTick(() => {
-          this.$refs.input.focus()
+          if (this.$refs.input && this.$refs.input.focus) {
+            this.$refs.input.focus()
+          }
         })
       })
     },

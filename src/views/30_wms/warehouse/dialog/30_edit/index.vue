@@ -40,12 +40,21 @@
               type="danger"
             />
           </template>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库编码："
-                prop="code"
-              >
+          <br>
+          <el-descriptions
+            title=""
+            :column="2"
+            :content-style="contentStyle"
+            :label-style="labelStyle"
+            direction="horizontal"
+            border
+            style="padding-right: 10px;padding-left: 10px;"
+          >
+            <el-descriptions-item>
+              <div slot="label">
+                仓库编码：
+              </div>
+              <el-form-item prop="code">
                 <el-input
                   v-model.trim="dataJson.tempJson.code"
                   clearable
@@ -55,12 +64,15 @@
                   placeholder="仓库编码"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库名称："
-                prop="name"
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div
+                slot="label"
+                class="required-mark"
               >
+                仓库名称：
+              </div>
+              <el-form-item prop="name">
                 <el-input
                   ref="refFocusOne"
                   v-model.trim="dataJson.tempJson.name"
@@ -70,14 +82,15 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库简称："
-                prop="short_name"
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div
+                slot="label"
+                class="required-mark"
               >
+                仓库简称：
+              </div>
+              <el-form-item prop="short_name">
                 <el-input
                   v-model.trim="dataJson.tempJson.short_name"
                   clearable
@@ -86,39 +99,44 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库类型："
-                prop="warehouse_type"
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div
+                slot="label"
+                class="required-mark"
               >
+                仓库类型：
+              </div>
+              <el-form-item prop="warehouse_type">
                 <select-dict
                   v-model="dataJson.tempJson.warehouse_type"
                   :para="CONSTANTS.DICT_M_WAREHOUSE_TYPE"
                   init-placeholder="请选择仓库类型"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="监管企业："
-                prop="charge_company_id"
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div
+                slot="label"
+                class="required-mark"
               >
-                <select-charge-company
+                监管企业：
+              </div>
+              <el-form-item prop="charge_company_id">
+                <select-enterprise-by-type
                   v-model.trim="dataJson.tempJson.charge_company_name"
+                  :enterprise-types="[CONSTANTS.DICT_M_ENTERPRISE_TYPE_SEVEN]"
                   placeholder="请选监管企业"
                   @closeParentDialog="handleDialogClose"
                   @onReturnData="handleChargeReturnData"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="运营企业："
-                prop="operate_company_id"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                运营企业：
+              </div>
+              <el-form-item prop="operate_company_id">
                 <select-operate-company
                   v-model.trim="dataJson.tempJson.operate_company_name"
                   placeholder="请选择运营企业"
@@ -126,14 +144,12 @@
                   @onReturnData="handleOperateReturnData"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="联系人："
-                prop="contact_person"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                联系人：
+              </div>
+              <el-form-item prop="contact_person">
                 <el-input
                   v-model.trim="dataJson.tempJson.contact_person"
                   clearable
@@ -142,12 +158,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="联系手机："
-                prop="mobile_phone"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                联系手机：
+              </div>
+              <el-form-item prop="mobile_phone">
                 <el-input
                   v-model.trim="dataJson.tempJson.mobile_phone"
                   clearable
@@ -156,15 +172,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="省市区："
-                prop="cascader_areas"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                省市区：
+              </div>
+              <el-form-item prop="cascader_areas">
                 <el-cascader
                   ref="refCascader"
                   v-model="dataJson.tempJson.cascader_areas"
@@ -176,33 +189,46 @@
                   @change="handleCascaderChange"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="片区："
-                prop="zone"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                片区：
+              </div>
+              <el-form-item prop="zone">
                 <select-dict
                   v-model="dataJson.tempJson.zone"
                   :para="CONSTANTS.DICT_M_WAREHOUSE_ZONE"
                   init-placeholder="请选择仓库片区"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item
-            label="详细地址："
-            prop="address"
+            </el-descriptions-item>
+          </el-descriptions>
+          <br>
+          <el-descriptions
+            title=""
+            :column="1"
+            :content-style="contentStyle"
+            :label-style="labelStyle"
+            direction="horizontal"
+            border
+            style="padding-right: 10px;padding-left: 10px;"
           >
-            <el-input
-              v-model.trim="dataJson.tempJson.address"
-              clearable
-              show-word-limit
-              type="textarea"
-              :maxlength="dataJson.inputSettings.maxLength.address"
-              placeholder="请输入"
-            />
-          </el-form-item>
+            <el-descriptions-item>
+              <div slot="label">
+                详细地址：
+              </div>
+              <el-form-item prop="address">
+                <el-input
+                  v-model.trim="dataJson.tempJson.address"
+                  clearable
+                  show-word-limit
+                  type="textarea"
+                  :maxlength="dataJson.inputSettings.maxLength.address"
+                  placeholder="请输入"
+                />
+              </el-form-item>
+            </el-descriptions-item>
+          </el-descriptions>
         </el-tab-pane>
 
         <el-tab-pane>
@@ -214,12 +240,21 @@
               type="danger"
             />
           </template>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库面积："
-                prop="area"
-              >
+          <br>
+          <el-descriptions
+            title=""
+            :column="2"
+            :content-style="contentStyle"
+            :label-style="labelStyle"
+            direction="horizontal"
+            border
+            style="padding-right: 10px;padding-left: 10px;"
+          >
+            <el-descriptions-item>
+              <div slot="label">
+                仓库面积：
+              </div>
+              <el-form-item prop="area">
                 <el-input
                   v-model.trim="dataJson.tempJson.area"
                   clearable
@@ -228,12 +263,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="仓库容积："
-                prop="warehouse_capacity"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                仓库容积：
+              </div>
+              <el-form-item prop="warehouse_capacity">
                 <el-input
                   v-model.trim="dataJson.tempJson.warehouse_capacity"
                   clearable
@@ -242,14 +277,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="经度信息："
-                prop="longitude"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                经度信息：
+              </div>
+              <el-form-item prop="longitude">
                 <el-input
                   v-model.trim="dataJson.tempJson.longitude"
                   clearable
@@ -258,12 +291,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="纬度信息："
-                prop="latitude"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                纬度信息：
+              </div>
+              <el-form-item prop="latitude">
                 <el-input
                   v-model.trim="dataJson.tempJson.latitude"
                   clearable
@@ -272,14 +305,12 @@
                   placeholder="请输入"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="启用日期："
-                prop="start_dt"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                启用日期：
+              </div>
+              <el-form-item prop="start_dt">
                 <el-date-picker
                   v-model="dataJson.tempJson.start_dt"
                   value-format="yyyy-MM-dd"
@@ -289,12 +320,12 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="到期日期："
-                prop="end_dt"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                到期日期：
+              </div>
+              <el-form-item prop="end_dt">
                 <el-date-picker
                   v-model="dataJson.tempJson.end_dt"
                   value-format="yyyy-MM-dd"
@@ -304,14 +335,12 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="每日收货开始时间："
-                prop="receive_start_time"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                每日收货开始时间：
+              </div>
+              <el-form-item prop="receive_start_time">
                 <el-time-picker
                   v-model="dataJson.tempJson.receive_start_time"
                   value-format="HH:mm:ss"
@@ -321,12 +350,12 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="每日收货结束时间："
-                prop="receive_end_time"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                每日收货结束时间：
+              </div>
+              <el-form-item prop="receive_end_time">
                 <el-time-picker
                   v-model="dataJson.tempJson.receive_end_time"
                   value-format="HH:mm:ss"
@@ -336,14 +365,12 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="每日发货开始时间："
-                prop="deliver_start_time"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                每日发货开始时间：
+              </div>
+              <el-form-item prop="deliver_start_time">
                 <el-time-picker
                   v-model="dataJson.tempJson.deliver_start_time"
                   value-format="HH:mm:ss"
@@ -353,12 +380,12 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="每日发货结束时间："
-                prop="deliver_end_time"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                每日发货结束时间：
+              </div>
+              <el-form-item prop="deliver_end_time">
                 <el-time-picker
                   v-model="dataJson.tempJson.deliver_end_time"
                   value-format="HH:mm:ss"
@@ -368,62 +395,66 @@
                   style="width: 100%"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="是否启用："
-                prop="enable"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                是否启用：
+              </div>
+              <el-form-item prop="enable">
                 <el-switch
                   v-model="dataJson.tempJson.enable"
-                  active-color="#ff4949"
-                  inactive-color="#dcdfe6"
+                  active-text="启用"
+                  inactive-text="停用"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="是否质检仓："
-                prop="warehouse_check"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                是否质检仓：
+              </div>
+              <el-form-item prop="warehouse_check">
                 <el-switch
                   v-model="dataJson.tempJson.warehouse_check"
-                  active-color="#ff4949"
-                  inactive-color="#dcdfe6"
+                  active-text="是"
+                  inactive-text="否"
+                  active-color="#409eff"
+                  inactive-color="#ff4949"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item
-                label="启用库区："
-                prop="enable_location"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                启用库区：
+              </div>
+              <el-form-item prop="enable_location">
                 <el-switch
                   v-model="dataJson.tempJson.enable_location"
+                  active-text="启用"
+                  inactive-text="禁用"
                   disabled
-                  active-color="#ff4949"
-                  inactive-color="#dcdfe6"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
                 />
               </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item
-                label="启用库位："
-                prop="enable_bin"
-              >
+            </el-descriptions-item>
+            <el-descriptions-item>
+              <div slot="label">
+                启用库位：
+              </div>
+              <el-form-item prop="enable_bin">
                 <el-switch
                   v-model="dataJson.tempJson.enable_bin"
+                  active-text="启用"
+                  inactive-text="禁用"
                   disabled
-                  active-color="#ff4949"
-                  inactive-color="#dcdfe6"
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
                 />
               </el-form-item>
-            </el-col>
-          </el-row>
+            </el-descriptions-item>
+          </el-descriptions>
         </el-tab-pane>
       </el-tabs>
     </el-form>
@@ -453,8 +484,19 @@
   width: 100%;
 }
 
+.required-mark::before {
+  content: '*';
+  color: #ff4949;
+  margin-right: 4px;
+}
 .dialog-footer {
   text-align: center;
+}
+.el-form-item--mini.el-form-item {
+  margin-bottom: 0px;
+}
+.el-button-group {
+  margin-bottom: 15px;
 }
 </style>
 
@@ -463,7 +505,7 @@ import { updateApi } from '@/api/30_wms/warehouse/warehouse'
 import deepcopy from 'deep-copy'
 import elDragDialog from '@/directive/el-drag-dialog'
 import SelectDict from '@/components/00_dict/select/SelectDict'
-import SelectChargeCompany from '@/views/30_wms/customer/selectgrid/selectCustomer'
+import SelectEnterpriseByType from '@/views/20_master/enterprise/dialog/selectgrid/bytype/index.vue'
 import SelectOperateCompany from '@/views/30_wms/customer/selectgrid/selectCustomer'
 import { getAreasCascaderApi } from '@/api/00_common/systemArea'
 
@@ -472,7 +514,7 @@ export default {
   directives: { elDragDialog },
   components: {
     SelectDict,
-    SelectChargeCompany,
+    SelectEnterpriseByType,
     SelectOperateCompany
   },
   props: {
@@ -487,6 +529,13 @@ export default {
   },
   data () {
     return {
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
       dataJson: {
         // 级联选择器数据
         cascader: {
@@ -497,8 +546,8 @@ export default {
         inputSettings: {
           maxLength: {
             code: 20,
-            name: 100,
-            short_name: 100,
+            name: 20,
+            short_name: 20,
             contact_person: 20,
             mobile_phone: 20,
             area: 20,

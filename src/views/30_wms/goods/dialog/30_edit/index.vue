@@ -46,7 +46,7 @@
             slot="label"
             class="required-mark"
           >
-            所属类别
+            所属类别：
           </div>
           <el-form-item
             prop="category_name"
@@ -64,7 +64,7 @@
             slot="label"
             class="required-mark"
           >
-            物料名称
+            物料名称：
           </div>
           <el-form-item
             prop="name"
@@ -85,7 +85,7 @@
           <div
             slot="label"
           >
-            物料编码
+            物料编码：
           </div>
           <el-form-item
             prop="code"
@@ -156,8 +156,6 @@
     <business-dialog
       v-if="popSettingsData.searchDialogDataOne.visible"
       :visible="popSettingsData.searchDialogDataOne.visible"
-      @closeMeOk="handleBusinessCloseOk"
-      @closeMeCancel="handleBusinessCloseCancel"
     />
     <category-dialog
       v-if="popSettingsData.searchDialogDataThree.visible"
@@ -221,12 +219,6 @@ export default {
       dataJson: {
         tempJson: {
           id: null,
-          business_id: '',
-          business_code: '',
-          business_name: '',
-          industry_id: '',
-          industry_code: '',
-          industry_name: '',
           category_id: '',
           category_code: '',
           category_name: '',
@@ -255,9 +247,6 @@ export default {
           disabledUpdate: false
         },
         rules: {
-          business_name: [
-            { required: true, message: '请选择所属板块', trigger: 'blur' }
-          ],
           category_name: [
             { required: true, message: '请选择所属类别', trigger: 'blur' }
           ],
@@ -283,12 +272,11 @@ export default {
       },
       // 样式设置
       contentStyle: {
-        'background-color': '#f0f0f0',
-        'padding': '10px'
+        width: '15%'
       },
       labelStyle: {
-        'font-weight': 'bold',
-        'width': '120px'
+        width: '10%',
+        'text-align': 'right'
       },
       // 原始数据（用于检测变更）
       originalData: {}
@@ -323,28 +311,6 @@ export default {
           this.$refs.refFocusOne.focus()
         }
       })
-    },
-
-    // 板块选择对话框
-    handleBusinessDialog () {
-      this.popSettingsData.searchDialogDataOne.visible = true
-    },
-    handleBusinessCloseOk (data) {
-      this.popSettingsData.searchDialogDataOne.visible = false
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = data
-
-      // 设置板块信息
-      this.dataJson.tempJson.business_id = data.id
-      this.dataJson.tempJson.business_code = data.code
-      this.dataJson.tempJson.business_name = data.name
-
-      // 清空下级选择
-      this.dataJson.tempJson.category_id = ''
-      this.dataJson.tempJson.category_code = ''
-      this.dataJson.tempJson.category_name = ''
-    },
-    handleBusinessCloseCancel () {
-      this.popSettingsData.searchDialogDataOne.visible = false
     },
 
     // 类别选择对话框

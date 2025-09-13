@@ -38,6 +38,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.uscc"
+                :maxlength="dataJson.inputSettings.maxLength.uscc"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -56,6 +59,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.name"
+                :maxlength="dataJson.inputSettings.maxLength.name"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -110,6 +116,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.legal_person"
+                :maxlength="dataJson.inputSettings.maxLength.legal_person"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -318,6 +327,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.contact_person"
+                :maxlength="dataJson.inputSettings.maxLength.contact_person"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -330,6 +342,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.contact_phone"
+                :maxlength="dataJson.inputSettings.maxLength.contact_phone"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -342,6 +357,9 @@
             >
               <el-input
                 v-model.trim="dataJson.tempJson.address"
+                :maxlength="dataJson.inputSettings.maxLength.address"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -357,6 +375,9 @@
               <el-input
                 v-model.trim="dataJson.tempJson.remark"
                 type="textarea"
+                :maxlength="dataJson.inputSettings.maxLength.remark"
+                show-word-limit
+                clearable
                 :placeholder="isPlaceholderShow('请输入')"
               />
             </el-form-item>
@@ -605,6 +626,17 @@ export default {
         // 单条数据 json
         tempJson: {
           type_ids: []
+        },
+        inputSettings: {
+          maxLength: {
+            uscc: 18,
+            name: 100,
+            legal_person: 20,
+            contact_person: 20,
+            contact_phone: 15,
+            address: 200,
+            remark: 200
+          }
         }
       },
       // 页面设置json
@@ -748,6 +780,7 @@ export default {
               this.getFlow()
             } else {
               this.closeLoading()
+              this.settings.loading = false // 确保按钮重新可点击
               this.$notify({
                 title: '校验失败',
                 message: _data.data.message,
@@ -758,9 +791,11 @@ export default {
           }).catch(error => {
             console.log('校验出错', error)
             this.closeLoading()
+            this.settings.loading = false // 确保按钮重新可点击
           })
         } else {
           this.closeLoading()
+          this.settings.loading = false // 确保按钮重新可点击
         }
       })
     },
@@ -778,6 +813,7 @@ export default {
         })
         .catch((err) => {
           this.closeLoading()
+          this.settings.loading = false // 确保按钮重新可点击
           this.$message.error(err)
         })
     },
@@ -810,6 +846,7 @@ export default {
               },
               _error => {
                 this.closeLoading()
+                this.settings.loading = false // 确保按钮重新可点击
                 this.$notify({
                   title: '新增处理失败',
                   message: _error.message,
@@ -823,6 +860,7 @@ export default {
             })
         } else {
           this.closeLoading()
+          this.settings.loading = false // 确保按钮重新可点击
         }
       })
     },
@@ -948,6 +986,7 @@ export default {
     handleBpmDialogCancel () {
       this.popSettingsData.sponsorDialog.visible = false
       this.closeLoading()
+      this.settings.loading = false // 确保按钮重新可点击
     },
     // 审批流确定
     handleBpmDialogOk (data) {

@@ -511,4 +511,8 @@ a {
   height: calc(100vh - 190px);
   overflow-x: auto;
 }
+
+.dialog-footer {
+  text-align: center;
+}
 </style>

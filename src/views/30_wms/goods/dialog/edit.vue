@@ -176,8 +176,8 @@
       </div>
     </el-dialog>
 
-      @closeMeOk="handleCategoryCloseOk"
-      @closeMeCancel="handleCategoryCloseCancel"
+    @closeMeOk="handleCategoryCloseOk"
+    @closeMeCancel="handleCategoryCloseCancel"
     />
   </div>
 

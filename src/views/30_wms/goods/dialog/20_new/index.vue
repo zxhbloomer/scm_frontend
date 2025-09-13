@@ -24,12 +24,6 @@
       label-width="150px"
       status-icon
     >
-      <el-alert
-        title="基本信息"
-        type="info"
-        :closable="false"
-      />
-      <br>
 
       <el-descriptions
         title=""
@@ -44,9 +38,29 @@
         <el-descriptions-item>
           <div
             slot="label"
+          >
+            物料编码：
+          </div>
+          <el-form-item
+            prop="code"
+            label-width="0"
+          >
+            <el-input
+              v-model.trim="dataJson.tempJson.code"
+              clearable
+              show-word-limit
+              :maxlength="dataJson.inputSettings.maxLength.code"
+              placeholder="请输入物料编码（可选）"
+            />
+          </el-form-item>
+        </el-descriptions-item>
+
+        <el-descriptions-item>
+          <div
+            slot="label"
             class="required-mark"
           >
-            所属类别
+            所属类别：
           </div>
           <el-form-item
             prop="category_name"
@@ -64,14 +78,13 @@
             slot="label"
             class="required-mark"
           >
-            物料名称
+            物料名称：
           </div>
           <el-form-item
             prop="name"
             label-width="0"
           >
             <el-input
-              ref="refFocusOne"
               v-model.trim="dataJson.tempJson.name"
               clearable
               show-word-limit
@@ -85,23 +98,23 @@
           <div
             slot="label"
           >
-            物料编码
+            状态：
           </div>
           <el-form-item
-            prop="code"
+            prop="enable"
             label-width="0"
           >
-            <el-input
-              v-model.trim="dataJson.tempJson.code"
-              clearable
-              show-word-limit
-              :maxlength="dataJson.inputSettings.maxLength.code"
-              placeholder="请输入物料编码（可选）"
+            <el-switch
+              v-model="dataJson.tempJson.enable"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="启用"
+              inactive-text="停用"
+              :active-value="true"
+              :inactive-value="false"
             />
           </el-form-item>
         </el-descriptions-item>
-
-        <el-descriptions-item />
       </el-descriptions>
     </el-form>
 
@@ -182,7 +195,8 @@ export default {
           category_code: '',
           category_name: '',
           name: '',
-          code: ''
+          code: '',
+          enable: false
         },
         inputSettings: {
           maxLength: {
@@ -194,11 +208,14 @@ export default {
       settings: {
         loading: false,
         duration: 4000,
+        // 初始化完成标志
+        initialized: false,
         btnShowStatus: {
           showInsert: true
         },
+        // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
-          disabledInsert: false
+          disabledInsert: true
         },
         rules: {
           category_name: [
@@ -222,12 +239,11 @@ export default {
       },
       // 样式设置
       contentStyle: {
-        'background-color': '#f0f0f0',
-        'padding': '10px'
+        width: '15%'
       },
       labelStyle: {
-        'font-weight': 'bold',
-        'width': '120px'
+        width: '10%',
+        'text-align': 'right'
       }
     }
   },
@@ -244,6 +260,16 @@ export default {
         }
       },
       immediate: true
+    },
+    // 监听表单数据变化，有变化时启用确定按钮
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        // 只有在初始化完成后才响应用户变化
+        if (this.settings.initialized) {
+          this.settings.btnDisabledStatus.disabledInsert = false
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -259,16 +285,19 @@ export default {
         delete this.dataJson.tempJson.c_name
         // 清空编号，因为编号必须唯一
         this.dataJson.tempJson.code = ''
+        // 如果复制数据中没有enable字段，默认设为停用状态
+        if (this.dataJson.tempJson.enable === undefined) {
+          this.dataJson.tempJson.enable = false
+        }
       } else {
         // 否则使用默认空数据
         this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
       }
 
-      // 设置焦点
+      // 确保按钮初始状态为禁用，并标记初始化完成
       this.$nextTick(() => {
-        if (this.$refs.refFocusOne) {
-          this.$refs.refFocusOne.focus()
-        }
+        this.settings.btnDisabledStatus.disabledInsert = true
+        this.settings.initialized = true
       })
     },
 

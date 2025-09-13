@@ -101,6 +101,10 @@
 .floatLeft {
   float: left;
 }
+
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <style scoped>

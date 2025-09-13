@@ -761,14 +761,25 @@ export default {
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
-        // 构造单行ID参数数组（参考现有标准模式）
-        const selectionJson = [{ id: this.dataJson.currentJson.id }]
-
         // 设置加载状态
         this.settings.loading = true
 
-        // 调用启用API
-        enabledSelectionApi(selectionJson).then(response => {
+        // 调用启用API - 改为单对象参数
+        enabledSelectionApi({ id: this.dataJson.currentJson.id }).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 直接更新列表项
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步当前选中项
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           // 成功通知
           this.$notify({
             title: '启用成功',
@@ -776,8 +787,6 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 刷新列表数据
-          this.handleSearch()
         }).catch(error => {
           // 失败通知
           this.$notify({
@@ -807,19 +816,30 @@ export default {
       }
 
       // 确认对话框
-      this.$confirm('是否要停用选中的数据？', '确认信息', {
+      this.$confirm('是否要停用选中的数据？注意：停用前会检查仓库库存。', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
-        // 构造单行ID参数数组（参考现有标准模式）
-        const selectionJson = [{ id: this.dataJson.currentJson.id }]
-
         // 设置加载状态
         this.settings.loading = true
 
-        // 调用停用API
-        disAbledSelectionApi(selectionJson).then(response => {
+        // 调用停用API - 改为单对象参数
+        disAbledSelectionApi({ id: this.dataJson.currentJson.id }).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 直接更新列表项
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步当前选中项
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           // 成功通知
           this.$notify({
             title: '停用成功',
@@ -827,8 +847,6 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 刷新列表数据
-          this.handleSearch()
         }).catch(error => {
           // 失败通知
           this.$notify({

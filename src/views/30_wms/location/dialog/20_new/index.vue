@@ -27,31 +27,26 @@
         status-icon
       >
         <br>
-        <el-row>
-          <el-col :span="12">
+        <el-descriptions
+          :content-style="contentStyle"
+          :label-style="labelStyle"
+          :column="2"
+        >
+          <el-descriptions-item label="仓库名称：" class="required-mark">
             <el-form-item
-              label="仓库名称："
               prop="warehouse_name"
+              style="margin-bottom: 0"
             >
-              <el-input
+              <input-search
                 v-model.trim="formData.warehouse_name"
-                disabled
-              >
-                <el-button
-                  slot="append"
-                  ref="selectWarehouse"
-                  icon="el-icon-search"
-                  @click="handleSelectWarehouse"
-                >
-                  选择
-                </el-button>
-              </el-input>
+                @onInputSearch="handleSelectWarehouse"
+              />
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库区名称：" class="required-mark">
             <el-form-item
-              label="库区名称："
               prop="name"
+              style="margin-bottom: 0"
             >
               <el-input
                 ref="focusInput"
@@ -62,14 +57,11 @@
                 placeholder="请输入库区名称"
               />
             </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库区简称：" class="required-mark">
             <el-form-item
-              label="库区简称："
               prop="short_name"
+              style="margin-bottom: 0"
             >
               <el-input
                 v-model.trim="formData.short_name"
@@ -79,8 +71,22 @@
                 placeholder="请输入库区简称"
               />
             </el-form-item>
-          </el-col>
-        </el-row>
+          </el-descriptions-item>
+          <el-descriptions-item label="是否启用：">
+            <el-form-item
+              prop="enable"
+              style="margin-bottom: 0"
+            >
+              <el-switch
+                v-model="formData.enable"
+                active-text="启用"
+                inactive-text="停用"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-form>
 
       <div
@@ -121,10 +127,11 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { insertApi } from '@/api/30_wms/location/location'
 import warehouseDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
+import InputSearch from '@/components/40_input/inputSearch'
 
 export default {
   name: 'LocationNewDialog',
-  components: { warehouseDialog },
+  components: { warehouseDialog, InputSearch },
   directives: { elDragDialog },
   props: {
     visible: {
@@ -136,13 +143,23 @@ export default {
     return {
       loading: false,
 
+      // 描述列表样式配置
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
+
       // 表单数据
       formData: {
         id: undefined,
         name: '',
         short_name: '',
         warehouse_name: '',
-        warehouse_id: undefined
+        warehouse_id: undefined,
+        enable: true
       },
 
       // 表单验证规则
@@ -155,7 +172,8 @@ export default {
           { min: 1, max: 20, message: '库区名称长度在1到20个字符', trigger: 'blur' }
         ],
         short_name: [
-          { max: 20, message: '库区简称长度不能超过20个字符', trigger: 'blur' }
+          { required: true, message: '请输入库区简称', trigger: 'blur' },
+          { min: 1, max: 20, message: '库区简称长度在1到20个字符', trigger: 'blur' }
         ]
       },
 
@@ -209,7 +227,8 @@ export default {
         name: '',
         short_name: '',
         warehouse_name: '',
-        warehouse_id: undefined
+        warehouse_id: undefined,
+        enable: true
       }
       this.loading = false
 
@@ -248,9 +267,11 @@ export default {
 
     // 仓库选择确认
     handleWarehouseSelected (warehouse) {
+      this.warehouseDialog.visible = false
+
+      // 设置仓库信息
       this.formData.warehouse_id = warehouse.id
       this.formData.warehouse_name = warehouse.name
-      this.warehouseDialog.visible = false
 
       // 触发表单验证
       this.$nextTick(() => {
@@ -275,9 +296,6 @@ export default {
       this.$refs.dataForm.validate(valid => {
         if (valid) {
           this.doInsert()
-        } else {
-          this.$message.warning('请检查输入信息')
-          return false
         }
       })
     },
@@ -289,13 +307,20 @@ export default {
         const submitData = deepCopy(this.formData)
 
         const response = await insertApi(submitData)
+        console.log('库区新增 API 响应:', response)
 
         this.$message.success('新增成功')
-        this.$emit('closeMeOk', response.data)
+        this.$emit('closeMeOk', {
+          return_flag: true,
+          data: response
+        })
       } catch (error) {
         console.error('新增库区失败:', error)
         this.$message.error(error.message || '新增失败')
-        this.$emit('error', error)
+        this.$emit('closeMeOk', {
+          return_flag: false,
+          error: error
+        })
       } finally {
         this.loading = false
       }
@@ -311,6 +336,16 @@ export default {
 
 .el-form-item .el-select {
   width: 100%;
+}
+
+.required-mark {
+  position: relative;
+}
+
+.required-mark::before {
+  content: '*';
+  color: #f56c6c;
+  margin-right: 4px;
 }
 </style>
 

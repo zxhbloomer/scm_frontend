@@ -402,6 +402,9 @@
   margin-right: 5px;
   margin-bottom: 5px;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

@@ -25,71 +25,61 @@
         label-width="150px"
       >
         <br>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="仓库名称：">
-              <span class="view-field">{{ formData.warehouse_name }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="库区名称：">
-              <span class="view-field">{{ formData.name }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="库区简称：">
-              <span class="view-field">{{ formData.short_name }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="状态：">
-              <el-tag
-                v-if="formData.status !== undefined"
-                :type="formData.status === 1 ? 'success' : 'danger'"
-              >
-                {{ formData.status === 1 ? '启用' : '禁用' }}
-              </el-tag>
-              <span v-else>暂无</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row v-if="showExtendedInfo">
-          <el-col :span="12">
-            <el-form-item label="创建时间：">
-              <span class="view-field">{{ formatDateTime(formData.c_time) }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="修改时间：">
-              <span class="view-field">{{ formatDateTime(formData.u_time) }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row v-if="showExtendedInfo">
-          <el-col :span="12">
-            <el-form-item label="创建人：">
-              <span class="view-field">{{ formData.c_name }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="修改人：">
-              <span class="view-field">{{ formData.u_name }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row v-if="formData.remark">
-          <el-col :span="24">
-            <el-form-item label="备注：">
-              <span class="view-field remark-field">{{ formData.remark }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-descriptions
+          :content-style="contentStyle"
+          :label-style="labelStyle"
+          :column="2"
+        >
+          <el-descriptions-item label="仓库名称：">
+            <span class="view-field">{{ formData.warehouse_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="库区名称：">
+            <span class="view-field">{{ formData.name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="库区简称：">
+            <span class="view-field">{{ formData.short_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="状态：">
+            <el-tag
+              v-if="formData.status !== undefined"
+              :type="formData.status === 1 ? 'success' : 'danger'"
+            >
+              {{ formData.status === 1 ? '启用' : '禁用' }}
+            </el-tag>
+            <span v-else class="view-field">--</span>
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="showExtendedInfo"
+            label="创建时间："
+          >
+            <span class="view-field">{{ formatDateTime(formData.c_time) || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="showExtendedInfo"
+            label="修改时间："
+          >
+            <span class="view-field">{{ formatDateTime(formData.u_time) || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="showExtendedInfo"
+            label="创建人："
+          >
+            <span class="view-field">{{ formData.c_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="showExtendedInfo"
+            label="修改人："
+          >
+            <span class="view-field">{{ formData.u_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item
+            v-if="formData.remark"
+            label="备注："
+            :span="2"
+          >
+            <span class="view-field remark-field">{{ formData.remark }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-form>
 
       <div
@@ -128,6 +118,15 @@ export default {
   data () {
     return {
       loading: false,
+
+      // 描述列表样式配置
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
 
       // 表单数据
       formData: {

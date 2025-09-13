@@ -103,4 +103,8 @@ export default {
   height: 100%;
   overflow: hidden;
 }
+
+.dialog-footer {
+  text-align: center;
+}
 </style>

@@ -117,6 +117,9 @@
   word-wrap: break-word;
   white-space: pre-wrap;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

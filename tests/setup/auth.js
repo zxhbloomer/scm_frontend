@@ -4,7 +4,7 @@ export async function setupWMSAuth(page, targetUrl = 'http://localhost:9528/#/ma
   const cookies = [
     {
       name: 'SCM_SESSION',
-      value: 'YjA1ZTdlZTctMjlkNS00ZGFjLTgzYzMtZGQ4Y2RlY2JjNTI5',
+      value: 'MzkyMTg4YWUtNTA4OC00MWY5LWE4N2EtMTBlNWNhZDQyOTc4',
       domain: 'localhost',
       path: '/'
     },
@@ -22,7 +22,7 @@ export async function setupWMSAuth(page, targetUrl = 'http://localhost:9528/#/ma
     },
     {
       name: 'wms-Token',
-      value: 'e702b1b9-ae80-40d2-a242-e7cef579c6d1',
+      value: 'b05e7ee7-29d5-4dac-83c3-dd8cdecbc529',
       domain: 'localhost', 
       path: '/'
     },
@@ -75,7 +75,7 @@ export async function setupWMSAuth(page, targetUrl = 'http://localhost:9528/#/ma
       sidebar: { opened: true }
     }));
 
-    localStorage.setItem('token', 'e702b1b9-ae80-40d2-a242-e7cef579c6d1');
+    localStorage.setItem('token', 'b05e7ee7-29d5-4dac-83c3-dd8cdecbc529');
   });
 
   // 5. 刷新页面让所有认证信息生效

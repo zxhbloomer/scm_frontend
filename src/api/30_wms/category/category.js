@@ -49,8 +49,9 @@ export function deleteApi (data) {
 }
 
 /**
- * 启用选择数据
- * @param {*} data
+ * 启用单条类别记录
+ * @param {Object} data - 类别对象 {id: number}
+ * @returns {Promise} - 返回更新后的类别数据
  */
 export function enabledSelectionApi (data) {
   return request({
@@ -61,24 +62,13 @@ export function enabledSelectionApi (data) {
 }
 
 /**
- * 停用选择数据
- * @param {*} data
+ * 停用单条类别记录
+ * @param {Object} data - 类别对象 {id: number}
+ * @returns {Promise} - 返回更新后的类别数据
  */
 export function disAbledSelectionApi (data) {
   return request({
     url: '/api/v1/category/disabled',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 停用/停用 选择数据
- * @param {*} data
- */
-export function enableOrDisAbleApi (data) {
-  return request({
-    url: '/api/v1/category/enable',
     method: 'post',
     data
   })

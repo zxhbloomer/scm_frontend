@@ -58,6 +58,27 @@
             />
           </el-form-item>
         </el-descriptions-item>
+        <el-descriptions-item>
+          <div
+            slot="label"
+          >
+            状态：
+          </div>
+          <el-form-item
+            prop="enable"
+          >
+            <el-switch
+              v-model="dataJson.tempJson.enable"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="启用"
+              inactive-text="停用"
+              :active-value="true"
+              :inactive-value="false"
+            />
+          </el-form-item>
+        </el-descriptions-item>
+        <el-descriptions-item />
       </el-descriptions>
     </el-form>
     <div
@@ -67,15 +88,15 @@
       <el-divider />
       <el-button
         plain
-        :disabled="settings.loading"
-        @click="handleCancel()"
-      >取消</el-button>
-      <el-button
-        plain
         type="primary"
         :disabled="settings.loading || settings.btnDisabledStatus.disabledUpdate"
         @click="doUpdate()"
       >确定</el-button>
+      <el-button
+        plain
+        :disabled="settings.loading"
+        @click="handleCancel()"
+      >取消</el-button>
     </div>
 
     <business-dialog
@@ -89,13 +110,12 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import InputSearch from '@/components/40_input/inputSearch'
 import deepCopy from 'deep-copy'
 import { updateApi } from '@/api/30_wms/category/category'
 import BusinessDialog from '@/views/20_master/business/dialog/dialog'
 
 export default {
-  components: { BusinessDialog, InputSearch },
+  components: { BusinessDialog },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -147,6 +167,8 @@ export default {
       settings: {
         // loading 状态
         loading: false,
+        // 初始化完成标志
+        initialized: false,
         // 按钮状态：是否可用，false:可用，true不可用
         btnDisabledStatus: {
           disabledUpdate: true
@@ -156,6 +178,10 @@ export default {
           name: [
             { required: true, message: '请输入类别名称', trigger: 'change' }
           ],
+          enable: [
+            { required: true, message: '请选择启用状态', trigger: 'change' },
+            { type: 'boolean', message: '启用状态必须是有效的布尔值', trigger: 'change' }
+          ]
         }
       }
     }
@@ -171,12 +197,19 @@ export default {
             this.$refs.categoryNameInput.focus()
           }
         })
+      } else {
+        // 弹窗关闭时，重置初始化状态
+        this.settings.initialized = false
+        this.settings.btnDisabledStatus.disabledUpdate = true
       }
     },
-    // 监听页面上面是否有修改，有修改按钮高亮
+    // 监听表单数据变化，有变化时启用确定按钮
     'dataJson.tempJson': {
       handler (newVal, oldVal) {
-        this.settings.btnDisabledStatus.disabledUpdate = false
+        // 只有在初始化完成后才响应用户变化
+        if (this.settings.initialized) {
+          this.settings.btnDisabledStatus.disabledUpdate = false
+        }
       },
       deep: true
     }
@@ -194,6 +227,17 @@ export default {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
       this.popSettingsData.searchDialogDataOne.selectedDataJson.id = this.data.business_id
+
+      // 确保enable字段存在，如果不存在则设置默认值
+      if (this.dataJson.tempJson.enable === undefined || this.dataJson.tempJson.enable === null) {
+        this.dataJson.tempJson.enable = false
+      }
+
+      // 确保按钮初始状态为禁用，并标记初始化完成
+      this.$nextTick(() => {
+        this.settings.btnDisabledStatus.disabledUpdate = true
+        this.settings.initialized = true
+      })
     },
     // 取消按钮
     handleCancel () {
@@ -223,7 +267,7 @@ export default {
             })
         }
       })
-    },
+    }
     // 板块
   }
 }

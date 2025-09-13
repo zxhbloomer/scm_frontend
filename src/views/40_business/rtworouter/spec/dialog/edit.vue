@@ -375,7 +375,7 @@ import { getListApi } from '@/api/30_wms/businesstype/businesstype'
 import businessDialog from '@/views/30_wms/businesstype/dialog/dialog'
 import industryDialog from '@/views/30_wms/industry/dialog/dialog'
 import categoryDialog from '@/views/30_wms/category/dialog/10_list/index'
-import goodsDialog from '@/views/30_wms/goods/dialog/dialog'
+import goodsDialog from '@/views/30_wms/goods/dialog/10_list/index'
 
 export default {
   components: { SelectDict, businessDialog, industryDialog, categoryDialog, goodsDialog },

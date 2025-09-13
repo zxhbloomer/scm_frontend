@@ -26,11 +26,15 @@
         status-icon
       >
         <br>
-        <el-row>
-          <el-col :span="12">
+        <el-descriptions
+          :content-style="contentStyle"
+          :label-style="labelStyle"
+          :column="2"
+        >
+          <el-descriptions-item label="仓库名称：" class="required-mark">
             <el-form-item
-              label="仓库名称："
               prop="warehouse_name"
+              style="margin-bottom: 0"
             >
               <el-input
                 v-model.trim="dataJson.tempJson.warehouse_name"
@@ -46,11 +50,11 @@
                 </el-button>
               </el-input>
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库区名称：" class="required-mark">
             <el-form-item
-              label="库区名称："
               prop="location_name"
+              style="margin-bottom: 0"
             >
               <el-input
                 v-model.trim="dataJson.tempJson.location_name"
@@ -66,13 +70,11 @@
                 </el-button>
               </el-input>
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库位名称：" class="required-mark">
             <el-form-item
-              label="库位名称："
               prop="name"
+              style="margin-bottom: 0"
             >
               <el-input
                 ref="refFocusOne"
@@ -83,8 +85,22 @@
                 placeholder="请输入库位名称"
               />
             </el-form-item>
-          </el-col>
-        </el-row>
+          </el-descriptions-item>
+          <el-descriptions-item label="是否启用：">
+            <el-form-item
+              prop="enable"
+              style="margin-bottom: 0"
+            >
+              <el-switch
+                v-model="dataJson.tempJson.enable"
+                active-text="启用"
+                inactive-text="停用"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-form>
       <div
         slot="footer"
@@ -125,6 +141,20 @@
 .el-form-item .el-select {
   width: 100%;
 }
+
+.required-mark {
+  position: relative;
+}
+
+.required-mark::before {
+  content: '*';
+  color: #f56c6c;
+  margin-right: 4px;
+}
+
+.dialog-footer {
+  text-align: center;
+}
 </style>
 <style >
 .el-input-group__append_select,
@@ -163,6 +193,15 @@ export default {
         width: '850px',
         labelWidth: '150px'
       },
+
+      // 描述列表样式配置
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
       popSettingsData: {
         // 弹出的查询框参数设置
         searchDialogDataOne: {
@@ -190,7 +229,8 @@ export default {
         tempJson: {
           name: '',
           warehouse_name: '',
-          location_name: ''
+          location_name: '',
+          enable: true
         },
         inputSettings: {
           maxLength: {

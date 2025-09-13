@@ -809,6 +809,9 @@
   background-color: #f56c6c;
   border-color: #f56c6c;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

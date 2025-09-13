@@ -26,13 +26,14 @@
     >
       <el-divider />
       <el-button
-        plain
-        @click="handleDoCancel()"
-      >取消</el-button>
-      <el-button
+        type="primary"
         :disabled="dataJson.settings.btnDisabledStatus.disabledOk"
         @click="handleDoOk()"
       >确定</el-button>
+      <el-button
+        plain
+        @click="handleDoCancel()"
+      >取消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -127,3 +128,9 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.dialog-footer {
+  text-align: center;
+}
+</style>

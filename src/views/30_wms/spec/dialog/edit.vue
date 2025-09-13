@@ -384,7 +384,7 @@ import deepCopy from 'deep-copy'
 import { updateApi, insertApi } from '@/api/30_wms/spec/spec'
 import { getListApi as getPropListApi } from '@/api/30_wms/prop/prop'
 import { getListApi } from '@/api/30_wms/businesstype/businesstype'
-import goodsDialog from '@/views/30_wms/goods/dialog/dialog'
+import goodsDialog from '@/views/30_wms/goods/dialog/10_list/index'
 
 export default {
   components: { SelectDict, goodsDialog },

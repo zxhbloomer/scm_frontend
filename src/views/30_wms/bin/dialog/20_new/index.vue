@@ -26,53 +26,37 @@
         status-icon
       >
         <br>
-        <el-row>
-          <el-col :span="12">
+        <el-descriptions
+          :content-style="contentStyle"
+          :label-style="labelStyle"
+          :column="2"
+        >
+          <el-descriptions-item label="仓库名称：" class="required-mark">
             <el-form-item
-              label="仓库名称："
               prop="warehouse_name"
+              style="margin-bottom: 0"
             >
-              <el-input
+              <input-search
                 v-model.trim="dataJson.tempJson.warehouse_name"
-                disabled
-              >
-                <el-button
-                  slot="append"
-                  ref="selectOne"
-                  icon="el-icon-search"
-                  @click="handleWarehouseDialog()"
-                >
-                  选择
-                </el-button>
-              </el-input>
+                @onInputSearch="handleWarehouseDialog"
+              />
             </el-form-item>
-          </el-col>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库区名称：" class="required-mark">
             <el-form-item
-              label="库区名称："
               prop="location_name"
+              style="margin-bottom: 0"
             >
-              <el-input
+              <input-search
                 v-model.trim="dataJson.tempJson.location_name"
-                disabled
-              >
-                <el-button
-                  slot="append"
-                  ref="selectTwo"
-                  icon="el-icon-search"
-                  @click="handleLocationDialog()"
-                >
-                  选择
-                </el-button>
-              </el-input>
+                @onInputSearch="handleLocationDialog"
+              />
             </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
+          </el-descriptions-item>
+          <el-descriptions-item label="库位名称：" class="required-mark">
             <el-form-item
-              label="库位名称："
               prop="name"
+              style="margin-bottom: 0"
             >
               <el-input
                 ref="refFocusOne"
@@ -83,8 +67,22 @@
                 placeholder="请输入库位名称"
               />
             </el-form-item>
-          </el-col>
-        </el-row>
+          </el-descriptions-item>
+          <el-descriptions-item label="是否启用：">
+            <el-form-item
+              prop="enable"
+              style="margin-bottom: 0"
+            >
+              <el-switch
+                v-model="dataJson.tempJson.enable"
+                active-text="启用"
+                inactive-text="停用"
+                active-color="#13ce66"
+                inactive-color="#ff4949"
+              />
+            </el-form-item>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-form>
       <div
         slot="footer"
@@ -128,6 +126,16 @@
 .dialog-footer {
   text-align: center;
 }
+
+.required-mark {
+  position: relative;
+}
+
+.required-mark::before {
+  content: '*';
+  color: #f56c6c;
+  margin-right: 4px;
+}
 </style>
 <style >
 .el-input-group__append_select,
@@ -144,10 +152,11 @@ import deepCopy from 'deep-copy'
 import { insertApi } from '@/api/30_wms/bin/bin'
 import warehouseDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
 import locationDialog from '@/views/30_wms/location/dialog/10_list/index'
+import InputSearch from '@/components/40_input/inputSearch'
 
 export default {
   name: 'BinNewDialog',
-  components: { warehouseDialog, locationDialog },
+  components: { warehouseDialog, locationDialog, InputSearch },
   directives: { elDragDialog },
   props: {
     visible: {
@@ -165,6 +174,15 @@ export default {
       dialogConfig: {
         width: '850px',
         labelWidth: '150px'
+      },
+
+      // 描述列表样式配置
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
       },
       popSettingsData: {
         // 弹出的查询框参数设置
@@ -193,7 +211,8 @@ export default {
         tempJson: {
           name: '',
           warehouse_name: '',
-          location_name: ''
+          location_name: '',
+          enable: true
         },
         inputSettings: {
           maxLength: {

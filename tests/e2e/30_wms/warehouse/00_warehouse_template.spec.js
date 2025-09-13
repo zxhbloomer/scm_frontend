@@ -1,6 +1,6 @@
 // 仓库管理测试 - 直接在目标页面设置认证
 import { test, expect } from '@playwright/test';
-import { setupWMSAuth } from '../setup/auth.js';
+import { setupWMSAuth } from '../../../setup/auth.js';
 
 test.describe('WMS仓库管理', () => {
 

@@ -278,20 +278,20 @@
 .el-form-item .el-select {
   width: 100%;
 }
-.el-button-group {
-  margin-bottom: 10px;
-}
+.el-button-group,
 .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
 </style>
-<style >
+<style>
+/* 全局按钮样式 */
 .el-input-group__append_select,
 .el-input-group__append {
   color: #ffffff;
   background-color: #1890ff;
   border-color: #1890ff;
 }
+
 .el-input-group__append_reset {
   color: #ffffff;
   background-color: #f56c6c;
@@ -300,7 +300,7 @@
 </style>
 
 <script>
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, enableOrDisAbleApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/category/category'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/category/category'
 import Pagination from '@/components/Pagination'
 import elDragDialog from '@/directive/el-drag-dialog'
 import NewDialog from '../../dialog/20_new/index.vue'
@@ -308,11 +308,10 @@ import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
 import deepCopy from 'deep-copy'
 import permission from '@/directive/permission/index.js' // 权限判断指令
-import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 
 export default {
-  components: { Pagination, NewDialog, EditDialog, ViewDialog, FieldHelp, FloatMenu },
+  components: { Pagination, NewDialog, EditDialog, ViewDialog, FloatMenu },
   directives: { elDragDialog, permission },
   props: {
     data: {
@@ -331,8 +330,7 @@ export default {
           // 翻页条件
           pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
           // 查询条件
-          name: '',
-          config_key: ''
+          name: ''
         },
         // 分页控件的json
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
@@ -340,11 +338,9 @@ export default {
         listData: null,
         // 单条数据 json
         currentJson: null,
-        tempJson: null,
         inputSettings: {
           maxLength: {
             name: 20,
-            config_key: 20,
             value: 50,
             descr: 200
           }
@@ -421,17 +417,12 @@ export default {
       ]
     }
   },
-  // 监听器
-  watch: {
-  },
   created () {
     // 设置页面标识，让FloatMenu组件能够正确管理列配置
     this.$options.name = this.$route.meta.page_code
 
     // 初始化查询
     this.getDataList()
-    // 数据初始化
-    this.dataJson.tempJson = this.$options.data.call(this).dataJson.tempJson
   },
   methods: {
     // 获取标签位置 - 与仓库管理一致
@@ -458,7 +449,10 @@ export default {
     // 行双点击，仅在dialog中有效
     handleRowDbClick (row) {
       this.dataJson.rowIndex = this.getRowIndex(row)
-      var _data = deepCopy(row)
+      // 设置选中数据到store，用于dialog获取
+      this.$store.dispatch('popUpSearchDialog/selectedDataJson', Object.assign({}, row))
+      // 触发dialog的双击事件
+      this.$emit('rowDbClick', row)
     },
     handleSearch () {
       // 查询
@@ -522,7 +516,10 @@ export default {
     // 点击按钮 更新
     handleUpdate () {
       if (this.dataJson.currentJson === null || this.dataJson.currentJson.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
+        this.$alert('请在表格中选择数据进行修改', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        })
         return
       }
       // 更新
@@ -532,7 +529,10 @@ export default {
     // 查看
     handleView () {
       if (this.dataJson.currentJson === null || this.dataJson.currentJson.id === undefined) {
-        this.showErrorMsg('请选择一条数据')
+        this.$alert('请在表格中选择数据进行查看', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        })
         return
       }
       this.popSettings.view.data = Object.assign({}, this.dataJson.currentJson)
@@ -555,14 +555,28 @@ export default {
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
-        // 构造单行ID参数数组（参考现有标准模式）
-        const selectionJson = [{ id: this.dataJson.currentJson.id }]
+        // 构造单个类别对象参数
+        const categoryData = { id: this.dataJson.currentJson.id }
 
         // 设置加载状态
         this.settings.loading = true
 
         // 调用启用API
-        enabledSelectionApi(selectionJson).then(response => {
+        enabledSelectionApi(categoryData).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 在列表中找到对应的行并更新
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步更新当前选中行数据，保持状态一致性
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           // 成功通知
           this.$notify({
             title: '启用成功',
@@ -570,8 +584,6 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 刷新列表数据
-          this.getDataList()
         }).catch(error => {
           // 失败通知
           this.$notify({
@@ -606,14 +618,28 @@ export default {
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
-        // 构造单行ID参数数组（参考现有标准模式）
-        const selectionJson = [{ id: this.dataJson.currentJson.id }]
+        // 构造单个类别对象参数
+        const categoryData = { id: this.dataJson.currentJson.id }
 
         // 设置加载状态
         this.settings.loading = true
 
         // 调用停用API
-        disAbledSelectionApi(selectionJson).then(response => {
+        disAbledSelectionApi(categoryData).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 在列表中找到对应的行并更新
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步更新当前选中行数据，保持状态一致性
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           // 成功通知
           this.$notify({
             title: '停用成功',
@@ -621,8 +647,6 @@ export default {
             type: 'success',
             duration: this.settings.duration
           })
-          // 刷新列表数据
-          this.getDataList()
         }).catch(error => {
           // 失败通知
           this.$notify({
@@ -686,10 +710,20 @@ export default {
       if (val.return_flag) {
         this.popSettings.edit.visible = false
 
-        // 设置到table中绑定的json数据源
-        this.dataJson.listData.splice(this.dataJson.rowIndex, 1, val.data.data)
-        // 设置到currentjson中
-        this.dataJson.currentJson = Object.assign({}, val.data.data)
+        // 获取更新后的数据
+        const updatedRecord = val.data.data
+
+        // 在列表中找到对应的行并更新（与启用/停用按钮保持一致的处理方式）
+        const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+        if (index !== -1) {
+          this.$set(this.dataJson.listData, index, updatedRecord)
+        }
+
+        // 同步更新当前选中行数据，保持状态一致性
+        if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+          this.dataJson.currentJson = Object.assign({}, updatedRecord)
+        }
+
         this.$notify({
           title: '更新处理成功',
           message: val.data.message,
@@ -706,48 +740,6 @@ export default {
       }
     },
     // ------------------编辑弹出框 end--------------------
-    // 启用/停用
-    handledEnableOrDisAbleApi (row) {
-      let _message = ''
-      const _value = row.enable
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-      if (_value === true) {
-        _message = '是否要启用该条数据？'
-      } else {
-        _message = '是否要停用该条数据？'
-      }
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        enableOrDisAbleApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.enable = !row.enable
-        }).finally(() => {
-          this.popSettingsData.dialogFormVisible = false
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.enable = !row.enable
-      })
-    },
     handleCurrentChange (row) {
       if (row === null || row === undefined) {
         // 处理null行的情况（表格排序、数据清空等）
@@ -878,6 +870,20 @@ export default {
       this.settings.loading = true
       // 开始导出
       exportAllApi(this.dataJson.searchForm).then(response => {
+        this.downloadExcelFile(response, '类别信息全部导出')
+        this.$notify({
+          title: '导出成功',
+          message: '类别数据已成功导出到Excel文件',
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
       }).finally(() => {
         this.settings.loading = false
       })
@@ -891,9 +897,54 @@ export default {
       const searchData = { ids: selectionIds }
       // 开始导出
       exportSelectionApi(searchData).then(response => {
+        this.downloadExcelFile(response, `类别信息选中导出_${selectionIds.length}条`)
+        this.$notify({
+          title: '导出成功',
+          message: `已成功导出${selectionIds.length}条类别数据到Excel文件`,
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+
+    // 文件下载处理方法
+    downloadExcelFile (response, fileName) {
+      try {
+        // 创建blob对象
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${fileName}_${new Date().getTime()}.xlsx`
+
+        // 触发下载
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 释放URL对象
+        URL.revokeObjectURL(link.href)
+      } catch (error) {
+        console.error('文件下载失败:', error)
+        this.$notify({
+          title: '下载失败',
+          message: '文件下载过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
     }
   }
 }

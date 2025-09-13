@@ -213,4 +213,7 @@ export default {
 </script>
 
 <style scoped>
+.dialog-footer {
+  text-align: center;
+}
 </style>

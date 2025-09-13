@@ -24,56 +24,38 @@
         :label-width="dialogConfig.labelWidth"
       >
         <br>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="仓库名称：">
-              <span class="view-text">{{ dataJson.tempJson.warehouse_name || '-' }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="库区名称：">
-              <span class="view-text">{{ dataJson.tempJson.location_name || '-' }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="库位名称：">
-              <span class="view-text">{{ dataJson.tempJson.name || '-' }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="启用状态：">
-              <span class="view-text" :class="dataJson.tempJson.enable ? 'status-enabled' : 'status-disabled'">
-                {{ enableStatusText }}
-              </span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="创建人：">
-              <span class="view-text">{{ dataJson.tempJson.c_name || '-' }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="创建时间：">
-              <span class="view-text">{{ formattedCreateTime || '-' }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row>
-          <el-col :span="12">
-            <el-form-item label="更新人：">
-              <span class="view-text">{{ dataJson.tempJson.u_name || '-' }}</span>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="更新时间：">
-              <span class="view-text">{{ formattedUpdateTime || '-' }}</span>
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-descriptions
+          :content-style="contentStyle"
+          :label-style="labelStyle"
+          :column="2"
+        >
+          <el-descriptions-item label="仓库名称：">
+            <span class="view-text">{{ dataJson.tempJson.warehouse_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="库区名称：">
+            <span class="view-text">{{ dataJson.tempJson.location_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="库位名称：">
+            <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="启用状态：">
+            <span class="view-text" :class="dataJson.tempJson.enable ? 'status-enabled' : 'status-disabled'">
+              {{ enableStatusText }}
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建人：">
+            <span class="view-text">{{ dataJson.tempJson.c_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="创建时间：">
+            <span class="view-text">{{ formattedCreateTime || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="更新人：">
+            <span class="view-text">{{ dataJson.tempJson.u_name || '--' }}</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="更新时间：">
+            <span class="view-text">{{ formattedUpdateTime || '--' }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
       </el-form>
       <div
         slot="footer"
@@ -93,6 +75,10 @@
 <style scoped>
 .el-form-item .el-select {
   width: 100%;
+}
+
+.dialog-footer {
+  text-align: center;
 }
 
 /* 查看页面文本样式 */
@@ -140,6 +126,15 @@ export default {
       dialogConfig: {
         width: '850px',
         labelWidth: '150px'
+      },
+
+      // 描述列表样式配置
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
       },
       dataJson: {
         // 单条数据 json

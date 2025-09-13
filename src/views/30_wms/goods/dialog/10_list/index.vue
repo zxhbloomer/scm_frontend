@@ -34,8 +34,6 @@
     <!-- 嵌入主业务组件 -->
     <goods-list
       ref="goodsListRef"
-      :me-dialog-status="true"
-      :data-model="dataModel"
       @rowDbClick="handleRowDbClick"
     />
 
@@ -105,11 +103,6 @@ export default {
     multiple: {
       type: Boolean,
       default: false
-    },
-    // 数据模型标识
-    dataModel: {
-      type: String,
-      default: 'selection'
     },
     // 预选数据
     preSelectedData: {

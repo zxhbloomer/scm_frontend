@@ -245,6 +245,9 @@
 .perfect_popper .el-form-item--mini.el-form-item {
   margin-bottom: 10px;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

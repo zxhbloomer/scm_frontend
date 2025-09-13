@@ -25,164 +25,104 @@
         <br>
 
         <el-tab-pane label="基本信息">
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="仓库编码：">
-                <span class="view-text">{{ dataJson.tempJson.code || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="仓库名称：">
-                <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="仓库简称：">
-                <span class="view-text">{{ dataJson.tempJson.short_name || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="仓库类型：">
-                <span class="view-text">{{ getWarehouseTypeText(dataJson.tempJson.warehouse_type) || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="监管企业：">
-                <span class="view-text">{{ dataJson.tempJson.charge_company_name || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="运营企业：">
-                <span class="view-text">{{ dataJson.tempJson.operate_company_name || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="联系人：">
-                <span class="view-text">{{ dataJson.tempJson.contact_person || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="联系手机：">
-                <span class="view-text">{{ dataJson.tempJson.mobile_phone || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="省市区：">
-                <span class="view-text">{{ getCascaderText() || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="片区：">
-                <span class="view-text">{{ getZoneText(dataJson.tempJson.zone) || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-form-item label="详细地址：">
-            <div class="view-textarea">{{ dataJson.tempJson.address || '--' }}</div>
-          </el-form-item>
+          <el-descriptions
+            :content-style="contentStyle"
+            :label-style="labelStyle"
+            :column="2"
+          >
+            <el-descriptions-item label="仓库编码：">
+              <span class="view-text">{{ dataJson.tempJson.code || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="仓库名称：">
+              <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="仓库简称：">
+              <span class="view-text">{{ dataJson.tempJson.short_name || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="仓库类型：">
+              <span class="view-text">{{ getWarehouseTypeText(dataJson.tempJson.warehouse_type) || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="监管企业：">
+              <span class="view-text">{{ dataJson.tempJson.charge_company_name || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="运营企业：">
+              <span class="view-text">{{ dataJson.tempJson.operate_company_name || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="联系人：">
+              <span class="view-text">{{ dataJson.tempJson.contact_person || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="联系手机：">
+              <span class="view-text">{{ dataJson.tempJson.mobile_phone || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="省市区：">
+              <span class="view-text">{{ getCascaderText() || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="片区：">
+              <span class="view-text">{{ getZoneText(dataJson.tempJson.zone) || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="详细地址：" :span="2">
+              <div class="view-textarea">{{ dataJson.tempJson.address || '--' }}</div>
+            </el-descriptions-item>
+          </el-descriptions>
         </el-tab-pane>
 
         <el-tab-pane label="其他信息">
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="仓库面积：">
-                <span class="view-text">{{ dataJson.tempJson.area || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="仓库容积：">
-                <span class="view-text">{{ dataJson.tempJson.warehouse_capacity || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="经度信息：">
-                <span class="view-text">{{ dataJson.tempJson.longitude || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="纬度信息：">
-                <span class="view-text">{{ dataJson.tempJson.latitude || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="启用日期：">
-                <span class="view-text">{{ dataJson.tempJson.start_dt || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="到期日期：">
-                <span class="view-text">{{ dataJson.tempJson.end_dt || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="每日收货开始时间：">
-                <span class="view-text">{{ dataJson.tempJson.receive_start_time || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="每日收货结束时间：">
-                <span class="view-text">{{ dataJson.tempJson.receive_end_time || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="每日发货开始时间：">
-                <span class="view-text">{{ dataJson.tempJson.deliver_start_time || '--' }}</span>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="每日发货结束时间：">
-                <span class="view-text">{{ dataJson.tempJson.deliver_end_time || '--' }}</span>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="是否启用：">
-                <el-tag :type="dataJson.tempJson.enable === 1 || dataJson.tempJson.enable === true ? 'success' : 'danger'">
-                  {{ dataJson.tempJson.enable === 1 || dataJson.tempJson.enable === true ? '启用' : '禁用' }}
-                </el-tag>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="是否质检仓：">
-                <el-tag :type="dataJson.tempJson.warehouse_check === 1 || dataJson.tempJson.warehouse_check === true ? 'success' : 'info'">
-                  {{ dataJson.tempJson.warehouse_check === 1 || dataJson.tempJson.warehouse_check === true ? '是' : '否' }}
-                </el-tag>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="启用库区：">
-                <el-tag :type="dataJson.tempJson.enable_location === 1 || dataJson.tempJson.enable_location === true ? 'success' : 'info'">
-                  {{ dataJson.tempJson.enable_location === 1 || dataJson.tempJson.enable_location === true ? '是' : '否' }}
-                </el-tag>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="启用库位：">
-                <el-tag :type="dataJson.tempJson.enable_bin === 1 || dataJson.tempJson.enable_bin === true ? 'success' : 'info'">
-                  {{ dataJson.tempJson.enable_bin === 1 || dataJson.tempJson.enable_bin === true ? '是' : '否' }}
-                </el-tag>
-              </el-form-item>
-            </el-col>
-          </el-row>
+          <el-descriptions
+            :content-style="contentStyle"
+            :label-style="labelStyle"
+            :column="2"
+          >
+            <el-descriptions-item label="仓库面积：">
+              <span class="view-text">{{ dataJson.tempJson.area || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="仓库容积：">
+              <span class="view-text">{{ dataJson.tempJson.warehouse_capacity || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="经度信息：">
+              <span class="view-text">{{ dataJson.tempJson.longitude || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="纬度信息：">
+              <span class="view-text">{{ dataJson.tempJson.latitude || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="启用日期：">
+              <span class="view-text">{{ dataJson.tempJson.start_dt || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="到期日期：">
+              <span class="view-text">{{ dataJson.tempJson.end_dt || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="每日收货开始时间：">
+              <span class="view-text">{{ dataJson.tempJson.receive_start_time || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="每日收货结束时间：">
+              <span class="view-text">{{ dataJson.tempJson.receive_end_time || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="每日发货开始时间：">
+              <span class="view-text">{{ dataJson.tempJson.deliver_start_time || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="每日发货结束时间：">
+              <span class="view-text">{{ dataJson.tempJson.deliver_end_time || '--' }}</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="是否启用：">
+              <el-tag :type="dataJson.tempJson.enable === 1 || dataJson.tempJson.enable === true ? 'success' : 'danger'">
+                {{ dataJson.tempJson.enable === 1 || dataJson.tempJson.enable === true ? '启用' : '禁用' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="是否质检仓：">
+              <el-tag :type="dataJson.tempJson.warehouse_check === 1 || dataJson.tempJson.warehouse_check === true ? 'success' : 'info'">
+                {{ dataJson.tempJson.warehouse_check === 1 || dataJson.tempJson.warehouse_check === true ? '是' : '否' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="启用库区：">
+              <el-tag :type="dataJson.tempJson.enable_location === 1 || dataJson.tempJson.enable_location === true ? 'success' : 'info'">
+                {{ dataJson.tempJson.enable_location === 1 || dataJson.tempJson.enable_location === true ? '是' : '否' }}
+              </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="启用库位：">
+              <el-tag :type="dataJson.tempJson.enable_bin === 1 || dataJson.tempJson.enable_bin === true ? 'success' : 'info'">
+                {{ dataJson.tempJson.enable_bin === 1 || dataJson.tempJson.enable_bin === true ? '是' : '否' }}
+              </el-tag>
+            </el-descriptions-item>
+          </el-descriptions>
         </el-tab-pane>
       </el-tabs>
     </el-form>
@@ -220,6 +160,12 @@
 .dialog-footer {
   text-align: center;
 }
+.el-form-item--mini.el-form-item {
+  margin-bottom: 0px;
+}
+.el-button-group {
+  margin-bottom: 15px;
+}
 </style>
 
 <script>
@@ -241,6 +187,13 @@ export default {
   },
   data () {
     return {
+      contentStyle: {
+        width: '15%'
+      },
+      labelStyle: {
+        width: '10%',
+        'text-align': 'right'
+      },
       dataJson: {
         tempJson: {
           id: undefined,

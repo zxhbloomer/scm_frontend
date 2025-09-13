@@ -50,7 +50,7 @@ export function insertApi (data) {
 
 /**
  * 启用选择数据
- * @param {*} data
+ * @param {Object} data 库区对象
  */
 export function enabledSelectionApi (data) {
   return request({
@@ -62,23 +62,11 @@ export function enabledSelectionApi (data) {
 
 /**
  * 停用选择数据
- * @param {*} data
+ * @param {Object} data 库区对象
  */
 export function disAbledSelectionApi (data) {
   return request({
     url: '/api/v1/location/disabled',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 停用/停用 选择数据
- * @param {*} data
- */
-export function enableOrDisAbleApi (data) {
-  return request({
-    url: '/api/v1/location/enable',
     method: 'post',
     data
   })

@@ -46,6 +46,10 @@
   height: 70vh;
   overflow: auto;
 }
+
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>

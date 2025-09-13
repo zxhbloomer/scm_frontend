@@ -66,6 +66,27 @@
             />
           </el-form-item>
         </el-descriptions-item>
+        <el-descriptions-item>
+          <div
+            slot="label"
+          >
+            状态：
+          </div>
+          <el-form-item
+            prop="enable"
+          >
+            <el-switch
+              v-model="dataJson.tempJson.enable"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="启用"
+              inactive-text="停用"
+              :active-value="true"
+              :inactive-value="false"
+            />
+          </el-form-item>
+        </el-descriptions-item>
+        <el-descriptions-item />
       </el-descriptions>
     </el-form>
     <div
@@ -91,12 +112,11 @@
 
 <script>
 import elDragDialog from '@/directive/el-drag-dialog'
-import InputSearch from '@/components/40_input/inputSearch'
 import deepCopy from 'deep-copy'
 import { insertApi } from '@/api/30_wms/category/category'
 
 export default {
-  components: { InputSearch },
+  components: {},
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -120,7 +140,8 @@ export default {
         // 单条数据 json
         tempJson: {
           code: '',
-          name: ''
+          name: '',
+          enable: true // 默认启用状态，符合新建类别的业务逻辑
         },
         inputSettings: {
           maxLength: {
@@ -143,23 +164,33 @@ export default {
         rules: {
           name: [
             { required: true, message: '请输入类别名称', trigger: 'change' }
-          ],
+          ]
         }
       }
     }
   },
+  computed: {
+    listenVisible () {
+      return this.visible
+    }
+  },
   // 监听器
   watch: {
-    // 监听弹窗显示状态，显示时自动设置焦点
-    visible (newVal) {
-      if (newVal) {
-        // 弹窗显示时，设置焦点到类别名称输入框
-        this.$nextTick(() => {
-          if (this.$refs.categoryNameInput) {
-            this.$refs.categoryNameInput.focus()
-          }
-        })
-      }
+    // 监听弹窗显示状态
+    listenVisible: {
+      handler (newVal) {
+        if (newVal) {
+          // 每次弹窗显示时都重新初始化数据
+          this.init()
+          // 设置焦点到类别名称输入框
+          this.$nextTick(() => {
+            if (this.$refs.categoryNameInput) {
+              this.$refs.categoryNameInput.focus()
+            }
+          })
+        }
+      },
+      immediate: true
     },
     // 监听表单数据变化，有变化时启用确定按钮
     'dataJson.tempJson': {
@@ -172,9 +203,6 @@ export default {
       deep: true
     }
   },
-  created () {
-    this.init()
-  },
   methods: {
     // 初始化处理
     init () {
@@ -184,7 +212,7 @@ export default {
     initInsertModel () {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.$options.data.call(this).dataJson.tempJson)
-      
+
       // 确保按钮初始状态为禁用，并标记初始化完成
       this.$nextTick(() => {
         this.settings.btnDisabledStatus.disabledInsert = true

@@ -86,7 +86,7 @@ export function deleteApi (data) {
 
 /**
  * 启用选择数据
- * @param {*} data
+ * @param {Object} data 仓库对象
  */
 export function enabledSelectionApi (data) {
   return request({
@@ -98,23 +98,11 @@ export function enabledSelectionApi (data) {
 
 /**
  * 停用选择数据
- * @param {*} data
+ * @param {Object} data 仓库对象
  */
 export function disAbledSelectionApi (data) {
   return request({
     url: '/api/v1/warehouse/disabled',
-    method: 'post',
-    data
-  })
-}
-
-/**
- * 停用/停用 选择数据
- * @param {*} data
- */
-export function enableOrDisAbleApi (data) {
-  return request({
-    url: '/api/v1/warehouse/enable',
     method: 'post',
     data
   })

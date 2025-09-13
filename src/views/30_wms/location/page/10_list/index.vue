@@ -229,6 +229,19 @@
         </template>
       </el-table-column>
 
+      <!-- 默认库位列 -->
+      <el-table-column
+        :auto-fit="true"
+        min-width="80"
+        align="center"
+        prop="is_default"
+        label="默认库位"
+      >
+        <template slot-scope="{row}">
+          {{ row.is_default ? '是' : '否' }}
+        </template>
+      </el-table-column>
+
       <!-- 标准化系统字段 -->
       <el-table-column
         :auto-fit="true"
@@ -342,7 +355,7 @@
 </style>
 
 <script>
-import { getListApi, enableOrDisAbleApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/location/location'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/location/location'
 import Pagination from '@/components/Pagination'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
@@ -624,201 +637,121 @@ export default {
 
     // 启用按钮
     handleEnabled () {
-      // 检查是否有选中的当前行
+      // 参数验证：检查是否选中了行
       if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
-        this.$alert('请先选择一条数据进行启用操作', '未选择数据错误', {
+        this.$alert('请在表格中选择数据进行启用', '未选择数据错误', {
           confirmButtonText: '关闭',
           type: 'error'
         })
         return
       }
 
-      // 单条启用操作
-      this.handleEnabledSingleData()
-    },
-
-    // 选中数据启用
-    handleEnabledSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
-      // 开始启用
-      enabledSelectionApi(selectionJson).then((_data) => {
-        this.$notify({
-          title: '启用成功',
-          message: _data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-        // loading
-      }, (_error) => {
-        this.$notify({
-          title: '启用错误',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-
-    // 单条数据启用
-    handleEnabledSingleData () {
-      const row = this.dataJson.currentJson
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-
-      this.$confirm('是否要启用该条数据？', '确认信息', {
+      // 确认对话框
+      this.$confirm('是否要启用选中的数据？', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
+        // 设置加载状态
         this.settings.loading = true
-        enabledSelectionApi(selectionJson).then((_data) => {
+
+        // 调用启用API - 改为单对象参数
+        enabledSelectionApi({ id: this.dataJson.currentJson.id }).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 直接更新列表项
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步当前选中项
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
+          // 成功通知
           this.$notify({
             title: '启用成功',
-            message: _data.message,
+            message: response.message,
             type: 'success',
             duration: this.settings.duration
           })
-          this.getDataList()
-        }).catch((_error) => {
+        }).catch(error => {
+          // 失败通知
           this.$notify({
-            title: '启用错误',
-            message: _error.message,
+            title: '启用失败',
+            message: error.message,
             type: 'error',
             duration: this.settings.duration
           })
         }).finally(() => {
+          // 清除加载状态
           this.settings.loading = false
         })
+      }).catch(() => {
+        // 用户取消操作，无需处理
       })
     },
 
     // 停用按钮
     handleDisAbled () {
-      // 检查是否有选中的当前行
+      // 参数验证：检查是否选中了行
       if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
-        this.$alert('请先选择一条数据进行停用操作', '未选择数据错误', {
+        this.$alert('请在表格中选择数据进行停用', '未选择数据错误', {
           confirmButtonText: '关闭',
           type: 'error'
         })
         return
       }
 
-      // 单条停用操作
-      this.handleDisAbledSingleData()
-    },
-
-    // 停用数据删除
-    handleDisAbledSelectionData () {
-      // loading
-      this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push({ 'id': value.id })
-      })
-      // 开始停用
-      disAbledSelectionApi(selectionJson).then((_data) => {
-        this.$notify({
-          title: '停用成功',
-          message: _data.message,
-          type: 'success',
-          duration: this.settings.duration
-        })
-        this.getDataList()
-        // loading
-      }, (_error) => {
-        this.$notify({
-          title: '停用错误',
-          message: _error.message,
-          type: 'error',
-          duration: this.settings.duration
-        })
-      }).finally(() => {
-        this.settings.loading = false
-      })
-    },
-
-    // 单条数据停用
-    handleDisAbledSingleData () {
-      const row = this.dataJson.currentJson
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-
-      this.$confirm('是否要停用该条数据？', '确认信息', {
+      // 确认对话框
+      this.$confirm('是否要停用选中的数据？', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
+        // 设置加载状态
         this.settings.loading = true
-        disAbledSelectionApi(selectionJson).then((_data) => {
+
+        // 调用停用API - 改为单对象参数
+        disAbledSelectionApi({ id: this.dataJson.currentJson.id }).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 直接更新列表项
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步当前选中项
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
+          // 成功通知
           this.$notify({
             title: '停用成功',
-            message: _data.message,
+            message: response.message,
             type: 'success',
             duration: this.settings.duration
           })
-          this.getDataList()
-        }).catch((_error) => {
+        }).catch(error => {
+          // 失败通知
           this.$notify({
-            title: '停用错误',
-            message: _error.message,
+            title: '停用失败',
+            message: error.message,
             type: 'error',
             duration: this.settings.duration
           })
         }).finally(() => {
+          // 清除加载状态
           this.settings.loading = false
         })
-      })
-    },
-
-    // 启用/停用开关
-    handledEnableOrDisAbleApi (row) {
-      let _message = ''
-      const _value = row.enable
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-
-      if (_value === true) {
-        _message = '是否要启用该条数据？'
-      } else {
-        _message = '是否要停用该条数据？'
-      }
-
-      // 选择全部的时候
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        // loading
-        this.settings.loading = true
-        enableOrDisAbleApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.enable = !row.enable
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.enable = !row.enable
+      }).catch(() => {
+        // 用户取消操作，无需处理
       })
     },
 
@@ -827,19 +760,30 @@ export default {
       this.dataJson.currentJson.index = this.getRowIndex(row)
 
       if (this.dataJson.currentJson.id !== undefined) {
-        // this.settings.btnShowStatus.doInsert = true
-        this.settings.btnShowStatus.showUpdate = true
-        this.settings.btnShowStatus.showDel = true
+        // 检查是否为默认库区 - 默认库区不允许修改、删除、启用、停用操作
+        const isDefaultLocation = row.is_default === true
 
-        // 智能控制启用/停用按钮：根据当前行状态决定哪个按钮可用
-        if (row.enable) {
-          // 当前行已启用，只能点击"停用"按钮
+        if (isDefaultLocation) {
+          // 默认库区：禁用所有修改操作按钮
+          this.settings.btnShowStatus.showUpdate = false
+          this.settings.btnShowStatus.showDel = false
           this.settings.btnShowStatus.showEnable = false
-          this.settings.btnShowStatus.showDisable = true
-        } else {
-          // 当前行已停用，只能点击"启用"按钮
-          this.settings.btnShowStatus.showEnable = true
           this.settings.btnShowStatus.showDisable = false
+        } else {
+          // 非默认库区：正常的按钮控制逻辑
+          this.settings.btnShowStatus.showUpdate = true
+          this.settings.btnShowStatus.showDel = true
+
+          // 智能控制启用/停用按钮：根据当前行状态决定哪个按钮可用
+          if (row.enable) {
+            // 当前行已启用，只能点击"停用"按钮
+            this.settings.btnShowStatus.showEnable = false
+            this.settings.btnShowStatus.showDisable = true
+          } else {
+            // 当前行已停用，只能点击"启用"按钮
+            this.settings.btnShowStatus.showEnable = true
+            this.settings.btnShowStatus.showDisable = false
+          }
         }
       } else {
         // this.settings.btnShowStatus.doInsert = false
@@ -955,13 +899,25 @@ export default {
 
     // 处理插入回调
     doInsertModelCallBack (val) {
+      console.log('新增回调数据:', val)
       if (val.return_flag) {
         this.popSettings.new.visible = false
+        // 检查数据结构
+        console.log('API响应数据:', val.data)
+        console.log('要添加的数据:', val.data.data)
+
         // 设置到table中绑定的json数据源
-        this.dataJson.listData.unshift(val.data.data)
+        if (val.data && val.data.data) {
+          this.dataJson.listData.unshift(val.data.data)
+          console.log('数据已添加到列表，当前列表长度:', this.dataJson.listData.length)
+        } else {
+          console.warn('数据结构异常，尝试使用 val.data:', val.data)
+          this.dataJson.listData.unshift(val.data)
+        }
+
         this.$notify({
           title: '新增处理成功',
-          message: val.data.message,
+          message: val.data.message || '新增成功',
           type: 'success',
           duration: this.settings.duration
         })

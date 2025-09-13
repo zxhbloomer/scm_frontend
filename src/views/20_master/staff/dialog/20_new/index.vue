@@ -744,6 +744,9 @@
   min-height: 32px;
   line-height: 24px;
 }
+.dialog-footer {
+  text-align: center;
+}
 </style>
 
 <script>
