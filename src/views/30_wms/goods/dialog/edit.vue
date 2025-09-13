@@ -35,48 +35,6 @@
           border
           style="padding-right: 10px;padding-left: 10px;"
         >
-          <el-descriptions-item>
-            <div
-              slot="label"
-              class="required-mark"
-            >
-              所属板块
-            </div>
-
-            <el-form-item
-              prop="business_name"
-              label-width="0"
-            >
-
-              <input-search
-                v-model.trim="dataJson.tempJson.business_name"
-                :disabled="isViewModel"
-                @onInputSearch="handleBusinessDialog"
-              />
-            </el-form-item>
-          </el-descriptions-item>
-
-          <el-descriptions-item>
-            <div
-              slot="label"
-              class="required-mark"
-            >
-              所属行业
-            </div>
-
-            <el-form-item
-              prop="industry_name"
-              label-width="0"
-            >
-
-              <input-search
-                v-model.trim="dataJson.tempJson.industry_name"
-                :disabled="isViewModel"
-                @onInputSearch="handleIndustryDialog"
-              />
-
-            </el-form-item>
-          </el-descriptions-item>
 
           <el-descriptions-item>
             <div
@@ -316,14 +274,10 @@ export default {
         },
         // 单条数据 json的，初始化原始数据
         tempJsonOriginal: {
-          business_name: '',
-          industry_name: '',
           category_name: ''
         },
         // 单条数据 json
         tempJson: {
-          business_name: '',
-          industry_name: '',
           category_name: ''
         },
         inputSettings: {
@@ -357,12 +311,6 @@ export default {
           ],
           category_name: [
             { required: true, message: '请选择类别', trigger: 'change' }
-          ],
-          business_name: [
-            { required: true, message: '请选择板块', trigger: 'change' }
-          ],
-          industry_name: [
-            { required: true, message: '请选择行业', trigger: 'change' }
           ],
           code: [
             { required: true, message: '请输入物料编码', trigger: 'change' }
@@ -576,7 +524,6 @@ export default {
       this.popSettingsData.searchDialogDataOne.selectedDataJson = val
       this.popSettingsData.searchDialogDataOne.visible = false
       this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.business_name = val.name
     },
     // 板块：关闭对话框：取消
     handleCompanyCloseCancel () {
@@ -596,7 +543,6 @@ export default {
       this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
       this.popSettingsData.searchDialogDataTwo.visible = false
       this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.industry_name = val.name
     },
     // 行业：关闭对话框：取消
     handleIndustryCloseCancel () {

@@ -45,50 +45,7 @@
               :closable="false"
             />
             <br>
-            <el-row>
-              <el-col :span="12">
-                <el-form-item
-                  label="所属板块："
-                  prop="business_name"
-                >
-                  <el-input
-                    v-model.trim="dataJson.tempJson.business_name"
-                    disabled
-                  >
-                    <el-button
-                      slot="append"
-                      ref="selectOne"
-                      icon="el-icon-search"
-                      :disabled="isViewModel"
-                      @click="handleBusinessDialog()"
-                    >
-                      选择
-                    </el-button>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item
-                  label="所属行业："
-                  prop="industry_name"
-                >
-                  <el-input
-                    v-model.trim="dataJson.tempJson.industry_name"
-                    disabled
-                  >
-                    <el-button
-                      slot="append"
-                      ref="selectOne"
-                      icon="el-icon-search"
-                      :disabled="isViewModel"
-                      @click="handleIndustryDialog()"
-                    >
-                      选择
-                    </el-button>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
+            <el-row />
             <el-row>
               <el-col :span="12">
                 <el-form-item
@@ -526,12 +483,6 @@ export default {
           ],
           category_name: [
             { required: true, message: '请选择类别', trigger: 'change' }
-          ],
-          business_name: [
-            { required: true, message: '请选择板块', trigger: 'change' }
-          ],
-          industry_name: [
-            { required: true, message: '请选择行业', trigger: 'change' }
           ]
         },
         rules: {
@@ -757,47 +708,8 @@ export default {
       })
     },
     handleTabsClick (tab, event) { },
-    // 板块
-    handleBusinessDialog () {
-      this.popSettingsData.searchDialogDataOne.visible = true
-    },
-    // 板块：关闭对话框：确定
-    handleCompanyCloseOk (val) {
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = val
-      this.popSettingsData.searchDialogDataOne.visible = false
-      this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.business_name = val.name
-    },
-    // 板块：关闭对话框：取消
-    handleCompanyCloseCancel () {
-      this.popSettingsData.searchDialogDataOne.visible = false
-    },
-    // 行业
-    handleIndustryDialog () {
-      if (this.popSettingsData.searchDialogDataOne.selectedDataJson.id == null) {
-        this.showErrorMsg('请先选择板块')
-        return
-      }
-      this.popSettingsData.searchDialogDataTwo.data = this.popSettingsData.searchDialogDataOne.selectedDataJson
-      this.popSettingsData.searchDialogDataTwo.visible = true
-    },
-    // 行业：关闭对话框：确定
-    handleIndustryCloseOk (val) {
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
-      this.popSettingsData.searchDialogDataTwo.visible = false
-      this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.industry_name = val.name
-    },
-    // 行业：关闭对话框：取消
-    handleIndustryCloseCancel () {
-      this.popSettingsData.searchDialogDataTwo.visible = false
-    },
     // 类别
     handleCategoryDialog () {
-      if (this.popSettingsData.searchDialogDataTwo.selectedDataJson.id == null) {
-        this.showErrorMsg('请先选择行业')
-        return
-      }
       this.popSettingsData.searchDialogDataThree.data = this.popSettingsData.searchDialogDataOne.selectedDataJson
       this.popSettingsData.searchDialogDataThree.visible = true
     },

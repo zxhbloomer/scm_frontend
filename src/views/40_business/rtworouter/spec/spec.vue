@@ -71,22 +71,6 @@
         :sort-orders="settings.sortOrders"
         :auto-fit="true"
         min-width="130"
-        prop="business_name"
-        label="所属板块"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
-        prop="industry_name"
-        label="所属行业"
-      />
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
         prop="category_name"
         label="所属类别"
       />

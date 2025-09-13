@@ -42,7 +42,6 @@ export default {
     'time': function (newVal, oldVal) {
       if (newVal === 0) {
         // this.$router.push({ path: this.des_page, query: {}})
-        console.log('+++++++++++++++' + this.protocol + this.host + '/#' + this.des_page)
         // location.href = this.protocol + '//' + this.host + '/#' + this.des_page
       }
     }

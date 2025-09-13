@@ -101,35 +101,26 @@
           </el-form-item>
         </el-descriptions-item>
 
-        <el-descriptions-item />
-      </el-descriptions>
-
-      <!-- 系统信息显示 -->
-      <el-descriptions
-        v-if="dataJson.tempJson.id"
-        title=""
-        :column="2"
-        :content-style="contentStyle"
-        :label-style="labelStyle"
-        direction="horizontal"
-        border
-        style="padding-right: 10px;padding-left: 10px;margin-top: 20px;"
-      >
         <el-descriptions-item>
-          <div slot="label">创建人</div>
-          <span>{{ dataJson.tempJson.c_name }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div slot="label">创建时间</div>
-          <span>{{ formatDateTime(dataJson.tempJson.c_time) }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div slot="label">更新人</div>
-          <span>{{ dataJson.tempJson.u_name }}</span>
-        </el-descriptions-item>
-        <el-descriptions-item>
-          <div slot="label">更新时间</div>
-          <span>{{ formatDateTime(dataJson.tempJson.u_time) }}</span>
+          <div
+            slot="label"
+          >
+            状态：
+          </div>
+          <el-form-item
+            prop="enable"
+            label-width="0"
+          >
+            <el-switch
+              v-model="dataJson.tempJson.enable"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="启用"
+              inactive-text="停用"
+              :active-value="true"
+              :inactive-value="false"
+            />
+          </el-form-item>
         </el-descriptions-item>
       </el-descriptions>
     </el-form>
@@ -224,10 +215,7 @@ export default {
           category_name: '',
           name: '',
           code: '',
-          c_name: '',
-          c_time: '',
-          u_name: '',
-          u_time: '',
+          enable: true,
           dbversion: 0
         },
         inputSettings: {
@@ -240,11 +228,13 @@ export default {
       settings: {
         loading: false,
         duration: 4000,
+        // 初始化完成标志
+        initialized: false,
         btnShowStatus: {
           showUpdate: true
         },
         btnDisabledStatus: {
-          disabledUpdate: false
+          disabledUpdate: true
         },
         rules: {
           category_name: [
@@ -256,6 +246,10 @@ export default {
           ],
           code: [
             { max: 50, message: '物料编码不能超过50个字符', trigger: 'blur' }
+          ],
+          enable: [
+            { required: true, message: '请选择启用状态', trigger: 'change' },
+            { type: 'boolean', message: '启用状态必须是有效的布尔值', trigger: 'change' }
           ]
         }
       },
@@ -277,9 +271,7 @@ export default {
       labelStyle: {
         width: '10%',
         'text-align': 'right'
-      },
-      // 原始数据（用于检测变更）
-      originalData: {}
+      }
     }
   },
   computed: {
@@ -295,6 +287,31 @@ export default {
         }
       },
       immediate: true
+    },
+    // 监听弹窗显示状态，显示时自动设置焦点
+    visible (newVal) {
+      if (newVal) {
+        // 弹窗显示时，设置焦点到物料名称输入框
+        this.$nextTick(() => {
+          if (this.$refs.refFocusOne) {
+            this.$refs.refFocusOne.focus()
+          }
+        })
+      } else {
+        // 弹窗关闭时，重置初始化状态
+        this.settings.initialized = false
+        this.settings.btnDisabledStatus.disabledUpdate = true
+      }
+    },
+    // 监听表单数据变化，有变化时启用确定按钮
+    'dataJson.tempJson': {
+      handler (newVal, oldVal) {
+        // 只有在初始化完成后才响应用户变化
+        if (this.settings.initialized) {
+          this.settings.btnDisabledStatus.disabledUpdate = false
+        }
+      },
+      deep: true
     }
   },
   methods: {
@@ -302,11 +319,19 @@ export default {
       // 初始化数据
       if (this.data) {
         this.dataJson.tempJson = deepCopy(this.data)
-        this.originalData = deepCopy(this.data)
       }
 
-      // 设置焦点
+      // 确保enable字段存在，如果不存在则设置默认值
+      if (this.dataJson.tempJson.enable === undefined || this.dataJson.tempJson.enable === null) {
+        this.dataJson.tempJson.enable = true
+      }
+
+      // 确保按钮初始状态为禁用，并标记初始化完成
       this.$nextTick(() => {
+        this.settings.btnDisabledStatus.disabledUpdate = true
+        this.settings.initialized = true
+
+        // 设置焦点
         if (this.$refs.refFocusOne) {
           this.$refs.refFocusOne.focus()
         }
@@ -328,13 +353,6 @@ export default {
     },
     handleCategoryCloseCancel () {
       this.popSettingsData.searchDialogDataThree.visible = false
-    },
-
-    // 检测数据是否有变更
-    hasDataChanged () {
-      const currentData = JSON.stringify(this.dataJson.tempJson)
-      const originalData = JSON.stringify(this.originalData)
-      return currentData !== originalData
     },
 
     // 提交更新
@@ -369,20 +387,9 @@ export default {
       })
     },
 
-    // 取消
+    // 取消按钮
     handleCancel () {
-      // 如果数据有变更，提示用户
-      if (this.hasDataChanged()) {
-        this.$confirm('数据已修改，确定要取消吗？', '确认信息', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.$emit('closeMeCancel')
-        })
-      } else {
-        this.$emit('closeMeCancel')
-      }
+      this.$emit('closeMeCancel')
     }
   }
 }

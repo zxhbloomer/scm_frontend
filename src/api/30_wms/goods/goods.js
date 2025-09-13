@@ -73,18 +73,6 @@ export function disAbledSelectionApi (data) {
 }
 
 /**
- * 停用/停用 选择数据
- * @param {*} data
- */
-export function enableOrDisAbleApi (data) {
-  return request({
-    url: '/api/v1/goods/enable',
-    method: 'post',
-    data
-  })
-}
-
-/**
  * 导出全部数据
  * @param {*} data
  */

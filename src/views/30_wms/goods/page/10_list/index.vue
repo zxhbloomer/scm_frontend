@@ -555,6 +555,7 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
+        // 多选操作后重新获取数据，保持和类别管理一致
         this.getDataList()
       }).catch((error) => {
         this.$notify({
@@ -595,6 +596,7 @@ export default {
           type: 'success',
           duration: this.settings.duration
         })
+        // 多选操作后重新获取数据，保持和类别管理一致
         this.getDataList()
       }).catch((error) => {
         this.$notify({
@@ -610,65 +612,105 @@ export default {
 
     // 单条数据启用
     handleEnabledSingleData () {
-      const row = this.dataJson.currentJson
-      const selectionJson = [{ id: row.id }]
+      // 构造单个物料对象参数
+      const goodsData = { id: this.dataJson.currentJson.id }
 
       this.$confirm('是否要启用该条数据？', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
+        // 设置加载状态
         this.settings.loading = true
-        enabledSelectionApi(selectionJson).then((response) => {
+
+        // 调用启用API
+        enabledSelectionApi(goodsData).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 在列表中找到对应的行并更新
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步更新当前选中行数据，保持状态一致性
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           this.$notify({
             title: '启用成功',
             message: response.message,
             type: 'success',
             duration: this.settings.duration
           })
-          this.getDataList()
-        }).catch((error) => {
+        }).catch(error => {
+          // 失败通知
           this.$notify({
-            title: '启用错误',
+            title: '启用失败',
             message: error.message,
             type: 'error',
             duration: this.settings.duration
           })
         }).finally(() => {
+          // 清除加载状态
           this.settings.loading = false
         })
+      }).catch(() => {
+        // 用户取消操作，无需处理
       })
     },
 
     // 单条数据停用
     handleDisAbledSingleData () {
-      const row = this.dataJson.currentJson
-      const selectionJson = [{ id: row.id }]
+      // 构造单个物料对象参数
+      const goodsData = { id: this.dataJson.currentJson.id }
 
       this.$confirm('是否要停用该条数据？', '确认信息', {
         distinguishCancelAndClose: true,
         confirmButtonText: '确认',
         cancelButtonText: '取消'
       }).then(() => {
+        // 设置加载状态
         this.settings.loading = true
-        disAbledSelectionApi(selectionJson).then((response) => {
+
+        // 调用停用API
+        disAbledSelectionApi(goodsData).then(response => {
+          // 获取更新后的数据
+          const updatedRecord = response.data
+
+          // 在列表中找到对应的行并更新
+          const index = this.dataJson.listData.findIndex(item => item.id === updatedRecord.id)
+          if (index !== -1) {
+            this.$set(this.dataJson.listData, index, updatedRecord)
+          }
+
+          // 同步更新当前选中行数据，保持状态一致性
+          if (this.dataJson.currentJson && this.dataJson.currentJson.id === updatedRecord.id) {
+            this.dataJson.currentJson = Object.assign({}, updatedRecord)
+          }
+
           this.$notify({
             title: '停用成功',
             message: response.message,
             type: 'success',
             duration: this.settings.duration
           })
-          this.getDataList()
-        }).catch((error) => {
+        }).catch(error => {
+          // 失败通知
           this.$notify({
-            title: '停用错误',
+            title: '停用失败',
             message: error.message,
             type: 'error',
             duration: this.settings.duration
           })
         }).finally(() => {
+          // 清除加载状态
           this.settings.loading = false
         })
+      }).catch(() => {
+        // 用户取消操作，无需处理
       })
     },
 

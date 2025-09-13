@@ -48,50 +48,6 @@
             <el-row>
               <el-col :span="12">
                 <el-form-item
-                  label="所属板块："
-                  prop="business_name"
-                >
-                  <el-input
-                    v-model.trim="dataJson.tempJson.business_name"
-                    disabled
-                  >
-                    <el-button
-                      slot="append"
-                      ref="selectOne"
-                      icon="el-icon-search"
-                      :disabled="isViewModel"
-                      @click="handleBusinessDialog()"
-                    >
-                      选择
-                    </el-button>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item
-                  label="所属行业："
-                  prop="industry_name"
-                >
-                  <el-input
-                    v-model.trim="dataJson.tempJson.industry_name"
-                    disabled
-                  >
-                    <el-button
-                      slot="append"
-                      ref="selectOne"
-                      icon="el-icon-search"
-                      :disabled="isViewModel"
-                      @click="handleIndustryDialog()"
-                    >
-                      选择
-                    </el-button>
-                  </el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row>
-              <el-col :span="12">
-                <el-form-item
                   label="所属类别："
                   prop="category_name"
                 >
@@ -314,19 +270,6 @@
       </div>
     </el-dialog>
 
-    <business-dialog
-      v-if="popSettingsData.searchDialogDataOne.visible"
-      :visible="popSettingsData.searchDialogDataOne.visible"
-      @closeMeOk="handleCompanyCloseOk"
-      @closeMeCancel="handleCompanyCloseCancel"
-    />
-    <industry-dialog
-      v-if="popSettingsData.searchDialogDataTwo.visible"
-      :visible="popSettingsData.searchDialogDataTwo.visible"
-      :data="popSettingsData.searchDialogDataOne.selectedDataJson"
-      @closeMeOk="handleIndustryCloseOk"
-      @closeMeCancel="handleIndustryCloseCancel"
-    />
     <category-dialog
       v-if="popSettingsData.searchDialogDataThree.visible"
       :visible="popSettingsData.searchDialogDataThree.visible"
@@ -372,13 +315,11 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { updateApi, insertApi } from '@/api/30_wms/spec/spec'
 import { getListApi } from '@/api/30_wms/businesstype/businesstype'
-import businessDialog from '@/views/30_wms/businesstype/dialog/dialog'
-import industryDialog from '@/views/30_wms/industry/dialog/dialog'
 import categoryDialog from '@/views/30_wms/category/dialog/10_list/index'
 import goodsDialog from '@/views/30_wms/goods/dialog/10_list/index'
 
 export default {
-  components: { SelectDict, businessDialog, industryDialog, categoryDialog, goodsDialog },
+  components: { SelectDict, categoryDialog, goodsDialog },
   directives: { elDragDialog },
   mixins: [],
   props: {
@@ -526,12 +467,6 @@ export default {
           ],
           category_name: [
             { required: true, message: '请选择类别', trigger: 'change' }
-          ],
-          business_name: [
-            { required: true, message: '请选择板块', trigger: 'change' }
-          ],
-          industry_name: [
-            { required: true, message: '请选择行业', trigger: 'change' }
           ]
         },
         rules: {
@@ -642,8 +577,6 @@ export default {
       // 数据初始化
       this.dataJson.tempJson = deepCopy(this.data)
       this.dataJson.tempJsonOriginal = deepCopy(this.data)
-      this.popSettingsData.searchDialogDataOne.selectedDataJson.id = this.data.business_id
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson.id = this.data.industry_id
       this.popSettingsData.searchDialogDataThree.selectedDataJson.id = this.data.category_id
       this.popSettingsData.searchDialogDataFour.selectedDataJson.id = this.data.goods_id
 
@@ -698,8 +631,6 @@ export default {
       this.$refs['dataSubmitForm'].validate(valid => {
         if (valid) {
           const tempData = deepCopy(this.dataJson.tempJson)
-          tempData.business_id = this.popSettingsData.searchDialogDataOne.selectedDataJson.id
-          tempData.industry_id = this.popSettingsData.searchDialogDataTwo.selectedDataJson.id
           tempData.category_id = this.popSettingsData.searchDialogDataThree.selectedDataJson.id
           tempData.goods_id = this.popSettingsData.searchDialogDataFour.selectedDataJson.id
           tempData.goods_name = this.popSettingsData.searchDialogDataFour.selectedDataJson.name
@@ -726,12 +657,6 @@ export default {
       this.$refs['dataSubmitForm'].validate(valid => {
         if (valid) {
           const tempData = deepCopy(this.dataJson.tempJson)
-          if (this.popSettingsData.searchDialogDataOne.selectedDataJson != null) {
-            tempData.business_id = this.popSettingsData.searchDialogDataOne.selectedDataJson.id
-          }
-          if (this.popSettingsData.searchDialogDataTwo.selectedDataJson != null) {
-            tempData.industry_id = this.popSettingsData.searchDialogDataTwo.selectedDataJson.id
-          }
           if (this.popSettingsData.searchDialogDataThree.selectedDataJson != null) {
             tempData.category_id = this.popSettingsData.searchDialogDataThree.selectedDataJson.id
           }
@@ -757,48 +682,9 @@ export default {
       })
     },
     handleTabsClick (tab, event) { },
-    // 板块
-    handleBusinessDialog () {
-      this.popSettingsData.searchDialogDataOne.visible = true
-    },
-    // 板块：关闭对话框：确定
-    handleCompanyCloseOk (val) {
-      this.popSettingsData.searchDialogDataOne.selectedDataJson = val
-      this.popSettingsData.searchDialogDataOne.visible = false
-      this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.business_name = val.name
-    },
-    // 板块：关闭对话框：取消
-    handleCompanyCloseCancel () {
-      this.popSettingsData.searchDialogDataOne.visible = false
-    },
-    // 行业
-    handleIndustryDialog () {
-      if (this.popSettingsData.searchDialogDataOne.selectedDataJson.id == null) {
-        this.showErrorMsg('请先选择板块')
-        return
-      }
-      this.popSettingsData.searchDialogDataTwo.data = this.popSettingsData.searchDialogDataOne.selectedDataJson
-      this.popSettingsData.searchDialogDataTwo.visible = true
-    },
-    // 行业：关闭对话框：确定
-    handleIndustryCloseOk (val) {
-      this.popSettingsData.searchDialogDataTwo.selectedDataJson = val
-      this.popSettingsData.searchDialogDataTwo.visible = false
-      this.settings.btnDisabledStatus.disabledUpdate = false
-      this.dataJson.tempJson.industry_name = val.name
-    },
-    // 行业：关闭对话框：取消
-    handleIndustryCloseCancel () {
-      this.popSettingsData.searchDialogDataTwo.visible = false
-    },
     // 类别
     handleCategoryDialog () {
-      if (this.popSettingsData.searchDialogDataTwo.selectedDataJson.id == null) {
-        this.showErrorMsg('请先选择行业')
-        return
-      }
-      this.popSettingsData.searchDialogDataThree.data = this.popSettingsData.searchDialogDataOne.selectedDataJson
+      this.popSettingsData.searchDialogDataThree.data = null
       this.popSettingsData.searchDialogDataThree.visible = true
     },
     // 类别：关闭对话框：确定

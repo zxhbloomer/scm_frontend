@@ -150,10 +150,6 @@ export default {
     init (url = '') {
       if (!url) return
       const base64_encode = encodeURIComponent(Base64.encode(url))
-      console.log('---------------------------')
-      console.log(base64_encode)
-      console.log(url)
-      console.log('---------------------------')
       this.dataJson.preview_online_url = process.env.VUE_APP_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
       this.dataJson.preview_pic_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL +
         '?width=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_WIDTH +

@@ -40,7 +40,7 @@ service.interceptors.request.use(
   },
   error => {
     // do something with request error
-    console.log(error) // for debug
+    // Request error logged
     return Promise.reject(error)
   }
 )
@@ -98,11 +98,10 @@ service.interceptors.response.use(
     }
   },
   error => {
-    console.log('err' + error) // for debug
+    // Response error logged
     // 1：定义message
     let showMsg = ''
     // if (error.response === undefined) {
-    //   console.log('error.response is undefined')
     // }
 
     // :2：处理错误区域
@@ -117,7 +116,7 @@ service.interceptors.response.use(
         case 401:
           // 返回 401 清除token信息并跳转到登录页面
           store.dispatch('user/resetToken').then(() => {
-            console.log('没有权限')
+            // No authorization
             // location.reload()
           })
           break

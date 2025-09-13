@@ -1,135 +1,129 @@
 <template>
-  <div class="app-container">
+  <div>
     <!-- ======================== 搜索区域 ======================== -->
     <div v-show="searchsetting.visible">
       <el-form
-        ref="searchForm"
-        :model="dataJson.searchForm"
+        ref="minusForm"
         :inline="true"
-        label-width="68px"
+        :model="dataJson.searchForm"
+        label-position="getLabelPosition()"
       >
-        <el-form-item label="关键词">
+        <el-form-item label="">
           <el-input
             v-model.trim="dataJson.searchForm.name"
             clearable
-            show-word-limit
-            :maxlength="50"
-            style="width: 200px;"
-            placeholder="请输入规格名称"
+            placeholder="规格名称"
             @keyup.enter.native="handleSearch"
-          >
-            <el-button
-              slot="append"
-              icon="el-icon-search"
-              class="el-input-group__append_select"
-              @click="handleSearch"
-            />
-          </el-input>
+          />
         </el-form-item>
-
-        <el-form-item>
+        <el-form-item style="float:right">
           <el-button
-            class="el-input-group__append_reset"
+            v-popover:popover
+            type="primary"
+            plain
+            icon="perfect-icon-reset"
             @click="doResetSearch"
-          >
-            重置
-          </el-button>
+          >重置</el-button>
+        </el-form-item>
+        <el-form-item style="float:right">
+          <el-button
+            type="primary"
+            plain
+            icon="el-icon-search"
+            @click="handleSearch"
+          >查询</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <!-- ======================== 按钮工具栏 ======================== -->
-    <el-button-group class="button-group">
+    <el-button-group>
       <el-button
-        v-permission="[P_SPEC_INSERT]"
+        v-permission="'P_SPEC:ADD'"
         type="primary"
-        icon="el-icon-plus"
+        icon="el-icon-circle-plus-outline"
+        :loading="settings.loading"
         @click="handleInsert"
-      >
-        新增
-      </el-button>
+      >新增</el-button>
 
       <el-button
-        v-permission="[P_SPEC_UPDATE]"
-        type="warning"
-        icon="el-icon-edit"
+        v-permission="'P_SPEC:UPDATE'"
+        type="primary"
+        icon="el-icon-edit-outline"
         :disabled="!settings.btnShowStatus.showUpdate"
+        :loading="settings.loading"
         @click="handleUpdate"
-      >
-        编辑
-      </el-button>
+      >编辑</el-button>
 
       <el-button
-        v-permission="[P_SPEC_COPY_INSERT]"
-        type="info"
+        v-permission="'P_SPEC:COPY'"
+        type="primary"
         icon="el-icon-copy-document"
         :disabled="!settings.btnShowStatus.showCopyInsert"
+        :loading="settings.loading"
         @click="handleCopyInsert"
-      >
-        复制新增
-      </el-button>
+      >复制新增</el-button>
 
       <el-button
-        v-permission="[P_SPEC_VIEW]"
-        type="success"
-        icon="el-icon-view"
-        :disabled="!settings.btnShowStatus.showView"
-        @click="handleView"
-      >
-        查看
-      </el-button>
-
-      <el-button
-        v-permission="[P_SPEC_ENABLED]"
+        v-permission="'P_SPEC:INFO'"
         type="primary"
-        icon="el-icon-check"
+        icon="el-icon-info"
+        :disabled="!settings.btnShowStatus.showView"
+        :loading="settings.loading"
+        @click="handleView"
+      >查看</el-button>
+
+      <el-button
+        v-permission="'P_SPEC:ENABLE'"
+        type="primary"
+        icon="el-icon-circle-check"
         :disabled="!settings.btnShowStatus.showEnable"
+        :loading="settings.loading"
         @click="handleEnabled"
-      >
-        启用
-      </el-button>
+      >启用</el-button>
 
       <el-button
-        v-permission="[P_SPEC_DISABLED]"
-        type="danger"
-        icon="el-icon-close"
+        v-permission="'P_SPEC:DISABLE'"
+        type="primary"
+        icon="el-icon-circle-close"
         :disabled="!settings.btnShowStatus.showDisable"
+        :loading="settings.loading"
         @click="handleDisabled"
-      >
-        停用
-      </el-button>
+      >停用</el-button>
 
       <el-button
-        v-permission="[P_SPEC_EXPORT]"
-        type="warning"
-        icon="el-icon-download"
+        v-permission="'P_SPEC:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
         :disabled="!settings.btnShowStatus.showExport"
+        :loading="settings.loading"
         @click="handleExport"
-      >
-        导出
-      </el-button>
+      >导出</el-button>
 
       <el-button
-        v-permission="[P_SPEC_UNIT_CALCULATOR]"
+        v-permission="'P_SPEC:UNIT'"
         type="primary"
         icon="el-icon-s-operation"
+        :loading="settings.loading"
         @click="handleUnit"
-      >
-        单位换算
-      </el-button>
+      >单位换算</el-button>
     </el-button-group>
-
+    <div style="padding-top: 10px" />
     <!-- ======================== 数据表格 ======================== -->
     <el-table
       ref="multipleTable"
       v-loading="settings.loading"
       :data="dataJson.listData"
+      :element-loading-text="'正在拼命加载中...'"
+      element-loading-background="rgba(255, 255, 255, 0.5)"
       :canvas-auto-height="true"
-      element-loading-text="拼命加载中，请稍后..."
-      element-loading-background="rgba(255, 255, 255, 0.7)"
-      :row-key="getRowKeys"
+      :columns-index-key="true"
+      stripe
       border
+      fit
       highlight-current-row
+      :default-sort="{prop: 'u_time', order: 'descending'}"
+      style="width: 100%"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
       @current-change="handleCurrentChange"
@@ -152,23 +146,6 @@
       />
 
       <!-- 业务数据列 -->
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
-        prop="business_name"
-        label="所属板块"
-      />
-
-      <el-table-column
-        sortable="custom"
-        :sort-orders="settings.sortOrders"
-        :auto-fit="true"
-        min-width="130"
-        prop="industry_name"
-        label="所属行业"
-      />
 
       <el-table-column
         sortable="custom"
@@ -216,36 +193,22 @@
         label="规格编号"
       />
 
-      <!-- 启用状态列（特殊处理） -->
       <el-table-column
-        min-width="100"
-        :sort-orders="settings.sortOrders"
         :auto-fit="true"
-        label="启用状态"
+        min-width="80"
+        align="left"
         prop="enable"
+        label="状态"
       >
-        <template v-slot:header>
-          <field-help
-            default-label="启用状态"
-            help="启用状态提示：<br>绿色：已启用<br>红色：未启用"
-          />
-        </template>
-        <template v-slot="scope">
-          <el-tooltip
-            :content="scope.row.enable === 'false' ? '启用状态：未启用' : '启用状态：已启用' "
-            placement="top"
-            :open-delay="500"
+        <template slot-scope="{row}">
+          <span
+            :style="{
+              color: row.enable ? '#67C23A' : '#F56C6C',
+              fontWeight: 'bold'
+            }"
           >
-            <el-switch
-              v-model="scope.row.enable"
-              active-color="#13ce66"
-              inactive-color="#ff4949"
-              :active-value="true"
-              :inactive-value="false"
-              :width="30"
-              @change="handledEnableOrDisAbleApi(scope.row)"
-            />
-          </el-tooltip>
+            {{ row.enable ? '启用' : '停用' }}
+          </span>
         </template>
       </el-table-column>
 
@@ -350,13 +313,12 @@
 
 <script>
 import permission from '@/directive/permission/index.js'
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, enableOrDisAbleApi, exportApi } from '@/api/30_wms/spec/spec'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportApi } from '@/api/30_wms/spec/spec'
 import Pagination from '@/components/Pagination'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
 import ViewDialog from '../../dialog/40_view/index.vue'
 import UnitCalculatorDialog from '../../unit/unitCalculator/unitCalculator'
-import FieldHelp from '@/components/30_table/FieldHelp/index.vue'
 import FloatMenu from '@/components/FloatMenu/index.vue'
 import deepCopy from 'deep-copy'
 
@@ -368,7 +330,6 @@ export default {
     EditDialog,
     ViewDialog,
     UnitCalculatorDialog,
-    FieldHelp,
     FloatMenu
   },
   directives: { permission },
@@ -854,50 +815,8 @@ export default {
 
     handleUnitCalculatorDialogCancel () {
       this.popSettings.unitCalculator.visible = false
-    },
-
-    // -------------------- 特殊操作 --------------------
-    // 启用/停用开关
-    handledEnableOrDisAbleApi (row) {
-      let _message = ''
-      const _value = row.enable
-      const selectionJson = []
-      selectionJson.push({ 'id': row.id })
-
-      if (_value === true) {
-        _message = '是否要启用该条数据？'
-      } else {
-        _message = '是否要停用该条数据？'
-      }
-
-      this.$confirm(_message, '确认信息', {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确认',
-        cancelButtonText: '取消'
-      }).then(() => {
-        this.settings.loading = true
-        enableOrDisAbleApi(selectionJson).then((_data) => {
-          this.$notify({
-            title: '更新处理成功',
-            message: _data.message,
-            type: 'success',
-            duration: this.settings.duration
-          })
-        }, (_error) => {
-          this.$notify({
-            title: '更新处理失败',
-            message: _error.message,
-            type: 'error',
-            duration: this.settings.duration
-          })
-          row.enable = !row.enable
-        }).finally(() => {
-          this.settings.loading = false
-        })
-      }).catch(action => {
-        row.enable = !row.enable
-      })
     }
+
   }
 }
 </script>
@@ -911,9 +830,6 @@ export default {
 }
 .el-form-item .el-select {
   width: 100%;
-}
-.button-group {
-  margin-bottom: 10px;
 }
 .el-form-item--mini.el-form-item {
   margin-bottom: 10px;

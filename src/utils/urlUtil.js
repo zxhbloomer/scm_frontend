@@ -83,7 +83,6 @@ export default {
   format: function (url, options) {
     const hash = this.getHashFragment(url)
     const baseUrl = this.getBaseUrl(url)
-    console.log(hash)
     return this.getParam(baseUrl, options) + (!hash ? '' : '#' + hash)
   },
   /**

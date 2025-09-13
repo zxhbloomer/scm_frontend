@@ -28,13 +28,6 @@
       border
       style="margin-bottom: 20px;"
     >
-      <el-descriptions-item label="所属板块">
-        {{ data.business_name || '暂无' }}
-      </el-descriptions-item>
-
-      <el-descriptions-item label="所属行业">
-        {{ data.industry_name || '暂无' }}
-      </el-descriptions-item>
 
       <el-descriptions-item label="所属类别">
         {{ data.category_name || '暂无' }}
