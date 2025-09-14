@@ -1,5 +1,6 @@
 <template>
   <div>
+    <FloatMenu />
     <!-- ======================== 搜索区域 ======================== -->
     <div v-show="searchsetting.visible">
       <el-form
@@ -91,14 +92,42 @@
         @click="handleDisabled"
       >停用</el-button>
 
+      <!-- 导出按钮组 - 完全按照仓库管理模式实现 -->
       <el-button
+        v-show="settings.btnShowStatus.hidenExport"
         v-permission="'P_SPEC:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
-        :disabled="!settings.btnShowStatus.showExport"
         :loading="settings.loading"
-        @click="handleExport"
+        @click="handleModelOpen"
       >导出</el-button>
+
+      <el-button
+        v-show="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SPEC:EXPORT'"
+        type="primary"
+        icon="el-icon-check"
+        :disabled="dataJson.multipleSelection.length === 0"
+        :loading="settings.loading"
+        @click="handleExportSelectionData"
+      >导出所选</el-button>
+
+      <el-button
+        v-show="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SPEC:EXPORT'"
+        type="primary"
+        icon="el-icon-download"
+        :loading="settings.loading"
+        @click="handleExportAllData"
+      >导出全部</el-button>
+
+      <el-button
+        v-show="!settings.btnShowStatus.hidenExport"
+        type="info"
+        icon="el-icon-close"
+        :loading="settings.loading"
+        @click="handleModelClose"
+      >退出导出模式</el-button>
 
       <el-button
         v-permission="'P_SPEC:UNIT'"
@@ -130,8 +159,9 @@
       @sort-change="handleSortChange"
       @selection-change="handleSelectionChange"
     >
-      <!-- 多选列 -->
+      <!-- 多选列 - 完全按照仓库管理模式实现 -->
       <el-table-column
+        v-if="settings.exportModel"
         type="selection"
         width="45"
         prop="id"
@@ -305,15 +335,12 @@
       @closeMeOk="handleUnitCalculatorDialogOk"
       @closeMeCancel="handleUnitCalculatorDialogCancel"
     />
-
-    <!-- 动态列配置菜单 -->
-    <FloatMenu />
   </div>
 </template>
 
 <script>
 import permission from '@/directive/permission/index.js'
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportApi } from '@/api/30_wms/spec/spec'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi } from '@/api/30_wms/spec/spec'
 import Pagination from '@/components/Pagination'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
@@ -381,6 +408,8 @@ export default {
       settings: {
         // 表格排序规则
         sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
+        // 导出模式开关 - 完全按照仓库管理模式实现
+        exportModel: false,
         // 按钮状态 - 标准化状态管理
         btnShowStatus: {
           showUpdate: false,
@@ -388,7 +417,9 @@ export default {
           showView: false,
           showEnable: false,
           showDisable: false,
-          showExport: false
+          showExport: false,
+          // 导出按钮显示状态：true=单导出按钮，false=三按钮模式
+          hidenExport: true
         },
         // loading 状态
         loading: true,
@@ -695,49 +726,72 @@ export default {
       this.popSettings.unitCalculator.visible = true
     },
 
-    // 导出
-    handleExport () {
-      if (this.dataJson.multipleSelection.length <= 0) {
-        this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
-          confirmButtonText: '关闭',
-          type: 'error'
-        })
-        return
-      }
+    // 导出模式相关方法 - 完全按照仓库管理模式实现
 
-      if (this.dataJson.multipleSelection.length === this.dataJson.listData.length) {
-        this.$confirm('请选择：当前页数据导出，全数据导出？', '确认信息', {
-          distinguishCancelAndClose: true,
-          confirmButtonText: '全数据导出',
-          cancelButtonText: '当前页数据导出'
-        }).then(() => {
-          this.handleExportAllData()
-        }).catch(action => {
-          if (action !== 'close') {
-            this.handleExportSelectionData()
-          }
-        })
-      } else {
-        this.handleExportSelectionData()
-      }
+    // 进入导出模式
+    handleModelOpen () {
+      this.settings.exportModel = true
+      this.settings.btnShowStatus.hidenExport = false
+      this.dataJson.multipleSelection = []
+      // 启动用户引导（如果需要Vue Tours）
+      // this.$tours['myTour'].start()
     },
 
+    // 退出导出模式
+    handleModelClose () {
+      this.settings.exportModel = false
+      this.settings.btnShowStatus.hidenExport = true
+      this.dataJson.multipleSelection = []
+    },
+
+    // 导出全部数据
     handleExportAllData () {
       this.settings.loading = true
-      this.dataJson.searchForm.ids = []
-      exportApi(this.dataJson.searchForm).then(response => {
+      exportAllApi(this.dataJson.searchForm).then(response => {
+        this.$notify({
+          title: '导出成功',
+          message: '全部数据导出完成',
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
         this.settings.loading = false
       })
     },
 
+    // 导出选中数据
     handleExportSelectionData () {
+      if (this.dataJson.multipleSelection.length === 0) {
+        this.$message.warning('请选择要导出的记录')
+        return
+      }
+
       this.settings.loading = true
-      const selectionJson = []
-      this.dataJson.multipleSelection.forEach(function (value, index, array) {
-        selectionJson.push(value.id)
-      })
-      this.dataJson.searchForm.ids = selectionJson
-      exportApi(this.dataJson.searchForm).then(response => {
+      const selectionIds = this.dataJson.multipleSelection.map(item => item.id)
+      const exportData = { ids: selectionIds }
+
+      exportSelectionApi(exportData).then(response => {
+        this.$notify({
+          title: '导出成功',
+          message: '选中数据导出完成',
+          type: 'success',
+          duration: this.settings.duration
+        })
+      }).catch(error => {
+        this.$notify({
+          title: '导出失败',
+          message: error.message || '导出过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }).finally(() => {
         this.settings.loading = false
       })
     },

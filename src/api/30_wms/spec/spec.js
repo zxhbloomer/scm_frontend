@@ -85,10 +85,23 @@ export function disAbledSelectionApi (data) {
 }
 
 /**
- * 导出
+ * 导出数据 全部导出 - 完全按照仓库管理模式实现
  * @param {*} data
  */
-export function exportApi (data) {
+export function exportAllApi (data) {
+  return request({
+    url: '/api/v1/goodsspec/exportall',
+    method: 'post',
+    data,
+    responseType: 'arraybuffer'
+  })
+}
+
+/**
+ * 导出数据 选中导出 - 完全按照仓库管理模式实现
+ * @param {*} data
+ */
+export function exportSelectionApi (data) {
   return request({
     url: '/api/v1/goodsspec/export',
     method: 'post',
