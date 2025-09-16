@@ -9,7 +9,7 @@
       <div
         class="chat-bubble"
         :class="{ 'chat-bubble--expanded': isExpanded }"
-        @click.stop="toggleChatPanel"
+        @click="toggleChatPanel"
       >
         <i class="el-icon-chat-dot-round chat-bubble__icon" />
       </div>
@@ -35,23 +35,15 @@
 
 <script>
 import ChatPanel from '../ChatPanel/ChatPanel.vue'
-import { mapState, mapActions } from 'vuex'
 
 export default {
-  name: 'ChatBubble',
+  name: 'SimplifiedChatBubble',
   // 点击外部关闭指令
   directives: {
     'click-outside': {
       bind (el, binding) {
         el.clickOutsideEvent = function (event) {
-          // 排除气泡按钮本身的点击
-          const chatBubble = el.querySelector('.chat-bubble')
-          const chatBubbleWrapper = el.closest('.chat-bubble-wrapper')
-
-          if (!(el === event.target || el.contains(event.target)) &&
-              !(chatBubble && (chatBubble === event.target || chatBubble.contains(event.target))) &&
-              !(chatBubbleWrapper && chatBubbleWrapper.querySelector('.chat-bubble-badge') &&
-                chatBubbleWrapper.querySelector('.chat-bubble-badge').contains(event.target))) {
+          if (!(el === event.target || el.contains(event.target))) {
             binding.value()
           }
         }
@@ -67,41 +59,75 @@ export default {
   },
   data () {
     return {
-      isExpanded: false
+      isExpanded: false,
+      unreadCount: 3, // 临时固定值
+      isLoading: false,
+      messages: [
+        {
+          id: 1,
+          type: 'system',
+          content: '欢迎来到在线客服',
+          timestamp: new Date().getTime()
+        },
+        {
+          id: 2,
+          type: 'agent',
+          content: '您好！有什么可以帮助您的吗？',
+          timestamp: new Date().getTime(),
+          avatar: ''
+        }
+      ]
     }
   },
-  computed: {
-    ...mapState('70_chat', {
-      messages: 'messages',
-      unreadCount: 'unreadCount',
-      isLoading: 'isLoading'
+  mounted () {
+    console.log('✅ SimplifiedChatBubble组件加载成功!')
+    console.log('当前状态:', {
+      messages: this.messages.length,
+      unreadCount: this.unreadCount,
+      isLoading: this.isLoading
     })
   },
-  mounted () {
-    console.log('ChatBubble组件加载成功')
-    // 可选：初始化聊天连接（需要配置WebSocket端点）
-    // this.initializeChat()
-  },
   methods: {
-    ...mapActions('70_chat', [
-      'sendMessage',
-      'markAsRead',
-      'initializeChat'
-    ]),
-
     toggleChatPanel () {
+      console.log('=== toggleChatPanel 被调用 ===')
       this.isExpanded = !this.isExpanded
+      console.log('展开状态:', this.isExpanded)
+
       if (this.isExpanded && this.unreadCount > 0) {
-        this.markAsRead()
+        this.unreadCount = 0 // 标记为已读
       }
     },
 
     closeChatPanel () {
+      console.log('=== closeChatPanel 被调用 ===')
       this.isExpanded = false
     },
 
     handleSendMessage (messageContent) {
-      this.sendMessage(messageContent)
+      console.log('=== handleSendMessage 被调用 ===', messageContent)
+
+      // 添加用户消息
+      const userMessage = {
+        id: Date.now(),
+        type: 'user',
+        content: messageContent,
+        timestamp: new Date().getTime()
+      }
+      this.messages.push(userMessage)
+
+      // 模拟客服回复
+      this.isLoading = true
+      setTimeout(() => {
+        const agentMessage = {
+          id: Date.now() + 1,
+          type: 'agent',
+          content: '我收到了您的消息：' + messageContent,
+          timestamp: new Date().getTime(),
+          avatar: ''
+        }
+        this.messages.push(agentMessage)
+        this.isLoading = false
+      }, 1000)
     }
   }
 }
