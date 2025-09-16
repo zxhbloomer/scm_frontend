@@ -49,10 +49,10 @@ export function insertApi (data) {
 }
 
 /**
- * 物理删除选择数据
+ * 删除选择数据
  * @param {*} data
  */
-export function realDeleteSelectionApi (data) {
+export function deleteApi (data) {
   return request({
     url: '/api/v1/goodsspec/delete',
     method: 'post',

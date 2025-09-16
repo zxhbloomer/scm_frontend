@@ -9,15 +9,23 @@
       @exitEditEvent="handleExitEditEvent"
       @saveLayoutDataEvent="handleSaveLayoutDataEvent"
     />
+
+    <!-- 聊天组件 -->
+    <ChatBubble />
   </div>
 </template>
 
 <script>
 import list_template from './list'
 import edit_template from './edit'
+import { ChatBubble } from '@/components/70_chat'
 
 export default {
-  components: { list_template, edit_template },
+  components: {
+    list_template,
+    edit_template,
+    ChatBubble
+  },
   data () {
     return {
       isEditModel: false

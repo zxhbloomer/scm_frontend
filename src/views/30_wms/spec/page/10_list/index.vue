@@ -92,42 +92,41 @@
         @click="handleDisabled"
       >停用</el-button>
 
-      <!-- 导出按钮组 - 完全按照仓库管理模式实现 -->
       <el-button
-        v-show="settings.btnShowStatus.hidenExport"
+        v-permission="'P_SPEC:DELETE'"
+        :disabled="!settings.btnShowStatus.showDel"
+        type="danger"
+        icon="el-icon-delete"
+        :loading="settings.loading"
+        @click="handleDelButton"
+      >删除</el-button>
+
+      <!-- 导出按钮 开始 - 完全按照物料管理模式实现 -->
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SPEC:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExport"
+      >开始导出</el-button>
+      <el-button
+        v-if="!settings.btnShowStatus.hidenExport"
+        v-permission="'P_SPEC:EXPORT'"
+        type="primary"
+        icon="el-icon-zoom-in"
+        :loading="settings.loading"
+        @click="handleExportOk"
+      >关闭导出</el-button>
+      <el-button
+        v-if="settings.btnShowStatus.hidenExport"
         v-permission="'P_SPEC:EXPORT'"
         type="primary"
         icon="el-icon-zoom-in"
         :loading="settings.loading"
         @click="handleModelOpen"
       >导出</el-button>
-
-      <el-button
-        v-show="!settings.btnShowStatus.hidenExport"
-        v-permission="'P_SPEC:EXPORT'"
-        type="primary"
-        icon="el-icon-check"
-        :disabled="dataJson.multipleSelection.length === 0"
-        :loading="settings.loading"
-        @click="handleExportSelectionData"
-      >导出所选</el-button>
-
-      <el-button
-        v-show="!settings.btnShowStatus.hidenExport"
-        v-permission="'P_SPEC:EXPORT'"
-        type="primary"
-        icon="el-icon-download"
-        :loading="settings.loading"
-        @click="handleExportAllData"
-      >导出全部</el-button>
-
-      <el-button
-        v-show="!settings.btnShowStatus.hidenExport"
-        type="info"
-        icon="el-icon-close"
-        :loading="settings.loading"
-        @click="handleModelClose"
-      >退出导出模式</el-button>
+      <!-- 导出按钮 结束 -->
 
       <el-button
         v-permission="'P_SPEC:UNIT'"
@@ -335,12 +334,15 @@
       @closeMeOk="handleUnitCalculatorDialogOk"
       @closeMeCancel="handleUnitCalculatorDialogCancel"
     />
+
+    <!-- Vue Tours导出引导组件 - 完全按照物料管理模式实现 -->
+    <v-tour name="myTour" :steps="steps" :options="tourOption" />
   </div>
 </template>
 
 <script>
 import permission from '@/directive/permission/index.js'
-import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi } from '@/api/30_wms/spec/spec'
+import { getListApi, enabledSelectionApi, disAbledSelectionApi, exportAllApi, exportSelectionApi, deleteApi } from '@/api/30_wms/spec/spec'
 import Pagination from '@/components/Pagination'
 import NewDialog from '../../dialog/20_new/index.vue'
 import EditDialog from '../../dialog/30_edit/index.vue'
@@ -449,7 +451,26 @@ export default {
           visible: false,
           dialogStatus: ''
         }
-      }
+      },
+
+      // ======================== Vue Tours配置 - 完全按照物料管理模式实现 ========================
+      tourOption: {
+        useKeyboardNavigation: false, // 是否通过键盘的←, → 和 ESC 控制指引
+        labels: { // 指引项的按钮文案
+          buttonStop: '结束' // 结束文案
+        }
+      },
+      steps: [
+        {
+          target: '.el-table-column--selection', // 当前项的id或class或data-v-step属性
+          content: '请通过点击多选框，选择要导出的规格数据！', // 当前项指引内容
+          params: {
+            placement: 'top', // 指引在target的位置，支持上、下、左、右
+            highlight: false, // 当前项激活时是否高亮显示
+            enableScrolling: false // 指引到当前项时是否滚动轴滚动到改项位置
+          }
+        }
+      ]
     }
   },
 
@@ -721,6 +742,46 @@ export default {
       })
     },
 
+    // 删除按钮操作
+    handleDelButton () {
+      if (!this.dataJson.currentJson || !this.dataJson.currentJson.id) {
+        this.$notify({
+          title: '操作提示',
+          message: '请先选择要删除的数据',
+          type: 'warning',
+          duration: this.settings.duration
+        })
+        return
+      }
+      this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).then(() => {
+        this.settings.loading = true
+        const selectionJson = { 'id': this.dataJson.currentJson.id }
+        deleteApi(selectionJson).then((_data) => {
+          this.$notify({
+            title: '删除成功',
+            message: _data.message,
+            type: 'success',
+            duration: this.settings.duration
+          })
+          this.handleSearch()
+        }, (_error) => {
+          this.$notify({
+            title: '删除失败',
+            message: _error.message,
+            type: 'error',
+            duration: this.settings.duration
+          })
+        }).finally(() => {
+          this.settings.loading = false
+        })
+      }).catch(action => {
+      })
+    },
+
     // 单位换算
     handleUnit () {
       this.popSettings.unitCalculator.visible = true
@@ -732,9 +793,8 @@ export default {
     handleModelOpen () {
       this.settings.exportModel = true
       this.settings.btnShowStatus.hidenExport = false
-      this.dataJson.multipleSelection = []
-      // 启动用户引导（如果需要Vue Tours）
-      // this.$tours['myTour'].start()
+      // 启动用户引导
+      this.$tours['myTour'].start()
     },
 
     // 退出导出模式
@@ -744,13 +804,40 @@ export default {
       this.dataJson.multipleSelection = []
     },
 
-    // 导出全部数据
+    // 智能导出判断方法 - 完全按照物料管理模式实现
+    handleExport () {
+      if (this.dataJson.multipleSelection.length <= 0) {
+        this.$alert('请在表格中选择数据进行导出', '未选择数据错误', {
+          confirmButtonText: '关闭',
+          type: 'error'
+        })
+      } else if (this.dataJson.multipleSelection.length === this.dataJson.listData.length) {
+        this.$confirm('请选择：当前页数据导出，全数据导出？', '确认信息', {
+          distinguishCancelAndClose: true,
+          confirmButtonText: '全数据导出',
+          cancelButtonText: '当前页数据导出'
+        }).then(() => {
+          this.handleExportAllData()
+        }).catch(action => {
+          if (action !== 'close') {
+            this.handleExportSelectionData()
+          }
+        })
+      } else {
+        this.handleExportSelectionData()
+      }
+    },
+
+    // 导出全部数据 - 完全按照物料管理模式实现
     handleExportAllData () {
+      // loading
       this.settings.loading = true
+      // 开始导出
       exportAllApi(this.dataJson.searchForm).then(response => {
+        this.downloadExcelFile(response, '规格信息全部导出')
         this.$notify({
           title: '导出成功',
-          message: '全部数据导出完成',
+          message: '规格数据已成功导出到Excel文件',
           type: 'success',
           duration: this.settings.duration
         })
@@ -766,21 +853,19 @@ export default {
       })
     },
 
-    // 导出选中数据
+    // 选中行数据导出（多选模式）- 完全按照物料管理模式实现
     handleExportSelectionData () {
-      if (this.dataJson.multipleSelection.length === 0) {
-        this.$message.warning('请选择要导出的记录')
-        return
-      }
-
+      // loading
       this.settings.loading = true
+      // 多选模式：构造选中行ID数组
       const selectionIds = this.dataJson.multipleSelection.map(item => item.id)
-      const exportData = { ids: selectionIds }
-
-      exportSelectionApi(exportData).then(response => {
+      const searchData = { ids: selectionIds }
+      // 开始导出
+      exportSelectionApi(searchData).then(response => {
+        this.downloadExcelFile(response, `规格信息选中导出_${selectionIds.length}条`)
         this.$notify({
           title: '导出成功',
-          message: '选中数据导出完成',
+          message: `已成功导出${selectionIds.length}条规格数据到Excel文件`,
           type: 'success',
           duration: this.settings.duration
         })
@@ -794,6 +879,46 @@ export default {
       }).finally(() => {
         this.settings.loading = false
       })
+    },
+
+    // 标准退出导出模式方法 - 完全按照物料管理模式实现
+    handleExportOk () {
+      this.settings.btnShowStatus.hidenExport = true
+      this.settings.btnShowStatus.showExport = false
+      this.settings.exportModel = false
+      // 清空已选择的数据，确保完全退出导出模式
+      this.$refs.multipleTable.clearSelection()
+    },
+
+    // 文件下载处理方法 - 完全按照物料管理模式实现
+    downloadExcelFile (response, fileName) {
+      try {
+        // 创建blob对象
+        const blob = new Blob([response], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        })
+
+        // 创建下载链接
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.download = `${fileName}_${new Date().getTime()}.xlsx`
+
+        // 触发下载
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 释放URL对象
+        URL.revokeObjectURL(link.href)
+      } catch (error) {
+        console.error('文件下载失败:', error)
+        this.$notify({
+          title: '下载失败',
+          message: '文件下载过程中发生错误',
+          type: 'error',
+          duration: this.settings.duration
+        })
+      }
     },
 
     // -------------------- 对话框回调 --------------------
