@@ -46,6 +46,20 @@ const getters = {
    * messageCount：消息总数
    * */
   todoCount: state => state.headNotice.toDoCount,
-  messageCount: state => state.headNotice.toDoCount + state.headNotice.alarmCount
+  messageCount: state => state.headNotice.toDoCount + state.headNotice.alarmCount,
+  /** 聊天相关 */
+  // 聊天连接状态
+  chatConnectionStatus: state => state.chat.isConnected,
+  chatConnecting: state => state.chat.isConnecting,
+  // 聊天消息
+  chatMessages: state => state.chat.messages,
+  chatUnreadCount: state => state.chat.unreadCount,
+  chatIsLoading: state => state.chat.isLoading,
+  chatIsTyping: state => state.chat.isTyping,
+  // 聊天会话
+  chatSessionId: state => state.chat.sessionId,
+  chatHasActiveSession: state => state.chat.sessionId && state.chat.isConnected,
+  // 聊天错误状态
+  chatLastError: state => state.chat.lastError
 }
 export default getters

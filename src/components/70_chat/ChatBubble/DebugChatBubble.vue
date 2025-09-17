@@ -51,10 +51,10 @@ export default {
         console.log('✅ Vuex store 存在')
 
         // 检查命名空间模块是否存在
-        if (this.$store.state['70_chat']) {
-          console.log('✅ 70_chat 模块存在')
+        if (this.$store.state.chat) {
+          console.log('✅ chat 模块存在')
         } else {
-          console.log('❌ 70_chat 模块不存在')
+          console.log('❌ chat 模块不存在')
         }
       } else {
         console.log('❌ Vuex store 不存在')

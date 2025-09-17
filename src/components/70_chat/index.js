@@ -23,4 +23,4 @@ export default {
 }
 
 // Vuex模块导入辅助
-export { default as chatStore } from '@/store/modules/70_chat/chat'
+export { default as chatStore } from '@/store/modules/chat'
