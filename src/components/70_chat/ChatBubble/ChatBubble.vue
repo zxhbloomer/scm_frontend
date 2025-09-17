@@ -71,19 +71,18 @@ export default {
     }
   },
   computed: {
-    ...mapState('70_chat', {
+    ...mapState('chat', {
       messages: 'messages',
       unreadCount: 'unreadCount',
       isLoading: 'isLoading'
     })
   },
   mounted () {
-    console.log('ChatBubble组件加载成功')
     // 可选：初始化聊天连接（需要配置WebSocket端点）
     // this.initializeChat()
   },
   methods: {
-    ...mapActions('70_chat', [
+    ...mapActions('chat', [
       'sendMessage',
       'markAsRead',
       'initializeChat'

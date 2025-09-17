@@ -118,7 +118,28 @@
     <div class="sk-cube sk-cube9"></div>
   </div>
   <script type="module" src="/src/main.js"></script>
+  <script>
+    window.chatwootSettings = {
+      position: 'right',
+      locale: 'zh',
+      launcherTitle: '联系客服',
+      welcomeTitle: '您好！',
+      welcomeDescription: '有什么可以帮助您的吗？'
+    };
 
+    (function(d,t) {
+      var BASE_URL="http://localhost:3000";
+      var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+      g.src=BASE_URL+"/packs/js/sdk.js";
+      s.parentNode.insertBefore(g,s);
+      g.onload=function(){
+        window.chatwootSDK.run({
+          websiteToken: 'pxgWpgg8s27MFet9Lw24tvRK',
+          baseUrl: BASE_URL
+        })
+      }
+    })(document,"script");
+  </script>
 </body>
 
 </html>

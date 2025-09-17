@@ -1,13 +1,15 @@
 // 聊天组件统一导出文件
-import ChatBubble from './ChatBubble/ChatBubble.vue'
+import ChatBubble from './HeWaChatBubble/index.vue' // 使用新的HeWa风格组件
 import ChatPanel from './ChatPanel/ChatPanel.vue'
 import chatMixin from './mixins/chatMixin'
+import hewaAiMixin from './mixins/hewaAiMixin'
 
 // 导出组件
 export {
   ChatBubble,
   ChatPanel,
-  chatMixin
+  chatMixin,
+  hewaAiMixin
 }
 
 // 批量安装插件方法

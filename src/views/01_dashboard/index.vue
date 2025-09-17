@@ -19,8 +19,6 @@
 import list_template from './list'
 import edit_template from './edit'
 import { ChatBubble } from '@/components/70_chat'
-// import DebugChatBubble from '@/components/70_chat/ChatBubble/DebugChatBubble.vue'
-// import SimplifiedChatBubble from '@/components/70_chat/ChatBubble/SimplifiedChatBubble.vue'
 
 export default {
   components: {

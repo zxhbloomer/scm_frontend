@@ -1,0 +1,658 @@
+/**
+ * HeWa AI助手动画效果
+ * 精心设计的交互动画，提升用户体验
+ */
+
+// ==========================================
+// 基础动画变量
+// ==========================================
+
+$animation-duration-fast: 0.2s;
+$animation-duration-normal: 0.3s;
+$animation-duration-slow: 0.5s;
+$animation-duration-slower: 0.8s;
+
+$easing-ease-out: cubic-bezier(0.25, 0.8, 0.25, 1);
+$easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+$easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+$easing-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+// ==========================================
+// 聊天气泡动画
+// ==========================================
+
+// 气泡弹跳进入
+@keyframes bubble-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(100px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1) translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+// 气泡脉冲效果
+@keyframes bubble-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+  }
+}
+
+// 气泡悬停波纹
+@keyframes bubble-ripple {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+// 气泡旋转展开
+@keyframes bubble-rotate-expand {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) rotate(-180deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+// ==========================================
+// 聊天面板动画
+// ==========================================
+
+// 面板滑入
+@keyframes panel-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(5px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.02);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+// 面板滑出
+@keyframes panel-slide-out {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+    filter: blur(5px);
+  }
+}
+
+// 面板摇摆进入
+@keyframes panel-swing-in {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) rotateX(-90deg);
+    transform-origin: bottom center;
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-10px) rotateX(5deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+
+// ==========================================
+// 消息动画
+// ==========================================
+
+// 消息淡入滑动
+@keyframes message-fade-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) translateX(0);
+  }
+}
+
+// 用户消息从右侧滑入
+@keyframes message-slide-right {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// AI消息从左侧滑入
+@keyframes message-slide-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// 消息气泡弹出
+@keyframes message-bubble-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// 消息内容打字机效果
+@keyframes message-typewriter {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  1% {
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+// ==========================================
+// 正在输入动画
+// ==========================================
+
+// 输入点跳动
+@keyframes typing-dots {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+// 输入波形
+@keyframes typing-wave {
+  0%, 100% {
+    height: 4px;
+    background: #c0c4cc;
+  }
+  50% {
+    height: 16px;
+    background: #667eea;
+  }
+}
+
+// 输入脉冲
+@keyframes typing-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+  }
+}
+
+// ==========================================
+// 语音录制动画
+// ==========================================
+
+// 录音波形
+@keyframes voice-wave {
+  0%, 100% {
+    height: 10px;
+  }
+  50% {
+    height: 30px;
+  }
+}
+
+// 录音脉冲圈
+@keyframes voice-pulse-ring {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+// 录音指示器闪烁
+@keyframes voice-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0.3;
+  }
+}
+
+// ==========================================
+// 按钮和交互动画
+// ==========================================
+
+// 按钮按下效果
+@keyframes button-press {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// 按钮悬停发光
+@keyframes button-glow {
+  0%, 100% {
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+  }
+}
+
+// 图标旋转
+@keyframes icon-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// 图标弹跳
+@keyframes icon-bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
+// ==========================================
+// 加载动画
+// ==========================================
+
+// 加载点旋转
+@keyframes loading-dots {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// 加载条进度
+@keyframes loading-progress {
+  0% {
+    width: 0%;
+  }
+  50% {
+    width: 60%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+// 骨架屏闪烁
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+// ==========================================
+// 反馈动画
+// ==========================================
+
+// 成功勾选
+@keyframes success-check {
+  0% {
+    stroke-dasharray: 44;
+    stroke-dashoffset: 44;
+  }
+  100% {
+    stroke-dasharray: 44;
+    stroke-dashoffset: 0;
+  }
+}
+
+// 错误摇摆
+@keyframes error-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+// 警告闪烁
+@keyframes warning-flash {
+  0%, 50%, 100% {
+    background-color: transparent;
+  }
+  25%, 75% {
+    background-color: rgba(230, 162, 60, 0.2);
+  }
+}
+
+// ==========================================
+// 背景动画
+// ==========================================
+
+// 渐变移动
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+// 粒子漂浮
+@keyframes particle-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-20px) translateX(-5px);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(-10px) translateX(10px);
+    opacity: 0.6;
+  }
+}
+
+// ==========================================
+// 响应式动画控制
+// ==========================================
+
+// 减少动画（用户偏好）
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// 移动设备动画优化
+@media (max-width: 768px) {
+  .hewa-chat-panel,
+  .hewa-chat-bubble,
+  .hewa-message-list {
+    animation-duration: 0.2s;
+    transition-duration: 0.2s;
+  }
+}
+
+// ==========================================
+// 动画应用类
+// ==========================================
+
+// 聊天气泡动画
+.bubble-bounce-in {
+  animation: bubble-bounce-in 0.6s $easing-bounce;
+}
+
+.bubble-pulse {
+  animation: bubble-pulse 2s ease-in-out infinite;
+}
+
+.bubble-rotate-expand {
+  animation: bubble-rotate-expand 0.4s $easing-spring;
+}
+
+// 聊天面板动画
+.panel-slide-in {
+  animation: panel-slide-in 0.4s $easing-ease-out;
+}
+
+.panel-slide-out {
+  animation: panel-slide-out 0.3s $easing-ease-out;
+}
+
+.panel-swing-in {
+  animation: panel-swing-in 0.6s $easing-bounce;
+}
+
+// 消息动画
+.message-fade-slide {
+  animation: message-fade-slide 0.4s $easing-ease-out;
+}
+
+.message-slide-right {
+  animation: message-slide-right 0.3s $easing-ease-out;
+}
+
+.message-slide-left {
+  animation: message-slide-left 0.3s $easing-ease-out;
+}
+
+.message-bubble-pop {
+  animation: message-bubble-pop 0.3s $easing-bounce;
+}
+
+.message-typewriter {
+  animation: message-typewriter 1.5s steps(40, end);
+}
+
+// 输入状态动画
+.typing-dots {
+  animation: typing-dots 1.4s ease-in-out infinite;
+  
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+.typing-wave {
+  animation: typing-wave 1s ease-in-out infinite;
+  
+  &:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  
+  &:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+  
+  &:nth-child(4) {
+    animation-delay: 0.3s;
+  }
+  
+  &:nth-child(5) {
+    animation-delay: 0.4s;
+  }
+}
+
+// 语音录制动画
+.voice-wave {
+  animation: voice-wave 0.8s ease-in-out infinite;
+  
+  &:nth-child(1) { animation-delay: 0s; }
+  &:nth-child(2) { animation-delay: 0.1s; }
+  &:nth-child(3) { animation-delay: 0.2s; }
+  &:nth-child(4) { animation-delay: 0.3s; }
+  &:nth-child(5) { animation-delay: 0.4s; }
+}
+
+.voice-pulse-ring {
+  animation: voice-pulse-ring 1.5s ease-out infinite;
+}
+
+.voice-blink {
+  animation: voice-blink 1s ease-in-out infinite;
+}
+
+// 按钮动画
+.button-press {
+  animation: button-press 0.2s ease-out;
+}
+
+.button-glow {
+  animation: button-glow 2s ease-in-out infinite;
+}
+
+// 图标动画
+.icon-rotate {
+  animation: icon-rotate 2s linear infinite;
+}
+
+.icon-bounce {
+  animation: icon-bounce 1s ease-in-out infinite;
+}
+
+// 加载动画
+.loading-dots {
+  animation: loading-dots 1s linear infinite;
+}
+
+.loading-progress {
+  animation: loading-progress 2s ease-in-out;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200px 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+// 反馈动画
+.success-check {
+  animation: success-check 0.6s ease-in-out;
+}
+
+.error-shake {
+  animation: error-shake 0.5s ease-in-out;
+}
+
+.warning-flash {
+  animation: warning-flash 1s ease-in-out 3;
+}
+
+// 背景动画
+.gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+.particle-float {
+  animation: particle-float 3s ease-in-out infinite;
+  
+  &:nth-child(2) {
+    animation-delay: 0.5s;
+    animation-duration: 3.5s;
+  }
+  
+  &:nth-child(3) {
+    animation-delay: 1s;
+    animation-duration: 4s;
+  }
+}
+
+// ==========================================
+// 性能优化
+// ==========================================
+
+// GPU加速动画
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform, opacity;
+}
+
+// 动画暂停控制
+.animation-paused {
+  animation-play-state: paused;
+}
+
+.animation-running {
+  animation-play-state: running;
+}
