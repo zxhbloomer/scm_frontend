@@ -3,7 +3,7 @@ import { mapState, mapActions, mapGetters } from 'vuex'
 
 export default {
   computed: {
-    ...mapState('70_chat', {
+    ...mapState('chat', {
       chatMessages: 'messages',
       chatUnreadCount: 'unreadCount',
       isChatLoading: 'isLoading',
@@ -12,7 +12,7 @@ export default {
       chatUserInfo: 'userInfo'
     }),
 
-    ...mapGetters('70_chat', {
+    ...mapGetters('chat', {
       chatConnectionStatus: 'connectionStatus',
       chatLatestMessages: 'latestMessages',
       chatUnreadMessages: 'unreadMessages',
@@ -21,7 +21,7 @@ export default {
   },
 
   methods: {
-    ...mapActions('70_chat', {
+    ...mapActions('chat', {
       initializeChatModule: 'initializeChat',
       sendChatMessage: 'sendMessage',
       markChatAsRead: 'markAsRead',

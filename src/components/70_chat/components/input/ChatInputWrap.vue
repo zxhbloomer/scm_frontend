@@ -1,6 +1,6 @@
 <template>
   <div
-    class="items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background shadow-base shadow-sm"
+    class="items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background shadow-sm"
     :class="{
       'shadow-n-brand': isFocused,
       'shadow-n-strong': !isFocused,
@@ -179,56 +179,23 @@ export default {
   background-color: #ffffff;
 }
 
-/* 完全按照chatwoot的CSS变量系统 - 手动实现 */
-:root {
-  /* chatwoot的颜色变量 - 浅色模式 */
-  --border-strong: 100 116 139; /* #64748b */
-  --border-brand: 59 130 246;   /* #3b82f6*/
-  --n-background: 255 255 255;  /* #ffffff */
-}
-
-/* 暗黑模式变量 */
-.dark {
-  --border-strong: 52 52 52;    /* 暗黑模式边框 */
-  --border-brand: 59 130 246;   /* 品牌色保持一致 */
-  --n-background: 18 18 19;     /* 暗黑背景 */
-}
-
-/* shadow效果 - 手动实现chatwoot的TailwindCSS类 */
+/* 简单直接的shadow效果 */
 .shadow-sm {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* 手动实现 !shadow-[0_0_0_1px,0_0_2px_3px] */
-.shadow-base {
-  box-shadow: 0 0 0 1px transparent, 0 0 2px 3px transparent;
-}
-
-/* 手动实现 !shadow-n-strong */
+/* 未选中状态 - 浅灰色边框 */
 .shadow-n-strong {
   box-shadow:
-    0 0 0 1px rgb(var(--border-strong)) !important,
-    0 0 2px 3px rgb(var(--border-strong) / 0.1) !important;
+    0 0 0 1px rgb(235, 235, 235) !important,
+    0 0 2px 3px rgba(235, 235, 235, 0.1) !important;
 }
 
-/* 手动实现 !shadow-n-brand */
+/* 选中状态 - 蓝色边框 */
 .shadow-n-brand {
   box-shadow:
-    0 0 0 1px rgb(var(--border-brand)) !important,
-    0 0 2px 3px rgb(var(--border-brand) / 0.1) !important;
-}
-
-/* 暗黑模式支持 */
-.dark .shadow-n-strong {
-  box-shadow:
-    0 0 0 1px rgb(var(--border-strong)) !important,
-    0 0 2px 3px rgb(var(--border-strong) / 0.1) !important;
-}
-
-.dark .shadow-n-brand {
-  box-shadow:
-    0 0 0 1px rgb(var(--border-brand)) !important,
-    0 0 2px 3px rgb(var(--border-brand) / 0.1) !important;
+    0 0 0 1px #2781F6 !important,
+    0 0 2px 3px rgba(39, 129, 246, 0.1) !important;
 }
 
 /* 输入框样式 - 按照chatwoot的user-message-input */

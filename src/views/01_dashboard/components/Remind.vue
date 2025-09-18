@@ -142,7 +142,18 @@ export default {
     getData () {
       this.settings.loading = true
       getRemindDataApi().then(response => {
-        this.dataJson.data = response.data
+        // 确保响应数据的完整性和类型正确性
+        this.dataJson.data = {
+          pendingQty: response.data?.pendingQty || 0,
+          overOneDay: response.data?.overOneDay || 0,
+          overOneDaypercentage: this.ensureNumber(response.data?.overOneDaypercentage),
+          overTwoDay: response.data?.overTwoDay || 0,
+          overTwoDaypercentage: this.ensureNumber(response.data?.overTwoDaypercentage),
+          overThreeDay: response.data?.overThreeDay || 0,
+          overThreeDaypercentage: this.ensureNumber(response.data?.overThreeDaypercentage),
+          overOneWeek: response.data?.overOneWeek || 0,
+          overOneWeekpercentage: this.ensureNumber(response.data?.overOneWeekpercentage)
+        }
 
         this.dataJson.chartData = [
           { value: this.dataJson.data.overOneDay, name: '超1天' },
@@ -157,6 +168,9 @@ export default {
           ).clientWidth
         })
         this.settings.loading = false
+      }).catch(error => {
+        console.error('获取提醒数据失败:', error)
+        this.settings.loading = false
       }).finally(() => {
         this.settings.loading = false
       })
@@ -164,6 +178,14 @@ export default {
     // 删除面板项发送事件
     deletePanelItem () {
       this.$emit('deletePanelItemEvent', this.panelId)
+    },
+    // 确保百分比值为数字类型
+    ensureNumber (value) {
+      if (value === null || value === undefined || value === '') {
+        return 0
+      }
+      const num = Number(value)
+      return isNaN(num) ? 0 : Math.max(0, Math.min(100, num))
     },
     // acharts饼形图
     doughnut () {

@@ -73,7 +73,16 @@ export default {
       panelId: this.id,
       isPanelSetIcon: this.panelSetIcon,
       dataJson: {
-        data: null
+        data: {
+          pendingProcessQty: 0,
+          todayPendingProcessQty: 0,
+          processedQty: 0,
+          todayProcessedQty: 0,
+          initiatedQty: 0,
+          todayInitiatedQty: 0,
+          todayUpdateInitiatedQty: 0,
+          todayReceivedQty: 0
+        }
       },
       settings: {
         loading: false,
@@ -105,7 +114,20 @@ export default {
     getData () {
       this.settings.loading = true
       getMatterDataApi().then(response => {
-        this.dataJson.data = response.data
+        // 确保响应数据的完整性
+        this.dataJson.data = {
+          pendingProcessQty: response.data?.pendingProcessQty || 0,
+          todayPendingProcessQty: response.data?.todayPendingProcessQty || 0,
+          processedQty: response.data?.processedQty || 0,
+          todayProcessedQty: response.data?.todayProcessedQty || 0,
+          initiatedQty: response.data?.initiatedQty || 0,
+          todayInitiatedQty: response.data?.todayInitiatedQty || 0,
+          todayUpdateInitiatedQty: response.data?.todayUpdateInitiatedQty || 0,
+          todayReceivedQty: response.data?.todayReceivedQty || 0
+        }
+        this.settings.loading = false
+      }).catch(error => {
+        console.error('获取待办事项数据失败:', error)
         this.settings.loading = false
       }).finally(() => {
         this.settings.loading = false

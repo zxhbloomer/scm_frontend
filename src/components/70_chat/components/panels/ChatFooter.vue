@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import ChatInputWrap from './ChatInputWrap.vue'
+import ChatInputWrap from '../input/ChatInputWrap.vue'
 
 export default {
   name: 'ChatFooter',

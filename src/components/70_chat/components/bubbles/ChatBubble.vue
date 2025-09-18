@@ -34,8 +34,7 @@
 </template>
 
 <script>
-import ChatPanel from '../ChatPanel/ChatPanel.vue'
-import { mapState, mapActions } from 'vuex'
+import ChatPanel from '../panels/ChatPanel.vue'
 
 export default {
   name: 'ChatBubble',
@@ -71,22 +70,32 @@ export default {
     }
   },
   computed: {
-    ...mapState('chat', {
-      messages: 'messages',
-      unreadCount: 'unreadCount',
-      isLoading: 'isLoading'
-    })
+    // 使用项目标准的全局getters
+    messages () {
+      return this.$store.getters.chatMessages
+    },
+    unreadCount () {
+      return this.$store.getters.chatUnreadCount
+    },
+    isLoading () {
+      return this.$store.getters.chatIsLoading
+    }
   },
   mounted () {
     // 可选：初始化聊天连接（需要配置WebSocket端点）
     // this.initializeChat()
   },
   methods: {
-    ...mapActions('chat', [
-      'sendMessage',
-      'markAsRead',
-      'initializeChat'
-    ]),
+    // 使用项目标准的action调用方式
+    sendMessage (content) {
+      return this.$store.dispatch('chat/sendMessage', content)
+    },
+    markAsRead () {
+      return this.$store.dispatch('chat/markAsRead')
+    },
+    initializeChat () {
+      return this.$store.dispatch('chat/initializeChat')
+    },
 
     toggleChatPanel () {
       this.isExpanded = !this.isExpanded
@@ -109,7 +118,7 @@ export default {
 <style scoped>
 .chat-bubble-wrapper {
   position: fixed;
-  bottom: 20px;
+  bottom: 50px;
   right: 20px;
   z-index: 9999;
 }
