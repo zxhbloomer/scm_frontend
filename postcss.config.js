@@ -1,7 +1,6 @@
-// 基于Chatwoot实际PostCSS配置模式
+// PostCSS配置 - 移除Tailwind，保留Autoprefixer
 module.exports = {
   plugins: {
-    tailwindcss: {},
     autoprefixer: {}
   }
 }
