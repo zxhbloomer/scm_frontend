@@ -109,7 +109,7 @@ export default {
 <style scoped>
 .chat-bubble-wrapper {
   position: fixed;
-  bottom: 20px;
+  bottom: 100px;
   right: 20px;
   z-index: 9999;
 }

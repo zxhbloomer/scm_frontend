@@ -1,0 +1,515 @@
+[
+  {
+    "name": "表情符号",
+    "slug": "smileys_emotion",
+    "emojis": [
+      {
+        "emoji": "😀",
+        "name": "开心脸",
+        "slug": "grinning_face"
+      },
+      {
+        "emoji": "😃",
+        "name": "大眼开心脸",
+        "slug": "grinning_face_with_big_eyes"
+      },
+      {
+        "emoji": "😄",
+        "name": "眯眼开心脸",
+        "slug": "grinning_face_with_smiling_eyes"
+      },
+      {
+        "emoji": "😁",
+        "name": "灿烂笑容",
+        "slug": "beaming_face_with_smiling_eyes"
+      },
+      {
+        "emoji": "😆",
+        "name": "咧嘴笑",
+        "slug": "grinning_squinting_face"
+      },
+      {
+        "emoji": "😅",
+        "name": "流汗笑",
+        "slug": "grinning_face_with_sweat"
+      },
+      {
+        "emoji": "🤣",
+        "name": "笑倒",
+        "slug": "rolling_on_the_floor_laughing"
+      },
+      {
+        "emoji": "😂",
+        "name": "喜极而泣",
+        "slug": "face_with_tears_of_joy"
+      },
+      {
+        "emoji": "🙂",
+        "name": "微笑",
+        "slug": "slightly_smiling_face"
+      },
+      {
+        "emoji": "😉",
+        "name": "眨眼",
+        "slug": "winking_face"
+      },
+      {
+        "emoji": "😊",
+        "name": "开心眯眼",
+        "slug": "smiling_face_with_smiling_eyes"
+      },
+      {
+        "emoji": "😍",
+        "name": "心形眼",
+        "slug": "smiling_face_with_heart_eyes"
+      },
+      {
+        "emoji": "🥰",
+        "name": "三颗心",
+        "slug": "smiling_face_with_hearts"
+      },
+      {
+        "emoji": "😘",
+        "name": "飞吻",
+        "slug": "face_blowing_a_kiss"
+      },
+      {
+        "emoji": "😗",
+        "name": "亲吻脸",
+        "slug": "kissing_face"
+      },
+      {
+        "emoji": "😙",
+        "name": "眯眼亲吻",
+        "slug": "kissing_face_with_smiling_eyes"
+      },
+      {
+        "emoji": "🤔",
+        "name": "思考",
+        "slug": "thinking_face"
+      },
+      {
+        "emoji": "🤐",
+        "name": "闭嘴",
+        "slug": "zipper_mouth_face"
+      },
+      {
+        "emoji": "🤨",
+        "name": "挑眉",
+        "slug": "face_with_raised_eyebrow"
+      },
+      {
+        "emoji": "😐",
+        "name": "无表情",
+        "slug": "neutral_face"
+      },
+      {
+        "emoji": "😑",
+        "name": "面无表情",
+        "slug": "expressionless_face"
+      },
+      {
+        "emoji": "😶",
+        "name": "无嘴脸",
+        "slug": "face_without_mouth"
+      },
+      {
+        "emoji": "😏",
+        "name": "得意",
+        "slug": "smirking_face"
+      },
+      {
+        "emoji": "😒",
+        "name": "无聊",
+        "slug": "unamused_face"
+      },
+      {
+        "emoji": "🙄",
+        "name": "翻白眼",
+        "slug": "face_with_rolling_eyes"
+      },
+      {
+        "emoji": "😬",
+        "name": "龇牙",
+        "slug": "grimacing_face"
+      },
+      {
+        "emoji": "🤥",
+        "name": "说谎",
+        "slug": "lying_face"
+      },
+      {
+        "emoji": "😔",
+        "name": "沉思",
+        "slug": "pensive_face"
+      },
+      {
+        "emoji": "😕",
+        "name": "困惑",
+        "slug": "confused_face"
+      },
+      {
+        "emoji": "🙃",
+        "name": "倒脸",
+        "slug": "upside_down_face"
+      },
+      {
+        "emoji": "😲",
+        "name": "震惊",
+        "slug": "astonished_face"
+      },
+      {
+        "emoji": "😵",
+        "name": "晕眩",
+        "slug": "dizzy_face"
+      },
+      {
+        "emoji": "😳",
+        "name": "脸红",
+        "slug": "flushed_face"
+      },
+      {
+        "emoji": "🥺",
+        "name": "恳求",
+        "slug": "pleading_face"
+      },
+      {
+        "emoji": "😢",
+        "name": "流泪",
+        "slug": "crying_face"
+      },
+      {
+        "emoji": "😭",
+        "name": "大哭",
+        "slug": "loudly_crying_face"
+      },
+      {
+        "emoji": "😤",
+        "name": "喷气",
+        "slug": "face_with_steam_from_nose"
+      },
+      {
+        "emoji": "😠",
+        "name": "生气",
+        "slug": "angry_face"
+      },
+      {
+        "emoji": "😡",
+        "name": "愤怒",
+        "slug": "pouting_face"
+      },
+      {
+        "emoji": "🤬",
+        "name": "脏话",
+        "slug": "face_with_symbols_on_mouth"
+      },
+      {
+        "emoji": "😈",
+        "name": "坏笑",
+        "slug": "smiling_face_with_horns"
+      },
+      {
+        "emoji": "👿",
+        "name": "恶魔",
+        "slug": "angry_face_with_horns"
+      }
+    ]
+  },
+  {
+    "name": "手势",
+    "slug": "people_body",
+    "emojis": [
+      {
+        "emoji": "👍",
+        "name": "点赞",
+        "slug": "thumbs_up"
+      },
+      {
+        "emoji": "👎",
+        "name": "踩",
+        "slug": "thumbs_down"
+      },
+      {
+        "emoji": "👌",
+        "name": "OK手势",
+        "slug": "ok_hand"
+      },
+      {
+        "emoji": "✌️",
+        "name": "胜利手势",
+        "slug": "victory_hand"
+      },
+      {
+        "emoji": "🤞",
+        "name": "交叉手指",
+        "slug": "crossed_fingers"
+      },
+      {
+        "emoji": "🤟",
+        "name": "我爱你",
+        "slug": "love_you_gesture"
+      },
+      {
+        "emoji": "🤘",
+        "name": "摇滚",
+        "slug": "sign_of_the_horns"
+      },
+      {
+        "emoji": "🤙",
+        "name": "打电话",
+        "slug": "call_me_hand"
+      },
+      {
+        "emoji": "👈",
+        "name": "左指",
+        "slug": "backhand_index_pointing_left"
+      },
+      {
+        "emoji": "👉",
+        "name": "右指",
+        "slug": "backhand_index_pointing_right"
+      },
+      {
+        "emoji": "👆",
+        "name": "上指",
+        "slug": "backhand_index_pointing_up"
+      },
+      {
+        "emoji": "👇",
+        "name": "下指",
+        "slug": "backhand_index_pointing_down"
+      },
+      {
+        "emoji": "☝️",
+        "name": "食指",
+        "slug": "index_pointing_up"
+      },
+      {
+        "emoji": "✋",
+        "name": "举手",
+        "slug": "raised_hand"
+      },
+      {
+        "emoji": "🤚",
+        "name": "手背",
+        "slug": "raised_back_of_hand"
+      },
+      {
+        "emoji": "🖐️",
+        "name": "五指张开",
+        "slug": "hand_with_fingers_splayed"
+      },
+      {
+        "emoji": "🖖",
+        "name": "瓦肯手势",
+        "slug": "vulcan_salute"
+      },
+      {
+        "emoji": "👋",
+        "name": "挥手",
+        "slug": "waving_hand"
+      },
+      {
+        "emoji": "🤝",
+        "name": "握手",
+        "slug": "handshake"
+      },
+      {
+        "emoji": "🙏",
+        "name": "祈祷",
+        "slug": "folded_hands"
+      },
+      {
+        "emoji": "✍️",
+        "name": "写字",
+        "slug": "writing_hand"
+      },
+      {
+        "emoji": "👏",
+        "name": "鼓掌",
+        "slug": "clapping_hands"
+      },
+      {
+        "emoji": "🙌",
+        "name": "举双手",
+        "slug": "raising_hands"
+      },
+      {
+        "emoji": "👐",
+        "name": "张开双手",
+        "slug": "open_hands"
+      },
+      {
+        "emoji": "🤲",
+        "name": "托举",
+        "slug": "palms_up_together"
+      },
+      {
+        "emoji": "🤜",
+        "name": "右拳",
+        "slug": "right_facing_fist"
+      },
+      {
+        "emoji": "🤛",
+        "name": "左拳",
+        "slug": "left_facing_fist"
+      },
+      {
+        "emoji": "✊",
+        "name": "举拳",
+        "slug": "raised_fist"
+      },
+      {
+        "emoji": "👊",
+        "name": "拳头",
+        "slug": "oncoming_fist"
+      },
+      {
+        "emoji": "🫵",
+        "name": "指向你",
+        "slug": "index_pointing_at_the_viewer"
+      }
+    ]
+  },
+  {
+    "name": "符号",
+    "slug": "symbols",
+    "emojis": [
+      {
+        "emoji": "❤️",
+        "name": "红心",
+        "slug": "red_heart"
+      },
+      {
+        "emoji": "🧡",
+        "name": "橙心",
+        "slug": "orange_heart"
+      },
+      {
+        "emoji": "💛",
+        "name": "黄心",
+        "slug": "yellow_heart"
+      },
+      {
+        "emoji": "💚",
+        "name": "绿心",
+        "slug": "green_heart"
+      },
+      {
+        "emoji": "💙",
+        "name": "蓝心",
+        "slug": "blue_heart"
+      },
+      {
+        "emoji": "💜",
+        "name": "紫心",
+        "slug": "purple_heart"
+      },
+      {
+        "emoji": "🖤",
+        "name": "黑心",
+        "slug": "black_heart"
+      },
+      {
+        "emoji": "🤍",
+        "name": "白心",
+        "slug": "white_heart"
+      },
+      {
+        "emoji": "🤎",
+        "name": "棕心",
+        "slug": "brown_heart"
+      },
+      {
+        "emoji": "💔",
+        "name": "破碎的心",
+        "slug": "broken_heart"
+      },
+      {
+        "emoji": "💕",
+        "name": "两颗心",
+        "slug": "two_hearts"
+      },
+      {
+        "emoji": "💖",
+        "name": "闪闪发光的心",
+        "slug": "sparkling_heart"
+      },
+      {
+        "emoji": "💗",
+        "name": "成长的心",
+        "slug": "growing_heart"
+      },
+      {
+        "emoji": "💘",
+        "name": "被丘比特射中的心",
+        "slug": "heart_with_arrow"
+      },
+      {
+        "emoji": "💝",
+        "name": "带丝带的心",
+        "slug": "heart_with_ribbon"
+      },
+      {
+        "emoji": "💟",
+        "name": "心形装饰",
+        "slug": "heart_decoration"
+      },
+      {
+        "emoji": "☮️",
+        "name": "和平符号",
+        "slug": "peace_symbol"
+      },
+      {
+        "emoji": "✝️",
+        "name": "拉丁十字",
+        "slug": "latin_cross"
+      },
+      {
+        "emoji": "☪️",
+        "name": "星月符号",
+        "slug": "star_and_crescent"
+      },
+      {
+        "emoji": "🕎",
+        "name": "烛台",
+        "slug": "menorah"
+      },
+      {
+        "emoji": "🔯",
+        "name": "六芒星",
+        "slug": "dotted_six_pointed_star"
+      },
+      {
+        "emoji": "🕉️",
+        "name": "嗡符号",
+        "slug": "om"
+      },
+      {
+        "emoji": "☸️",
+        "name": "法轮",
+        "slug": "wheel_of_dharma"
+      },
+      {
+        "emoji": "☯️",
+        "name": "阴阳",
+        "slug": "yin_yang"
+      },
+      {
+        "emoji": "✡️",
+        "name": "大卫星",
+        "slug": "star_of_david"
+      },
+      {
+        "emoji": "🔮",
+        "name": "水晶球",
+        "slug": "crystal_ball"
+      },
+      {
+        "emoji": "🧿",
+        "name": "护身符",
+        "slug": "nazar_amulet"
+      }
+    ]
+  }
+]

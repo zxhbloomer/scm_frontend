@@ -240,7 +240,7 @@ export default {
 <style>
 .hewa-chat-entry {
   position: fixed;
-  bottom: 50px;
+  bottom: 100px;
   right: 20px;
   z-index: 9999;
 }

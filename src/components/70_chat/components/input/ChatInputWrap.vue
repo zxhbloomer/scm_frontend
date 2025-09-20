@@ -1,64 +1,84 @@
 <template>
   <div
-    class="items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background shadow-sm"
-    :class="{
-      'shadow-n-brand': isFocused,
-      'shadow-n-strong': !isFocused,
-    }"
+    ref="chatInputContainer"
+    class="chat-input-container"
   >
-    <!-- 输入框 -->
-    <el-input
-      ref="chatInput"
-      v-model="userInput"
-      type="textarea"
-      :rows="1"
-      :placeholder="placeholder"
-      :disabled="isLoading"
-      resize="none"
-      class="user-message-input"
-      @focus="onFocus"
-      @blur="onBlur"
-      @keydown.native="handleKeyDown"
-      @input="handleInput"
-    />
+    <div
+      class="items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background shadow-sm"
+      :class="{
+        'shadow-n-brand': isFocused,
+        'shadow-n-strong': !isFocused,
+      }"
+    >
+      <!-- 输入框 -->
+      <el-input
+        ref="chatInput"
+        v-model="userInput"
+        type="textarea"
+        :rows="1"
+        :placeholder="placeholder"
+        :disabled="isLoading"
+        resize="none"
+        class="user-message-input"
+        @focus="onFocus"
+        @blur="onBlur"
+        @keydown.native="handleKeyDown"
+        @input="handleInput"
+      />
 
-    <!-- 右侧按钮区域 -->
-    <div class="flex items-center ltr:pl-2 rtl:pr-2">
-      <!-- 附件按钮 -->
-      <button
-        v-if="showAttachment"
-        class="attachment-btn"
-        title="附件"
-      >
-        <i class="el-icon-paperclip" />
-      </button>
+      <!-- 右侧按钮区域 -->
+      <div class="flex items-center ltr:pl-2 rtl:pr-2">
+        <!-- 附件按钮 -->
+        <button
+          v-if="showAttachment"
+          class="attachment-btn"
+          title="附件"
+        >
+          <i class="el-icon-paperclip" />
+        </button>
 
-      <!-- emoji按钮 -->
-      <button
-        class="emoji-btn"
-        title="表情"
-        @click="toggleEmojiPicker"
-      >
-        <i class="el-icon-sunny" />
-      </button>
+        <!-- emoji按钮 -->
+        <button
+          class="emoji-btn"
+          :class="{ active: showEmojiPicker }"
+          title="表情"
+          @click="toggleEmojiPicker"
+        >
+          <i class="el-icon-sunny" />
+        </button>
 
-      <!-- 发送按钮 -->
-      <el-button
-        v-if="showSendButton"
-        type="primary"
-        class="send-button"
-        :loading="isLoading"
-        @click="handleSendMessage"
-      >
-        <i class="el-icon-s-promotion" />
-      </el-button>
+        <!-- 发送按钮 -->
+        <el-button
+          v-if="showSendButton"
+          type="primary"
+          class="send-button"
+          :loading="isLoading"
+          @click="handleSendMessage"
+        >
+          <i class="el-icon-s-promotion" />
+        </el-button>
+      </div>
     </div>
+
+    <!-- emoji选择器 -->
+    <emoji-input
+      v-if="showEmojiPicker"
+      :on-select="handleEmojiSelect"
+      @select="handleEmojiSelect"
+      @close="hideEmojiPicker"
+    />
   </div>
 </template>
 
 <script>
+import EmojiInput from './emoji/EmojiInput.vue'
+
 export default {
   name: 'ChatInputWrap',
+
+  components: {
+    EmojiInput
+  },
 
   props: {
     isLoading: {
@@ -88,6 +108,16 @@ export default {
     }
   },
 
+  mounted () {
+    // 添加文档点击事件监听，用于点击外部关闭emoji选择器
+    document.addEventListener('click', this.handleDocumentClick)
+  },
+
+  beforeDestroy () {
+    // 移除文档点击事件监听
+    document.removeEventListener('click', this.handleDocumentClick)
+  },
+
   methods: {
     onFocus () {
       this.isFocused = true
@@ -101,6 +131,10 @@ export default {
       if (e.keyCode === 13 && !e.shiftKey) {
         e.preventDefault()
         this.handleSendMessage()
+      }
+      // ESC键关闭emoji选择器
+      if (e.keyCode === 27) {
+        this.hideEmojiPicker()
       }
     },
 
@@ -118,11 +152,60 @@ export default {
 
     toggleEmojiPicker () {
       this.showEmojiPicker = !this.showEmojiPicker
+      if (this.showEmojiPicker) {
+        // 显示emoji选择器时，可以失焦输入框，让用户专注选择emoji
+      } else {
+        // 隐藏emoji选择器时，重新聚焦到输入框
+        this.focusInput()
+      }
+    },
+
+    hideEmojiPicker () {
+      if (this.showEmojiPicker) {
+        this.showEmojiPicker = false
+        this.focusInput()
+      }
+    },
+
+    handleEmojiSelect (emoji) {
+      // 获取当前光标位置
+      const textarea = this.$refs.chatInput?.$refs?.textarea || this.$refs.chatInput?.$el?.querySelector('textarea')
+      if (textarea) {
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+
+        // 在光标位置插入emoji
+        const before = this.userInput.substring(0, start)
+        const after = this.userInput.substring(end)
+        this.userInput = before + emoji + after
+
+        // 设置新的光标位置
+        this.$nextTick(() => {
+          const newPosition = start + emoji.length
+          textarea.setSelectionRange(newPosition, newPosition)
+          textarea.focus()
+        })
+      } else {
+        // 如果无法获取textarea，就直接追加到末尾
+        this.userInput += emoji
+      }
+
+      // 选择emoji后关闭选择器
+      this.hideEmojiPicker()
     },
 
     focusInput () {
       if (this.$refs.chatInput) {
         this.$refs.chatInput.focus()
+      }
+    },
+
+    handleDocumentClick (event) {
+      // 如果emoji选择器是打开的，并且点击的不是容器内的元素，则关闭emoji选择器
+      if (this.showEmojiPicker && this.$refs.chatInputContainer) {
+        if (!this.$refs.chatInputContainer.contains(event.target)) {
+          this.hideEmojiPicker()
+        }
       }
     }
   }
@@ -130,15 +213,9 @@ export default {
 </script>
 
 <style scoped>
-/* CSS Reset for this component - 基于 Meyer Web Reset */
-* {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
-  vertical-align: baseline;
-  box-sizing: border-box;
+/* 容器样式 */
+.chat-input-container {
+  position: relative;
 }
 
 /* 完全按照chatwoot的样式 */
@@ -198,6 +275,11 @@ export default {
     0 0 2px 3px rgba(39, 129, 246, 0.1) !important;
 }
 
+/* 按钮容器 */
+.ltr\:pl-2 {
+  padding-left: 8px;
+}
+
 /* 输入框样式 - 按照chatwoot的user-message-input */
 .user-message-input {
   width: 100%;
@@ -231,11 +313,6 @@ export default {
   background: transparent;
 }
 
-/* 按钮容器 */
-.ltr\:pl-2 {
-  padding-left: 8px;
-}
-
 /* 按钮样式 */
 .attachment-btn,
 .emoji-btn {
@@ -258,6 +335,16 @@ export default {
 .emoji-btn:hover {
   background: #f1f5f9;
   color: #0f172a;
+}
+
+.emoji-btn.active {
+  background: #2781F6;
+  color: white;
+}
+
+.emoji-btn.active:hover {
+  background: #1e6bc7;
+  color: white;
 }
 
 .send-button {

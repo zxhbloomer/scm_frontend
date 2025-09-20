@@ -12,7 +12,7 @@ const state = {
   sessionId: null,
   sessionInfo: {},
 
-  // 消息相关
+  // 消息相关 - 清空以显示"猜你想问"
   messages: [],
   unreadCount: 0,
   isLoading: false,

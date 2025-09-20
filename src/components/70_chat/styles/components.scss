@@ -1,0 +1,141 @@
+/*
+ * 聊天组件样式
+ * 使用@apply指令组合Tailwind工具类，基于Chatwoot实际模式
+ */
+
+/* 聊天容器基础样式 */
+.chat-container {
+  @apply h-full w-full flex flex-col bg-white dark:bg-gray-900;
+}
+
+/* 消息气泡基础样式 - 参考Chatwoot的bubble样式 */
+.chat-bubble {
+  @apply rounded-lg px-3 py-2 max-w-xs break-words;
+  
+  /* 使用CSS变量系统 */
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* 用户消息气泡 */
+.chat-bubble--user {
+  @apply ml-auto;
+  background-color: rgb(var(--chat-bubble-user));
+  color: rgb(var(--chat-bubble-user-text));
+}
+
+/* 客服消息气泡 */
+.chat-bubble--agent {
+  @apply mr-auto;
+  background-color: rgb(var(--chat-bubble-agent));
+  color: rgb(var(--chat-bubble-agent-text));
+}
+
+/* 消息列表容器 */
+.chat-messages {
+  @apply flex-1 overflow-y-auto p-4 space-y-3;
+  
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    @apply w-1;
+  }
+  
+  &::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded;
+  }
+}
+
+/* 消息输入区域 */
+.chat-input-area {
+  @apply p-4 border-t;
+  border-color: rgb(var(--chat-border));
+}
+
+/* 输入框样式 */
+.chat-input {
+  @apply w-full p-3 border rounded-lg resize-none;
+  border-color: rgb(var(--chat-border));
+  background-color: rgb(var(--chat-bg));
+  color: rgb(var(--chat-text));
+  
+  &:focus {
+    @apply outline-none border-blue-500;
+    border-color: rgb(var(--chat-primary));
+  }
+}
+
+/* 发送按钮 */
+.chat-send-btn {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  background-color: rgb(var(--chat-primary));
+  color: rgb(var(--chat-bubble-user-text));
+  
+  &:hover {
+    @apply opacity-90;
+  }
+  
+  &:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+}
+
+/* 消息时间戳 */
+.chat-timestamp {
+  @apply text-xs opacity-70;
+  color: rgb(var(--chat-text-secondary));
+}
+
+/* 消息状态指示器 */
+.chat-message-status {
+  @apply inline-flex items-center text-xs;
+  color: rgb(var(--chat-text-secondary));
+}
+
+/* 阴影效果 - 参考Chatwoot的shadow系统 */
+.chat-shadow-soft {
+  --tw-shadow-color: rgb(var(--border-strong) / 0.1);
+  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+.chat-shadow-strong {
+  --tw-shadow-color: rgb(var(--border-strong) / 0.25);
+  --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-shadow);
+}
+
+/* 头像样式 */
+.chat-avatar {
+  @apply w-8 h-8 rounded-full flex-shrink-0;
+  
+  img {
+    @apply w-full h-full rounded-full object-cover;
+  }
+}
+
+/* 消息分组 */
+.chat-message-group {
+  @apply flex gap-2;
+  
+  &--user {
+    @apply flex-row-reverse;
+  }
+  
+  &--agent {
+    @apply flex-row;
+  }
+}
+
+/* 在线状态指示器 */
+.chat-online-indicator {
+  @apply w-2 h-2 rounded-full;
+  background-color: rgb(var(--chat-success));
+}
+
+.chat-offline-indicator {
+  @apply w-2 h-2 rounded-full bg-gray-400;
+}

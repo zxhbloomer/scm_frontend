@@ -1,5 +1,5 @@
 <template>
-  <div class="chat-panel">
+  <div class="chat-panel chat-container">
     <!-- 聊天头部 -->
     <chat-header
       :assistant="assistantInfo"
@@ -19,6 +19,7 @@
         :is-typing="isLoading"
         :user-info="userInfo"
         @message-action="handleMessageAction"
+        @quick-question="handleQuickQuestion"
       />
     </div>
 
@@ -40,6 +41,9 @@
 </template>
 
 <script>
+// 导入Tailwind CSS样式 - 仅在聊天组件中启用
+import '../../styles/index.scss'
+
 import ChatHeader from './ChatHeader.vue'
 import ChatFooter from './ChatFooter.vue'
 import MessageList from '../messages/MessageList.vue'
@@ -75,7 +79,7 @@ export default {
     assistantInfo: {
       type: Object,
       default: () => ({
-        name: 'HeWa智能助手',
+        name: 'SCM智能助手',
         avatar: '',
         role: 'SCM业务专家'
       })
@@ -154,6 +158,12 @@ export default {
     handleFeedback (feedbackData) {
       this.$emit('feedback', feedbackData)
       console.log('用户反馈:', feedbackData)
+    },
+
+    handleQuickQuestion (question) {
+      console.log('处理快捷问题:', question)
+      // 将快捷问题作为用户消息发送
+      this.$emit('send-message', question)
     }
   }
 }

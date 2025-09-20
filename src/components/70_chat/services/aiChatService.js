@@ -266,7 +266,7 @@ class AIChatService {
   }
 
   /**
-   * 智能问题建议
+   * 智能问题建议 - 来自备份aiChatService.js的完整实现
    * @param {string} userInput - 用户输入
    * @returns {Array} 建议问题列表
    */
@@ -274,7 +274,7 @@ class AIChatService {
     const suggestions = []
     const input = userInput.toLowerCase()
 
-    // 关键词匹配建议
+    // 关键词匹配建议 - 完整的备份映射
     const keywordSuggestions = {
       '采购': [
         '如何创建采购订单？',

@@ -1,0 +1,57 @@
+/*
+ * CSS变量桥接系统
+ * 基于Chatwoot实际变量模式，桥接Element UI和Tailwind CSS
+ */
+
+.chat-container {
+  /* 聊天主色彩系统 - 基于Element UI变量 */
+  --chat-primary: 24 144 255; /* Element UI primary blue */
+  --chat-success: 103 194 58;
+  --chat-warning: 230 162 60;
+  --chat-danger: 245 108 108;
+  --chat-info: 144 147 153;
+
+  /* 聊天背景色系统 */
+  --chat-bg: 255 255 255;
+  --chat-bg-secondary: 248 249 250;
+  --chat-text: 48 49 51;
+  --chat-text-secondary: 144 147 153;
+  --chat-border: 220 223 230;
+
+  /* 聊天气泡颜色 */
+  --chat-bubble-user: 24 144 255;      /* 用户消息气泡 */
+  --chat-bubble-agent: 245 245 245;    /* 客服消息气泡 */
+  --chat-bubble-user-text: 255 255 255;
+  --chat-bubble-agent-text: 48 49 51;
+
+  /* 阴影系统 - 参考Chatwoot的shadow变量 */
+  --border-strong: 220 223 230;
+  --black-alpha-1: 0 0 0 / 0.04;
+  --alpha-3: 0 0 0 / 0.08;
+}
+
+/* 暗色模式支持 */
+.dark {
+  --chat-bg: 20 20 20;
+  --chat-bg-secondary: 30 30 30;
+  --chat-text: 255 255 255;
+  --chat-text-secondary: 200 200 200;
+  --chat-border: 60 60 60;
+  
+  --chat-bubble-agent: 40 40 40;
+  --chat-bubble-agent-text: 255 255 255;
+  
+  --border-strong: 60 60 60;
+  --black-alpha-1: 255 255 255 / 0.04;
+  --alpha-3: 255 255 255 / 0.08;
+}
+
+/* Element UI变量兼容层 - 限制在聊天容器内 */
+.chat-container {
+  /* 将Element UI的CSS变量映射到我们的聊天变量 */
+  --el-color-primary-rgb: var(--chat-primary);
+  --el-color-success-rgb: var(--chat-success);
+  --el-color-warning-rgb: var(--chat-warning);
+  --el-color-danger-rgb: var(--chat-danger);
+  --el-color-info-rgb: var(--chat-info);
+}

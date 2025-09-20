@@ -25,6 +25,10 @@
         <chat-panel
           :messages="messages"
           :is-loading="isLoading"
+          :user-info="userInfo"
+          :assistant-info="assistantInfo"
+          :online-status="onlineStatus"
+          :input-placeholder="inputPlaceholder"
           @send-message="handleSendMessage"
           @close="closeChatPanel"
         />
@@ -79,6 +83,30 @@ export default {
     },
     isLoading () {
       return this.$store.getters.chatIsLoading
+    },
+    // 用户信息
+    userInfo () {
+      return {
+        id: this.$store.getters.staff_id,
+        name: this.$store.getters.name || '访客',
+        avatar: this.$store.getters.avatar
+      }
+    },
+    // 助手信息
+    assistantInfo () {
+      return {
+        name: 'SCM智能助手',
+        avatar: '',
+        role: 'SCM业务专家'
+      }
+    },
+    // 在线状态
+    onlineStatus () {
+      return this.$store.getters.chatConnectionStatus ? 'online' : 'offline'
+    },
+    // 输入占位符
+    inputPlaceholder () {
+      return '输入您的消息'
     }
   },
   mounted () {
@@ -164,8 +192,8 @@ export default {
   position: absolute;
   bottom: 80px;
   right: 0;
-  width: 360px;
-  height: 500px;
+  width: 480px;
+  height: 80vh;
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
