@@ -40,21 +40,21 @@
             @keyup.enter.native="handleSearch"
           />
         </el-form-item>
-        <!--        <el-form-item>-->
-        <!--          <el-date-picker-->
-        <!--            v-model="dataJson.searchForm.daterange"-->
-        <!--            style="width: 292px"-->
-        <!--            value-format="yyyy-MM-dd"-->
-        <!--            type="daterange"-->
-        <!--            align="right"-->
-        <!--            unlink-panels-->
-        <!--            range-separator="至"-->
-        <!--            start-placeholder="开始日期"-->
-        <!--            end-placeholder="结束日期"-->
-        <!--            :picker-options="pickerOptions"-->
-        <!--            @keyup.enter.native="handleSearch"-->
-        <!--          />-->
-        <!--        </el-form-item>-->
+        <el-form-item>
+          <el-date-picker
+            v-model="dataJson.searchForm.daterange"
+            style="width: 292px"
+            value-format="yyyy-MM-dd"
+            type="daterange"
+            align="right"
+            unlink-panels
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            :picker-options="pickerOptions"
+            @keyup.enter.native="handleSearch"
+          />
+        </el-form-item>
         <el-form-item style="float:right">
           <el-button
             type="primary"
@@ -354,7 +354,9 @@ export default {
           sync_status: null,
           warehouse_type: null,
           todo_status: '2',
-          daterange: [],
+          daterange: null,
+          start_time: null,
+          over_time: null,
           status_list: ['3', '2', '1', '0', '5', '6', '7'],
           active_tabs_index: 2 // 当前被激活的页签
 
@@ -504,8 +506,8 @@ export default {
     // 作为独立页面，通过route路由打开时
     this.$options.name = this.$route.meta.page_code
 
-    // 默认查询近一个月内的数据
-    this.setDateRange()
+    // 默认不设置时间范围，让用户自己选择
+    // this.setDateRange()
     // 接收url参数
     // 获取url参数
     // const p1 = urlUtil.getHashQueryVariable(window.location.href, 'p1')
@@ -590,9 +592,13 @@ export default {
       }
     },
     handleSearch () {
-      if (this.dataJson.searchForm.daterange !== null && this.dataJson.searchForm.daterange !== undefined && this.dataJson.searchForm.daterange !== '') {
+      if (this.dataJson.searchForm.daterange !== null && this.dataJson.searchForm.daterange !== undefined && this.dataJson.searchForm.daterange.length > 0) {
         this.dataJson.searchForm.start_time = this.dataJson.searchForm.daterange[0]
         this.dataJson.searchForm.over_time = this.dataJson.searchForm.daterange[1]
+      } else {
+        // 如果没有选择时间范围，清空时间参数
+        this.dataJson.searchForm.start_time = null
+        this.dataJson.searchForm.over_time = null
       }
 
       // 查询
@@ -648,8 +654,8 @@ export default {
       this.settings.reset3 = !this.settings.reset3
       this.settings.reset4 = !this.settings.reset4
 
-      // 默认查询近一个月内的数据
-      this.setDateRange()
+      // 重置时也不设置默认时间范围
+      // this.setDateRange()
     },
 
     // 获取row-key
@@ -696,13 +702,10 @@ export default {
 
     // 设置创建时间的默认时间
     setDateRange () {
-      const end = new Date()
-      const start = new Date()
-      start.setTime(start.getTime() - 3600 * 1000 * 24 * 90)
-      this.dataJson.searchForm.daterange.push(start)
-      this.dataJson.searchForm.daterange.push(end)
-      this.dataJson.searchForm.start_time = start
-      this.dataJson.searchForm.over_time = end
+      // 不设置默认时间，让用户自己选择
+      this.dataJson.searchForm.daterange = []
+      this.dataJson.searchForm.start_time = null
+      this.dataJson.searchForm.over_time = null
     }
   }
 }

@@ -351,7 +351,16 @@ export default {
           over_inventory_upper: 0
         },
         // 单条数据 json
-        tempJson: null,
+        tempJson: {
+          // 基本信息字段
+          user_name: '',
+          staff_name: '',
+          page_name: '',
+          operation: '',
+          operate_time: '',
+          url: '',
+          ip: ''
+        },
         inputSettings: {
           maxLength: {
             contract_num: 20,
@@ -472,9 +481,21 @@ export default {
 
     // 查看时的初始化
     async initViewModel () {
-      // 数据初始化
-      this.dataJson.tempJson = deepCopy(this.data)
-      this.dataJson.detailListData = this.data.detailVo
+      // 数据初始化 - 从前面页面传过来的数据中提取基本信息
+      this.dataJson.tempJson = Object.assign({}, this.dataJson.tempJson, {
+        // 前面页面传过来的基本信息
+        user_name: this.data.user_name || '',
+        staff_name: this.data.staff_name || '',
+        page_name: this.data.page_name || '',
+        operation: this.data.operation || '',
+        operate_time: this.data.operate_time || this.data.operate_date || '',
+        url: this.data.url || '',
+        ip: this.data.ip || ''
+      })
+      
+      console.log('前面页面传入的数据:', this.data)
+      console.log('初始化后的tempJson:', this.dataJson.tempJson)
+      
       await this.getData()
       // 初始化来源
       // await getListApi({}).then(response => {
@@ -541,10 +562,29 @@ export default {
       // 查询逻辑
       this.settings.loading = true
       await getApi(this.data).then(response => {
-        this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJson.over_inventory_upper = this.dataJson.tempJson.over_inventory_upper * 100
+        // 保存基本信息，避免被覆盖
+        const basicInfo = {
+          user_name: this.dataJson.tempJson.user_name,
+          staff_name: this.dataJson.tempJson.staff_name,
+          page_name: this.dataJson.tempJson.page_name,
+          operation: this.dataJson.tempJson.operation,
+          operate_time: this.dataJson.tempJson.operate_time,
+          url: this.dataJson.tempJson.url,
+          ip: this.dataJson.tempJson.ip
+        }
+        
+        // 合并后端数据，但保持基本信息
+        this.dataJson.tempJson = Object.assign({}, deepCopy(response.data), basicInfo)
+        
+        // 关键修复：使用正确的字段名dataChangeList，而不是dataChangeMongoVoList
+        this.dataJson.detailListData = response.data.dataChangeList || []
+        
+        console.log('后端返回的变更记录列表:', this.dataJson.detailListData)
+        
+        if (this.dataJson.tempJson.over_inventory_upper) {
+          this.dataJson.tempJson.over_inventory_upper = this.dataJson.tempJson.over_inventory_upper * 100
+        }
         this.dataJson.tempJsonOriginal = deepCopy(response.data)
-        this.dataJson.detailListData = this.dataJson.tempJson.dataChangeMongoVoList
 
         if (this.dataJson.tempJson.detailList !== null && this.dataJson.tempJson.detailList !== undefined && this.dataJson.tempJson.detailList.length) {
           this.dataJson.tempJson.sku_price = this.dataJson.tempJson.detailList[0].contract_price
