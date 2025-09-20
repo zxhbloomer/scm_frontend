@@ -6,7 +6,7 @@ import request from '@/utils/request'
  */
 export function getListApi (query) {
   return request({
-    url: '/api/v1/log/sys/new/list',
+    url: '/api/v1/log/sys/list',
     method: 'post',
     data: query
   })
@@ -18,7 +18,7 @@ export function getListApi (query) {
  */
 export function getApi (query) {
   return request({
-    url: '/api/v1/log/sys/new/get',
+    url: '/api/v1/log/sys/get',
     method: 'post',
     data: query
   })

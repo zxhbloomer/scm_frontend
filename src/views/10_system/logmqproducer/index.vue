@@ -11,6 +11,7 @@
           v-model.trim="dataJson.searchForm.type"
           clearable
           placeholder="类型"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item label="">
@@ -18,6 +19,7 @@
           v-model.trim="dataJson.searchForm.name"
           clearable
           placeholder="队列名称"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item label="">
@@ -25,6 +27,7 @@
           v-model.trim="dataJson.searchForm.code"
           clearable
           placeholder="队列编码"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item label="">
@@ -32,6 +35,7 @@
           v-model.trim="dataJson.searchForm.message_id"
           clearable
           placeholder="message_id"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item>
@@ -39,6 +43,7 @@
           v-model.trim="dataJson.searchForm.mq_data"
           clearable
           placeholder="消息体"
+          @keyup.enter.native="handleSearch"
         />
       </el-form-item>
       <el-form-item>
@@ -355,8 +360,8 @@ export default {
     'dataJson.searchForm': {
       handler () {
         if (this.dataJson.searchForm.daterange === null) {
-          this.dataJson.searchForm.producer_c_time_start = null
-          this.dataJson.searchForm.producer_c_time_end = null
+          this.dataJson.searchForm.start_time = null
+          this.dataJson.searchForm.over_time = null
         }
       }
     }
@@ -397,9 +402,9 @@ export default {
     },
     handleSearch () {
       // 时间区间
-      if (this.dataJson.searchForm.daterange !== null && this.dataJson.searchForm.daterange !== undefined && this.dataJson.searchForm.ed_dt !== '') {
-        this.dataJson.searchForm.producer_c_time_start = this.dataJson.searchForm.daterange[0]
-        this.dataJson.searchForm.producer_c_time_end = this.dataJson.searchForm.daterange[1]
+      if (this.dataJson.searchForm.daterange !== null && this.dataJson.searchForm.daterange !== undefined && this.dataJson.searchForm.daterange !== '') {
+        this.dataJson.searchForm.start_time = this.dataJson.searchForm.daterange[0]
+        this.dataJson.searchForm.over_time = this.dataJson.searchForm.daterange[1]
       }
       // 查询
       this.dataJson.searchForm.pageCondition.current = 1

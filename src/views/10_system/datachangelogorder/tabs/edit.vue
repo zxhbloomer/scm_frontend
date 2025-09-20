@@ -507,7 +507,22 @@ export default {
       this.settings.loading = true
       await getApi(this.data).then(response => {
         this.dataJson.tempJson = deepCopy(response.data)
-        this.dataJson.tempJson.over_inventory_upper = this.dataJson.tempJson.over_inventory_upper * 100
+
+        // 关键修复：从列表第一项中提取基本信息，因为列表中每项的基本信息都相同
+        if (response.data.dataChangeMongoVoList && response.data.dataChangeMongoVoList.length > 0) {
+          const firstItem = response.data.dataChangeMongoVoList[0]
+
+          // 设置基本信息字段到tempJson顶层，供页面显示使用
+          this.dataJson.tempJson.order_code = firstItem.order_code
+          this.dataJson.tempJson.name = firstItem.name
+          this.dataJson.tempJson.u_name = firstItem.u_name
+          this.dataJson.tempJson.u_time = firstItem.u_time
+          this.dataJson.tempJson.request_id = firstItem.request_id
+        }
+
+        if (this.dataJson.tempJson.over_inventory_upper) {
+          this.dataJson.tempJson.over_inventory_upper = this.dataJson.tempJson.over_inventory_upper * 100
+        }
         this.dataJson.tempJsonOriginal = deepCopy(response.data)
         this.dataJson.detailListData = this.dataJson.tempJson.dataChangeMongoVoList
 
