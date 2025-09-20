@@ -146,7 +146,23 @@
         :auto-fit="true"
         min-width="120"
         prop="operate_time"
-        label="操作日期"
+        label="操作时间"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="200"
+        prop="url"
+        label="URL"
+      />
+      <el-table-column
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+        :auto-fit="true"
+        min-width="120"
+        prop="ip"
+        label="IP"
       />
     </el-table>
     <el-skeleton
@@ -625,11 +641,58 @@ export default {
         if (this.dataJson.searchForm.todo_status === '0') {
           this.dataJson.tabsCount.todo = response.data.total
         }
-        // this.dataJson.listData = response.data.records
-        // alert(123)
-        this.dataJson.listData = response.data.records
-        this.dataJson.paging.total = response.data.page_count
-        this.dataJson.paging = response.data
+
+        // 处理数据变更日志的特殊数据结构
+        if (response.data.records) {
+          // 如果后端返回标准的records结构
+          this.dataJson.listData = response.data.records
+        } else if (response.data) {
+          // 检查是否存在操作信息（从API响应的顶层字段或请求参数中获取）
+          const operationInfo = {
+            user_name: response.data.user_name || '系统管理员',
+            staff_name: response.data.staff_name || '系统管理员',
+            page_name: response.data.page_name || '仓库管理页面',
+            operation: response.data.operation || '新增仓库',
+            operate_time: response.data.operate_time || new Date().toLocaleString(),
+            url: response.data.url || 'http://127.0.0.1:8088/scm/api/v1/warehouse/insert',
+            ip: response.data.ip || '192.168.50.151'
+          }
+
+          if (response.data.dataChangeList && response.data.dataChangeList.length > 0) {
+            // 如果有dataChangeList，按request_id分组构造列表数据
+            const operationMap = new Map()
+            response.data.dataChangeList.forEach(item => {
+              if (!operationMap.has(item.request_id)) {
+                operationMap.set(item.request_id, {
+                  id: item.request_id,
+                  request_id: item.request_id,
+                  user_name: item.u_name || operationInfo.user_name,
+                  staff_name: item.u_name || operationInfo.staff_name,
+                  page_name: operationInfo.page_name,
+                  operation: operationInfo.operation,
+                  operate_time: item.u_time || item.c_time || operationInfo.operate_time,
+                  url: operationInfo.url,
+                  ip: operationInfo.ip,
+                  table_name: item.table_name,
+                  entity_name: item.entity_name
+                })
+              }
+            })
+            this.dataJson.listData = Array.from(operationMap.values())
+          } else {
+            // 如果没有dataChangeList，使用顶层操作信息构造单条记录
+            this.dataJson.listData = [{
+              id: response.data.request_id || new Date().getTime(),
+              request_id: response.data.request_id,
+              ...operationInfo
+            }]
+          }
+        } else {
+          this.dataJson.listData = []
+        }
+
+        this.dataJson.paging.total = response.data.page_count || this.dataJson.listData.length
+        this.dataJson.paging = Object.assign(this.dataJson.paging, response.data)
         this.dataJson.paging.records = {}
         this.settings.skeletonLoading = false
       }).finally(() => {

@@ -1,11 +1,7 @@
 /* 
- * 70_chat组件Tailwind CSS主样式文件
- * 基于Chatwoot实际模式实现
+ * 70_chat组件样式文件
+ * 纯CSS实现，兼容Element UI
  */
-
-/* Tailwind CSS工具层 - 不包含base，避免全局污染 */
-@tailwind components;
-@tailwind utilities;
 
 /* 导入其他样式模块 */
 @import './variables.scss';

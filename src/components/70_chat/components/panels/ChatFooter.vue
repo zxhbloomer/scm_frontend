@@ -1,9 +1,8 @@
 <template>
   <footer
-    class="relative z-50 mb-1 rounded-lg px-5"
+    class="chat-footer"
   >
     <chat-input-wrap
-      class="shadow-sm"
       :is-loading="isLoading"
       :placeholder="placeholder"
       @send-message="handleSendMessage"
@@ -41,18 +40,12 @@ export default {
 </script>
 
 <style scoped>
-/* 按照chatwoot的footer样式 */
-footer {
-  /* 对应chatwoot的: relative z-50 mb-1 rounded-lg px-5 */
+/* 聊天底部样式 */
+.chat-footer {
   position: relative;
   z-index: 50;
   margin-bottom: 4px;
   border-radius: 8px;
-}
-
-/* px-5 对应padding-left和padding-right为20px (5 * 4px) */
-.px-5 {
-  padding-left: 20px;
-  padding-right: 20px;
+  padding: 0 20px;
 }
 </style>

@@ -1,6 +1,6 @@
 /*
  * 自定义工具类
- * 聊天组件专用的实用工具类，基于Chatwoot实际需求
+ * 聊天组件专用的实用工具类，纯CSS实现
  */
 
 /* 文本截断工具类 */
@@ -51,7 +51,7 @@
   }
 }
 
-/* 动画工具类 - 参考Chatwoot的动画 */
+/* 动画工具类 */
 .chat-fade-in {
   animation: chatFadeIn 0.3s ease-out;
 }

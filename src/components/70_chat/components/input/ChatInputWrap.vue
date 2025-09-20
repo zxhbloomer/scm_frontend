@@ -4,10 +4,9 @@
     class="chat-input-container"
   >
     <div
-      class="items-center flex ltr:pl-3 rtl:pr-3 ltr:pr-2 rtl:pl-2 rounded-[7px] transition-all duration-200 bg-n-background shadow-sm"
+      class="chat-input-wrapper"
       :class="{
-        'shadow-n-brand': isFocused,
-        'shadow-n-strong': !isFocused,
+        'focused': isFocused
       }"
     >
       <!-- 输入框 -->
@@ -27,7 +26,7 @@
       />
 
       <!-- 右侧按钮区域 -->
-      <div class="flex items-center ltr:pl-2 rtl:pr-2">
+      <div class="chat-input-actions">
         <!-- 附件按钮 -->
         <button
           v-if="showAttachment"
@@ -216,6 +215,28 @@ export default {
 /* 容器样式 */
 .chat-input-container {
   position: relative;
+}
+
+/* 新的输入框包装器样式 */
+.chat-input-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 8px;
+  border-radius: 7px;
+  transition: all 200ms ease;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 1px rgb(235, 235, 235), 0 0 2px 3px rgba(235, 235, 235, 0.1);
+}
+
+.chat-input-wrapper.focused {
+  box-shadow: 0 0 0 1px #2781F6, 0 0 2px 3px rgba(39, 129, 246, 0.1);
+}
+
+/* 按钮区域样式 */
+.chat-input-actions {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
 }
 
 /* 完全按照chatwoot的样式 */
