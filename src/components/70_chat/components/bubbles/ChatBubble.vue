@@ -19,7 +19,6 @@
     <transition name="chat-panel">
       <div
         v-if="isExpanded"
-        v-click-outside="closeChatPanel"
         class="chat-panel-container"
       >
         <chat-panel
@@ -42,35 +41,13 @@ import ChatPanel from '../panels/ChatPanel.vue'
 
 export default {
   name: 'ChatBubble',
-  // 点击外部关闭指令
-  directives: {
-    'click-outside': {
-      bind (el, binding) {
-        el.clickOutsideEvent = function (event) {
-          // 排除气泡按钮本身的点击
-          const chatBubble = el.querySelector('.chat-bubble')
-          const chatBubbleWrapper = el.closest('.chat-bubble-wrapper')
-
-          if (!(el === event.target || el.contains(event.target)) &&
-              !(chatBubble && (chatBubble === event.target || chatBubble.contains(event.target))) &&
-              !(chatBubbleWrapper && chatBubbleWrapper.querySelector('.chat-bubble-badge') &&
-                chatBubbleWrapper.querySelector('.chat-bubble-badge').contains(event.target))) {
-            binding.value()
-          }
-        }
-        document.addEventListener('click', el.clickOutsideEvent)
-      },
-      unbind (el) {
-        document.removeEventListener('click', el.clickOutsideEvent)
-      }
-    }
-  },
+  // 移除点击外部关闭指令，现在只能通过点击气泡切换状态
   components: {
     ChatPanel
   },
   data () {
     return {
-      isExpanded: false
+      // 面板状态现在由store管理，移除本地状态
     }
   },
   computed: {
@@ -83,6 +60,10 @@ export default {
     },
     isLoading () {
       return this.$store.getters.chatIsLoading
+    },
+    // 面板展开状态从store获取
+    isExpanded () {
+      return this.$store.getters.chatPanelExpanded
     },
     // 用户信息
     userInfo () {
@@ -110,6 +91,8 @@ export default {
     }
   },
   mounted () {
+    // 初始化面板状态（从localStorage恢复）
+    this.$store.dispatch('chat/initChatPanel')
     // 可选：初始化聊天连接（需要配置WebSocket端点）
     // this.initializeChat()
   },
@@ -126,14 +109,13 @@ export default {
     },
 
     toggleChatPanel () {
-      this.isExpanded = !this.isExpanded
-      if (this.isExpanded && this.unreadCount > 0) {
-        this.markAsRead()
-      }
+      // 使用store action来切换面板状态
+      this.$store.dispatch('chat/toggleChatPanel')
     },
 
     closeChatPanel () {
-      this.isExpanded = false
+      // 关闭面板（设置为false）
+      this.$store.dispatch('chat/setChatPanelExpanded', false)
     },
 
     handleSendMessage (messageContent) {

@@ -1,6 +1,6 @@
 <template>
   <transition name="feedback-panel">
-    <div v-if="visible" class="hewa-feedback-panel">
+    <div v-if="visible" class="scm-feedback-panel">
       <div class="feedback-overlay" @click="closeFeedback" />
 
       <div class="feedback-content">
@@ -274,7 +274,7 @@ export default {
 </script>
 
 <style scoped>
-.hewa-feedback-panel {
+.scm-feedback-panel {
   position: fixed;
   top: 0;
   left: 0;

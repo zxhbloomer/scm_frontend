@@ -1,8 +1,8 @@
 <template>
-  <div ref="messagesContainer" class="hewa-message-list">
+  <div ref="messagesContainer" class="scm-message-list">
     <div class="messages-wrapper">
-      <!-- HeWa欢迎区域 - 和71_chat完全一致 -->
-      <div v-if="!hasConversation" class="hewa-welcome-area">
+      <!-- SCM欢迎区域 - 和71_chat完全一致 -->
+      <div v-if="!hasConversation" class="scm-welcome-area">
         <!-- 欢迎消息 -->
         <div class="welcome-message">
           <div class="welcome-icon">
@@ -16,7 +16,7 @@
               你好{{ userInfo && userInfo.name ? '，' + userInfo.name : '' }}！👋
             </h3>
             <p class="welcome-subtitle">
-              我是HeWa智能助手，专注于SCM供应链管理。
+              我是SCM智能助手，专注于SCM供应链管理。
               <br>有什么可以帮助您的吗？
             </p>
           </div>
@@ -270,7 +270,7 @@
 
         <div class="typing-content">
           <div class="typing-bubble">
-            <div class="typing-text">HeWa正在思考</div>
+            <div class="typing-text">SCM正在思考</div>
             <div class="typing-dots">
               <span />
               <span />
@@ -488,7 +488,7 @@ export default {
 </script>
 
 <style scoped>
-.hewa-message-list {
+.scm-message-list {
   width: 100%;
   height: 100%;
   display: flex;
@@ -508,8 +508,8 @@ export default {
   gap: 16px;
 }
 
-/* HeWa欢迎区域样式 - 和71_chat完全一致 */
-.hewa-welcome-area {
+/* SCM欢迎区域样式 - 和71_chat完全一致 */
+.scm-welcome-area {
   padding: 24px 20px;
   background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
 }
@@ -743,7 +743,7 @@ export default {
 
 /* 响应式调整 */
 @media (max-width: 480px) {
-  .hewa-welcome-area {
+  .scm-welcome-area {
     padding: 16px 12px;
   }
 
@@ -1114,21 +1114,21 @@ export default {
 }
 
 /* 滚动条样式 */
-.hewa-message-list::-webkit-scrollbar {
+.scm-message-list::-webkit-scrollbar {
   width: 6px;
 }
 
-.hewa-message-list::-webkit-scrollbar-track {
+.scm-message-list::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 3px;
 }
 
-.hewa-message-list::-webkit-scrollbar-thumb {
+.scm-message-list::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 3px;
 }
 
-.hewa-message-list::-webkit-scrollbar-thumb:hover {
+.scm-message-list::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 

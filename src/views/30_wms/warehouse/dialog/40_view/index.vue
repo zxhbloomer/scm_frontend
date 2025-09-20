@@ -19,48 +19,85 @@
     <el-form
       :model="dataJson.tempJson"
       label-position="right"
-      label-width="150px"
+      label-width="0px"
     >
       <el-tabs style="height: 380px">
         <br>
 
         <el-tab-pane label="基本信息">
           <el-descriptions
+            title=""
+            :column="2"
             :content-style="contentStyle"
             :label-style="labelStyle"
-            :column="2"
+            direction="horizontal"
+            border
+            style="padding-right: 10px;padding-left: 10px;"
           >
-            <el-descriptions-item label="仓库编码：">
+            <el-descriptions-item>
+              <div slot="label">
+                仓库编码：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.code || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="仓库名称：">
+            <el-descriptions-item>
+              <div slot="label">
+                仓库名称：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.name || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="仓库简称：">
+            <el-descriptions-item>
+              <div slot="label">
+                仓库简称：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.short_name || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="仓库类型：">
+            <el-descriptions-item>
+              <div slot="label">
+                仓库类型：
+              </div>
               <span class="view-text">{{ getWarehouseTypeText(dataJson.tempJson.warehouse_type) || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="监管企业：">
+            <el-descriptions-item>
+              <div slot="label">
+                监管企业：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.charge_company_name || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="运营企业：">
+            <el-descriptions-item>
+              <div slot="label">
+                运营企业：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.operate_company_name || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="联系人：">
+            <el-descriptions-item>
+              <div slot="label">
+                联系人：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.contact_person || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="联系手机：">
+            <el-descriptions-item>
+              <div slot="label">
+                联系手机：
+              </div>
               <span class="view-text">{{ dataJson.tempJson.mobile_phone || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="省市区：">
+            <el-descriptions-item>
+              <div slot="label">
+                省市区：
+              </div>
               <span class="view-text">{{ getCascaderText() || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="片区：">
+            <el-descriptions-item>
+              <div slot="label">
+                片区：
+              </div>
               <span class="view-text">{{ getZoneText(dataJson.tempJson.zone) || '--' }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="详细地址：" :span="2">
+            <el-descriptions-item :span="2">
+              <div slot="label">
+                详细地址：
+              </div>
               <div class="view-textarea">{{ dataJson.tempJson.address || '--' }}</div>
             </el-descriptions-item>
           </el-descriptions>
@@ -68,9 +105,13 @@
 
         <el-tab-pane label="其他信息">
           <el-descriptions
+            title=""
+            :column="2"
             :content-style="contentStyle"
             :label-style="labelStyle"
-            :column="2"
+            direction="horizontal"
+            border
+            style="padding-right: 10px;padding-left: 10px;"
           >
             <el-descriptions-item label="仓库面积：">
               <span class="view-text">{{ dataJson.tempJson.area || '--' }}</span>
@@ -191,7 +232,7 @@ export default {
         width: '15%'
       },
       labelStyle: {
-        width: '10%',
+        width: '12%',
         'text-align': 'right'
       },
       dataJson: {

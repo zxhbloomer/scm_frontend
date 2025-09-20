@@ -20,6 +20,9 @@
         <settings />
       </right-panel>
     </div>
+
+    <!-- 全局聊天组件 -->
+    <ChatBubble v-if="showChatBubble" />
   </div>
 </template>
 
@@ -29,6 +32,7 @@ import RightPanel from '@/components/RightPanel'
 import { AppMain, Navbar, Settings, Sidebar } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
+import { ChatBubble } from '@/components/70_chat'
 
 export default {
   name: 'Layout',
@@ -37,7 +41,8 @@ export default {
     Navbar,
     RightPanel,
     Settings,
-    Sidebar
+    Sidebar,
+    ChatBubble
     // TagsView
   },
   mixins: [ResizeMixin],
@@ -56,6 +61,30 @@ export default {
         withoutAnimation: this.sidebar.withoutAnimation,
         mobile: this.device === 'mobile'
       }
+    },
+    // 可选优化方案1：页面级别的显示控制
+    showChatBubble () {
+      // 获取当前路由路径
+      const currentPath = this.$route.path
+
+      // 定义不显示聊天气泡的页面路径
+      const hiddenPaths = [
+        '/login',
+        '/404',
+        '/401',
+        '/password_reset',
+        '/signup',
+        '/sso',
+        '/auth-redirect'
+      ]
+
+      // 如果当前路径在隐藏列表中，则不显示聊天气泡
+      if (hiddenPaths.includes(currentPath)) {
+        return false
+      }
+
+      // 默认显示聊天气泡
+      return true
     }
   },
   methods: {

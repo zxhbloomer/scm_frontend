@@ -23,25 +23,21 @@
         :rules="formRules"
         :model="formData"
         label-position="right"
-        label-width="150px"
+        label-width="0px"
         status-icon
       >
         <br>
         <el-descriptions
+          title=""
+          :column="2"
           :content-style="contentStyle"
           :label-style="labelStyle"
-          :column="2"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
         >
-          <el-descriptions-item label="仓库名称：" class="required-mark">
-            <el-form-item
-              prop="warehouse_name"
-              style="margin-bottom: 0"
-            >
-              <input-search
-                v-model.trim="formData.warehouse_name"
-                @onInputSearch="handleSelectWarehouse"
-              />
-            </el-form-item>
+          <el-descriptions-item label="仓库名称：">
+            {{ formData.warehouse_name || '--' }}
           </el-descriptions-item>
           <el-descriptions-item label="库区名称：" class="required-mark">
             <el-form-item
@@ -127,11 +123,10 @@ import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
 import { updateApi } from '@/api/30_wms/location/location'
 import warehouseDialog from '@/views/30_wms/warehouse/dialog/10_list/index.vue'
-import InputSearch from '@/components/40_input/inputSearch'
 
 export default {
   name: 'LocationEditDialog',
-  components: { warehouseDialog, InputSearch },
+  components: { warehouseDialog },
   directives: { elDragDialog },
   props: {
     visible: {
@@ -152,7 +147,7 @@ export default {
         width: '15%'
       },
       labelStyle: {
-        width: '10%',
+        width: '12%',
         'text-align': 'right'
       },
 

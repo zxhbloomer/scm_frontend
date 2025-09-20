@@ -18,6 +18,9 @@ const state = {
   isLoading: false,
   isTyping: false,
 
+  // 聊天面板状态
+  isPanelExpanded: false,
+
   // WebSocket连接
   socket: null,
   stompClient: null,
@@ -101,6 +104,18 @@ const mutations = {
     state.isTyping = status
   },
 
+  // 聊天面板状态控制
+  SET_PANEL_EXPANDED (state, expanded) {
+    state.isPanelExpanded = expanded
+    // 持久化到localStorage，保持跨页面状态
+    localStorage.setItem('chat_panel_expanded', expanded.toString())
+  },
+
+  TOGGLE_PANEL (state) {
+    state.isPanelExpanded = !state.isPanelExpanded
+    localStorage.setItem('chat_panel_expanded', state.isPanelExpanded.toString())
+  },
+
   // WebSocket连接
   SET_SOCKET (state, socket) {
     state.socket = socket
@@ -133,7 +148,23 @@ const mutations = {
     state.isConnecting = false
     state.lastError = null
     state.retryCount = 0
+    // 保持面板状态，不重置 isPanelExpanded
     localStorage.removeItem('chat_session_id')
+  },
+
+  // 初始化状态（从localStorage恢复）
+  INIT_CHAT_STATE (state) {
+    // 恢复面板展开状态
+    const savedPanelState = localStorage.getItem('chat_panel_expanded')
+    if (savedPanelState !== null) {
+      state.isPanelExpanded = savedPanelState === 'true'
+    }
+
+    // 恢复会话ID
+    const savedSessionId = localStorage.getItem('chat_session_id')
+    if (savedSessionId) {
+      state.sessionId = savedSessionId
+    }
   }
 }
 
@@ -142,6 +173,9 @@ const actions = {
   async initializeChat ({ commit, dispatch, state }) {
     try {
       commit('SET_LOADING', true)
+
+      // 首先初始化状态（从localStorage恢复）
+      commit('INIT_CHAT_STATE')
 
       // 尝试从localStorage恢复会话
       const savedSessionId = localStorage.getItem('chat_session_id')
@@ -429,6 +463,24 @@ const actions = {
       console.error('结束会话失败:', error)
       commit('SET_ERROR', error.message)
     }
+  },
+
+  // 面板状态管理
+  toggleChatPanel ({ commit, state }) {
+    commit('TOGGLE_PANEL')
+    // 如果打开面板且有未读消息，标记为已读
+    if (state.isPanelExpanded && state.unreadCount > 0) {
+      commit('SET_UNREAD_COUNT', 0)
+    }
+  },
+
+  setChatPanelExpanded ({ commit }, expanded) {
+    commit('SET_PANEL_EXPANDED', expanded)
+  },
+
+  // 初始化面板状态（用于组件挂载时调用）
+  initChatPanel ({ commit }) {
+    commit('INIT_CHAT_STATE')
   }
 }
 
@@ -455,7 +507,10 @@ const getters = {
   // 是否有活跃会话
   hasActiveSession: (state) => {
     return !!state.sessionId && state.isConnected
-  }
+  },
+
+  // 面板状态
+  isPanelExpanded: (state) => state.isPanelExpanded
 }
 
 export default {

@@ -1,5 +1,5 @@
 <template>
-  <div class="hewa-chat-header">
+  <div class="scm-chat-header">
     <!-- 背景装饰 -->
     <div class="header-bg" />
 
@@ -88,7 +88,7 @@ export default {
       type: Object,
       required: true,
       default: () => ({
-        name: 'HeWa智能助手',
+        name: 'SCM智能助手',
         avatar: '',
         role: 'SCM业务专家'
       })
@@ -169,7 +169,7 @@ export default {
 </script>
 
 <style scoped>
-.hewa-chat-header {
+.scm-chat-header {
   position: relative;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;

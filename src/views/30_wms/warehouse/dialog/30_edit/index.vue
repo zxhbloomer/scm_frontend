@@ -22,7 +22,7 @@
       :rules="settings.rules"
       :model="dataJson.tempJson"
       label-position="right"
-      label-width="150px"
+      label-width="0px"
       status-icon
     >
       <el-tabs
@@ -202,18 +202,7 @@
                 />
               </el-form-item>
             </el-descriptions-item>
-          </el-descriptions>
-          <br>
-          <el-descriptions
-            title=""
-            :column="1"
-            :content-style="contentStyle"
-            :label-style="labelStyle"
-            direction="horizontal"
-            border
-            style="padding-right: 10px;padding-left: 10px;"
-          >
-            <el-descriptions-item>
+            <el-descriptions-item :span="2">
               <div slot="label">
                 详细地址：
               </div>
@@ -480,10 +469,6 @@
 </template>
 
 <style scoped>
-.el-form-item .el-select {
-  width: 100%;
-}
-
 .required-mark::before {
   content: '*';
   color: #ff4949;
@@ -494,6 +479,9 @@
 }
 .el-form-item--mini.el-form-item {
   margin-bottom: 0px;
+}
+.el-form-item .el-select {
+  width: 100%;
 }
 .el-button-group {
   margin-bottom: 15px;
@@ -533,7 +521,7 @@ export default {
         width: '15%'
       },
       labelStyle: {
-        width: '10%',
+        width: '12%',
         'text-align': 'right'
       },
       dataJson: {

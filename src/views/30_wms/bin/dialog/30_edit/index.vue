@@ -22,14 +22,18 @@
         :rules="settings.rules"
         :model="dataJson.tempJson"
         label-position="right"
-        :label-width="dialogConfig.labelWidth"
+        label-width="0px"
         status-icon
       >
         <br>
         <el-descriptions
+          title=""
+          :column="2"
           :content-style="contentStyle"
           :label-style="labelStyle"
-          :column="2"
+          direction="horizontal"
+          border
+          style="padding-right: 10px;padding-left: 10px;"
         >
           <el-descriptions-item label="仓库名称：" class="required-mark">
             <el-form-item
@@ -199,7 +203,7 @@ export default {
         width: '15%'
       },
       labelStyle: {
-        width: '10%',
+        width: '12%',
         'text-align': 'right'
       },
       popSettingsData: {
