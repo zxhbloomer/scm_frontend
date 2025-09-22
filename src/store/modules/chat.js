@@ -1,6 +1,8 @@
-import chatAPI from '@/api/70_chat/chat'
-import SockJS from 'sockjs-client'
-import Stomp from 'stompjs'
+import aiChatService from '@/components/70_chat/api/aiChatService'
+// import SockJS from 'sockjs-client'
+// import Stomp from 'stompjs'
+
+console.log('Chat module loading, aiChatService:', aiChatService)
 
 // 聊天模块状态管理
 const state = {
@@ -9,8 +11,8 @@ const state = {
   isConnecting: false,
 
   // 会话信息
-  sessionId: null,
-  sessionInfo: {},
+  conversationId: null,
+  conversationInfo: {},
 
   // 消息相关 - 清空以显示"猜你想问"
   messages: [],
@@ -21,7 +23,7 @@ const state = {
   // 聊天面板状态
   isPanelExpanded: false,
 
-  // WebSocket连接
+  // WebSocket连接 (AI聊天暂时不需要)
   socket: null,
   stompClient: null,
 
@@ -55,18 +57,18 @@ const mutations = {
   },
 
   // 会话管理
-  SET_SESSION_ID (state, sessionId) {
-    state.sessionId = sessionId
+  SET_CONVERSATION_ID (state, conversationId) {
+    state.conversationId = conversationId
     // 存储到localStorage中，页面刷新后恢复
-    if (sessionId) {
-      localStorage.setItem('chat_session_id', sessionId)
+    if (conversationId) {
+      localStorage.setItem('chat_conversation_id', conversationId)
     } else {
-      localStorage.removeItem('chat_session_id')
+      localStorage.removeItem('chat_conversation_id')
     }
   },
 
-  SET_SESSION_INFO (state, info) {
-    state.sessionInfo = { ...state.sessionInfo, ...info }
+  SET_CONVERSATION_INFO (state, info) {
+    state.conversationInfo = { ...state.conversationInfo, ...info }
   },
 
   // 消息管理
@@ -141,7 +143,7 @@ const mutations = {
 
   // 重置状态
   RESET_CHAT_STATE (state) {
-    state.sessionId = null
+    state.conversationId = null
     state.messages = []
     state.unreadCount = 0
     state.isConnected = false
@@ -149,7 +151,7 @@ const mutations = {
     state.lastError = null
     state.retryCount = 0
     // 保持面板状态，不重置 isPanelExpanded
-    localStorage.removeItem('chat_session_id')
+    localStorage.removeItem('chat_conversation_id')
   },
 
   // 初始化状态（从localStorage恢复）
@@ -160,10 +162,10 @@ const mutations = {
       state.isPanelExpanded = savedPanelState === 'true'
     }
 
-    // 恢复会话ID
-    const savedSessionId = localStorage.getItem('chat_session_id')
-    if (savedSessionId) {
-      state.sessionId = savedSessionId
+    // 恢复对话ID
+    const savedConversationId = localStorage.getItem('chat_conversation_id')
+    if (savedConversationId) {
+      state.conversationId = savedConversationId
     }
   }
 }
@@ -177,16 +179,16 @@ const actions = {
       // 首先初始化状态（从localStorage恢复）
       commit('INIT_CHAT_STATE')
 
-      // 尝试从localStorage恢复会话
-      const savedSessionId = localStorage.getItem('chat_session_id')
-      if (savedSessionId) {
-        commit('SET_SESSION_ID', savedSessionId)
+      // 尝试从localStorage恢复对话
+      const savedConversationId = localStorage.getItem('chat_conversation_id')
+      if (savedConversationId) {
+        commit('SET_CONVERSATION_ID', savedConversationId)
         // 尝试恢复历史消息
         await dispatch('loadMessages')
       }
 
-      // 初始化WebSocket连接
-      await dispatch('connectWebSocket')
+      // AI聊天使用REST API，不需要WebSocket连接
+      // await dispatch('connectWebSocket')
     } catch (error) {
       console.error('初始化聊天失败:', error)
       commit('SET_ERROR', error.message)
@@ -195,28 +197,23 @@ const actions = {
     }
   },
 
-  // 创建新会话
-  async createSession ({ commit, state }) {
+  // 创建新对话
+  async createConversation ({ commit, state }, prompt = '您好，我是SCM智能助手，请问有什么可以帮助您的吗？') {
     try {
-      const response = await chatAPI.initSession(state.userInfo)
-      const sessionData = response.data
+      const conversationId = aiChatService.generateConversationId()
+      const response = await aiChatService.addConversation({
+        prompt,
+        chatModelId: 'default',
+        conversationId,
+        organizationId: 'default'
+      })
 
-      commit('SET_SESSION_ID', sessionData.session_id)
-      commit('SET_SESSION_INFO', sessionData)
+      commit('SET_CONVERSATION_ID', conversationId)
+      commit('SET_CONVERSATION_INFO', response)
 
-      // 添加欢迎消息
-      if (sessionData.welcome_message) {
-        commit('ADD_MESSAGE', {
-          id: 'welcome_' + Date.now(),
-          content: sessionData.welcome_message,
-          type: 'system',
-          timestamp: new Date().toISOString()
-        })
-      }
-
-      return sessionData
+      return { conversationId, ...response }
     } catch (error) {
-      console.error('创建会话失败:', error)
+      console.error('创建对话失败:', error)
       commit('SET_ERROR', error.message)
       throw error
     }
@@ -229,9 +226,9 @@ const actions = {
     try {
       commit('SET_LOADING', true)
 
-      // 如果没有会话，先创建会话
-      if (!state.sessionId) {
-        await dispatch('createSession')
+      // 如果没有对话，先创建对话
+      if (!state.conversationId) {
+        await dispatch('createConversation', content)
       }
 
       // 添加用户消息到界面
@@ -244,18 +241,31 @@ const actions = {
       }
       commit('ADD_MESSAGE', userMessage)
 
-      // 发送消息到服务器
-      const response = await chatAPI.sendMessage(state.sessionId, content)
-      const messageData = response.data
+      // 发送消息到AI服务器
+      const response = await aiChatService.sendMessage({
+        conversationId: state.conversationId,
+        prompt: content.trim(),
+        chatModelId: 'default'
+      })
 
-      // 更新消息状态
+      // 更新用户消息状态
       commit('UPDATE_MESSAGE', {
         messageId: userMessage.id,
         updates: {
-          id: messageData.id,
           status: 'sent'
         }
       })
+
+      // 添加AI回复消息
+      if (response.content) {
+        commit('ADD_MESSAGE', {
+          id: 'ai_' + Date.now(),
+          content: response.content,
+          type: 'agent',
+          timestamp: new Date().toISOString(),
+          status: 'delivered'
+        })
+      }
     } catch (error) {
       console.error('发送消息失败:', error)
       commit('SET_ERROR', error.message)
@@ -277,19 +287,18 @@ const actions = {
 
   // 加载历史消息
   async loadMessages ({ commit, state }, params = {}) {
-    if (!state.sessionId) return
+    if (!state.conversationId) return
 
     try {
-      const response = await chatAPI.getMessages(state.sessionId, params)
-      const messages = response.data.messages || []
+      const messages = await aiChatService.getChatHistory(state.conversationId, params.limit || 50)
 
       // 转换消息格式
       const formattedMessages = messages.map(msg => ({
-        id: msg.id,
+        id: msg.id || Date.now(),
         content: msg.content,
-        type: msg.sender_type === 'user' ? 'user' : 'agent',
-        timestamp: msg.created_at,
-        avatar: msg.sender_avatar,
+        type: msg.type || 'agent',
+        timestamp: msg.timestamp,
+        avatar: msg.avatar,
         status: 'delivered'
       }))
 
@@ -307,140 +316,33 @@ const actions = {
 
   // 标记已读
   async markAsRead ({ commit, state }) {
-    if (!state.sessionId || state.unreadCount === 0) return
+    if (!state.conversationId || state.unreadCount === 0) return
 
     try {
-      await chatAPI.markAsRead(state.sessionId)
+      // AI聊天暂时不需要标记已读逻辑，直接设置为0
       commit('SET_UNREAD_COUNT', 0)
     } catch (error) {
       console.error('标记已读失败:', error)
     }
   },
 
-  // 连接WebSocket
+  // 连接WebSocket (AI聊天暂时不需要)
   async connectWebSocket ({ commit, dispatch, state }) {
-    if (state.isConnected || state.isConnecting) return
-
-    commit('SET_CONNECTING', true)
-
-    try {
-      // 创建SockJS连接
-      const socket = new SockJS('/ws/chat')
-      const stompClient = Stomp.over(socket)
-
-      // 禁用调试日志
-      stompClient.debug = null
-
-      // 连接配置
-      const connectHeaders = {}
-      if (state.sessionId) {
-        connectHeaders['session-id'] = state.sessionId
-      }
-
-      // 连接WebSocket
-      await new Promise((resolve, reject) => {
-        stompClient.connect(
-          connectHeaders,
-          (frame) => {
-            commit('SET_CONNECTED', true)
-            commit('SET_SOCKET', socket)
-            commit('SET_STOMP_CLIENT', stompClient)
-            commit('SET_RETRY_COUNT', 0)
-
-            // 订阅消息
-            dispatch('subscribeToMessages')
-
-            resolve(frame)
-          },
-          (error) => {
-            commit('SET_ERROR', error)
-            reject(error)
-          }
-        )
-      })
-    } catch (error) {
-      console.error('WebSocket连接失败:', error)
-      commit('SET_ERROR', error.message)
-
-      // 重连机制
-      if (state.retryCount < state.config.maxRetries) {
-        commit('SET_RETRY_COUNT', state.retryCount + 1)
-        setTimeout(() => {
-          dispatch('connectWebSocket')
-        }, state.config.retryInterval)
-      }
-    } finally {
-      commit('SET_CONNECTING', false)
-    }
+    console.log('AI聊天使用REST API，跳过WebSocket连接')
+    // AI聊天使用REST API，不需要WebSocket
+    return Promise.resolve()
   },
 
-  // 订阅消息
+  // 订阅消息 (AI聊天暂时不需要)
   subscribeToMessages ({ commit, state }) {
-    if (!state.stompClient || !state.sessionId) return
-
-    // 订阅个人消息
-    state.stompClient.subscribe(`/topic/chat/${state.sessionId}`, (message) => {
-      const messageData = JSON.parse(message.body)
-
-      // 处理不同类型的消息
-      switch (messageData.type) {
-        case 'message':
-          commit('ADD_MESSAGE', {
-            id: messageData.id,
-            content: messageData.content,
-            type: messageData.sender_type === 'user' ? 'user' : 'agent',
-            timestamp: messageData.timestamp,
-            avatar: messageData.avatar
-          })
-
-          // 增加未读计数（如果不是用户自己的消息）
-          if (messageData.sender_type !== 'user') {
-            commit('SET_UNREAD_COUNT', state.unreadCount + 1)
-          }
-          break
-
-        case 'typing_start':
-          commit('SET_TYPING', true)
-          break
-
-        case 'typing_stop':
-          commit('SET_TYPING', false)
-          break
-
-        case 'session_end':
-          // 会话结束处理
-          commit('RESET_CHAT_STATE')
-          break
-
-        default:
-          console.log('未知消息类型:', messageData.type)
-      }
-    })
-
-    // 订阅系统消息
-    state.stompClient.subscribe('/topic/system', (message) => {
-      const systemData = JSON.parse(message.body)
-
-      if (systemData.type === 'maintenance') {
-        commit('ADD_MESSAGE', {
-          id: 'system_' + Date.now(),
-          content: systemData.message,
-          type: 'system',
-          timestamp: new Date().toISOString()
-        })
-      }
-    })
+    console.log('AI聊天使用REST API，跳过消息订阅')
+    // AI聊天使用REST API，不需要消息订阅
   },
 
-  // 断开连接
+  // 断开连接 (AI聊天暂时不需要)
   disconnectWebSocket ({ commit, state }) {
-    if (state.stompClient) {
-      state.stompClient.disconnect()
-    }
-    if (state.socket) {
-      state.socket.close()
-    }
-
+    console.log('AI聊天使用REST API，跳过WebSocket断开')
+    // AI聊天使用REST API，不需要WebSocket
     commit('SET_CONNECTED', false)
     commit('SET_SOCKET', null)
     commit('SET_STOMP_CLIENT', null)
@@ -451,16 +353,16 @@ const actions = {
     commit('SET_USER_INFO', userInfo)
   },
 
-  // 结束会话
-  async endSession ({ commit, dispatch, state }) {
-    if (!state.sessionId) return
+  // 结束对话
+  async endConversation ({ commit, dispatch, state }) {
+    if (!state.conversationId) return
 
     try {
-      await chatAPI.endSession(state.sessionId)
+      await aiChatService.deleteConversation(state.conversationId)
       commit('RESET_CHAT_STATE')
       dispatch('disconnectWebSocket')
     } catch (error) {
-      console.error('结束会话失败:', error)
+      console.error('结束对话失败:', error)
       commit('SET_ERROR', error.message)
     }
   },
@@ -504,9 +406,9 @@ const getters = {
     )
   },
 
-  // 是否有活跃会话
+  // 是否有活跃对话
   hasActiveSession: (state) => {
-    return !!state.sessionId && state.isConnected
+    return !!state.conversationId
   },
 
   // 面板状态

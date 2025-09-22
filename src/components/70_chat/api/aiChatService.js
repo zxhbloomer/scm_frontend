@@ -7,7 +7,6 @@ import request from '@/utils/request'
 
 class AIChatService {
   constructor () {
-    this.baseURL = '/scm/ai-chat'
     this.sessionTimeout = 30 * 60 * 1000 // 30分钟会话超时
     this.activeSessions = new Map() // 活跃会话管理
   }
@@ -15,157 +14,142 @@ class AIChatService {
   /**
    * 发送消息给AI助手
    * @param {Object} params - 请求参数
-   * @param {string} params.sessionId - 会话ID
-   * @param {string} params.message - 用户消息
-   * @param {string} params.context - 上下文信息
-   * @param {Object} params.userInfo - 用户信息
+   * @param {string} params.conversationId - 对话ID
+   * @param {string} params.prompt - 用户消息
+   * @param {string} params.chatModelId - AI模型ID
    * @returns {Promise} AI回复
    */
-  async sendMessage ({ sessionId, message, context = '', userInfo = {}}) {
+  async sendMessage ({ conversationId, prompt, chatModelId = 'default' }) {
     try {
-      // 首先尝试模拟回复（开发环境或后端不可用时）
-      if (process.env.NODE_ENV === 'development' || !this.isBackendAvailable) {
-        return await this.generateMockResponse(message, context)
+      // 在正式环境中，始终尝试调用真实后端
+      // 在开发环境中，可以通过配置决定是否使用mock
+      const useMock = process.env.NODE_ENV === 'development' && process.env.VUE_APP_USE_MOCK_AI === 'true'
+
+      if (useMock) {
+        return await this.generateMockResponse(prompt, '')
       }
 
       const response = await request({
-        url: `${this.baseURL}/send`,
+        url: '/api/v1/ai/conversation/chat',
         method: 'post',
         data: {
-          sessionId,
-          message,
-          context,
-          userInfo,
-          timestamp: Date.now(),
-          platform: 'web'
+          conversationId,
+          prompt,
+          chatModelId
         }
       })
 
       // 更新会话状态
-      this.updateSessionActivity(sessionId)
+      this.updateSessionActivity(conversationId)
 
       return this.formatAIResponse(response.data)
     } catch (error) {
       console.error('AI聊天请求失败:', error)
       // 后端失败时使用模拟回复
-      return await this.generateMockResponse(message, context)
+      return await this.generateMockResponse(prompt, '')
     }
   }
 
   /**
-   * 获取快捷问题列表
-   * @param {string} category - 问题分类（可选）
-   * @returns {Promise<Array>} 快捷问题列表
+   * 添加新对话
+   * @param {Object} params - 请求参数
+   * @param {string} params.prompt - 用户消息
+   * @param {string} params.chatModelId - AI模型ID
+   * @param {string} params.conversationId - 对话ID
+   * @param {string} params.organizationId - 组织ID
+   * @returns {Promise} 新对话信息
    */
-  async getQuickQuestions (category = 'scm') {
+  async addConversation ({ prompt, chatModelId, conversationId, organizationId }) {
     try {
       const response = await request({
-        url: `${this.baseURL}/quick-questions`,
-        method: 'get',
-        params: { category }
-      })
-
-      return response.data || this.getDefaultQuickQuestions()
-    } catch (error) {
-      console.error('获取快捷问题失败:', error)
-      return this.getDefaultQuickQuestions()
-    }
-  }
-
-  /**
-   * 提交用户反馈
-   * @param {Object} feedback - 反馈数据
-   * @returns {Promise} 提交结果
-   */
-  async submitFeedback (feedback) {
-    try {
-      const response = await request({
-        url: `${this.baseURL}/feedback`,
+        url: '/api/v1/ai/conversation/add',
         method: 'post',
         data: {
-          ...feedback,
-          timestamp: Date.now(),
-          userAgent: navigator.userAgent
+          prompt,
+          chatModelId,
+          conversationId,
+          organizationId
         }
       })
-
       return response.data
     } catch (error) {
-      console.error('提交反馈失败:', error)
+      console.error('添加对话失败:', error)
       throw error
     }
   }
 
   /**
-   * 获取聊天历史记录
-   * @param {string} sessionId - 会话ID
-   * @param {number} limit - 记录数量限制
-   * @returns {Promise<Array>} 历史消息列表
+   * 获取对话列表
+   * @returns {Promise<Array>} 对话列表
    */
-  async getChatHistory (sessionId, limit = 50) {
+  async getConversationList () {
     try {
       const response = await request({
-        url: `${this.baseURL}/history`,
-        method: 'get',
-        params: { sessionId, limit }
+        url: '/api/v1/ai/conversation/list',
+        method: 'get'
       })
-
-      return response.data?.messages || []
+      return response.data || []
     } catch (error) {
-      console.error('获取聊天历史失败:', error)
+      console.error('获取对话列表失败:', error)
       return []
     }
   }
 
   /**
-   * 检查AI服务状态
-   * @returns {Promise<Object>} 服务状态
+   * 删除对话
+   * @param {string} conversationId - 对话ID
+   * @returns {Promise} 删除结果
    */
-  async checkServiceStatus () {
+  async deleteConversation (conversationId) {
     try {
       const response = await request({
-        url: `${this.baseURL}/status`,
-        method: 'get',
-        timeout: 5000
+        url: `/api/v1/ai/conversation/delete/${conversationId}`,
+        method: 'delete'
       })
-
-      return {
-        online: true,
-        status: 'healthy',
-        version: response.data?.version || '1.0.0',
-        ...response.data
-      }
+      return response.data
     } catch (error) {
-      console.error('AI服务状态检查失败:', error)
-      return {
-        online: false,
-        status: 'error',
-        error: error.message
-      }
+      console.error('删除对话失败:', error)
+      throw error
     }
   }
 
   /**
-   * 切换到人工客服
-   * @param {string} sessionId - 会话ID
-   * @param {Object} context - 上下文信息
-   * @returns {Promise} 切换结果
+   * 获取对话详情
+   * @param {string} conversationId - 对话ID
+   * @returns {Promise<Array>} 对话内容列表
    */
-  async switchToHuman (sessionId, context = {}) {
+  async getAiChatDetail (conversationId) {
     try {
       const response = await request({
-        url: `${this.baseURL}/switch-human`,
+        url: `/api/v1/ai/conversation/chat/list/${conversationId}`,
+        method: 'get'
+      })
+
+      return response.data || []
+    } catch (error) {
+      console.error('获取对话详情失败:', error)
+      return []
+    }
+  }
+
+  /**
+   * 更新对话标题
+   * @param {Object} params - 请求参数
+   * @param {string} params.id - 对话ID
+   * @param {string} params.title - 新标题
+   * @returns {Promise} 更新结果
+   */
+  async updateAiChatTitle ({ id, title }) {
+    try {
+      const response = await request({
+        url: '/api/v1/ai/conversation/update',
         method: 'post',
-        data: {
-          sessionId,
-          context,
-          timestamp: Date.now()
-        }
+        data: { id, title }
       })
 
       return response.data
     } catch (error) {
-      console.error('切换人工客服失败:', error)
+      console.error('更新对话标题失败:', error)
       throw error
     }
   }
@@ -238,8 +222,8 @@ class AIChatService {
    * 更新会话活跃状态
    * @private
    */
-  updateSessionActivity (sessionId) {
-    this.activeSessions.set(sessionId, Date.now())
+  updateSessionActivity (conversationId) {
+    this.activeSessions.set(conversationId, Date.now())
 
     // 清理过期会话
     this.cleanupExpiredSessions()
@@ -251,18 +235,18 @@ class AIChatService {
    */
   cleanupExpiredSessions () {
     const now = Date.now()
-    for (const [sessionId, lastActivity] of this.activeSessions.entries()) {
+    for (const [conversationId, lastActivity] of this.activeSessions.entries()) {
       if (now - lastActivity > this.sessionTimeout) {
-        this.activeSessions.delete(sessionId)
+        this.activeSessions.delete(conversationId)
       }
     }
   }
 
   /**
-   * 生成会话ID
+   * 生成对话ID
    */
-  generateSessionId () {
-    return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  generateConversationId () {
+    return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
   }
 
   /**

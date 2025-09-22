@@ -57,8 +57,8 @@ const getters = {
   chatIsLoading: state => state.chat.isLoading,
   chatIsTyping: state => state.chat.isTyping,
   // 聊天会话
-  chatSessionId: state => state.chat.sessionId,
-  chatHasActiveSession: state => state.chat.sessionId && state.chat.isConnected,
+  chatConversationId: state => state.chat.conversationId,
+  chatHasActiveSession: state => state.chat.conversationId,
   // 聊天面板状态
   chatPanelExpanded: state => state.chat.isPanelExpanded,
   // 聊天错误状态

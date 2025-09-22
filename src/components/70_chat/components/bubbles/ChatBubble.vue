@@ -90,11 +90,50 @@ export default {
       return '输入您的消息'
     }
   },
+
+  // 监听面板展开状态变化
+  watch: {
+    // SCM特有逻辑：面板打开时自动开始AI对话
+    isExpanded: {
+      handler (newVal, oldVal) {
+        console.log('面板状态变化:', oldVal, '->', newVal)
+        // 从关闭到打开时，自动发起AI对话
+        if (!oldVal && newVal) {
+          console.log('聊天面板打开，准备开始自动AI对话')
+          // 延迟一下确保组件完全渲染
+          this.$nextTick(() => {
+            this.startAutoConversation()
+          })
+        }
+      },
+      immediate: false
+    }
+  },
   mounted () {
+    console.log('ChatBubble mounted')
+    console.log('Store modules:', Object.keys(this.$store.state))
+    console.log('Chat store exists:', !!this.$store.state.chat)
+
+    if (this.$store.state.chat) {
+      console.log('Chat store state:', this.$store.state.chat)
+      console.log('isPanelExpanded:', this.$store.state.chat.isPanelExpanded)
+    } else {
+      console.error('Chat store 模块未找到！')
+      return
+    }
+
+    // 测试getter
+    console.log('chatPanelExpanded getter:', this.$store.getters.chatPanelExpanded)
+
     // 初始化面板状态（从localStorage恢复）
     this.$store.dispatch('chat/initChatPanel')
-    // 可选：初始化聊天连接（需要配置WebSocket端点）
-    // this.initializeChat()
+      .then(() => {
+        console.log('聊天面板初始化完成')
+        console.log('初始化后面板状态:', this.$store.state.chat.isPanelExpanded)
+      })
+      .catch(error => {
+        console.error('聊天面板初始化失败:', error)
+      })
   },
   methods: {
     // 使用项目标准的action调用方式
@@ -109,8 +148,18 @@ export default {
     },
 
     toggleChatPanel () {
+      console.log('点击聊天气泡')
+      console.log('当前面板状态:', this.isExpanded)
+      console.log('Store state:', this.$store.state.chat)
+
       // 使用store action来切换面板状态
       this.$store.dispatch('chat/toggleChatPanel')
+        .then(() => {
+          console.log('切换后面板状态:', this.isExpanded)
+        })
+        .catch(error => {
+          console.error('切换面板状态失败:', error)
+        })
     },
 
     closeChatPanel () {
@@ -120,6 +169,17 @@ export default {
 
     handleSendMessage (messageContent) {
       this.sendMessage(messageContent)
+    },
+
+    // SCM特有功能：面板打开时自动开始AI对话
+    startAutoConversation () {
+      // 检查是否已有消息，如果没有则发起欢迎对话
+      if (this.messages.length === 0) {
+        console.log('开始自动AI对话...')
+        // 发送一个欢迎消息来启动对话
+        const welcomePrompt = '您好，我是SCM智能助手，请问有什么可以帮助您的吗？'
+        this.sendMessage(welcomePrompt)
+      }
     }
   }
 }

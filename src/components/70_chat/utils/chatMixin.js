@@ -8,7 +8,7 @@ export default {
       chatUnreadCount: 'unreadCount',
       isChatLoading: 'isLoading',
       isChatTyping: 'isTyping',
-      chatSessionId: 'sessionId',
+      chatConversationId: 'conversationId',
       chatUserInfo: 'userInfo'
     }),
 
@@ -26,7 +26,7 @@ export default {
       sendChatMessage: 'sendMessage',
       markChatAsRead: 'markAsRead',
       setChatUserInfo: 'setUserInfo',
-      endChatSession: 'endSession',
+      endChatConversation: 'endConversation',
       connectChatWebSocket: 'connectWebSocket',
       disconnectChatWebSocket: 'disconnectWebSocket'
     }),

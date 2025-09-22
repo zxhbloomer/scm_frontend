@@ -492,10 +492,10 @@ export default {
         url: this.data.url || '',
         ip: this.data.ip || ''
       })
-      
+
       console.log('前面页面传入的数据:', this.data)
       console.log('初始化后的tempJson:', this.dataJson.tempJson)
-      
+
       await this.getData()
       // 初始化来源
       // await getListApi({}).then(response => {
@@ -572,15 +572,15 @@ export default {
           url: this.dataJson.tempJson.url,
           ip: this.dataJson.tempJson.ip
         }
-        
+
         // 合并后端数据，但保持基本信息
         this.dataJson.tempJson = Object.assign({}, deepCopy(response.data), basicInfo)
-        
-        // 关键修复：使用正确的字段名dataChangeList，而不是dataChangeMongoVoList
-        this.dataJson.detailListData = response.data.dataChangeList || []
-        
+
+        // 修复字段名：使用正确的字段名oldNewdetails获取变更记录
+        this.dataJson.detailListData = response.data.oldNewdetails || []
+
         console.log('后端返回的变更记录列表:', this.dataJson.detailListData)
-        
+
         if (this.dataJson.tempJson.over_inventory_upper) {
           this.dataJson.tempJson.over_inventory_upper = this.dataJson.tempJson.over_inventory_upper * 100
         }
