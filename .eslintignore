@@ -3,6 +3,7 @@ src/assets
 public
 dist
 src/components/60_bpm/**
+src/components/70_chat/components/markdown/assets/**
 /node_modules/*
 tests/**
 test-results/**

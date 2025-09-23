@@ -120,7 +120,16 @@
           <div v-if="message.type === 'system'" class="message-system">
             <div class="system-content">
               <i class="el-icon-info" />
-              <span>{{ message.content }}</span>
+              <md-renderer
+                :source="message.content"
+                :reasoning-content="message.reasoning"
+                :send-message="sendMessage"
+                :chat-record-id="message.id"
+                :child-node="message.child_node"
+                :runtime-node-id="message.runtime_node_id"
+                :disabled="false"
+                type="ai-chat"
+              />
             </div>
             <div class="message-time">{{ formatTime(message.timestamp) }}</div>
           </div>
@@ -165,10 +174,28 @@
                 <div class="bubble-content">
                   <div v-if="message.isError" class="error-content">
                     <i class="el-icon-warning" />
-                    <span>{{ message.content }}</span>
+                    <md-renderer
+                      :source="message.content"
+                      :reasoning-content="message.reasoning"
+                      :send-message="sendMessage"
+                      :chat-record-id="message.id"
+                      :child-node="message.child_node"
+                      :runtime-node-id="message.runtime_node_id"
+                      :disabled="false"
+                      type="ai-chat"
+                    />
                   </div>
                   <div v-else class="ai-content">
-                    {{ message.content }}
+                    <md-renderer
+                      :source="message.content"
+                      :reasoning-content="message.reasoning"
+                      :send-message="sendMessage"
+                      :chat-record-id="message.id"
+                      :child-node="message.child_node"
+                      :runtime-node-id="message.runtime_node_id"
+                      :disabled="false"
+                      type="ai-chat"
+                    />
                   </div>
                 </div>
 
@@ -253,7 +280,18 @@
               </div>
 
               <div class="message-bubble message-bubble--agent">
-                <div class="bubble-content">{{ message.content }}</div>
+                <div class="bubble-content">
+                  <md-renderer
+                    :source="message.content"
+                    :reasoning-content="message.reasoning"
+                    :send-message="sendMessage"
+                    :chat-record-id="message.id"
+                    :child-node="message.child_node"
+                    :runtime-node-id="message.runtime_node_id"
+                    :disabled="false"
+                    type="ai-chat"
+                  />
+                </div>
                 <div class="bubble-actions">
                   <el-button
                     type="text"
@@ -297,8 +335,14 @@
 </template>
 
 <script>
+import { MdRenderer } from '../markdown'
+
 export default {
   name: 'MessageList',
+
+  components: {
+    MdRenderer
+  },
 
   props: {
     messages: {
@@ -397,6 +441,17 @@ export default {
         }
       }
       return 'el-icon-chat-dot-round'
+    },
+
+    // sendMessage方法，按照MaxKB的chatMessage实现
+    sendMessage (question, type = 'new', other_params_data) {
+      if (type === 'old') {
+        // 处理表单提交等旧消息
+        this.$emit('send-message', question, other_params_data)
+      } else {
+        // 处理快速问题等新消息
+        this.$emit('quick-question', question)
+      }
     },
 
     formatTime (timestamp) {

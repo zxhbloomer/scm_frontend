@@ -77,14 +77,15 @@ const mutations = {
   },
 
   ADD_MESSAGE (state, message) {
-    state.messages.push({
+    const newMessage = {
       id: message.id || Date.now(),
       content: message.content,
       type: message.type || 'user', // user, agent, system
       timestamp: message.timestamp || new Date().toISOString(),
       avatar: message.avatar || null,
       status: message.status || 'sent' // sent, delivered, read, failed
-    })
+    }
+    state.messages.push(newMessage)
   },
 
   UPDATE_MESSAGE (state, { messageId, updates }) {
@@ -258,28 +259,33 @@ const actions = {
 
       // 添加AI回复消息
       if (response.content) {
-        commit('ADD_MESSAGE', {
+        const aiMessage = {
           id: 'ai_' + Date.now(),
           content: response.content,
           type: 'agent',
           timestamp: new Date().toISOString(),
           status: 'delivered'
-        })
+        }
+        commit('ADD_MESSAGE', aiMessage)
       }
     } catch (error) {
       console.error('发送消息失败:', error)
       commit('SET_ERROR', error.message)
 
-      // 标记消息发送失败
+      // 与MeterSphere一致：标记消息发送失败，保持原始用户输入
       const failedMessage = state.messages.find(msg => msg.status === 'sending')
       if (failedMessage) {
         commit('UPDATE_MESSAGE', {
           messageId: failedMessage.id,
-          updates: { status: 'failed' }
+          updates: {
+            status: 'failed',
+            content: content.trim() // 保持原始用户输入
+          }
         })
       }
 
-      throw error
+      // 不抛出异常，避免影响用户界面
+      // throw error
     } finally {
       commit('SET_LOADING', false)
     }
@@ -290,14 +296,14 @@ const actions = {
     if (!state.conversationId) return
 
     try {
-      const messages = await aiChatService.getChatHistory(state.conversationId, params.limit || 50)
+      const messages = await aiChatService.getAiChatDetail(state.conversationId)
 
       // 转换消息格式
       const formattedMessages = messages.map(msg => ({
         id: msg.id || Date.now(),
         content: msg.content,
         type: msg.type || 'agent',
-        timestamp: msg.timestamp,
+        timestamp: msg.createTime || msg.timestamp || new Date().toISOString(),
         avatar: msg.avatar,
         status: 'delivered'
       }))
@@ -328,20 +334,17 @@ const actions = {
 
   // 连接WebSocket (AI聊天暂时不需要)
   async connectWebSocket ({ commit, dispatch, state }) {
-    console.log('AI聊天使用REST API，跳过WebSocket连接')
     // AI聊天使用REST API，不需要WebSocket
     return Promise.resolve()
   },
 
   // 订阅消息 (AI聊天暂时不需要)
   subscribeToMessages ({ commit, state }) {
-    console.log('AI聊天使用REST API，跳过消息订阅')
     // AI聊天使用REST API，不需要消息订阅
   },
 
   // 断开连接 (AI聊天暂时不需要)
   disconnectWebSocket ({ commit, state }) {
-    console.log('AI聊天使用REST API，跳过WebSocket断开')
     // AI聊天使用REST API，不需要WebSocket
     commit('SET_CONNECTED', false)
     commit('SET_SOCKET', null)

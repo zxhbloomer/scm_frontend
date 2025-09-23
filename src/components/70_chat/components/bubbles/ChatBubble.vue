@@ -198,10 +198,7 @@ export default {
     },
 
     startAutoConversation () {
-      if (this.messages.length === 0) {
-        const welcomePrompt = '您好，我是SCM智能助手，请问有什么可以帮助您的吗？'
-        this.sendMessage(welcomePrompt)
-      }
+      console.log('聊天面板已打开，欢迎界面已显示')
     }
   }
 }

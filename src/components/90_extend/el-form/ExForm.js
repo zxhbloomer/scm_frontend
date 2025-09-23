@@ -20,11 +20,6 @@ export default {
     beforeSubmitValidate: {
       type: Function,
       default: null
-    },
-    // 是否显示调试信息
-    debugMode: {
-      type: Boolean,
-      default: true
     }
   },
 
@@ -262,7 +257,6 @@ export default {
       }
 
       this.memberTracker.changeLog.push(change)
-      this.debugLog('字段变化', change)
     },
 
     // 追踪值变化
@@ -287,14 +281,6 @@ export default {
         }
 
         this.memberTracker.changeLog.push(change)
-        this.debugLog('值变化', change)
-      }
-    },
-
-    // 调试日志
-    debugLog (message, data) {
-      if (this.debugMode) {
-        console.log(`[ExForm Debug] ${message}:`, data)
       }
     },
 
@@ -433,17 +419,7 @@ export default {
 
           // 标记和引用
           hasNoProp: !child.prop,
-          fieldInstance: child,
-
-          // 调试信息（可选）
-          _debug: {
-            componentName: child.$options.componentName,
-            hasChildren: child.$children?.length > 0,
-            childrenTypes: child.$children?.map(c => c.$options.componentName) || [],
-            allProps: child.$props,
-            slots: Object.keys(child.$slots || {}),
-            controlsCount: formControls.length
-          }
+          fieldInstance: child
         }
       }) : []
 
@@ -643,27 +619,9 @@ export default {
   mounted () {
     this.formInitialized = true
 
-    if (this.debugMode) {
-      // 延迟检查表单成员和控件
-      setTimeout(() => {
-        const allMembers = this.getAllFormMembers()
-        console.log('ExForm 表单成员:', allMembers.summary)
-
-        const allControls = this.getAllFormControls()
-        console.log('ExForm 表单控件:', allControls.length, '个')
-      }, 200)
-    }
-
     // 监听字段注册事件
     this.$on('el.form.addField', (field) => {
-      if (this.debugMode) {
-        console.log('🔗 字段注册:', field.prop, '| 总数:', this.fields.length)
-      }
-    })
-
-    this.debugLog('表单挂载完成', {
-      fieldsCount: (this.fields || []).length,
-      allMembers: this.allFormMembers
+      // 字段注册处理
     })
   },
 
