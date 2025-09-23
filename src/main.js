@@ -73,6 +73,7 @@ import VueTour from 'vue-tour'
 // 引入组件和样式
 import RouterTab from '@/components/RouterTab/install'
 import ExTable from '@/components/30_table/ExTable'
+import ExForm from '@/components/90_extend/el-form'
 Vue.use(RouterTab)
 Vue.use(ElInputTag)
 
@@ -91,6 +92,10 @@ Vue.use(Element, {
 })
 /** 扩展的table和tablecolumn必须在，element下面，否则没有效果 */
 Vue.use(ExTable, {
+  size: Cookies.get('size') || 'mini' // set element-ui default size
+})
+/** 扩展的表单组件必须在，element下面，否则没有效果 */
+Vue.use(ExForm, {
   size: Cookies.get('size') || 'mini' // set element-ui default size
 })
 

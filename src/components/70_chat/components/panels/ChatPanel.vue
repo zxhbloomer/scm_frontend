@@ -4,7 +4,9 @@
     <chat-header
       :assistant="assistantInfo"
       :online-status="onlineStatus"
+      :is-maximized="isMaximized"
       @close="$emit('close')"
+      @toggle-maximize="$emit('toggle-maximize')"
       @switch-human="handleSwitchHuman"
       @clear-conversation="handleClearConversation"
       @export-conversation="handleExportConversation"
@@ -20,6 +22,7 @@
         :user-info="userInfo"
         @message-action="handleMessageAction"
         @quick-question="handleQuickQuestion"
+        @resize-chat="handleResizeChat"
       />
     </div>
 
@@ -91,6 +94,10 @@ export default {
     inputPlaceholder: {
       type: String,
       default: '输入您的消息'
+    },
+    isMaximized: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -109,7 +116,6 @@ export default {
     handleMessageAction (action, data) {
       switch (action) {
         case 'copy':
-          console.log('复制消息:', data)
           break
         case 'feedback':
           this.openFeedback(data.message)
@@ -121,7 +127,7 @@ export default {
           this.$emit('execute-action', data)
           break
         default:
-          console.log('未知消息操作:', action, data)
+          break
       }
     },
 
@@ -157,13 +163,14 @@ export default {
 
     handleFeedback (feedbackData) {
       this.$emit('feedback', feedbackData)
-      console.log('用户反馈:', feedbackData)
     },
 
     handleQuickQuestion (question) {
-      console.log('处理快捷问题:', question)
-      // 将快捷问题作为用户消息发送
       this.$emit('send-message', question)
+    },
+
+    handleResizeChat (newWidth) {
+      this.$emit('resize-chat', newWidth)
     }
   }
 }
@@ -182,19 +189,32 @@ export default {
   flex: 1;
   overflow: hidden;
   background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
+  min-height: 0; /* 确保可以收缩 */
 }
 
-/* 确保三段式布局 */
+/* 确保三段式布局：头部固定、内容滚动、底部固定 */
 .chat-panel > :first-child {
-  flex-shrink: 0;
+  flex-shrink: 0; /* 头部不收缩 */
+  position: relative;
+  z-index: 10;
 }
 
 .chat-panel > .chat-panel__content {
   flex: 1;
-  min-height: 0;
+  min-height: 0; /* 允许内容区域收缩并滚动 */
+  overflow: hidden;
 }
 
 .chat-panel > :last-child {
-  flex-shrink: 0;
+  flex-shrink: 0; /* 底部不收缩 */
+  position: relative;
+  z-index: 10;
+}
+
+/* 确保聊天面板在小屏幕上正确显示 */
+@media (max-height: 600px) {
+  .chat-panel {
+    min-height: 400px;
+  }
 }
 </style>

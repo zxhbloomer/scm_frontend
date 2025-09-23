@@ -49,6 +49,16 @@
           />
         </el-tooltip>
 
+        <!-- 最大化/还原按钮 -->
+        <el-tooltip :content="isMaximized ? '还原窗口' : '最大化窗口'" placement="bottom">
+          <el-button
+            type="text"
+            :icon="isMaximized ? 'el-icon-copy-document' : 'el-icon-full-screen'"
+            class="action-btn maximize-btn"
+            @click="$emit('toggle-maximize')"
+          />
+        </el-tooltip>
+
         <!-- 更多选项 -->
         <el-dropdown trigger="click" @command="handleDropdownCommand">
           <el-button
@@ -97,6 +107,10 @@ export default {
       type: String,
       default: 'online',
       validator: value => ['online', 'offline', 'away', 'busy'].includes(value)
+    },
+    isMaximized: {
+      type: Boolean,
+      default: false
     }
   },
 
@@ -321,6 +335,10 @@ export default {
 
 .human-service-btn:hover {
   background: rgba(103, 194, 58, 0.3);
+}
+
+.maximize-btn:hover {
+  background: rgba(64, 158, 255, 0.3);
 }
 
 .close-btn:hover {

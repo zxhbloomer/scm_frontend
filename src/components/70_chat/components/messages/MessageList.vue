@@ -1,8 +1,21 @@
 <template>
   <div ref="messagesContainer" class="scm-message-list">
+    <!-- 拖拽调整手柄 -->
+    <div
+      class="resize-handle"
+      title="拖拽调整窗口宽度"
+      @mousedown="startResize"
+    >
+      <div class="handle-dots">
+        <span />
+        <span />
+        <span />
+      </div>
+    </div>
+
     <div class="messages-wrapper">
-      <!-- SCM欢迎区域 - 和71_chat完全一致 -->
-      <div v-if="!hasConversation" class="scm-welcome-area">
+      <!-- SCM欢迎区域 - 始终显示在最前面 -->
+      <div class="scm-welcome-area">
         <!-- 欢迎消息 -->
         <div class="welcome-message">
           <div class="welcome-icon">
@@ -308,7 +321,6 @@ export default {
 
   data () {
     return {
-      // 和71_chat完全一致的快捷问题列表
       quickQuestions: [
         '如何创建采购订单？',
         '库存不足怎么处理？',
@@ -364,26 +376,21 @@ export default {
   },
 
   methods: {
-    // 和71_chat完全一致的快捷问题方法
     initializeQuestions () {
-      // 随机选择6个问题显示
       const shuffled = [...this.quickQuestions].sort(() => 0.5 - Math.random())
       this.displayQuestions = shuffled.slice(0, 6)
     },
 
     refreshQuestions () {
-      // 重新随机选择问题
       this.initializeQuestions()
       this.$message.success('已为您更新推荐问题')
     },
 
     selectQuestion (question) {
-      console.log('选择问题:', question)
       this.$emit('quick-question', question)
     },
 
     getQuestionIcon (question) {
-      // 根据问题内容返回对应图标
       for (const [keyword, icon] of Object.entries(this.questionIcons)) {
         if (question.includes(keyword)) {
           return icon
@@ -399,13 +406,11 @@ export default {
       const now = new Date()
 
       if (date.toDateString() === now.toDateString()) {
-        // 今天显示时间
         return date.toLocaleTimeString('zh-CN', {
           hour: '2-digit',
           minute: '2-digit'
         })
       } else {
-        // 其他日期显示月日时间
         return date.toLocaleString('zh-CN', {
           month: '2-digit',
           day: '2-digit',
@@ -460,28 +465,48 @@ export default {
     },
 
     feedbackMessage (message, type) {
-      console.log('消息反馈:', type, message)
-
       const feedbackText = type === 'positive' ? '感谢您的反馈！' : '我们会改进回答质量'
       this.$message.success(feedbackText)
-
       this.$emit('message-action', 'feedback', { message, type })
     },
 
     retryMessage (message) {
-      console.log('重试消息:', message)
       this.$emit('message-action', 'retry', message)
     },
 
     executeAction (action, message) {
-      console.log('执行操作:', action, message)
       this.$emit('message-action', 'execute', { action, message })
     },
 
     handleQuickQuestion (question) {
-      console.log('快捷问题:', question)
-      // 发出快捷问题选择事件，让父组件处理
       this.$emit('quick-question', question)
+    },
+
+    startResize (event) {
+      event.preventDefault()
+
+      const startX = event.clientX
+      const startWidth = this.$parent.$el.offsetWidth || 480
+
+      const minWidth = 480
+      const maxWidth = Math.min(window.innerWidth * 0.8, 1200)
+
+      const handleMouseMove = (e) => {
+        const newWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + (startX - e.clientX)))
+        this.$emit('resize-chat', newWidth)
+      }
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove)
+        document.removeEventListener('mouseup', handleMouseUp)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+      }
+
+      document.body.style.cursor = 'ew-resize'
+      document.body.style.userSelect = 'none'
+      document.addEventListener('mousemove', handleMouseMove)
+      document.addEventListener('mouseup', handleMouseUp)
     }
   }
 }
@@ -496,6 +521,56 @@ export default {
   position: relative;
 }
 
+.resize-handle {
+  position: absolute;
+  left: -6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 50px;
+  cursor: ew-resize;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(64, 158, 255, 0.15);
+  border: 1px solid rgba(64, 158, 255, 0.3);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: rgba(64, 158, 255, 0.25);
+    border-color: rgba(64, 158, 255, 0.5);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    background: rgba(64, 158, 255, 0.35);
+    border-color: #409EFF;
+  }
+}
+
+.handle-dots {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  span {
+    width: 3px;
+    height: 3px;
+    background: rgba(64, 158, 255, 0.8);
+    border-radius: 50%;
+    transition: background 0.2s ease;
+  }
+}
+
+.resize-handle:hover .handle-dots span {
+  background: #409EFF;
+  transform: scale(1.2);
+}
+
 .messages-wrapper {
   flex: 1;
   overflow-y: auto;
@@ -508,13 +583,11 @@ export default {
   gap: 16px;
 }
 
-/* SCM欢迎区域样式 - 和71_chat完全一致 */
 .scm-welcome-area {
   padding: 24px 20px;
   background: linear-gradient(145deg, #f8fafc 0%, #ffffff 100%);
 }
 
-/* 欢迎消息 */
 .welcome-message {
   display: flex;
   align-items: flex-start;
@@ -571,7 +644,6 @@ export default {
   margin: 0;
 }
 
-/* 快捷问题区域 */
 .quick-questions-section {
   margin-bottom: 24px;
 }
@@ -680,7 +752,6 @@ export default {
   transform: translateX(4px);
 }
 
-/* 功能介绍 */
 .features-section {
   margin-bottom: 24px;
 }
@@ -711,7 +782,6 @@ export default {
   color: #606266;
 }
 
-/* 底部提示 */
 .bottom-tip {
   display: flex;
   align-items: center;
@@ -725,7 +795,6 @@ export default {
   text-align: center;
 }
 
-/* 过渡动画 */
 .question-card-enter-active,
 .question-card-leave-active {
   transition: all 0.4s ease;
@@ -741,7 +810,6 @@ export default {
   transition: transform 0.4s ease;
 }
 
-/* 响应式调整 */
 @media (max-width: 480px) {
   .scm-welcome-area {
     padding: 16px 12px;
@@ -770,7 +838,6 @@ export default {
   }
 }
 
-/* 消息项布局 */
 .message-item {
   display: flex;
   animation: messageSlideIn 0.4s ease-out;
@@ -787,7 +854,6 @@ export default {
   }
 }
 
-/* 系统消息 */
 .message-system {
   align-self: center;
   text-align: center;
@@ -806,7 +872,6 @@ export default {
   font-size: 13px;
 }
 
-/* 用户消息 */
 .message-item--user {
   flex-direction: row-reverse;
 }
@@ -829,7 +894,6 @@ export default {
   align-items: flex-end;
 }
 
-/* AI助手消息 */
 .message-item--ai {
   flex-direction: row;
 }
@@ -847,7 +911,6 @@ export default {
   align-items: flex-start;
 }
 
-/* 头像样式 */
 .message-avatar {
   flex-shrink: 0;
 }
@@ -868,7 +931,6 @@ export default {
   fill: white;
 }
 
-/* 消息气泡 */
 .message-bubble {
   position: relative;
   padding: 12px 16px;
@@ -906,7 +968,6 @@ export default {
   box-shadow: 0 2px 12px rgba(103, 194, 58, 0.1);
 }
 
-/* 气泡内容 */
 .bubble-content {
   margin-bottom: 4px;
 }
@@ -922,7 +983,6 @@ export default {
   white-space: pre-wrap;
 }
 
-/* AI步骤 */
 .ai-steps {
   margin-top: 12px;
   padding-top: 12px;
@@ -948,7 +1008,6 @@ export default {
   line-height: 1.4;
 }
 
-/* AI操作按钮 */
 .ai-actions {
   margin-top: 12px;
   display: flex;
@@ -971,7 +1030,6 @@ export default {
   color: white;
 }
 
-/* 气泡操作栏 */
 .bubble-actions {
   display: flex;
   gap: 4px;
@@ -995,7 +1053,6 @@ export default {
   background: rgba(102, 126, 234, 0.1);
 }
 
-/* 人工客服信息 */
 .agent-info {
   display: flex;
   align-items: center;
@@ -1017,7 +1074,6 @@ export default {
   border-radius: 4px;
 }
 
-/* 消息时间 */
 .message-time {
   font-size: 11px;
   color: #c0c4cc;
@@ -1025,7 +1081,6 @@ export default {
   white-space: nowrap;
 }
 
-/* 正在输入指示器 */
 .typing-indicator {
   display: flex;
   align-items: flex-start;
@@ -1097,7 +1152,6 @@ export default {
   }
 }
 
-/* 消息过渡动画 */
 .message-enter-active,
 .message-leave-active {
   transition: all 0.4s ease;
@@ -1113,7 +1167,6 @@ export default {
   transition: transform 0.4s ease;
 }
 
-/* 滚动条样式 */
 .scm-message-list::-webkit-scrollbar {
   width: 6px;
 }
@@ -1132,7 +1185,6 @@ export default {
   background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
 }
 
-/* 响应式调整 */
 @media (max-width: 480px) {
   .messages-wrapper {
     padding: 12px 16px;

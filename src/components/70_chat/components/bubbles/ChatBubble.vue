@@ -20,6 +20,10 @@
       <div
         v-if="isExpanded"
         class="chat-panel-container"
+        :class="{
+          'maximized': isMaximized
+        }"
+        :style="panelStyle"
       >
         <chat-panel
           :messages="messages"
@@ -28,9 +32,13 @@
           :assistant-info="assistantInfo"
           :online-status="onlineStatus"
           :input-placeholder="inputPlaceholder"
+          :is-maximized="isMaximized"
           @send-message="handleSendMessage"
           @close="closeChatPanel"
+          @toggle-maximize="toggleMaximize"
+          @resize-chat="handleResizeChat"
         />
+
       </div>
     </transition>
   </div>
@@ -41,17 +49,23 @@ import ChatPanel from '../panels/ChatPanel.vue'
 
 export default {
   name: 'ChatBubble',
-  // 移除点击外部关闭指令，现在只能通过点击气泡切换状态
   components: {
     ChatPanel
   },
   data () {
     return {
-      // 面板状态现在由store管理，移除本地状态
+      isMaximized: false,
+      panelSize: {
+        width: 480,
+        height: Math.max(window.innerHeight * 0.8, 500)
+      },
+      minSize: {
+        width: 480,
+        height: 500
+      }
     }
   },
   computed: {
-    // 使用项目标准的全局getters
     messages () {
       return this.$store.getters.chatMessages
     },
@@ -61,11 +75,9 @@ export default {
     isLoading () {
       return this.$store.getters.chatIsLoading
     },
-    // 面板展开状态从store获取
     isExpanded () {
       return this.$store.getters.chatPanelExpanded
     },
-    // 用户信息
     userInfo () {
       return {
         id: this.$store.getters.staff_id,
@@ -73,7 +85,6 @@ export default {
         avatar: this.$store.getters.avatar
       }
     },
-    // 助手信息
     assistantInfo () {
       return {
         name: 'SCM智能助手',
@@ -81,26 +92,42 @@ export default {
         role: 'SCM业务专家'
       }
     },
-    // 在线状态
     onlineStatus () {
       return this.$store.getters.chatConnectionStatus ? 'online' : 'offline'
     },
-    // 输入占位符
     inputPlaceholder () {
       return '输入您的消息'
+    },
+
+    panelStyle () {
+      if (this.isMaximized) {
+        return {
+          position: 'fixed',
+          top: '2.5vh',
+          left: '2.5vw',
+          right: '2.5vw',
+          bottom: '2.5vh',
+          width: '95vw',
+          height: '95vh',
+          zIndex: 10000
+        }
+      }
+
+      const maxHeight = Math.min(window.innerHeight - 150, window.innerHeight * 0.85)
+      const currentHeight = Math.min(this.panelSize.height, maxHeight)
+
+      return {
+        width: `${this.panelSize.width}px`,
+        height: `${currentHeight}px`,
+        maxHeight: `${maxHeight}px`
+      }
     }
   },
 
-  // 监听面板展开状态变化
   watch: {
-    // SCM特有逻辑：面板打开时自动开始AI对话
     isExpanded: {
       handler (newVal, oldVal) {
-        console.log('面板状态变化:', oldVal, '->', newVal)
-        // 从关闭到打开时，自动发起AI对话
         if (!oldVal && newVal) {
-          console.log('聊天面板打开，准备开始自动AI对话')
-          // 延迟一下确保组件完全渲染
           this.$nextTick(() => {
             this.startAutoConversation()
           })
@@ -110,33 +137,31 @@ export default {
     }
   },
   mounted () {
-    console.log('ChatBubble mounted')
-    console.log('Store modules:', Object.keys(this.$store.state))
-    console.log('Chat store exists:', !!this.$store.state.chat)
-
-    if (this.$store.state.chat) {
-      console.log('Chat store state:', this.$store.state.chat)
-      console.log('isPanelExpanded:', this.$store.state.chat.isPanelExpanded)
-    } else {
+    if (!this.$store.state.chat) {
       console.error('Chat store 模块未找到！')
       return
     }
 
-    // 测试getter
-    console.log('chatPanelExpanded getter:', this.$store.getters.chatPanelExpanded)
-
-    // 初始化面板状态（从localStorage恢复）
     this.$store.dispatch('chat/initChatPanel')
-      .then(() => {
-        console.log('聊天面板初始化完成')
-        console.log('初始化后面板状态:', this.$store.state.chat.isPanelExpanded)
-      })
       .catch(error => {
         console.error('聊天面板初始化失败:', error)
       })
+    this.handleResize = () => {
+      if (!this.isMaximized) {
+        const newHeight = Math.max(window.innerHeight * 0.8, this.minSize.height)
+        this.panelSize.height = newHeight
+      }
+    }
+
+    window.addEventListener('resize', this.handleResize)
+  },
+
+  beforeDestroy () {
+    if (this.handleResize) {
+      window.removeEventListener('resize', this.handleResize)
+    }
   },
   methods: {
-    // 使用项目标准的action调用方式
     sendMessage (content) {
       return this.$store.dispatch('chat/sendMessage', content)
     },
@@ -148,22 +173,13 @@ export default {
     },
 
     toggleChatPanel () {
-      console.log('点击聊天气泡')
-      console.log('当前面板状态:', this.isExpanded)
-      console.log('Store state:', this.$store.state.chat)
-
-      // 使用store action来切换面板状态
       this.$store.dispatch('chat/toggleChatPanel')
-        .then(() => {
-          console.log('切换后面板状态:', this.isExpanded)
-        })
         .catch(error => {
           console.error('切换面板状态失败:', error)
         })
     },
 
     closeChatPanel () {
-      // 关闭面板（设置为false）
       this.$store.dispatch('chat/setChatPanelExpanded', false)
     },
 
@@ -171,12 +187,18 @@ export default {
       this.sendMessage(messageContent)
     },
 
-    // SCM特有功能：面板打开时自动开始AI对话
+    toggleMaximize () {
+      this.isMaximized = !this.isMaximized
+    },
+
+    handleResizeChat (newWidth) {
+      if (!this.isMaximized) {
+        this.panelSize.width = newWidth
+      }
+    },
+
     startAutoConversation () {
-      // 检查是否已有消息，如果没有则发起欢迎对话
       if (this.messages.length === 0) {
-        console.log('开始自动AI对话...')
-        // 发送一个欢迎消息来启动对话
         const welcomePrompt = '您好，我是SCM智能助手，请问有什么可以帮助您的吗？'
         this.sendMessage(welcomePrompt)
       }
@@ -240,6 +262,14 @@ export default {
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+
+  &.maximized {
+    position: fixed !important;
+    z-index: 10000;
+    border-radius: 8px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  }
+
 }
 
 /* 过渡动画 */
@@ -267,6 +297,16 @@ export default {
     height: 70vh;
     right: -15px;
     bottom: 80px;
+
+    &.maximized {
+      top: 5vh !important;
+      left: 2.5vw !important;
+      right: 2.5vw !important;
+      bottom: 5vh !important;
+      width: 95vw !important;
+      height: 90vh !important;
+    }
   }
+
 }
 </style>
