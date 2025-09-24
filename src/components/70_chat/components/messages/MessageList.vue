@@ -111,7 +111,7 @@
       <!-- 消息项 -->
       <transition-group name="message" tag="div" class="messages-container">
         <div
-          v-for="message in messages"
+          v-for="message in visibleMessages"
           :key="message.id"
           class="message-item"
           :class="[`message-item--${message.type}`]"
@@ -139,17 +139,7 @@
             <div class="message-content">
               <div class="message-bubble message-bubble--user">
                 <div class="bubble-content">{{ message.content }}</div>
-                <div class="bubble-actions">
-                  <el-button
-                    type="text"
-                    size="mini"
-                    icon="el-icon-copy-document"
-                    class="bubble-action-btn"
-                    @click="copyMessage(message)"
-                  />
-                </div>
               </div>
-              <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
             <div class="message-avatar">
               <el-avatar :size="32" :src="userInfo && userInfo.avatar ? userInfo.avatar : ''">
@@ -224,6 +214,10 @@
                   </el-button>
                 </div>
 
+              </div>
+
+              <div class="message-meta">
+                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
                 <!-- 消息操作栏 -->
                 <div class="bubble-actions">
                   <el-button
@@ -261,8 +255,6 @@
                   />
                 </div>
               </div>
-
-              <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
           </div>
 
@@ -294,18 +286,21 @@
                     type="ai-chat"
                   />
                 </div>
+              </div>
+
+              <div class="message-meta">
+                <div class="message-time">{{ formatTime(message.timestamp) }}</div>
                 <div class="bubble-actions">
                   <el-button
                     type="text"
                     size="mini"
                     icon="el-icon-copy-document"
                     class="bubble-action-btn"
+                    title="复制"
                     @click="copyMessage(message)"
                   />
                 </div>
               </div>
-
-              <div class="message-time">{{ formatTime(message.timestamp) }}</div>
             </div>
           </div>
         </div>
@@ -401,12 +396,36 @@ export default {
   computed: {
     hasConversation () {
       return this.messages && this.messages.length > 0
+    },
+    visibleMessages () {
+      // 过滤掉隐藏的消息和实际内容为空的消息，避免显示空白区域
+      return this.messages.filter(message => {
+        if (message.isHidden) return false
+
+        // 对AI和agent消息进行内容检查
+        if (message.type === 'ai' || message.type === 'agent') {
+          const content = (message.content || '').trim()
+          // 确保有足够的实际内容才显示
+          return content.length > 10 && content.replace(/\s+/g, ' ').length > 5
+        }
+
+        // 其他类型消息(用户、系统)正常显示
+        return true
+      })
     }
   },
 
   watch: {
     messages: {
       handler () {
+        this.scrollToBottom()
+      },
+      deep: true
+    },
+
+    visibleMessages: {
+      handler () {
+        // 当可见消息变化时（比如隐藏消息变为可见）也滚动到底部
         this.scrollToBottom()
       },
       deep: true
@@ -462,21 +481,16 @@ export default {
       if (!timestamp) return ''
 
       const date = new Date(timestamp)
-      const now = new Date()
 
-      if (date.toDateString() === now.toDateString()) {
-        return date.toLocaleTimeString('zh-CN', {
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      } else {
-        return date.toLocaleString('zh-CN', {
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      }
+      // 格式化为 "2025-09-24 20:45:18" 格式
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
 
     scrollToBottom () {
@@ -1000,10 +1014,13 @@ export default {
   transition: all 0.3s ease;
 }
 
+/* 移除hover效果，因为按钮现在始终显示 */
+/*
 .message-bubble:hover .bubble-actions {
   opacity: 1;
   transform: translateY(0);
 }
+*/
 
 .message-bubble--user {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -1088,12 +1105,22 @@ export default {
   color: white;
 }
 
+/* 消息元信息容器 - 时间和按钮两端对齐 */
+.message-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  min-height: 20px;
+}
+
 .bubble-actions {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
-  opacity: 0;
-  transform: translateY(4px);
+  margin-top: 0;
+  opacity: 1;
+  transform: translateY(0);
   transition: all 0.3s ease;
 }
 

@@ -133,7 +133,8 @@ class AIChatService {
                     // 流式进行中的内容块
 
                     // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
-                    if (content !== undefined && content !== null) {
+                    // 只有当内容不为空且包含有效字符时才触发回调
+                    if (content !== undefined && content !== null && content.trim().length > 0) {
                       onContent(content)
                     }
                   }

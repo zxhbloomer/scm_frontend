@@ -112,9 +112,7 @@ export default {
 
   computed: {
     isTyping () {
-      const typing = this.isLoading || this.$store.getters['chat/chatIsTyping']
-      console.log('[ChatPanel] isTyping:', typing, 'isLoading prop:', this.isLoading)
-      return typing
+      return this.isLoading || this.$store.getters['chat/chatIsTyping']
     }
   },
 

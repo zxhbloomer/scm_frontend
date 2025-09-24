@@ -213,13 +213,15 @@ const actions = {
       commit('ADD_MESSAGE', userMessage)
 
       const aiMessageId = 'ai_' + Date.now()
+      // 立即创建AI消息但设为隐藏状态，避免闪烁
       const aiMessage = {
         id: aiMessageId,
         content: '',
         type: 'ai',
         timestamp: new Date().toISOString(),
-        status: 'typing',
-        isStreaming: true
+        status: 'thinking',
+        isStreaming: true,
+        isHidden: true // 标记为隐藏，不在UI中显示
       }
       commit('ADD_MESSAGE', aiMessage)
       // 开始思考状态
@@ -237,21 +239,32 @@ const actions = {
           })
         },
         onContent: (contentChunk) => {
-          // 开始接收内容时结束思考状态
-          commit('SET_TYPING', false)
-
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
-          const accumulatedContent = (currentMessage?.content || '') + (contentChunk || '')
 
-          commit('UPDATE_MESSAGE', {
-            messageId: aiMessageId,
-            updates: {
-              content: accumulatedContent,
-              status: 'streaming',
-              isStreaming: false,
-              streamFormat: 'flux-chat-response'
+          if (currentMessage) {
+            const accumulatedContent = (currentMessage.content || '') + (contentChunk || '')
+
+            // 只有当累积内容有实际意义时才显示AI消息并隐藏思考状态
+            // 提高阈值，确保有足够内容才显示，避免空白对话框
+            const trimmedContent = accumulatedContent.trim()
+            const hasValidContent = trimmedContent.length > 15 &&
+                                  trimmedContent.replace(/\s+/g, ' ').length > 10 // 去除多余空格后仍有内容
+
+            if (hasValidContent && state.isTyping) {
+              commit('SET_TYPING', false)
             }
-          })
+
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: {
+                content: accumulatedContent,
+                status: hasValidContent ? 'streaming' : 'thinking',
+                isStreaming: !hasValidContent,
+                isHidden: !hasValidContent, // 有有效内容时才显示
+                streamFormat: 'flux-chat-response'
+              }
+            })
+          }
         },
         onComplete: (fullContent) => {
           // 确保思考状态结束
@@ -260,16 +273,24 @@ const actions = {
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
           const finalContent = fullContent || currentMessage?.content || ''
 
-          commit('UPDATE_MESSAGE', {
-            messageId: aiMessageId,
-            updates: {
-              content: finalContent,
-              status: 'delivered',
-              isStreaming: false,
-              streamFormat: 'flux-chat-response',
-              completedAt: new Date().toISOString()
-            }
-          })
+          if (currentMessage) {
+            // 检查最终内容是否足够显示，避免空白消息
+            const trimmedFinalContent = finalContent.trim()
+            const hasEnoughContent = trimmedFinalContent.length > 5 &&
+                                   trimmedFinalContent.replace(/\s+/g, ' ').length > 3
+
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: {
+                content: finalContent,
+                status: 'delivered',
+                isStreaming: false,
+                isHidden: !hasEnoughContent, // 只有有足够内容才显示
+                streamFormat: 'flux-chat-response',
+                completedAt: new Date().toISOString()
+              }
+            })
+          }
         },
         onError: (_error) => {
           // 错误时结束思考状态
