@@ -17,8 +17,9 @@
     <!-- 消息列表 -->
     <div class="chat-panel__content">
       <message-list
+        ref="messageList"
         :messages="messages"
-        :is-typing="isLoading"
+        :is-typing="isTyping"
         :user-info="userInfo"
         @message-action="handleMessageAction"
         @quick-question="handleQuickQuestion"
@@ -31,6 +32,7 @@
       :is-loading="isLoading"
       :placeholder="inputPlaceholder"
       @send-message="handleSendMessage"
+      @input-focus="handleInputFocus"
     />
 
     <!-- 反馈面板 -->
@@ -108,6 +110,14 @@ export default {
     }
   },
 
+  computed: {
+    isTyping () {
+      const typing = this.isLoading || this.$store.getters['chat/chatIsTyping']
+      console.log('[ChatPanel] isTyping:', typing, 'isLoading prop:', this.isLoading)
+      return typing
+    }
+  },
+
   methods: {
     handleSendMessage (message) {
       this.$emit('send-message', message)
@@ -171,6 +181,13 @@ export default {
 
     handleResizeChat (newWidth) {
       this.$emit('resize-chat', newWidth)
+    },
+
+    handleInputFocus () {
+      // 当输入框获得焦点时，滚动到底部
+      if (this.$refs.messageList) {
+        this.$refs.messageList.scrollToBottom()
+      }
     }
   }
 }

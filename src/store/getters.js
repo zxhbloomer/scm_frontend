@@ -9,6 +9,7 @@ const getters = {
   name: state => state.user.name,
   introduction: state => state.user.introduction,
   roles: state => state.user.roles,
+  conv_uuid: state => state.user.conv_uuid,
   // 菜单router
   permission_menus_routers: state => state.permission.menus,
   // 顶部导航栏

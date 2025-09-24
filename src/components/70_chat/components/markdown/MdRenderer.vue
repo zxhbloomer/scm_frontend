@@ -27,6 +27,7 @@
         v-else-if="item.type === 'html_rander'"
         :key="`html-${index}`"
         :source="item.content"
+        @vue:mounted="() => console.log('🌐 HTML渲染器已加载')"
       />
 
       <!-- 图表渲染器 -->
@@ -34,6 +35,7 @@
         v-else-if="item.type === 'echarts_rander'"
         :key="`echarts-${index}`"
         :option="item.content"
+        @vue:mounted="() => console.log('📊 ECharts图表渲染器已加载')"
       />
 
       <!-- 表单渲染器 -->
@@ -46,6 +48,7 @@
         :child-node="childNode"
         :disabled="disabled"
         :send-message="sendMessage"
+        @vue:mounted="() => console.log('📝 表单渲染器已加载')"
       />
 
       <!-- Markdown预览 -->
@@ -54,6 +57,7 @@
         :key="`md-${index}`"
         :text="item.content"
         class="maxkb-md"
+        @vue:mounted="() => console.log('📄 Markdown预览器已加载')"
       />
     </template>
   </div>
@@ -118,18 +122,40 @@ export default {
   computed: {
     mdViewList () {
       const tempSource = this.source
-      return this.splitFormRander(
+
+      const result = this.splitFormRander(
         this.splitEchartsRander(
           this.splitHtmlRander(
             this.splitQuickQuestion([tempSource])
           )
         )
       )
+
+      return result
     },
 
     canSendMessage () {
       return this.sendMessage && this.type !== 'log'
     }
+  },
+  watch: {
+    source: {
+      handler (newVal, oldVal) {
+        // Source changed
+      },
+      immediate: false
+    },
+    reasoningContent: {
+      handler (newVal, oldVal) {
+        // Reasoning content changed
+      }
+    }
+  },
+  created () {
+    // Component created
+  },
+  mounted () {
+    console.log('🎯 MdRenderer组件已挂载，解析内容类型:', this.mdViewList.map(item => item.type))
   },
   methods: {
     handleQuestionClick (content) {
@@ -140,9 +166,10 @@ export default {
 
     // 分割快速问题标签
     splitQuickQuestion (result) {
-      return result
+      const finalResult = result
         .map(item => this.splitQuickQuestionItem(item))
         .reduce((x, y) => [...x, ...y], [])
+      return finalResult
     },
 
     splitQuickQuestionItem (source) {
@@ -180,9 +207,10 @@ export default {
 
     // 分割HTML渲染标签
     splitHtmlRander (result) {
-      return result
+      const finalResult = result
         .map(item => this.splitHtmlRanderItem(item.content, item.type))
         .reduce((x, y) => [...x, ...y], [])
+      return finalResult
     },
 
     splitHtmlRanderItem (source, type) {
@@ -220,9 +248,10 @@ export default {
 
     // 分割Echarts渲染标签
     splitEchartsRander (result) {
-      return result
+      const finalResult = result
         .map(item => this.splitEchartsRanderItem(item.content, item.type))
         .reduce((x, y) => [...x, ...y], [])
+      return finalResult
     },
 
     splitEchartsRanderItem (source, type) {
@@ -260,9 +289,10 @@ export default {
 
     // 分割表单渲染标签
     splitFormRander (result) {
-      return result
+      const finalResult = result
         .map(item => this.splitFormRanderItem(item.content, item.type))
         .reduce((x, y) => [...x, ...y], [])
+      return finalResult
     },
 
     splitFormRanderItem (source, type) {
@@ -428,6 +458,7 @@ export default {
       line-height: 1.6;
       color: inherit;
       background: transparent;
+      padding: 0px !important;
     }
 
     ::v-deep img {

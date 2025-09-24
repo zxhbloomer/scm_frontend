@@ -120,6 +120,7 @@ export default {
   methods: {
     onFocus () {
       this.isFocused = true
+      this.$emit('input-focus')
     },
 
     onBlur () {

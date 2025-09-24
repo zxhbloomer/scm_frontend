@@ -110,7 +110,7 @@ export default {
           this.chartInstance.setOption(optionConfig, true)
         }
       } catch (error) {
-        console.error('图表初始化失败:', error)
+        // 图表初始化失败处理
       }
     },
 
@@ -130,7 +130,7 @@ export default {
           return this.jsonParseOption(optionData)
         }
       } catch (error) {
-        console.error('图表配置解析失败:', error)
+        // 图表配置解析失败处理
         return null
       }
     },
@@ -149,7 +149,7 @@ export default {
 
     evalParseOption (optionData) {
       // 出于安全考虑，不推荐使用eval，这里提供一个安全的替代方案
-      console.warn('EVAL模式存在安全风险，建议使用JSON配置')
+      // EVAL模式安全风险警告
 
       try {
         // 尝试解析为函数配置
@@ -164,7 +164,7 @@ export default {
           return optionFunction(echarts)
         }
       } catch (error) {
-        console.error('EVAL配置解析失败:', error)
+        // EVAL配置解析失败处理
       }
 
       return null

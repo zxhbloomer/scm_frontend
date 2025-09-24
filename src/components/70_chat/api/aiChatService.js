@@ -4,6 +4,7 @@
  */
 
 import request from '@/utils/request'
+import store from '@/store'
 
 class AIChatService {
   constructor () {
@@ -12,7 +13,291 @@ class AIChatService {
   }
 
   /**
-   * 发送消息给AI助手
+   * 流式发送消息给AI助手 (Spring AI标准格式)
+   * @param {Object} params - 请求参数
+   * @param {string} params.conversationId - 对话ID
+   * @param {string} params.prompt - 用户消息
+   * @param {string} params.chatModelId - AI模型ID
+   * @param {Object} callbacks - 回调函数
+   * @param {Function} callbacks.onStart - 开始回调
+   * @param {Function} callbacks.onContent - 内容片段回调
+   * @param {Function} callbacks.onComplete - 完成回调
+   * @param {Function} callbacks.onError - 错误回调
+   * @returns {Function} 取消函数
+   */
+  sendMessageStream ({ conversationId, prompt, chatModelId = 'default' }, callbacks = {}) {
+    const {
+      onStart = () => {},
+      onContent = () => {},
+      onComplete = () => {},
+      onError = () => {}
+    } = callbacks
+
+    let cancelled = false
+    const controller = new AbortController()
+    let hasStarted = false
+
+    const connectSSE = async () => {
+      try {
+        // 使用fetch进行SSE请求（axios不支持真正的流式处理）
+        const baseURL = process.env.VUE_APP_BASE_API
+        const url = `${baseURL}/api/v1/ai/conversation/chat/stream`
+
+        // 构建请求头
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'X-Tenant-ID': 'scm_tenant_20250519_001'
+        }
+
+        // 检查是否有认证token
+        if (store.getters.token) {
+          headers['Authorization'] = `Bearer ${store.getters.token}`
+        }
+
+        // 添加 wms-Token，从cookies中获取
+        const wmsToken = document.cookie.split(';')
+          .find(row => row.trim().startsWith('wms-Token='))
+        if (wmsToken) {
+          headers['wms-Token'] = wmsToken.split('=')[1]
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            conversationId,
+            prompt,
+            chatModelId
+          }),
+          signal: controller.signal
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        let done = false
+        // eslint-disable-next-line no-unmodified-loop-condition
+        while (!done && !cancelled) {
+          const result = await reader.read()
+          done = result.done
+          const value = result.value
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+
+          buffer += chunk
+
+          // 处理SSE消息格式: data: JSON\n\n
+          const messages = buffer.split('\n\n')
+          buffer = messages.pop() || '' // 保留最后一个不完整的消息
+
+          for (const message of messages) {
+            if (message.trim() === '') continue
+
+            // 解析SSE格式的data行 - 修复多行JSON问题
+            if (message.startsWith('data:')) {
+              const jsonData = message.slice(5) // 移除 "data:" 前缀
+
+              if (jsonData.trim() === '') {
+                continue
+              }
+
+              try {
+                // 解析ChatResponse JSON对象
+                const chatResponse = JSON.parse(jsonData)
+
+                if (chatResponse.results && chatResponse.results.length > 0) {
+                  const generation = chatResponse.results[0]
+                  const content = generation.output?.content || ''
+
+                  // 第一次收到数据时触发start事件
+                  if (!hasStarted) {
+                    hasStarted = true
+                    onStart()
+                  }
+
+                  // 检查是否为完成事件（有finishReason）
+                  if (generation.metadata && generation.metadata.finishReason === 'stop') {
+                    // 完成事件 - content是完整的最终内容
+                    onComplete(content)
+                    return
+                  } else {
+                    // 流式进行中的内容块
+
+                    // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
+                    if (content !== undefined && content !== null) {
+                      onContent(content)
+                    }
+                  }
+                }
+              } catch (parseError) {
+                // 继续处理其他消息，不中断流
+              }
+            }
+          }
+        }
+
+        // 流结束处理
+        if (!cancelled) {
+          if (!hasStarted) {
+            onComplete('')
+          }
+        }
+      } catch (error) {
+        if (!cancelled && error.name !== 'AbortError') {
+          onError(error)
+        }
+      }
+    }
+
+    // 开始连接
+    connectSSE()
+
+    // 更新会话状态
+    this.updateSessionActivity(conversationId)
+
+    // 返回取消函数
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }
+
+  /**
+   * 流式发送消息给AI助手 (SSE兼容版本)
+   * @deprecated 使用sendMessageStream的Spring AI标准版本
+   */
+  sendMessageStreamSSE ({ conversationId, prompt, chatModelId = 'default' }, callbacks = {}) {
+    const {
+      onStart = () => {},
+      onContent = () => {},
+      onComplete = () => {},
+      onError = () => {}
+    } = callbacks
+
+    let cancelled = false
+    const controller = new AbortController()
+
+    const connectSSE = async () => {
+      try {
+        // 使用旧的SSE接口
+        const baseURL = process.env.VUE_APP_BASE_API
+        const url = `${baseURL}/api/v1/ai/conversation/chat/stream/sse`
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'X-Tenant-ID': 'scm_tenant_20250519_001'
+        }
+
+        if (store.getters.token) {
+          headers['Authorization'] = `Bearer ${store.getters.token}`
+        }
+
+        const wmsToken = document.cookie.split(';')
+          .find(row => row.trim().startsWith('wms-Token='))
+        if (wmsToken) {
+          headers['wms-Token'] = wmsToken.split('=')[1]
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            conversationId,
+            prompt,
+            chatModelId
+          }),
+          signal: controller.signal
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        let done = false
+        // eslint-disable-next-line no-unmodified-loop-condition
+        while (!done && !cancelled) {
+          const result = await reader.read()
+          done = result.done
+          const value = result.value
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          buffer += chunk
+
+          const messages = buffer.split('\n\n')
+          buffer = messages.pop() || ''
+
+          for (const message of messages) {
+            if (message.trim() === '') continue
+
+            let eventType = null
+            let eventData = ''
+
+            const lines = message.split('\n')
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.slice(6).trim()
+              } else if (line.startsWith('data:')) {
+                eventData = line.slice(5)
+              }
+            }
+
+            switch (eventType) {
+              case 'start':
+                onStart()
+                break
+              case 'content':
+                if (eventData && eventData.trim() !== '') {
+                  onContent(eventData)
+                }
+                break
+              case 'complete':
+                onComplete(eventData)
+                return
+              case 'error':
+                onError(new Error(eventData))
+                return
+            }
+          }
+        }
+
+        if (!cancelled) {
+          onComplete(buffer)
+        }
+      } catch (error) {
+        if (!cancelled && error.name !== 'AbortError') {
+          onError(error)
+        }
+      }
+    }
+
+    connectSSE()
+    this.updateSessionActivity(conversationId)
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }
+
+  /**
+   * 发送消息给AI助手 (原有的同步方法，保持兼容)
    * @param {Object} params - 请求参数
    * @param {string} params.conversationId - 对话ID
    * @param {string} params.prompt - 用户消息
@@ -56,7 +341,6 @@ class AIChatService {
         throw new Error('AI服务返回数据为空')
       }
     } catch (error) {
-      console.error('AI聊天请求失败:', error)
       throw error
     }
   }
@@ -84,7 +368,6 @@ class AIChatService {
       })
       return response.data
     } catch (error) {
-      console.error('添加对话失败:', error)
       throw error
     }
   }
@@ -101,7 +384,6 @@ class AIChatService {
       })
       return response.data || []
     } catch (error) {
-      console.error('获取对话列表失败:', error)
       return []
     }
   }
@@ -119,7 +401,6 @@ class AIChatService {
       })
       return response.data
     } catch (error) {
-      console.error('删除对话失败:', error)
       throw error
     }
   }
@@ -136,9 +417,31 @@ class AIChatService {
         method: 'get'
       })
 
-      return response.data || []
+      // SCM的request.js已经处理了响应，直接返回了response.data
+      // 所以这里的response就是实际的数据
+      let result = []
+
+      if (Array.isArray(response)) {
+        // 如果response直接是数组（最常见情况）
+        result = response
+      } else if (response && response.data && Array.isArray(response.data)) {
+        // 如果有data属性且是数组
+        result = response.data
+      } else if (response && typeof response === 'object') {
+        // 如果response是对象，尝试找到数组数据
+        const keys = Object.keys(response)
+        // 尝试找到第一个数组属性
+        for (const key of keys) {
+          if (Array.isArray(response[key])) {
+            result = response[key]
+            break
+          }
+        }
+      }
+
+      return result || []
     } catch (error) {
-      console.error('获取对话详情失败:', error)
+      console.error('获取历史消息失败:', error)
       return []
     }
   }
@@ -160,7 +463,6 @@ class AIChatService {
 
       return response.data
     } catch (error) {
-      console.error('更新对话标题失败:', error)
       throw error
     }
   }
@@ -249,7 +551,6 @@ class AIChatService {
   trackUserAction (action, data = {}) {
     try {
       // 这里可以集成数据分析服务
-      console.log('用户行为跟踪:', { action, data, timestamp: Date.now() })
 
       // 可以发送到分析服务
       // analytics.track(action, data)

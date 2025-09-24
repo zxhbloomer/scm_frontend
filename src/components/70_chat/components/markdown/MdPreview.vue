@@ -1,10 +1,12 @@
 <template>
-  <v-md-preview
-    :text="text"
-    :language="language"
-    v-bind="$attrs"
-    v-on="$listeners"
-  />
+  <div>
+    <v-md-preview
+      :text="text"
+      :language="language"
+      v-bind="$attrs"
+      v-on="$listeners"
+    />
+  </div>
 </template>
 
 <script>
@@ -71,4 +73,5 @@ export default {
   font-size: 14px;
   line-height: 1.6;
 }
+
 </style>

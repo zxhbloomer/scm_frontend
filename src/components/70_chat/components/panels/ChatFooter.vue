@@ -6,6 +6,7 @@
       :is-loading="isLoading"
       :placeholder="placeholder"
       @send-message="handleSendMessage"
+      @input-focus="handleInputFocus"
     />
   </footer>
 </template>
@@ -34,6 +35,10 @@ export default {
   methods: {
     handleSendMessage (content) {
       this.$emit('send-message', content)
+    },
+
+    handleInputFocus () {
+      this.$emit('input-focus')
     }
   }
 }

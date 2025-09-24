@@ -3,6 +3,9 @@
  * 基于chatwoot实现，适配70_chat使用
  */
 
+// 统一的emoji正则表达式
+const EMOJI_REGEX = /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g
+
 /**
  * 检测是否支持emoji字符集
  * 基于Modernizr emoji检测
@@ -39,10 +42,7 @@ export const hasEmojiSupport = () => {
 export const removeEmoji = text => {
   if (text) {
     return text
-      .replace(
-        /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
-        ''
-      )
+      .replace(EMOJI_REGEX, '')
       .replace(/\s+/g, ' ')
       .trim()
   }
@@ -55,8 +55,8 @@ export const removeEmoji = text => {
  * @return {boolean} 是否包含emoji
  */
 export const containsEmoji = text => {
-  const emojiRegex = /([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/
-  return emojiRegex.test(text)
+  const regex = new RegExp(EMOJI_REGEX.source)
+  return regex.test(text)
 }
 
 /**
@@ -66,7 +66,7 @@ export const containsEmoji = text => {
  */
 export const countEmojis = text => {
   if (!text) return 0
-  const emojiMatches = text.match(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g)
+  const emojiMatches = text.match(EMOJI_REGEX)
   return emojiMatches ? emojiMatches.length : 0
 }
 

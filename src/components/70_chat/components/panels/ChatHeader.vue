@@ -128,7 +128,7 @@ export default {
 
   methods: {
     handleDropdownCommand (command) {
-      console.log('头部下拉菜单操作:', command)
+      // 头部下拉菜单操作处理
 
       switch (command) {
         case 'clear':
@@ -144,7 +144,7 @@ export default {
           this.openHelp()
           break
         default:
-          console.warn('未知命令:', command)
+          // 未知命令处理
       }
     },
 

@@ -8,6 +8,8 @@ const state = {
   avatar: '',
   introduction: '',
   roles: [],
+  // AI会话UUID
+  conv_uuid: '',
   // session信息
   session_bean: {}
 }
@@ -27,6 +29,9 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_CONV_UUID: (state, conv_uuid) => {
+    state.conv_uuid = conv_uuid
   },
   SET_SESSION_BEAN: (state, session_bean) => {
     state.session_bean = session_bean
@@ -99,7 +104,7 @@ const actions = {
           reject('验证失败，请重新登录')
         }
 
-        const { roles, name, avatar, introduction, user_session_bean } = data
+        const { roles, name, avatar, introduction, conv_uuid, user_session_bean } = data
 
         // roles must be a non-empty array
         // if (!roles || roles.length <= 0) {
@@ -110,6 +115,7 @@ const actions = {
         commit('SET_NAME', name)
         commit('SET_AVATAR', avatar)
         commit('SET_INTRODUCTION', introduction)
+        commit('SET_CONV_UUID', conv_uuid || '')
         commit('SET_SESSION_BEAN', user_session_bean)
         resolve(data)
       }).catch(error => {

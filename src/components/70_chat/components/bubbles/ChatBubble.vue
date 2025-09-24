@@ -67,16 +67,16 @@ export default {
   },
   computed: {
     messages () {
-      return this.$store.getters.chatMessages
+      return this.$store.getters['chat/chatMessages']
     },
     unreadCount () {
-      return this.$store.getters.chatUnreadCount
+      return this.$store.getters['chat/chatUnreadCount']
     },
     isLoading () {
-      return this.$store.getters.chatIsLoading
+      return this.$store.getters['chat/chatIsTyping']
     },
     isExpanded () {
-      return this.$store.getters.chatPanelExpanded
+      return this.$store.getters['chat/chatPanelExpanded']
     },
     userInfo () {
       return {
@@ -93,7 +93,7 @@ export default {
       }
     },
     onlineStatus () {
-      return this.$store.getters.chatConnectionStatus ? 'online' : 'offline'
+      return this.$store.getters['chat/connectionStatus']?.isConnected ? 'online' : 'offline'
     },
     inputPlaceholder () {
       return '输入您的消息'
@@ -138,13 +138,12 @@ export default {
   },
   mounted () {
     if (!this.$store.state.chat) {
-      console.error('Chat store 模块未找到！')
       return
     }
 
     this.$store.dispatch('chat/initChatPanel')
-      .catch(error => {
-        console.error('聊天面板初始化失败:', error)
+      .catch(_error => {
+        // 聊天面板初始化失败处理
       })
     this.handleResize = () => {
       if (!this.isMaximized) {
@@ -174,8 +173,8 @@ export default {
 
     toggleChatPanel () {
       this.$store.dispatch('chat/toggleChatPanel')
-        .catch(error => {
-          console.error('切换面板状态失败:', error)
+        .catch(_error => {
+          // 切换面板状态失败处理
         })
     },
 
@@ -198,7 +197,10 @@ export default {
     },
 
     startAutoConversation () {
-      console.log('聊天面板已打开，欢迎界面已显示')
+      // 聊天面板展开时初始化聊天并加载历史消息
+      this.initializeChat().catch(error => {
+        console.error('聊天初始化失败:', error)
+      })
     }
   }
 }

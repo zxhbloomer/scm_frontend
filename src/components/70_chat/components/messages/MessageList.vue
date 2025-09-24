@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="messages-wrapper">
+    <div ref="messagesWrapper" class="messages-wrapper">
       <!-- SCM欢迎区域 - 始终显示在最前面 -->
       <div class="scm-welcome-area">
         <!-- 欢迎消息 -->
@@ -186,6 +186,7 @@
                     />
                   </div>
                   <div v-else class="ai-content">
+                    <!-- 直接显示Markdown内容，移除打字机效果 -->
                     <md-renderer
                       :source="message.content"
                       :reasoning-content="message.reasoning"
@@ -281,6 +282,7 @@
 
               <div class="message-bubble message-bubble--agent">
                 <div class="bubble-content">
+                  <!-- 直接显示Markdown内容，移除打字机效果 -->
                   <md-renderer
                     :source="message.content"
                     :reasoning-content="message.reasoning"
@@ -410,13 +412,15 @@ export default {
       deep: true
     },
 
-    isTyping () {
+    isTyping (newVal, oldVal) {
       this.scrollToBottom()
     }
   },
 
   mounted () {
     this.initializeQuestions()
+    // 组件挂载后滚动到底部，确保聊天打开时显示最新消息
+    this.scrollToBottom()
   },
 
   methods: {
@@ -477,10 +481,10 @@ export default {
 
     scrollToBottom () {
       this.$nextTick(() => {
-        const container = this.$refs.messagesContainer
-        if (container) {
-          container.scrollTo({
-            top: container.scrollHeight,
+        const wrapper = this.$refs.messagesWrapper
+        if (wrapper) {
+          wrapper.scrollTo({
+            top: wrapper.scrollHeight,
             behavior: 'smooth'
           })
         }
@@ -1035,7 +1039,6 @@ export default {
 }
 
 .ai-content {
-  white-space: pre-wrap;
 }
 
 .ai-steps {

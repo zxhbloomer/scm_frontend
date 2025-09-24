@@ -168,7 +168,6 @@ export default {
     },
 
     selectQuestion (question) {
-      console.log('选择问题:', question)
       this.$emit('quick-question', question)
     },
 

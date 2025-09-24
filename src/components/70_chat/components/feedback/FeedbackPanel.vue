@@ -249,7 +249,7 @@ export default {
         // 触发反馈事件
         this.$emit('feedback', feedbackData)
       } catch (error) {
-        console.error('提交反馈失败:', error)
+        // 提交反馈失败处理
         this.$message.error('提交失败，请稍后重试')
       } finally {
         this.isSubmitting = false
@@ -260,7 +260,7 @@ export default {
       // 这里应该调用实际的反馈接口
       return new Promise((resolve) => {
         setTimeout(() => {
-          console.log('反馈数据:', feedbackData)
+          // 反馈数据处理
           resolve({ success: true })
         }, 1000)
       })
