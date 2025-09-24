@@ -545,6 +545,26 @@ class AIChatService {
   }
 
   /**
+   * 清空对话内容
+   * @param {string} conversationId - 对话ID
+   * @returns {Promise} 清空结果
+   */
+  async clearConversationContent (conversationId) {
+    try {
+      const response = await request({
+        url: `/api/v1/ai/conversation/clear/${conversationId}`,
+        method: 'post'
+      })
+
+      console.log('对话内容已清空:', conversationId)
+      return response.data
+    } catch (error) {
+      console.error('清空对话内容失败:', error)
+      throw new Error(error.message || '清空对话内容失败')
+    }
+  }
+
+  /**
    * 记录用户行为
    * @param {string} action - 行为类型
    * @param {Object} data - 行为数据

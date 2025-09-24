@@ -27,6 +27,16 @@
       />
     </div>
 
+    <!-- 新建对话按钮 -->
+    <div class="new-conversation-area">
+      <button
+        class="new-conversation-btn"
+        @click="handleNewConversation"
+      >
+        + 新建对话
+      </button>
+    </div>
+
     <!-- 聊天底部 -->
     <chat-footer
       :is-loading="isLoading"
@@ -186,6 +196,16 @@ export default {
       if (this.$refs.messageList) {
         this.$refs.messageList.scrollToBottom()
       }
+    },
+
+    handleNewConversation () {
+      this.$store.dispatch('chat/clearConversation')
+        .then(() => {
+          this.$message.success('新对话已创建')
+        })
+        .catch(error => {
+          this.$message.error('创建新对话失败：' + error.message)
+        })
     }
   }
 }
@@ -224,6 +244,32 @@ export default {
   flex-shrink: 0; /* 底部不收缩 */
   position: relative;
   z-index: 10;
+}
+
+/* 新建对话按钮区域 */
+.new-conversation-area {
+  padding: 8px 20px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fafafa;
+}
+
+.new-conversation-btn {
+  background: none;
+  border: none;
+  color: #409eff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.new-conversation-btn:hover {
+  color: #337ecc;
+  text-decoration: underline;
+}
+
+.new-conversation-btn:focus {
+  outline: none;
 }
 
 /* 确保聊天面板在小屏幕上正确显示 */

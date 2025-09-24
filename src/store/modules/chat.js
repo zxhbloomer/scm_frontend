@@ -395,6 +395,23 @@ const actions = {
     }
   },
 
+  async clearConversation ({ commit, state }) {
+    if (!state.conversationId) return
+
+    try {
+      await aiChatService.clearConversationContent(state.conversationId)
+      // 只清空前端消息列表，保留对话状态
+      commit('SET_MESSAGES', [])
+      commit('SET_UNREAD_COUNT', 0)
+      commit('SET_LOADING', false)
+      commit('SET_TYPING', false)
+      commit('SET_ERROR', null)
+    } catch (error) {
+      commit('SET_ERROR', error.message)
+      throw error
+    }
+  },
+
   toggleChatPanel ({ commit, state }) {
     commit('TOGGLE_PANEL')
     if (state.isPanelExpanded && state.unreadCount > 0) {
