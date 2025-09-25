@@ -57,7 +57,7 @@
 
 <script>
 // 导入Tailwind CSS样式 - 仅在聊天组件中启用
-import '../../styles/index.scss'
+import '../../../styles/index.scss'
 
 import ChatHeader from './ChatHeader.vue'
 import ChatFooter from './ChatFooter.vue'

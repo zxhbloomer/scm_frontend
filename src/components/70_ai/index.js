@@ -2,21 +2,21 @@
 // 基于Chatwoot架构的标准化聊天模块
 
 // Bubble组件（悬浮聊天气泡）
-import ChatBubble from './components/bubbles/ChatBubble.vue'
+import ChatBubble from '@/components/70_ai/components/chat/bubbles/ChatBubble.vue'
 
 // 消息组件
-import MessageList from './components/messages/MessageList.vue'
+import MessageList from '@/components/70_ai/components/chat/messages/MessageList.vue'
 
 // 输入组件
-import ChatInputWrap from './components/input/ChatInputWrap.vue'
+import ChatInputWrap from '@/components/70_ai/components/chat/input/ChatInputWrap.vue'
 
 // 面板组件
-import ChatPanel from './components/panels/ChatPanel.vue'
-import ChatHeader from './components/panels/ChatHeader.vue'
-import ChatFooter from './components/panels/ChatFooter.vue'
+import ChatPanel from '@/components/70_ai/components/chat/panels/ChatPanel.vue'
+import ChatHeader from '@/components/70_ai/components/chat/panels/ChatHeader.vue'
+import ChatFooter from '@/components/70_ai/components/chat/panels/ChatFooter.vue'
 
 // 反馈组件
-import FeedbackPanel from './components/feedback/FeedbackPanel.vue'
+import FeedbackPanel from '@/components/70_ai/components/chat/feedback/FeedbackPanel.vue'
 
 // API服务
 import aiChatService from './api/aiChatService.js'

@@ -70,7 +70,7 @@
 </template>
 
 <script>
-import EmojiInput from './emoji/EmojiInput.vue'
+import EmojiInput from './emoji'
 
 export default {
   name: 'ChatInputWrap',

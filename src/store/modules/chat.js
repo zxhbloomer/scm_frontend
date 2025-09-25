@@ -1,4 +1,4 @@
-import aiChatService from '@/components/70_chat/api/aiChatService'
+import aiChatService from '@/components/70_ai/api/aiChatService'
 // import SockJS from 'sockjs-client'
 // import Stomp from 'stompjs'
 

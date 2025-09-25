@@ -32,7 +32,7 @@ import RightPanel from '@/components/RightPanel'
 import { AppMain, Navbar, Settings, Sidebar } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
-import { ChatBubble } from '@/components/70_chat'
+import { ChatBubble } from '@/components/70_ai'
 
 export default {
   name: 'Layout',
