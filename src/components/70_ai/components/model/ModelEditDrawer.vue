@@ -169,7 +169,8 @@ import {
   ModelTypeEnum,
   ModelPermissionTypeEnum,
   ModelOwnerTypeTypeEnum,
-  baseModelTypeMap
+  baseModelTypeMap,
+  ModelBaseTypeEnum
 } from '../../constants/model'
 import {
   getModelDefaultConfig,
@@ -194,7 +195,7 @@ export default {
     supplierModelItem: {
       type: Object,
       default: () => ({
-        value: 'DeepSeek',
+        value: ModelBaseTypeEnum.DeepSeek,
         name: 'DeepSeek',
         icon: 'deepSeek'
       })
@@ -216,7 +217,7 @@ export default {
         id: '',
         name: '',
         type: ModelTypeEnum.LLM,
-        providerName: 'DeepSeek',
+        providerName: ModelBaseTypeEnum.DeepSeek,
         permissionType: ModelPermissionTypeEnum.PUBLIC,
         status: true,
         owner: '',

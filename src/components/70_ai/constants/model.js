@@ -1,13 +1,11 @@
 // AI模型相关常量定义 - 基于MeterSphere实现
 // 完全参照MeterSphere的枚举定义
 
-// 模型供应商枚举
+// 模型供应商枚举 - 仅包含MeterSphere完整支持的厂商
 export const ModelBaseTypeEnum = {
   DeepSeek: 'DeepSeek',
   ZhiPuAI: 'ZhiPu AI', // 智谱 AI
-  OpenAI: 'Open AI',
-  QianFan: 'QianFan', // 基于SCM后端实际支持的供应商
-  Ollama: 'Ollama'
+  OpenAI: 'Open AI'
 }
 
 // 模型类型枚举
@@ -149,10 +147,8 @@ export const baseModelTypeMap = {
       label: 'gpt-4-1106-preview',
       tooltip: 'OpenAI GPT-4 1106预览版'
     }
-  ],
-  // 扩展支持其他供应商
-  [ModelBaseTypeEnum.QianFan]: [],
-  [ModelBaseTypeEnum.Ollama]: []
+  ]
+  // 仅支持上述3个厂商，扩展其他厂商需等MeterSphere完整实现后同步
 }
 
 // DeepSeek推理模型默认参数
@@ -265,12 +261,10 @@ export const defaultAdvancedSetValueMap = {
       minValue: 1,
       maxValue: 8000
     }
-  ],
-  [ModelBaseTypeEnum.QianFan]: [],
-  [ModelBaseTypeEnum.Ollama]: []
+  ]
 }
 
-// 供应商模型列表
+// 供应商模型列表 - 仅包含MeterSphere完整支持的厂商
 export const modelList = [
   {
     value: ModelBaseTypeEnum.DeepSeek,
@@ -286,15 +280,5 @@ export const modelList = [
     value: ModelBaseTypeEnum.ZhiPuAI,
     name: '智谱AI',
     icon: 'zhiPuAi'
-  },
-  {
-    value: ModelBaseTypeEnum.QianFan,
-    name: '千帆',
-    icon: 'qianFan'
-  },
-  {
-    value: ModelBaseTypeEnum.Ollama,
-    name: 'Ollama',
-    icon: 'ollama'
   }
 ]

@@ -59,22 +59,15 @@
           />
         </el-tooltip>
 
-        <!-- 更多选项 -->
-        <el-dropdown trigger="click" @command="handleDropdownCommand">
+        <!-- 更多选项 - 直接打开模型设置 -->
+        <el-tooltip content="模型设置" placement="bottom">
           <el-button
             type="text"
             icon="el-icon-more"
             class="action-btn more-btn"
             @click="handleMoreButtonClick"
           />
-          <el-dropdown-menu slot="dropdown" class="header-dropdown">
-            <el-dropdown-item command="model-settings">模型设置</el-dropdown-item>
-            <el-dropdown-item command="clear">清空对话</el-dropdown-item>
-            <el-dropdown-item command="export">导出记录</el-dropdown-item>
-            <el-dropdown-item command="settings">聊天设置</el-dropdown-item>
-            <el-dropdown-item command="help">帮助中心</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
+        </el-tooltip>
 
         <!-- 关闭按钮 -->
         <el-button
@@ -148,61 +141,6 @@ export default {
   },
 
   methods: {
-    handleDropdownCommand (command) {
-      // 头部下拉菜单操作处理
-      console.log('🔧 [ChatHeader] 下拉菜单点击事件:', command)
-
-      switch (command) {
-        case 'model-settings':
-          this.openModelSettings()
-          break
-        case 'clear':
-          this.clearConversation()
-          break
-        case 'export':
-          this.exportConversation()
-          break
-        case 'settings':
-          this.openSettings()
-          break
-        case 'help':
-          this.openHelp()
-          break
-        default:
-          console.warn('🔧 [ChatHeader] 未知命令:', command)
-      }
-    },
-
-    clearConversation () {
-      this.$confirm('确定要清空当前对话记录吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        this.$emit('clear-conversation')
-        this.$message.success('对话记录已清空')
-      }).catch(() => {
-        // 用户取消
-      })
-    },
-
-    exportConversation () {
-      this.$message.info('正在导出对话记录...')
-      // 这里可以实现对话记录的导出功能
-      this.$emit('export-conversation')
-    },
-
-    openSettings () {
-      this.$message.info('聊天设置功能开发中...')
-      // 这里可以打开设置对话框
-      this.$emit('open-settings')
-    },
-
-    openHelp () {
-      this.$message.info('正在打开帮助中心...')
-      // 这里可以打开帮助页面
-      this.$emit('open-help')
-    },
 
     openModelSettings () {
       console.log('🔧 [ChatHeader] 打开模型设置弹窗')
@@ -215,7 +153,8 @@ export default {
     },
 
     handleMoreButtonClick () {
-      console.log('🔧 [ChatHeader] 更多按钮被点击')
+      console.log('🔧 [ChatHeader] 更多按钮被点击 - 打开模型设置')
+      this.openModelSettings()
     }
   }
 }
@@ -398,25 +337,9 @@ export default {
   );
 }
 
-/* 下拉菜单样式 */
-.header-dropdown {
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.header-dropdown >>> .el-dropdown-menu__item {
-  font-size: 14px;
-  padding: 10px 16px;
-  color: #303133;
-  transition: all 0.3s ease;
-}
-
-.header-dropdown >>> .el-dropdown-menu__item:hover {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+/* 更多按钮样式增强 */
+.more-btn:hover {
+  background: rgba(103, 194, 58, 0.3);
 }
 
 /* 响应式调整 */

@@ -37,10 +37,8 @@ export function getModelSvg (modelItem) {
       return 'deepSeek'
     case ModelBaseTypeEnum.ZhiPuAI:
       return 'zhiPuAi'
-    case ModelBaseTypeEnum.QianFan:
-      return 'qianFan'
-    case ModelBaseTypeEnum.Ollama:
-      return 'ollama'
+    case ModelBaseTypeEnum.OpenAI:
+      return 'openAi'
     default:
       return 'openAi'
   }

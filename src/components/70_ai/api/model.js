@@ -1,7 +1,7 @@
 // AI模型API服务 - 基于MeterSphere实现，适配SCM后端
 import request from '@/utils/request'
 
-// API基础路径 - 对应后端Controller的RequestMapping
+// API基础路径 - 对应SCM后端SystemAIModelConfigController
 const API_BASE = '/api/v1/ai/model/config'
 
 /**
