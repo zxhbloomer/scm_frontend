@@ -179,7 +179,7 @@ export default {
         try {
           return JSON.parse(this.formSetting)
         } catch (e) {
-          console.warn('表单配置解析失败:', e)
+          // 表单配置解析失败
           return {}
         }
       }

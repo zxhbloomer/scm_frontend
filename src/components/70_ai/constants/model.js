@@ -1,7 +1,7 @@
-// AI模型相关常量定义 - 基于MeterSphere实现
-// 完全参照MeterSphere的枚举定义
+// AI模型相关常量定义
+// AI模型相关枚举定义
 
-// 模型供应商枚举 - 仅包含MeterSphere完整支持的厂商
+// 模型供应商枚举
 export const ModelBaseTypeEnum = {
   DeepSeek: 'DeepSeek',
   ZhiPuAI: 'ZhiPu AI', // 智谱 AI
@@ -35,7 +35,7 @@ export const modelTypeOptions = [
   }
 ]
 
-// 基础模型类型映射 - 基于MeterSphere配置
+// 基础模型类型映射
 export const baseModelTypeMap = {
   [ModelBaseTypeEnum.DeepSeek]: [
     {
@@ -148,7 +148,7 @@ export const baseModelTypeMap = {
       tooltip: 'OpenAI GPT-4 1106预览版'
     }
   ]
-  // 仅支持上述3个厂商，扩展其他厂商需等MeterSphere完整实现后同步
+  // 支持上述3个厂商
 }
 
 // DeepSeek推理模型默认参数
@@ -264,7 +264,7 @@ export const defaultAdvancedSetValueMap = {
   ]
 }
 
-// 供应商模型列表 - 仅包含MeterSphere完整支持的厂商
+// 供应商模型列表
 export const modelList = [
   {
     value: ModelBaseTypeEnum.DeepSeek,

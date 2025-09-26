@@ -1,11 +1,11 @@
-// AI模型API服务 - 基于MeterSphere实现，适配SCM后端
+// AI模型API服务
 import request from '@/utils/request'
 
 // API基础路径 - 对应SCM后端SystemAIModelConfigController
 const API_BASE = '/api/v1/ai/model/config'
 
 /**
- * 获取模型列表 - 对应MeterSphere的getModelConfigList
+ * 获取模型列表
  * @param {Object} params - 查询参数
  * @returns {Promise} - 模型列表数据
  */
@@ -24,7 +24,7 @@ export function getModelConfigList (params) {
 }
 
 /**
- * 编辑模型配置 - 对应MeterSphere的editModelConfig
+ * 编辑模型配置
  * @param {Object} data - 模型配置数据
  * @returns {Promise} - 编辑结果
  */
@@ -50,7 +50,7 @@ export function editModelConfig (data) {
 }
 
 /**
- * 获取模型详情 - 对应MeterSphere的getModelConfigDetail
+ * 获取模型详情
  * @param {string} id - 模型ID
  * @returns {Promise} - 模型详情数据
  */
@@ -62,7 +62,7 @@ export function getModelConfigDetail (id) {
 }
 
 /**
- * 删除模型 - 对应MeterSphere的deleteModelConfig
+ * 删除模型
  * @param {string} id - 模型ID
  * @returns {Promise} - 删除结果
  */
@@ -74,7 +74,7 @@ export function deleteModelConfig (id) {
 }
 
 /**
- * 获取模型名称列表 - 对应MeterSphere的getModelConfigNameList
+ * 获取模型名称列表
  * @returns {Promise} - 模型名称列表
  */
 export function getModelConfigNameList () {
@@ -146,7 +146,7 @@ function getUserId () {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
     return userInfo.id || ''
   } catch (e) {
-    console.warn('Failed to get user ID:', e)
+    // 获取用户ID失败，使用默认值
     return ''
   }
 }

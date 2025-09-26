@@ -115,9 +115,7 @@ export default {
     }
   },
   mounted () {
-    console.log('🔧 [ScmCardList] mounted, mode:', this.mode)
     if (this.mode === 'remote') {
-      console.log('🔧 [ScmCardList] 开始计算列表大小')
       this.$nextTick(async () => {
         await this.computedListSize()
         this.initListListener(this.remoteList)
@@ -191,25 +189,18 @@ export default {
           let list = []
           let total = 0
 
-          console.log('🔧 [ScmCardList] loadNextList响应数据:', res)
-
           if (res && Array.isArray(res)) {
             // 直接返回数组格式
             list = res
             total = res.length
-            console.log('🔧 [ScmCardList] 使用数组格式，数据条数:', total)
           } else if (res && res.records) {
-            // MeterSphere标准格式
+            // 标准格式
             list = res.records
             total = res.total
-            console.log('🔧 [ScmCardList] 使用records格式，数据条数:', total)
           } else if (res && res.list) {
             // 其他格式
             list = res.list
             total = res.total
-            console.log('🔧 [ScmCardList] 使用list格式，数据条数:', total)
-          } else {
-            console.log('🔧 [ScmCardList] 未识别的数据格式')
           }
 
           if (isReload) {
@@ -244,7 +235,6 @@ export default {
       }
 
       if (clientWidth === 0 || clientHeight === 0) {
-        console.log('🔧 [ScmCardList] DOM尺寸为0，使用默认值')
         this.listSize = 10 // 默认值
         // 即使无法计算准确大小，也要加载数据
         setTimeout(() => {

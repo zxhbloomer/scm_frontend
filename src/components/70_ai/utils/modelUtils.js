@@ -1,4 +1,4 @@
-// AI模型工具函数 - 基于MeterSphere实现
+// AI模型工具函数
 import {
   ModelBaseTypeEnum,
   baseModelTypeMap,
@@ -8,7 +8,7 @@ import {
 } from '../constants/model'
 
 /**
- * AppKey脱敏处理 - 基于MeterSphere实现
+ * AppKey脱敏处理
  * @param {string} key - 原始AppKey
  * @returns {string} - 脱敏后的AppKey
  */
@@ -27,7 +27,7 @@ export function maskAppKey (key) {
 }
 
 /**
- * 获取模型图标 - 基于MeterSphere实现
+ * 获取模型图标
  * @param {Object} modelItem - 模型项
  * @returns {string} - 图标名称
  */
@@ -45,7 +45,7 @@ export function getModelSvg (modelItem) {
 }
 
 /**
- * 获取模型默认配置 - 基于MeterSphere实现
+ * 获取模型默认配置
  * @param {string} supplierType - 供应商类型
  * @param {string} baseModelType - 基础模型类型
  * @returns {Array} - 默认配置数组

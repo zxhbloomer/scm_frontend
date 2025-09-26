@@ -1,12 +1,15 @@
 <template>
-  <!-- AI模型设置主弹窗 - 基于MeterSphere实现，转换为弹窗形式 -->
+  <!-- AI模型设置主弹窗 -->
   <el-dialog
+    v-el-drag-dialog
     :visible="visible"
     title="AI模型设置"
     width="80%"
     :before-close="handleClose"
     :close-on-click-modal="false"
     class="model-settings-dialog"
+    :append-to-body="true"
+    :modal-append-to-body="true"
   >
     <div class="h-full w-full">
       <!-- 分割面板：左侧供应商列表，右侧模型列表 -->
@@ -148,8 +151,8 @@
       </div>
     </div>
 
-    <!-- 模型编辑抽屉 -->
-    <ModelEditDrawer
+    <!-- 模型编辑弹窗 -->
+    <ModelEditDialog
       :visible="showModelConfigDrawer"
       :current-model-id="currentModelId"
       :supplier-model-item="supplierModelItem"
@@ -165,15 +168,17 @@
 import { modelList, modelTypeOptions } from '../../constants/model'
 import { getModelSvg, characterLimit } from '../../utils/modelUtils'
 import { getModelConfigList, editModelConfig, deleteModelConfig } from '../../api/model'
-import ModelEditDrawer from './ModelEditDrawer.vue'
+import ModelEditDialog from './ModelEditDialog.vue'
 import ScmCardList from '../common/ScmCardList.vue'
+import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
   name: 'ModelSettingsDialog',
   components: {
-    ModelEditDrawer,
+    ModelEditDialog,
     ScmCardList
   },
+  directives: { elDragDialog },
   props: {
     visible: {
       type: Boolean,
@@ -208,9 +213,7 @@ export default {
      * 包装getModelConfigList，适配ScmCardList组件
      */
     async getModelConfigListWrapper (params) {
-      console.log('🔧 [ModelSettingsDialog] API调用参数:', params)
       const response = await getModelConfigList(params)
-      console.log('🔧 [ModelSettingsDialog] API响应:', response)
       return response
     },
 
@@ -218,7 +221,6 @@ export default {
      * 切换模型供应商
      */
     changeModelType (item) {
-      console.log('🔧 [ModelSettingsDialog] 切换供应商:', item)
       this.keyword = ''
       this.activeModelType = item.value
       this.supplierModelItem = item
@@ -480,8 +482,8 @@ export default {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: var(--border-radius-small, 4px);
-  background: var(--color-text-n9, #f5f5f5);
+  border-radius: 4px;
+  background: #f5f5f5;
 }
 
 .model-icon {

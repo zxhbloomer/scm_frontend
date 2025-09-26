@@ -1,14 +1,18 @@
 <template>
-  <!-- AI模型编辑抽屉 - 基于MeterSphere modelEditDrawer.vue实现 -->
-  <el-drawer
+  <!-- AI模型编辑弹窗 -->
+  <el-dialog
+    v-el-drag-dialog
     :visible="visible"
     :title="modelTitle"
-    size="50%"
-    :before-close="handleDrawerCancel"
-    class="model-edit-drawer"
+    width="800px"
+    :before-close="handleDialogCancel"
+    :close-on-click-modal="false"
+    class="model-edit-dialog"
     destroy-on-close
+    :append-to-body="true"
+    :modal-append-to-body="true"
   >
-    <div class="drawer-content">
+    <div class="dialog-content">
       <el-form
         ref="formRef"
         :model="form"
@@ -142,25 +146,25 @@
     </div>
 
     <!-- 底部操作按钮 -->
-    <div class="drawer-footer">
-      <el-button @click="handleDrawerCancel">取消</el-button>
+    <div class="dialog-footer">
+      <el-button @click="handleDialogCancel">取消</el-button>
       <el-button
         v-if="!currentModelId"
         type="primary"
         :loading="loading"
-        @click="handleDrawerConfirm(true)"
+        @click="handleDialogConfirm(true)"
       >
         保存并继续
       </el-button>
       <el-button
         type="primary"
         :loading="loading"
-        @click="handleDrawerConfirm(false)"
+        @click="handleDialogConfirm(false)"
       >
         {{ currentModelId ? '更新' : '保存' }}
       </el-button>
     </div>
-  </el-drawer>
+  </el-dialog>
 </template>
 
 <script>
@@ -180,9 +184,11 @@ import {
   editModelConfig,
   getModelConfigDetail
 } from '../../api/model'
+import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
-  name: 'ModelEditDrawer',
+  name: 'ModelEditDialog',
+  directives: { elDragDialog },
   props: {
     visible: {
       type: Boolean,
@@ -362,7 +368,7 @@ export default {
     /**
      * 取消操作
      */
-    handleDrawerCancel () {
+    handleDialogCancel () {
       this.$refs.formRef?.resetFields()
       this.initForm()
       this.$emit('close')
@@ -372,7 +378,7 @@ export default {
     /**
      * 确认操作
      */
-    handleDrawerConfirm (isContinue = false) {
+    handleDialogConfirm (isContinue = false) {
       this.$refs.formRef.validate(async (valid) => {
         if (!valid) return
 
@@ -422,7 +428,7 @@ export default {
           this.$refs.formRef?.resetFields()
         } else {
           // 关闭抽屉
-          this.handleDrawerCancel()
+          this.handleDialogCancel()
         }
       } catch (error) {
         console.error('保存模型失败:', error)
@@ -449,19 +455,20 @@ export default {
 </script>
 
 <style scoped>
-.model-edit-drawer :deep(.el-drawer__body) {
+.model-edit-dialog :deep(.el-dialog__body) {
   padding: 0;
   display: flex;
   flex-direction: column;
+  height: 500px;
 }
 
-.drawer-content {
+.dialog-content {
   flex: 1;
   padding: 20px;
   overflow-y: auto;
 }
 
-.drawer-footer {
+.dialog-footer {
   padding: 20px;
   border-top: 1px solid #e4e7ed;
   display: flex;
