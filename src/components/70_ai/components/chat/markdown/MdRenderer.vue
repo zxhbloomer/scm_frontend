@@ -27,7 +27,6 @@
         v-else-if="item.type === 'html_rander'"
         :key="`html-${index}`"
         :source="item.content"
-        @vue:mounted="() => console.log('🌐 HTML渲染器已加载')"
       />
 
       <!-- 图表渲染器 -->
@@ -35,7 +34,6 @@
         v-else-if="item.type === 'echarts_rander'"
         :key="`echarts-${index}`"
         :option="item.content"
-        @vue:mounted="() => console.log('📊 ECharts图表渲染器已加载')"
       />
 
       <!-- 表单渲染器 -->
@@ -48,7 +46,6 @@
         :child-node="childNode"
         :disabled="disabled"
         :send-message="sendMessage"
-        @vue:mounted="() => console.log('📝 表单渲染器已加载')"
       />
 
       <!-- Markdown预览 -->
@@ -57,7 +54,6 @@
         :key="`md-${index}`"
         :text="item.content"
         class="maxkb-md"
-        @vue:mounted="() => console.log('📄 Markdown预览器已加载')"
       />
     </template>
   </div>
@@ -150,12 +146,6 @@ export default {
         // Reasoning content changed
       }
     }
-  },
-  created () {
-    // Component created
-  },
-  mounted () {
-    console.log('🎯 MdRenderer组件已挂载，解析内容类型:', this.mdViewList.map(item => item.type))
   },
   methods: {
     handleQuestionClick (content) {

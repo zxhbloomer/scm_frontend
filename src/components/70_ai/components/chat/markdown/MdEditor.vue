@@ -39,16 +39,6 @@ export default {
              localStorage.getItem('scm-locale') ||
              'zh-CN'
     }
-  },
-  mounted () {
-    // 初始化配置
-    this.initEditorConfig()
-  },
-  methods: {
-    initEditorConfig () {
-      // 这里可以添加 SCM 特定的配置
-      console.log('MdEditor initialized with language:', this.language)
-    }
   }
 }
 </script>

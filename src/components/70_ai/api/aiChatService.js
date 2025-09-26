@@ -70,7 +70,8 @@ class AIChatService {
           body: JSON.stringify({
             conversationId,
             prompt,
-            chatModelId
+            chatModelId,
+            tenantId: 'scm_tenant_20250519_001'
           }),
           signal: controller.signal
         })
@@ -217,7 +218,8 @@ class AIChatService {
           body: JSON.stringify({
             conversationId,
             prompt,
-            chatModelId
+            chatModelId,
+            tenantId: 'scm_tenant_20250519_001'
           }),
           signal: controller.signal
         })
@@ -313,7 +315,8 @@ class AIChatService {
         data: {
           conversationId,
           prompt,
-          chatModelId
+          chatModelId,
+          tenantId: 'scm_tenant_20250519_001'
         }
       })
 
@@ -364,7 +367,8 @@ class AIChatService {
           prompt,
           chatModelId,
           conversationId,
-          organizationId
+          organizationId,
+          tenantId: 'scm_tenant_20250519_001'
         }
       })
       return response.data
@@ -556,7 +560,6 @@ class AIChatService {
         method: 'post'
       })
 
-      console.log('对话内容已清空:', conversationId)
       return response.data
     } catch (error) {
       console.error('清空对话内容失败:', error)

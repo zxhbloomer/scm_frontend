@@ -39,9 +39,6 @@ export default {
              'zh-CN'
     }
   },
-  mounted () {
-    console.log('MdPreview initialized with language:', this.language)
-  },
   methods: {
     handleClickPreview (event, data) {
       this.$emit('click-preview', event, data)

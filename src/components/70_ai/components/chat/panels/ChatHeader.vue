@@ -65,8 +65,10 @@
             type="text"
             icon="el-icon-more"
             class="action-btn more-btn"
+            @click="handleMoreButtonClick"
           />
           <el-dropdown-menu slot="dropdown" class="header-dropdown">
+            <el-dropdown-item command="model-settings">模型设置</el-dropdown-item>
             <el-dropdown-item command="clear">清空对话</el-dropdown-item>
             <el-dropdown-item command="export">导出记录</el-dropdown-item>
             <el-dropdown-item command="settings">聊天设置</el-dropdown-item>
@@ -86,12 +88,25 @@
 
     <!-- 底部装饰线 -->
     <div class="header-border" />
+
+    <!-- 模型设置弹窗 -->
+    <ModelSettingsDialog
+      :visible="showModelSettings"
+      @close="handleModelSettingsClose"
+      @update:visible="showModelSettings = $event"
+    />
   </div>
 </template>
 
 <script>
+import ModelSettingsDialog from '../../model/ModelSettingsDialog.vue'
+
 export default {
   name: 'ChatHeader',
+
+  components: {
+    ModelSettingsDialog
+  },
 
   props: {
     assistant: {
@@ -114,6 +129,12 @@ export default {
     }
   },
 
+  data () {
+    return {
+      showModelSettings: false
+    }
+  },
+
   computed: {
     statusText () {
       const statusMap = {
@@ -129,8 +150,12 @@ export default {
   methods: {
     handleDropdownCommand (command) {
       // 头部下拉菜单操作处理
+      console.log('🔧 [ChatHeader] 下拉菜单点击事件:', command)
 
       switch (command) {
+        case 'model-settings':
+          this.openModelSettings()
+          break
         case 'clear':
           this.clearConversation()
           break
@@ -144,7 +169,7 @@ export default {
           this.openHelp()
           break
         default:
-          // 未知命令处理
+          console.warn('🔧 [ChatHeader] 未知命令:', command)
       }
     },
 
@@ -177,6 +202,20 @@ export default {
       this.$message.info('正在打开帮助中心...')
       // 这里可以打开帮助页面
       this.$emit('open-help')
+    },
+
+    openModelSettings () {
+      console.log('🔧 [ChatHeader] 打开模型设置弹窗')
+      this.showModelSettings = true
+    },
+
+    handleModelSettingsClose () {
+      console.log('🔧 [ChatHeader] 关闭模型设置弹窗')
+      this.showModelSettings = false
+    },
+
+    handleMoreButtonClick () {
+      console.log('🔧 [ChatHeader] 更多按钮被点击')
     }
   }
 }
