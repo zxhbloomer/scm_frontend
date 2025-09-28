@@ -51,11 +51,6 @@ class AIChatService {
           'X-Tenant-ID': 'scm_tenant_20250519_001'
         }
 
-        // 检查是否有认证token
-        if (store.getters.token) {
-          headers['Authorization'] = `Bearer ${store.getters.token}`
-        }
-
         // 添加 wms-Token，从cookies中获取
         const wmsToken = document.cookie.split(';')
           .find(row => row.trim().startsWith('wms-Token='))
