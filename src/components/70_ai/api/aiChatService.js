@@ -4,7 +4,6 @@
  */
 
 import request from '@/utils/request'
-import store from '@/store'
 
 class AIChatService {
   constructor () {
@@ -194,10 +193,6 @@ class AIChatService {
           'Accept': 'text/event-stream',
           'Cache-Control': 'no-cache',
           'X-Tenant-ID': 'scm_tenant_20250519_001'
-        }
-
-        if (store.getters.token) {
-          headers['Authorization'] = `Bearer ${store.getters.token}`
         }
 
         const wmsToken = document.cookie.split(';')
