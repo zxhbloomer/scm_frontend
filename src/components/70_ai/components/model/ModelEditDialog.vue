@@ -108,35 +108,43 @@
           </div>
 
           <div class="section-content">
+            <!-- 表格表头 -->
+            <div class="advanced-params-header">
+              <div class="param-col param-name-col">参数 <span class="required">*</span></div>
+              <div class="param-col param-label-col">显示名称 <span class="required">*</span></div>
+              <div class="param-col param-value-col">参数值 <span class="required">*</span></div>
+              <div class="param-col param-switch-col" />
+            </div>
+
+            <!-- 表格内容 -->
             <div class="advanced-params">
               <div
                 v-for="param in form.advSettingDTOList"
                 :key="param.name"
-                class="param-item"
+                class="param-row"
               >
-                <div class="param-header">
-                  <div class="param-info">
-                    <label class="param-name">{{ param.name }}</label>
-                    <span class="param-label">{{ param.label }}</span>
-                  </div>
-                  <el-switch
-                    v-model="param.enable"
-                    class="param-switch"
-                  />
+                <div class="param-col param-name-col">
+                  <span class="param-name-text">{{ param.name }}</span>
                 </div>
-
-                <div v-if="param.enable" class="param-control">
+                <div class="param-col param-label-col">
+                  <span class="param-label-text">{{ param.label }}</span>
+                </div>
+                <div class="param-col param-value-col">
                   <el-input-number
                     v-model="param.value"
                     :min="param.minValue"
                     :max="param.maxValue"
-                    :precision="param.name === 'maxTokens' ? 0 : 1"
-                    :step="param.name === 'maxTokens' ? 1 : 0.1"
-                    class="w-full"
+                    :precision="param.name === 'max_tokens' ? 0 : 1"
+                    :step="param.name === 'max_tokens' ? 1 : 0.1"
+                    :disabled="!param.enable"
+                    class="param-input"
                   />
-                  <div class="param-range">
-                    范围：{{ param.minValue }} - {{ param.maxValue }}
-                  </div>
+                </div>
+                <div class="param-col param-switch-col">
+                  <el-switch
+                    v-model="param.enable"
+                    class="param-switch"
+                  />
                 </div>
               </div>
             </div>
@@ -147,7 +155,13 @@
 
     <!-- 底部操作按钮 -->
     <div class="dialog-footer">
-      <el-button @click="handleDialogCancel">取消</el-button>
+      <el-button
+        type="primary"
+        :loading="loading"
+        @click="handleDialogConfirm(false)"
+      >
+        {{ currentModelId ? '更新' : '保存' }}
+      </el-button>
       <el-button
         v-if="!currentModelId"
         type="primary"
@@ -156,13 +170,7 @@
       >
         保存并继续
       </el-button>
-      <el-button
-        type="primary"
-        :loading="loading"
-        @click="handleDialogConfirm(false)"
-      >
-        {{ currentModelId ? '更新' : '保存' }}
-      </el-button>
+      <el-button @click="handleDialogCancel">取消</el-button>
     </div>
   </el-dialog>
 </template>
@@ -319,10 +327,23 @@ export default {
 
       try {
         const detail = await getModelConfigDetail(this.currentModelId)
+        console.log('模型详情数据:', detail)
+        console.log('高级设置数据:', detail.advSettingVoList)
+
+        // 如果后端没有返回高级设置，根据供应商和基础模型生成默认配置
+        let advSettings = detail.advSettingVoList || []
+        if (advSettings.length === 0 && detail.providerName && detail.baseName) {
+          console.log('后端未返回高级设置，生成默认配置')
+          advSettings = getModelDefaultConfig(detail.providerName, detail.baseName)
+        }
+
         this.form = {
           ...this.form,
-          ...detail
+          ...detail,
+          // 字段名映射：API返回advSettingVoList，前端使用advSettingDTOList
+          advSettingDTOList: advSettings
         }
+        console.log('表单高级设置:', this.form.advSettingDTOList)
       } catch (error) {
         console.error('获取模型详情失败:', error)
         this.$message.error('获取模型详情失败')
@@ -459,7 +480,7 @@ export default {
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 500px;
+  height: 650px;
 }
 
 .dialog-content {
@@ -472,7 +493,7 @@ export default {
   padding: 20px;
   border-top: 1px solid #e4e7ed;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
   background: #fff;
 }
@@ -503,53 +524,86 @@ export default {
   padding-top: 16px;
 }
 
-.advanced-params {
-  space-y: 16px;
-}
-
-.param-item {
-  margin-bottom: 20px;
-  padding: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 4px;
-  background-color: #fafafa;
-}
-
-.param-header {
+/* 表格表头 */
+.advanced-params-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.param-info {
-  flex: 1;
-}
-
-.param-name {
-  display: block;
+  padding: 12px 16px;
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-bottom: none;
   font-weight: 500;
-  color: #303133;
-  margin-bottom: 4px;
+  color: #606266;
+  font-size: 14px;
 }
 
-.param-label {
-  font-size: 12px;
-  color: #909399;
+.advanced-params-header .required {
+  color: #f56c6c;
+  margin-left: 2px;
 }
 
+/* 表格内容 */
+.advanced-params {
+  border: 1px solid #e4e7ed;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e4e7ed;
+  background-color: #ffffff;
+}
+
+.param-row:last-child {
+  border-bottom: none;
+}
+
+.param-row:hover {
+  background-color: #f5f7fa;
+}
+
+/* 列宽设置 */
+.param-col {
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.param-name-col {
+  flex: 0 0 180px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.param-label-col {
+  flex: 0 0 200px;
+  color: #606266;
+  font-size: 14px;
+}
+
+.param-value-col {
+  flex: 1;
+  min-width: 200px;
+}
+
+.param-switch-col {
+  flex: 0 0 80px;
+  justify-content: center;
+}
+
+/* 输入框样式 */
+.param-input {
+  width: 100%;
+}
+
+.param-input :deep(.el-input__inner) {
+  text-align: left;
+}
+
+/* 开关样式 */
 .param-switch {
   flex-shrink: 0;
-}
-
-.param-control {
-  margin-top: 12px;
-}
-
-.param-range {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #909399;
 }
 
 .model-name-form :deep(.el-form-item__label) {

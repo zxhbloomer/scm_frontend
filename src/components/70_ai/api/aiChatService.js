@@ -64,8 +64,7 @@ class AIChatService {
           body: JSON.stringify({
             conversationId,
             prompt,
-            chatModelId,
-            tenantId: 'scm_tenant_20250519_001'
+            chatModelId
           }),
           signal: controller.signal
         })
@@ -529,13 +528,6 @@ class AIChatService {
         this.activeSessions.delete(conversationId)
       }
     }
-  }
-
-  /**
-   * 生成对话ID
-   */
-  generateConversationId () {
-    return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
   }
 
   /**

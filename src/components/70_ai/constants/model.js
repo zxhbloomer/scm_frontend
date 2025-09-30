@@ -154,7 +154,7 @@ export const baseModelTypeMap = {
 // DeepSeek推理模型默认参数
 export const DEEP_SEEK_REASONER = [
   {
-    name: 'maxTokens',
+    name: 'max_tokens',
     label: '最大Token数',
     value: 4000,
     enable: true,
@@ -162,7 +162,7 @@ export const DEEP_SEEK_REASONER = [
     maxValue: 8000
   },
   {
-    name: 'topP',
+    name: 'top_p',
     label: 'Top P',
     value: 1.0,
     enable: true,
@@ -174,7 +174,7 @@ export const DEEP_SEEK_REASONER = [
 // DeepSeek对话模型默认参数
 export const DEEP_SEEK_CHAT = [
   {
-    name: 'frequencyPenalty',
+    name: 'frequency_penalty',
     label: '频率惩罚',
     value: 0,
     enable: true,
@@ -182,7 +182,7 @@ export const DEEP_SEEK_CHAT = [
     maxValue: 2.0
   },
   {
-    name: 'maxTokens',
+    name: 'max_tokens',
     label: '最大Token数',
     value: 4096,
     enable: true,
@@ -198,7 +198,7 @@ export const DEEP_SEEK_CHAT = [
     maxValue: 2
   },
   {
-    name: 'topP',
+    name: 'top_p',
     label: 'Top P',
     value: 1,
     enable: true,
@@ -212,7 +212,7 @@ export const defaultAdvancedSetValueMap = {
   [ModelBaseTypeEnum.DeepSeek]: [],
   [ModelBaseTypeEnum.OpenAI]: [
     {
-      name: 'maxTokens',
+      name: 'max_tokens',
       label: '最大Token数',
       value: 1000,
       enable: true,
@@ -228,7 +228,7 @@ export const defaultAdvancedSetValueMap = {
       maxValue: 2
     },
     {
-      name: 'topP',
+      name: 'top_p',
       label: 'Top P',
       value: 1,
       enable: true,
@@ -246,7 +246,7 @@ export const defaultAdvancedSetValueMap = {
       maxValue: 1
     },
     {
-      name: 'topP',
+      name: 'top_p',
       label: 'Top P',
       value: 1,
       enable: true,
@@ -254,7 +254,7 @@ export const defaultAdvancedSetValueMap = {
       maxValue: 1
     },
     {
-      name: 'maxTokens',
+      name: 'max_tokens',
       label: '最大Token数',
       value: 4000,
       enable: true,

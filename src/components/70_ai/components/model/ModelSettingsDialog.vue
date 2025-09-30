@@ -85,7 +85,7 @@
                         <svg-icon :icon-class="getModelSvg(item)" class="model-icon" />
                       </div>
                       <div class="model-item-info">
-                        <el-tooltip :content="item.name" :disabled="item.name.length <= 20">
+                        <el-tooltip :content="item.name" :disabled="(item.name || '').length <= 20">
                           <div class="one-line-text model-name">{{ item.name }}</div>
                         </el-tooltip>
                         <div class="model-creator">
@@ -104,7 +104,7 @@
                         <div class="body-label-item">基础模型</div>
                       </div>
                       <div class="model-item-body-value">
-                        <el-tooltip :content="getTypeName(item)" :disabled="getTypeName(item).length <= 20">
+                        <el-tooltip :content="getTypeName(item)" :disabled="(getTypeName(item) || '').length <= 20">
                           <div class="one-line-text body-value-item">{{ getTypeName(item) }}</div>
                         </el-tooltip>
                         <el-tooltip :content="item.baseName" :disabled="(item.baseName || '').length <= 20">
@@ -224,16 +224,14 @@ export default {
       this.keyword = ''
       this.activeModelType = item.value
       this.supplierModelItem = item
-      // 通过ScmCardList组件重新加载数据
-      this.$refs.modelCardListRef?.reload()
+      // ScmCardList会通过watch remoteParams自动重新加载数据，无需手动调用reload
     },
 
     /**
      * 搜索数据
      */
     searchData () {
-      // 通过ScmCardList组件重新加载数据
-      this.$refs.modelCardListRef?.reload()
+      // ScmCardList会通过watch remoteParams自动重新加载数据，无需手动调用reload
     },
 
     /**
@@ -350,6 +348,7 @@ export default {
      * 获取类型名称
      */
     getTypeName (item) {
+      if (!item) return '-'
       const typeOption = modelTypeOptions.find(e => e.value === item.type)
       return typeOption ? typeOption.label : item.type || '-'
     },
@@ -606,5 +605,8 @@ export default {
 /* 内容区域padding */
 .content-padding {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 </style>

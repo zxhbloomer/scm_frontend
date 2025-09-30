@@ -111,8 +111,8 @@
       <!-- 消息项 -->
       <transition-group name="message" tag="div" class="messages-container">
         <div
-          v-for="message in visibleMessages"
-          :key="message.id"
+          v-for="(message, index) in visibleMessages"
+          :key="`message-${index}`"
           class="message-item"
           :class="[`message-item--${message.type}`]"
         >
@@ -194,7 +194,7 @@
                 <div v-if="message.steps && message.steps.length" class="ai-steps">
                   <div class="steps-title">操作步骤：</div>
                   <ol class="steps-list">
-                    <li v-for="(step, index) in message.steps" :key="index" class="step-item">
+                    <li v-for="(step, index) in message.steps" :key="`step-${index}`" class="step-item">
                       {{ step }}
                     </li>
                   </ol>
@@ -203,8 +203,8 @@
                 <!-- 操作按钮 -->
                 <div v-if="message.actions && message.actions.length" class="ai-actions">
                   <el-button
-                    v-for="action in message.actions"
-                    :key="action.action"
+                    v-for="(action, actionIndex) in message.actions"
+                    :key="`action-${actionIndex}`"
                     type="primary"
                     size="mini"
                     class="action-button"
