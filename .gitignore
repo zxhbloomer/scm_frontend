@@ -48,3 +48,12 @@ myvenv/
 
 # Local commands and scripts
 /.claude
+
+# Documentation
+claudedocs/
+
+# Temporary files
+nul
+*.rsls
+*.backup
+*.bak

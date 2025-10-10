@@ -194,7 +194,7 @@
                 <div v-if="message.steps && message.steps.length" class="ai-steps">
                   <div class="steps-title">操作步骤：</div>
                   <ol class="steps-list">
-                    <li v-for="(step, index) in message.steps" :key="`step-${index}`" class="step-item">
+                    <li v-for="(step, stepIndex) in message.steps" :key="`step-${stepIndex}`" class="step-item">
                       {{ step }}
                     </li>
                   </ol>

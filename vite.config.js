@@ -35,6 +35,9 @@ export default defineConfig(() => {
         VUE_APP_BASE_API: '/scm',
         VUE_APP_Tenant: 'false',
         VUE_APP_FILE_UPLOAD_URL: 'http://file.xinyirunscm.com/',
+        VUE_APP_FILE_SYSTEM_UPLOAD_URL: '/fs',
+        VUE_APP_FILE_SYSTEM_APP_KEY: '8a90e44e-2a14-5c02-b3a5-95a1ce3a9eb6',
+        VUE_APP_FILE_SYSTEM_SECRET_KEY: '1d7ee618-2fcb-5ec3-b0b2-d6df9115301d',
         VUE_APP_Version: '1.0.0',
         VUE_APP_WEBSOCKET_NOTICE: '/scm/notice'
       }),

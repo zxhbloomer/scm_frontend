@@ -4,6 +4,7 @@
  */
 
 import request from '@/utils/request'
+import { getTenantId } from '@/utils/tenant'
 
 class AIChatService {
   constructor () {
@@ -46,8 +47,13 @@ class AIChatService {
         const headers = {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'X-Tenant-ID': 'scm_tenant_20250519_001'
+          'Cache-Control': 'no-cache'
+        }
+
+        // 添加租户ID（使用统一方法）
+        const tenantId = getTenantId()
+        if (tenantId) {
+          headers['X-Tenant-ID'] = tenantId
         }
 
         // 添加 wms-Token，从cookies中获取
@@ -190,8 +196,13 @@ class AIChatService {
         const headers = {
           'Content-Type': 'application/json',
           'Accept': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'X-Tenant-ID': 'scm_tenant_20250519_001'
+          'Cache-Control': 'no-cache'
+        }
+
+        // 添加租户ID（使用统一方法）
+        const tenantId = getTenantId()
+        if (tenantId) {
+          headers['X-Tenant-ID'] = tenantId
         }
 
         const wmsToken = document.cookie.split(';')
@@ -208,7 +219,7 @@ class AIChatService {
             conversationId,
             prompt,
             chatModelId,
-            tenantId: 'scm_tenant_20250519_001'
+            tenantId // 使用统一的租户ID
           }),
           signal: controller.signal
         })
@@ -305,7 +316,7 @@ class AIChatService {
           conversationId,
           prompt,
           chatModelId,
-          tenantId: 'scm_tenant_20250519_001'
+          tenantId: getTenantId() // 使用统一的租户ID方法
         }
       })
 
@@ -357,7 +368,7 @@ class AIChatService {
           chatModelId,
           conversationId,
           organizationId,
-          tenantId: 'scm_tenant_20250519_001'
+          tenantId: getTenantId() // 使用统一的租户ID方法
         }
       })
       return response.data

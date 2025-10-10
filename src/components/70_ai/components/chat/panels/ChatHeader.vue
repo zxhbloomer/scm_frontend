@@ -59,13 +59,23 @@
           />
         </el-tooltip>
 
-        <!-- 更多选项 - 直接打开模型设置 -->
-        <el-tooltip content="模型设置" placement="bottom">
+        <!-- 模型管理 -->
+        <el-tooltip content="模型管理" placement="bottom">
           <el-button
             type="text"
-            icon="el-icon-more"
-            class="action-btn more-btn"
-            @click="handleMoreButtonClick"
+            icon="el-icon-setting"
+            class="action-btn model-manage-btn"
+            @click="openModelSettings"
+          />
+        </el-tooltip>
+
+        <!-- 知识库管理 -->
+        <el-tooltip content="知识库管理" placement="bottom">
+          <el-button
+            type="text"
+            icon="el-icon-files"
+            class="action-btn kb-manage-btn"
+            @click="openKnowledgeBaseManage"
           />
         </el-tooltip>
 
@@ -88,17 +98,26 @@
       @close="handleModelSettingsClose"
       @update:visible="showModelSettings = $event"
     />
+
+    <!-- 知识库管理弹窗 -->
+    <KnowledgeBaseManageDialog
+      :visible.sync="showKnowledgeBase"
+      :llm-list="llmList"
+    />
   </div>
 </template>
 
 <script>
 import ModelSettingsDialog from '../../model/ModelSettingsDialog.vue'
+import { KnowledgeBaseManageDialog } from '../../rag'
+import { getModelConfigNameList } from '../../../api/model'
 
 export default {
   name: 'ChatHeader',
 
   components: {
-    ModelSettingsDialog
+    ModelSettingsDialog,
+    KnowledgeBaseManageDialog
   },
 
   props: {
@@ -124,7 +143,9 @@ export default {
 
   data () {
     return {
-      showModelSettings: false
+      showModelSettings: false,
+      showKnowledgeBase: false,
+      llmList: []
     }
   },
 
@@ -140,21 +161,51 @@ export default {
     }
   },
 
-  methods: {
+  mounted () {
+    this.loadModelList()
+  },
 
+  methods: {
+    /**
+     * 加载模型列表
+     */
+    async loadModelList () {
+      try {
+        const response = await getModelConfigNameList()
+        const data = response.data || response
+
+        this.llmList = (data || []).map(item => ({
+          ...item,
+          label: item.modelTitle || item.modelName,
+          value: item.modelId,
+          id: item.modelId,
+          name: item.modelName
+        }))
+      } catch (error) {
+        console.error('[ChatHeader] 加载模型列表失败:', error)
+        this.llmList = []
+      }
+    },
+
+    /**
+     * 打开模型设置弹窗
+     */
     openModelSettings () {
-      console.log('🔧 [ChatHeader] 打开模型设置弹窗')
       this.showModelSettings = true
     },
 
+    /**
+     * 关闭模型设置弹窗
+     */
     handleModelSettingsClose () {
-      console.log('🔧 [ChatHeader] 关闭模型设置弹窗')
       this.showModelSettings = false
     },
 
-    handleMoreButtonClick () {
-      console.log('🔧 [ChatHeader] 更多按钮被点击 - 打开模型设置')
-      this.openModelSettings()
+    /**
+     * 打开知识库管理弹窗
+     */
+    openKnowledgeBaseManage () {
+      this.showKnowledgeBase = true
     }
   }
 }
@@ -337,9 +388,14 @@ export default {
   );
 }
 
-/* 更多按钮样式增强 */
-.more-btn:hover {
-  background: rgba(103, 194, 58, 0.3);
+/* 模型管理按钮样式 */
+.model-manage-btn:hover {
+  background: rgba(64, 158, 255, 0.3);
+}
+
+/* 知识库管理按钮样式 */
+.kb-manage-btn:hover {
+  background: rgba(230, 162, 60, 0.3);
 }
 
 /* 响应式调整 */

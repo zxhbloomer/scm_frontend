@@ -63,6 +63,7 @@
     "clipboard": "2.0.4",
     "codemirror": "5.45.0",
     "core-js": "^3.21.1",
+    "cytoscape": "^3.28.1",
     "deep-copy": "1.4.2",
     "driver.js": "0.9.5",
     "dropzone": "5.5.1",

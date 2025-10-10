@@ -183,7 +183,11 @@ export default {
     },
 
     handleSendMessage (messageContent) {
-      this.sendMessage(messageContent)
+      // 如果 messageContent 是对象，提取 content 字段；否则直接使用
+      const content = typeof messageContent === 'object' && messageContent.content
+        ? messageContent.content
+        : messageContent
+      this.sendMessage(content)
     },
 
     toggleMaximize () {

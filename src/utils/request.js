@@ -6,6 +6,7 @@ import store from '@/store'
 // import { getToken } from '@/utils/auth'
 import fileDownload from 'js-file-download'
 import router from '@/router'
+import { getTenantId } from './tenant'
 
 // create an axios instance
 const service = axios.create({
@@ -25,15 +26,12 @@ service.interceptors.request.use(
       // please modify it according to the actual situation
       // config.headers['X-Token'] = getToken()
     }
-    config.headers['X-Tenant-ID'] = 'scm_tenant_20250519_001'
-    // 处理多租户设置
-    // 获取多租户配置，默认为 'false'（使用固定租户ID）
-    const tenantMode = process.env.VUE_APP_Tenant || 'false'
 
-    // 只有在明确启用多租户模式('true')时才不设置租户ID
-    // 其他情况（'false'、undefined、空字符串等）都设置固定租户ID
-    if (tenantMode !== 'true') {
-      config.headers['X-Tenant-ID'] = 'scm_tenant_20250519_001'
+    // 处理多租户设置
+    // 使用统一的租户ID获取方法
+    const tenantId = getTenantId()
+    if (tenantId) {
+      config.headers['X-Tenant-ID'] = tenantId
     }
 
     return config

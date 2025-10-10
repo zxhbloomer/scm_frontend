@@ -2,7 +2,96 @@
   <div
     ref="chatInputContainer"
     class="chat-input-container"
+    @drop.prevent="handleDrop"
+    @dragover.prevent
   >
+    <!-- 文件上传区域 -->
+    <div
+      v-if="hasUploadedFiles"
+      class="file-preview-area"
+    >
+      <el-scrollbar max-height="136px">
+        <div
+          v-loading="uploadLoading"
+          class="file-preview-content"
+        >
+          <!-- 文档文件预览 -->
+          <div
+            v-for="(item, index) in uploadDocumentList"
+            :key="'doc-' + index"
+            class="file-card"
+            @mouseenter="showDeleteIcon = item.uid"
+            @mouseleave="showDeleteIcon = null"
+          >
+            <div class="file-info">
+              <img
+                :src="getFileIcon(item.name)"
+                class="file-icon"
+              >
+              <div
+                class="file-name"
+                :title="item.name"
+              >
+                {{ item.name }}
+              </div>
+            </div>
+            <i
+              v-if="showDeleteIcon === item.uid"
+              class="el-icon-circle-close file-delete"
+              @click="removeFile(item)"
+            />
+          </div>
+
+          <!-- 图片文件预览 -->
+          <div
+            v-for="(item, index) in uploadImageList"
+            :key="'img-' + index"
+            class="image-preview"
+            @mouseenter="showDeleteIcon = item.uid"
+            @mouseleave="showDeleteIcon = null"
+          >
+            <el-image
+              :src="item.url"
+              fit="cover"
+              class="preview-image"
+            />
+            <i
+              v-if="showDeleteIcon === item.uid"
+              class="el-icon-circle-close image-delete"
+              @click="removeFile(item)"
+            />
+          </div>
+
+          <!-- 音频文件预览 -->
+          <div
+            v-for="(item, index) in uploadAudioList"
+            :key="'audio-' + index"
+            class="file-card"
+            @mouseenter="showDeleteIcon = item.uid"
+            @mouseleave="showDeleteIcon = null"
+          >
+            <div class="file-info">
+              <img
+                :src="getFileIcon(item.name)"
+                class="file-icon"
+              >
+              <div
+                class="file-name"
+                :title="item.name"
+              >
+                {{ item.name }}
+              </div>
+            </div>
+            <i
+              v-if="showDeleteIcon === item.uid"
+              class="el-icon-circle-close file-delete"
+              @click="removeFile(item)"
+            />
+          </div>
+        </div>
+      </el-scrollbar>
+    </div>
+
     <div
       class="chat-input-wrapper"
       :class="{
@@ -23,61 +112,79 @@
         @blur="onBlur"
         @keydown.native="handleKeyDown"
         @input="handleInput"
+        @paste.native="handlePaste"
       />
 
       <!-- 右侧按钮区域 -->
       <div class="chat-input-actions">
-        <!-- 附件按钮 -->
-        <button
-          v-if="showAttachment"
-          class="attachment-btn"
-          title="附件"
+        <!-- 附件上传按钮 -->
+        <el-upload
+          v-if="fileUploadSetting.enabled"
+          ref="uploadRef"
+          action="#"
+          :auto-upload="false"
+          :show-file-list="false"
+          :accept="acceptFileTypes"
+          :on-change="handleFileChange"
+          :disabled="isLoading || isFilesLimitReached"
+          multiple
         >
-          <i class="el-icon-paperclip" />
-        </button>
+          <el-tooltip
+            effect="dark"
+            placement="top"
+            :content="`上传文件：最多${fileUploadSetting.maxFiles}个，每个不超过${fileUploadSetting.fileLimit}MB`"
+          >
+            <el-button
+              text
+              :disabled="isFilesLimitReached || isLoading"
+              class="attachment-btn"
+            >
+              <i class="el-icon-paperclip" />
+            </el-button>
+          </el-tooltip>
+        </el-upload>
 
-        <!-- emoji按钮 -->
-        <button
-          class="emoji-btn"
-          :class="{ active: showEmojiPicker }"
-          title="表情"
-          @click="toggleEmojiPicker"
-        >
-          <i class="el-icon-sunny" />
-        </button>
+        <!-- 分隔线 -->
+        <el-divider
+          v-if="fileUploadSetting.enabled"
+          direction="vertical"
+        />
 
         <!-- 发送按钮 -->
         <el-button
-          v-if="showSendButton"
-          type="primary"
+          text
           class="send-button"
-          :loading="isLoading"
+          :disabled="isDisabledSend || isLoading || uploadLoading"
           @click="handleSendMessage"
         >
-          <i class="el-icon-s-promotion" />
+          <i
+            v-show="isDisabledSend || isLoading || uploadLoading"
+            class="el-icon-s-promotion send-icon-disabled"
+          />
+          <i
+            v-show="!isDisabledSend && !isLoading && !uploadLoading"
+            class="el-icon-s-promotion send-icon-active"
+          />
         </el-button>
       </div>
     </div>
-
-    <!-- emoji选择器 -->
-    <emoji-input
-      v-if="showEmojiPicker"
-      :on-select="handleEmojiSelect"
-      @select="handleEmojiSelect"
-      @close="hideEmojiPicker"
-    />
   </div>
 </template>
 
 <script>
-import EmojiInput from './emoji'
+import {
+  FILE_EXTENSIONS,
+  getFileIconUrl,
+  filterFilesByExtension,
+  getAcceptFileTypes,
+  validateFileSize,
+  validateFileType,
+  createElUploadFile,
+  checkFilesLimit
+} from '../../../utils/fileUtils'
 
 export default {
   name: 'ChatInputWrap',
-
-  components: {
-    EmojiInput
-  },
 
   props: {
     isLoading: {
@@ -87,6 +194,21 @@ export default {
     placeholder: {
       type: String,
       default: '输入您的消息'
+    },
+    // 文件上传配置
+    fileUploadSetting: {
+      type: Object,
+      default: () => ({
+        enabled: true,
+        maxFiles: 5,
+        fileLimit: 10, // MB
+        image: true,
+        document: true,
+        audio: true,
+        video: false,
+        other: false,
+        otherExtensions: []
+      })
     }
   },
 
@@ -94,27 +216,60 @@ export default {
     return {
       userInput: '',
       isFocused: false,
-      showEmojiPicker: false
+      // 文件上传相关
+      fileAllList: [], // 所有上传的文件
+      uploadingDict: {}, // 正在上传的文件字典
+      showDeleteIcon: null // 当前显示删除图标的文件uid
     }
   },
 
   computed: {
-    showAttachment () {
-      return this.userInput.length === 0
+    // 是否有已上传的文件
+    hasUploadedFiles () {
+      return this.fileAllList.length > 0
     },
-    showSendButton () {
-      return this.userInput.length > 0
+    // 发送按钮是否禁用
+    isDisabledSend () {
+      return !(this.userInput.trim() || this.hasUploadedFiles)
+    },
+    // 上传中状态
+    uploadLoading () {
+      return Object.keys(this.uploadingDict).length > 0
+    },
+    // 是否达到文件数量限制
+    isFilesLimitReached () {
+      return checkFilesLimit(this.fileAllList.length, this.fileUploadSetting.maxFiles)
+    },
+    // 允许的文件类型
+    acceptFileTypes () {
+      return getAcceptFileTypes(this.fileUploadSetting)
+    },
+    // 图片文件列表
+    uploadImageList () {
+      return filterFilesByExtension(this.fileAllList, FILE_EXTENSIONS.image)
+    },
+    // 文档文件列表
+    uploadDocumentList () {
+      return filterFilesByExtension(this.fileAllList, FILE_EXTENSIONS.document)
+    },
+    // 音频文件列表
+    uploadAudioList () {
+      return filterFilesByExtension(this.fileAllList, FILE_EXTENSIONS.audio)
+    },
+    // 视频文件列表
+    uploadVideoList () {
+      return filterFilesByExtension(this.fileAllList, FILE_EXTENSIONS.video)
+    },
+    // 所有允许的扩展名
+    allAllowedExtensions () {
+      const exts = []
+      if (this.fileUploadSetting.image) exts.push(...FILE_EXTENSIONS.image)
+      if (this.fileUploadSetting.document) exts.push(...FILE_EXTENSIONS.document)
+      if (this.fileUploadSetting.audio) exts.push(...FILE_EXTENSIONS.audio)
+      if (this.fileUploadSetting.video) exts.push(...FILE_EXTENSIONS.video)
+      if (this.fileUploadSetting.other) exts.push(...(this.fileUploadSetting.otherExtensions || []))
+      return exts
     }
-  },
-
-  mounted () {
-    // 添加文档点击事件监听，用于点击外部关闭emoji选择器
-    document.addEventListener('click', this.handleDocumentClick)
-  },
-
-  beforeDestroy () {
-    // 移除文档点击事件监听
-    document.removeEventListener('click', this.handleDocumentClick)
   },
 
   methods: {
@@ -132,10 +287,6 @@ export default {
         e.preventDefault()
         this.handleSendMessage()
       }
-      // ESC键关闭emoji选择器
-      if (e.keyCode === 27) {
-        this.hideEmojiPicker()
-      }
     },
 
     handleInput () {
@@ -143,69 +294,134 @@ export default {
     },
 
     handleSendMessage () {
-      if (this.userInput && this.userInput.trim()) {
-        this.$emit('send-message', this.userInput.trim())
-        this.userInput = ''
-        this.focusInput()
-      }
-    },
+      const message = this.userInput?.trim() || (this.hasUploadedFiles ? '发送文件' : '')
 
-    toggleEmojiPicker () {
-      this.showEmojiPicker = !this.showEmojiPicker
-      if (this.showEmojiPicker) {
-        // 显示emoji选择器时，可以失焦输入框，让用户专注选择emoji
-      } else {
-        // 隐藏emoji选择器时，重新聚焦到输入框
-        this.focusInput()
-      }
-    },
-
-    hideEmojiPicker () {
-      if (this.showEmojiPicker) {
-        this.showEmojiPicker = false
-        this.focusInput()
-      }
-    },
-
-    handleEmojiSelect (emoji) {
-      // 获取当前光标位置
-      const textarea = this.$refs.chatInput?.$refs?.textarea || this.$refs.chatInput?.$el?.querySelector('textarea')
-      if (textarea) {
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
-
-        // 在光标位置插入emoji
-        const before = this.userInput.substring(0, start)
-        const after = this.userInput.substring(end)
-        this.userInput = before + emoji + after
-
-        // 设置新的光标位置
-        this.$nextTick(() => {
-          const newPosition = start + emoji.length
-          textarea.setSelectionRange(newPosition, newPosition)
-          textarea.focus()
+      if (message || this.hasUploadedFiles) {
+        this.$emit('send-message', {
+          content: message,
+          files: {
+            images: this.uploadImageList,
+            documents: this.uploadDocumentList,
+            audios: this.uploadAudioList,
+            videos: this.uploadVideoList
+          }
         })
-      } else {
-        // 如果无法获取textarea，就直接追加到末尾
-        this.userInput += emoji
+
+        // 清空输入和文件
+        this.userInput = ''
+        this.fileAllList = []
+        this.focusInput()
+      }
+    },
+
+    // 文件上传相关方法
+    handleFileChange (file, fileList) {
+      this.processFile(file.raw)
+    },
+
+    processFile (rawFile) {
+      // 检查文件数量限制
+      if (this.isFilesLimitReached) {
+        this.$message.warning(`最多上传${this.fileUploadSetting.maxFiles}个文件`)
+        return
       }
 
-      // 选择emoji后关闭选择器
-      this.hideEmojiPicker()
+      // 验证文件大小
+      if (!validateFileSize(rawFile, this.fileUploadSetting.fileLimit)) {
+        if (rawFile.size === 0) {
+          this.$message.warning('不能上传空文件')
+        } else {
+          this.$message.warning(`文件大小不能超过${this.fileUploadSetting.fileLimit}MB`)
+        }
+        return
+      }
+
+      // 验证文件类型
+      if (!validateFileType(rawFile, this.allAllowedExtensions)) {
+        this.$message.warning('不支持该文件类型')
+        return
+      }
+
+      // 创建文件对象
+      const elFile = createElUploadFile(rawFile)
+
+      // 开始上传
+      this.uploadFile(elFile)
+    },
+
+    async uploadFile (file) {
+      // 标记为上传中
+      this.$set(this.uploadingDict, file.uid, true)
+
+      try {
+        // 这里调用实际的上传API
+        // const response = await this.$api.uploadChatFile(file.raw)
+        // file.url = response.data.url
+        // file.file_id = response.data.file_id
+
+        // 临时模拟上传成功
+        await new Promise(resolve => setTimeout(resolve, 500))
+        file.url = URL.createObjectURL(file.raw)
+        file.file_id = file.uid
+
+        // 添加到文件列表
+        this.fileAllList.push(file)
+      } catch (error) {
+        this.$message.error('文件上传失败：' + (error.message || '未知错误'))
+      } finally {
+        // 移除上传中标记
+        this.$delete(this.uploadingDict, file.uid)
+      }
+    },
+
+    // 粘贴上传
+    handlePaste (event) {
+      if (!this.fileUploadSetting.enabled) return
+
+      const clipboardData = event.clipboardData
+      if (!clipboardData) return
+
+      const files = clipboardData.files
+      if (files.length === 0) return
+
+      // 处理粘贴的文件
+      Array.from(files).forEach(rawFile => {
+        this.processFile(rawFile)
+      })
+
+      // 阻止默认粘贴行为
+      event.preventDefault()
+    },
+
+    // 拖拽上传
+    handleDrop (event) {
+      if (!this.fileUploadSetting.enabled) return
+
+      const files = event.dataTransfer?.files
+      if (!files) return
+
+      // 处理拖拽的文件
+      Array.from(files).forEach(rawFile => {
+        this.processFile(rawFile)
+      })
+    },
+
+    // 删除文件
+    removeFile (file) {
+      const index = this.fileAllList.findIndex(f => f.uid === file.uid)
+      if (index > -1) {
+        this.fileAllList.splice(index, 1)
+      }
+    },
+
+    // 获取文件图标
+    getFileIcon (fileName) {
+      return getFileIconUrl(fileName)
     },
 
     focusInput () {
       if (this.$refs.chatInput) {
         this.$refs.chatInput.focus()
-      }
-    },
-
-    handleDocumentClick (event) {
-      // 如果emoji选择器是打开的，并且点击的不是容器内的元素，则关闭emoji选择器
-      if (this.showEmojiPicker && this.$refs.chatInputContainer) {
-        if (!this.$refs.chatInputContainer.contains(event.target)) {
-          this.hideEmojiPicker()
-        }
       }
     }
   }
@@ -216,6 +432,105 @@ export default {
 /* 容器样式 */
 .chat-input-container {
   position: relative;
+}
+
+/* 文件预览区域 */
+.file-preview-area {
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background-color: #f5f7fa;
+  padding: 8px;
+}
+
+.file-preview-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px;
+}
+
+/* 文件卡片样式 */
+.file-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 150ms ease;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.file-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.file-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  color: #606266;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-delete {
+  font-size: 18px;
+  color: #F56C6C;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 150ms ease;
+}
+
+.file-delete:hover {
+  transform: scale(1.2);
+}
+
+/* 图片预览样式 */
+.image-preview {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+}
+
+.image-delete {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 20px;
+  color: #F56C6C;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.image-delete:hover {
+  transform: scale(1.2);
 }
 
 /* 新的输入框包装器样式 */
@@ -336,49 +651,57 @@ export default {
 }
 
 /* 按钮样式 */
-.attachment-btn,
-.emoji-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.attachment-btn {
   min-height: 32px;
   min-width: 32px;
-  border: none;
-  background: transparent;
-  color: #0f172a;
-  cursor: pointer;
-  transition: all 150ms ease;
-  font-size: 16px;
-  border-radius: 4px;
-  margin-right: 4px;
+  padding: 4px;
+  margin-right: 0;
+  border: none !important;
 }
 
 .attachment-btn:hover,
-.emoji-btn:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+.attachment-btn:focus,
+.attachment-btn:active {
+  border: none !important;
+  background: transparent !important;
 }
 
-.emoji-btn.active {
-  background: #2781F6;
-  color: white;
+.attachment-btn >>> i {
+  font-size: 20px;
 }
 
-.emoji-btn.active:hover {
-  background: #1e6bc7;
-  color: white;
+/* 分隔线样式 */
+::v-deep .el-divider--vertical {
+  height: 1.5em;
+  margin: 0 8px;
+  background-color: #e5e7eb;
 }
 
+/* 发送按钮样式 */
 .send-button {
-  min-width: 36px;
-  height: 32px;
-  border-radius: 6px;
-  padding: 0;
-  margin-left: 4px;
+  min-height: 32px;
+  min-width: 32px;
+  padding: 4px;
+  margin-left: 0;
+  border: none !important;
 }
 
-.send-button >>> .el-button--primary {
-  background: #3b82f6;
-  border-color: #3b82f6;
+.send-button:hover,
+.send-button:focus,
+.send-button:active {
+  border: none !important;
+  background: transparent !important;
+}
+
+.send-button >>> i {
+  font-size: 24px;
+}
+
+.send-icon-disabled {
+  color: #9ca3af;
+}
+
+.send-icon-active {
+  color: #3b82f6;
 }
 </style>
