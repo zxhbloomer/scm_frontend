@@ -6,7 +6,7 @@
     width="90%"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
-    :show-close="false"
+    :show-close="true"
     :append-to-body="true"
     :modal-append-to-body="true"
     class="kb-manage-dialog"
