@@ -26,6 +26,7 @@
             <el-select
               v-model="selectedLayout"
               size="small"
+              :popper-append-to-body="false"
               @change="handleLayoutChange"
             >
               <el-option label="力导向布局" value="cose" />
@@ -35,24 +36,33 @@
             </el-select>
           </div>
 
-          <div class="control-item">
+          <div class="control-item button-group">
             <el-button
+              type="primary"
               size="small"
+              icon="el-icon-refresh"
               @click="handleReLayout"
             >
               重新布局
             </el-button>
+          </div>
+
+          <div class="control-item button-group">
             <el-button
+              type="success"
               size="small"
+              icon="el-icon-full-screen"
               @click="handleFitCanvas"
             >
               适配画布
             </el-button>
           </div>
 
-          <div class="control-item">
+          <div class="control-item button-group">
             <el-button
+              type="info"
               size="small"
+              icon="el-icon-download"
               @click="handleExportImage"
             >
               导出图片
@@ -236,11 +246,10 @@ export default {
         await this.loadGraphData()
 
         if (this.graphData.vertices.length > 0) {
-          this.$nextTick(() => {
-            this.renderGraphVisualization()
-          })
+          this.renderGraphVisualization()
         }
       } catch (error) {
+        console.error('加载图谱失败:', error)
         this.$message.error('加载图谱失败: ' + (error.message || '未知错误'))
       } finally {
         this.loading = false
@@ -264,8 +273,8 @@ export default {
         this.graphData.vertices = data.vertices
         this.graphData.edges = data.edges || []
 
-        const vertexIds = data.vertices.map(v => v.vertextId)
-        const edgeIds = data.edges.map(e => e.edgeId)
+        const vertexIds = data.vertices.map(v => v.id)
+        const edgeIds = (data.edges || []).map(e => e.id)
 
         this.maxVertextId = vertexIds.length > 0 ? Math.max(...vertexIds) : null
         this.maxEdgeId = edgeIds.length > 0 ? Math.max(...edgeIds) : null
@@ -279,15 +288,29 @@ export default {
       const container = this.$refs.cyContainer
 
       if (!container) {
+        console.error('图谱容器不存在')
         return
       }
 
-      this.cy = initCytoscape(container)
+      // 初始化Cytoscape实例
+      const cyInstance = initCytoscape(container)
 
+      // 使用Object.freeze()阻止Vue的响应式系统处理Cytoscape实例
+      // 关键性能优化：Cytoscape是复杂的第三方对象，不需要响应式
+      this.cy = Object.freeze(cyInstance)
+
+      if (!this.cy) {
+        console.error('Cytoscape实例创建失败')
+        return
+      }
+
+      // 渲染图谱数据
       renderGraph(this.cy, this.graphData.vertices, this.graphData.edges)
 
+      // 应用布局
       applyLayout(this.cy, this.selectedLayout)
 
+      // 绑定节点点击事件
       this.cy.on('tap', 'node', (evt) => {
         const node = evt.target
         clearHighlight(this.cy)
@@ -303,6 +326,7 @@ export default {
         }
       })
 
+      // 绑定边点击事件
       this.cy.on('tap', 'edge', (evt) => {
         const edge = evt.target
         clearHighlight(this.cy)
@@ -320,6 +344,7 @@ export default {
         }
       })
 
+      // 绑定画布点击事件
       this.cy.on('tap', (evt) => {
         if (evt.target === this.cy) {
           clearHighlight(this.cy)
@@ -327,9 +352,8 @@ export default {
         }
       })
 
-      setTimeout(() => {
-        fitToCanvas(this.cy)
-      }, 100)
+      // 适配画布
+      fitToCanvas(this.cy)
     },
 
     /**
@@ -451,6 +475,10 @@ export default {
   margin-bottom: 0;
 }
 
+.control-item.button-group .el-button {
+  width: 100%;
+}
+
 .control-label {
   display: block;
   font-size: 12px;
@@ -460,14 +488,6 @@ export default {
 
 .control-item .el-select {
   width: 100%;
-}
-
-.control-item .el-button {
-  width: 48%;
-}
-
-.control-item .el-button:first-child {
-  margin-right: 4%;
 }
 
 .element-details {

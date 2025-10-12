@@ -90,30 +90,80 @@
         />
 
         <el-table-column
-          label="索引状态"
-          width="150"
+          label="向量化状态"
+          width="120"
         >
           <template slot-scope="scope">
             <el-tag
-              v-if="scope.row.indexStatus === 'completed'"
+              v-if="scope.row.embeddingStatus === 3"
               type="success"
               size="small"
             >
               已完成
             </el-tag>
             <el-tag
-              v-else-if="scope.row.indexStatus === 'processing'"
+              v-else-if="scope.row.embeddingStatus === 2"
               type="warning"
               size="small"
             >
-              索引中
+              处理中
             </el-tag>
             <el-tag
-              v-else-if="scope.row.indexStatus === 'failed'"
+              v-else-if="scope.row.embeddingStatus === 4"
               type="danger"
               size="small"
             >
               失败
+            </el-tag>
+            <el-tag
+              v-else-if="scope.row.embeddingStatus === 1"
+              type="info"
+              size="small"
+            >
+              待处理
+            </el-tag>
+            <el-tag
+              v-else
+              type="info"
+              size="small"
+            >
+              未索引
+            </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          label="图谱化状态"
+          width="120"
+        >
+          <template slot-scope="scope">
+            <el-tag
+              v-if="scope.row.graphicalStatus === 3"
+              type="success"
+              size="small"
+            >
+              已完成
+            </el-tag>
+            <el-tag
+              v-else-if="scope.row.graphicalStatus === 2"
+              type="warning"
+              size="small"
+            >
+              处理中
+            </el-tag>
+            <el-tag
+              v-else-if="scope.row.graphicalStatus === 4"
+              type="danger"
+              size="small"
+            >
+              失败
+            </el-tag>
+            <el-tag
+              v-else-if="scope.row.graphicalStatus === 1"
+              type="info"
+              size="small"
+            >
+              待处理
             </el-tag>
             <el-tag
               v-else
@@ -360,7 +410,9 @@ export default {
         )
 
         const data = response.data || response
-        this.tableData = data.records || data || []
+        // 直接使用embeddingStatus和graphicalStatus字段
+        const records = data.records || data || []
+        this.tableData = records
         this.pagination.total = data.total || this.tableData.length
       } catch (error) {
         this.$message.error('加载失败: ' + (error.message || '未知错误'))
@@ -488,8 +540,10 @@ export default {
         const data = response.data || response
 
         if (data && data.length > 0) {
+          // 检查向量化或图谱化是否有处理中的项
+          // embeddingStatus: 2-处理中, graphicalStatus: 2-处理中
           const processingItems = data.filter(item =>
-            item.indexStatus === 'processing'
+            item.embeddingStatus === 2 || item.graphicalStatus === 2
           )
 
           if (processingItems.length === 0) {
@@ -540,19 +594,38 @@ export default {
      * 删除
      */
     handleDelete (row) {
-      this.$confirm(`确定删除知识点"${row.title}"吗？`, '提示', {
-        confirmButtonText: '确定',
+      const msgBox = this.$confirm('删除后无法恢复，确认要删除该条数据吗？', '确认信息', {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确认',
         cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
+        customClass: 'my-messagebox'
+      })
+
+      // 动态设置 MessageBox wrapper 的 z-index - 延迟确保 DOM 已渲染
+      setTimeout(() => {
+        const wrapper = document.querySelector('.el-message-box__wrapper:has(.my-messagebox)')
+        if (wrapper) {
+          wrapper.style.zIndex = '9999999'
+        }
+      }, 100)
+
+      msgBox.then(async () => {
         try {
           await knowledgeBaseService.itemDelete(row.itemUuid)
+
+          // 直接从列表中过滤掉删除的项，不重新查询
+          this.$nextTick(() => {
+            this.tableData = this.tableData.filter(item => item.itemUuid !== row.itemUuid)
+            this.pagination.total = this.pagination.total - 1
+          })
+
           this.$message.success('删除成功')
-          this.loadList()
         } catch (error) {
           this.$message.error('删除失败: ' + (error.message || '未知错误'))
         }
-      }).catch(() => {})
+      }).catch(() => {
+        // 用户取消
+      })
     },
 
     /**
@@ -598,12 +671,5 @@ export default {
 
 .dialog-footer {
   text-align: right;
-}
-</style>
-
-<style>
-/* 确保知识库详情弹窗在管理弹窗上层（非scoped，全局生效） */
-.kb-detail-dialog.el-dialog__wrapper {
-  z-index: 10200 !important;
 }
 </style>

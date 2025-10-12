@@ -11,68 +11,86 @@ import cytoscape from 'cytoscape'
  * @returns {Object} cytoscape实例
  */
 export function initCytoscape (containerOrId) {
-  // 支持传入DOM元素或ID字符串
   const container = typeof containerOrId === 'string'
     ? document.getElementById(containerOrId)
     : containerOrId
 
   if (!container) {
-    console.error('容器不存在')
+    console.error('Cytoscape容器不存在')
     return null
   }
 
-  const cy = cytoscape({
-    container,
-    elements: [],
-    style: [
-      {
-        selector: 'node',
-        style: {
-          'content': 'data(name)',
-          'width': 30,
-          'height': 30,
-          'background-color': '#409EFF',
-          'color': '#fff',
-          'text-valign': 'center',
-          'text-halign': 'center',
-          'font-size': '12px'
+  try {
+    const cy = cytoscape({
+      container,
+      elements: [],
+      style: [
+        {
+          selector: 'node',
+          style: {
+            'label': 'data(name)',
+            'width': 60,
+            'height': 60,
+            'background-color': '#409EFF',
+            'color': '#fff',
+            'text-valign': 'center',
+            'text-halign': 'center',
+            'font-size': '11px',
+            'text-wrap': 'wrap',
+            'text-max-width': '55px',
+            'border-width': 2,
+            'border-color': '#1e88e5',
+            'text-outline-width': 0
+          }
+        },
+        {
+          selector: 'node.highlighted',
+          style: {
+            'background-color': '#f56c6c',
+            'width': 65,
+            'height': 65,
+            'border-width': 3,
+            'border-color': '#e53935'
+          }
+        },
+        {
+          selector: 'edge',
+          style: {
+            'width': 2,
+            'line-color': '#999',
+            'target-arrow-color': '#999',
+            'target-arrow-shape': 'triangle',
+            'curve-style': 'bezier',
+            'label': 'data(label)',
+            'font-size': '11px',
+            'text-rotation': 'autorotate',
+            'text-background-color': '#ffffff',
+            'text-background-opacity': 0.9,
+            'text-background-padding': '2px',
+            'color': '#666',
+            'text-margin-y': -10,
+            'min-zoomed-font-size': 8
+          }
+        },
+        {
+          selector: 'edge.highlighted',
+          style: {
+            'width': 3,
+            'line-color': '#f56c6c',
+            'target-arrow-color': '#f56c6c'
+          }
         }
-      },
-      {
-        selector: 'node.highlighted',
-        style: {
-          'background-color': '#f56c6c',
-          'width': 35,
-          'height': 35,
-          'border-width': 3,
-          'border-color': '#f56c6c'
-        }
-      },
-      {
-        selector: 'edge',
-        style: {
-          'width': 2,
-          'line-color': '#ccc',
-          'target-arrow-color': '#ccc',
-          'target-arrow-shape': 'triangle',
-          'curve-style': 'bezier',
-          'label': 'data(label)',
-          'font-size': '10px',
-          'text-rotation': 'autorotate'
-        }
-      },
-      {
-        selector: 'edge.highlighted',
-        style: {
-          'width': 3,
-          'line-color': '#f56c6c',
-          'target-arrow-color': '#f56c6c'
-        }
-      }
-    ]
-  })
+      ]
+    })
 
-  return cy
+    console.log('[graphUtils] Cytoscape实例创建成功，准备返回cy对象')
+    console.log('[graphUtils] cy对象类型:', typeof cy)
+    console.log('[graphUtils] cy对象:', cy)
+    return cy
+  } catch (e) {
+    console.error('[graphUtils] Cytoscape实例创建失败:', e)
+    return null
+  }
 }
 
 /**
@@ -82,6 +100,10 @@ export function initCytoscape (containerOrId) {
  * @returns {Object} { nodes, edges }
  */
 export function transformGraphData (vertices, edges) {
+  console.log('[graphUtils] 开始转换图谱数据')
+  console.log('[graphUtils] 输入顶点数:', vertices.length)
+  console.log('[graphUtils] 输入边数:', edges.length)
+
   const nodes = vertices.map(vertex => ({
     group: 'nodes',
     data: {
@@ -91,16 +113,25 @@ export function transformGraphData (vertices, edges) {
     }
   }))
 
-  const edgeElements = edges.map(edge => ({
-    group: 'edges',
-    data: {
-      id: String(edge.id),
-      source: String(edge.startId),
-      target: String(edge.endId),
-      label: edge.label || edge.description || '',
-      description: edge.description
+  console.log('[graphUtils] 转换后节点数:', nodes.length)
+  console.log('[graphUtils] 节点数据示例:', nodes[0])
+
+  const edgeElements = edges.map(edge => {
+    const edgeData = {
+      group: 'edges',
+      data: {
+        id: String(edge.id),
+        source: String(edge.sourceId),
+        target: String(edge.targetId),
+        label: edge.type || edge.description || '',
+        description: edge.description
+      }
     }
-  }))
+    console.log('[graphUtils] 边数据:', edge, '-> 转换后:', edgeData)
+    return edgeData
+  })
+
+  console.log('[graphUtils] 转换后边数:', edgeElements.length)
 
   return { nodes, edges: edgeElements }
 }
@@ -113,7 +144,12 @@ export function transformGraphData (vertices, edges) {
  * @param {Object} options - 渲染选项
  */
 export function renderGraph (cy, vertices, edges, options = {}) {
-  if (!cy) return
+  if (!cy) {
+    console.error('[graphUtils] renderGraph: cy实例不存在')
+    return
+  }
+
+  console.log('[graphUtils] renderGraph开始, 顶点数:', vertices.length, '边数:', edges.length)
 
   const {
     clearExisting = true,
@@ -124,16 +160,26 @@ export function renderGraph (cy, vertices, edges, options = {}) {
 
   // 清除现有元素
   if (clearExisting) {
+    console.log('[graphUtils] 清除现有元素')
     cy.$('node').remove()
     cy.$('edge').remove()
   }
 
   // 转换数据
+  console.log('[graphUtils] 转换数据...')
   const { nodes, edges: edgeElements } = transformGraphData(vertices, edges)
+
+  console.log('[graphUtils] 数据转换完成, 节点:', nodes.length, '边:', edgeElements.length)
 
   // 添加节点
   if (nodes.length > 0) {
-    cy.add(nodes)
+    console.log('[graphUtils] 添加节点到cytoscape...')
+    try {
+      cy.add(nodes)
+      console.log('[graphUtils] 节点添加成功')
+    } catch (e) {
+      console.error('[graphUtils] 添加节点失败:', e)
+    }
 
     // 绑定节点点击事件
     if (onNodeClick) {
@@ -146,7 +192,14 @@ export function renderGraph (cy, vertices, edges, options = {}) {
 
   // 添加边
   if (edgeElements.length > 0) {
-    cy.add(edgeElements)
+    console.log('[graphUtils] 添加边到cytoscape...')
+    try {
+      cy.add(edgeElements)
+      console.log('[graphUtils] 边添加成功')
+    } catch (e) {
+      console.error('[graphUtils] 添加边失败:', e)
+      console.error('[graphUtils] 失败的边数据:', edgeElements)
+    }
 
     // 绑定边点击事件
     if (onEdgeClick) {
@@ -157,7 +210,10 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     }
   }
 
+  console.log('[graphUtils] renderGraph完成，当前cy元素数:', cy.elements().length)
+
   // 应用布局
+  console.log('[graphUtils] 应用布局:', layout)
   applyLayout(cy, layout)
 }
 
@@ -167,11 +223,25 @@ export function renderGraph (cy, vertices, edges, options = {}) {
  * @param {string} layoutName - 布局名称
  */
 export function applyLayout (cy, layoutName = 'cose') {
-  if (!cy) return
+  if (!cy) {
+    console.error('[graphUtils] applyLayout: cy实例不存在')
+    return
+  }
 
-  const layoutOptions = getLayoutOptions(layoutName)
-  const layout = cy.layout(layoutOptions)
-  layout.run()
+  console.log('[graphUtils] applyLayout开始, 布局名称:', layoutName)
+
+  try {
+    const layoutOptions = getLayoutOptions(layoutName)
+    console.log('[graphUtils] 布局选项:', layoutOptions)
+
+    const layout = cy.layout(layoutOptions)
+    console.log('[graphUtils] 布局对象创建成功，开始运行...')
+
+    layout.run()
+    console.log('[graphUtils] 布局运行完成')
+  } catch (e) {
+    console.error('[graphUtils] 布局应用失败:', e)
+  }
 }
 
 /**
@@ -184,23 +254,23 @@ export function getLayoutOptions (layoutName = 'cose') {
     // COSE布局（力导向）
     cose: {
       name: 'cose',
-      animate: true,
-      animationDuration: 500,
+      animate: false,
+      animationDuration: 0,
       animationThreshold: 250,
       refresh: 20,
       fit: true,
-      padding: 30,
+      padding: 50,
       randomize: false,
-      componentSpacing: 40,
-      nodeRepulsion: function (node) { return 2048 },
-      nodeOverlap: 4,
-      idealEdgeLength: function (edge) { return 32 },
-      edgeElasticity: function (edge) { return 32 },
+      componentSpacing: 100,
+      nodeRepulsion: function (node) { return 4096 },
+      nodeOverlap: 20,
+      idealEdgeLength: function (edge) { return 80 },
+      edgeElasticity: function (edge) { return 100 },
       nestingFactor: 1.2,
       gravity: 1,
-      numIter: 1000,
-      initialTemp: 1000,
-      coolingFactor: 0.99,
+      numIter: 100,
+      initialTemp: 200,
+      coolingFactor: 0.95,
       minTemp: 1.0
     },
 
