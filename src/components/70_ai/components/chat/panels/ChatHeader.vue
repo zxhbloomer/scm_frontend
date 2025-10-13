@@ -101,8 +101,10 @@
 
     <!-- 知识库管理弹窗 -->
     <KnowledgeBaseManageDialog
-      :visible.sync="showKnowledgeBase"
+      v-if="showKnowledgeBase"
+      :visible="showKnowledgeBase"
       :llm-list="llmList"
+      @update:visible="showKnowledgeBase = $event"
     />
   </div>
 </template>

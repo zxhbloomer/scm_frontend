@@ -1,294 +1,314 @@
 <template>
-  <el-dialog
-    v-el-drag-dialog
-    :visible.sync="dialogVisible"
-    :title="dialogTitle"
-    width="1400px"
-    :close-on-click-modal="false"
-    class="kb-detail-dialog"
-    @close="handleClose"
-  >
-    <div class="kb-detail-container">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-button
-            size="small"
-            type="primary"
-            icon="el-icon-plus"
-            :disabled="!kbUuid"
-            @click="handleAdd"
-          >
-            新建知识点
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-upload"
-            :disabled="!kbUuid"
-            @click="handleUpload"
-          >
-            上传文件
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-setting"
-            :disabled="selectedItems.length === 0"
-            @click="handleBatchIndex"
-          >
-            批量索引 ({{ selectedItems.length }})
-          </el-button>
-          <el-button
-            size="small"
-            icon="el-icon-refresh"
-            @click="handleRefreshIndexStatus"
-          >
-            刷新状态
-          </el-button>
-        </div>
-
-        <div class="toolbar-right">
-          <el-input
-            v-model="keyword"
-            placeholder="搜索知识点..."
-            size="small"
-            style="width: 250px"
-            clearable
-            @clear="handleSearch"
-            @keyup.enter.native="handleSearch"
-          >
-            <el-button
-              slot="append"
-              icon="el-icon-search"
-              @click="handleSearch"
-            />
-          </el-input>
-        </div>
-      </div>
-
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        border
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column
-          type="selection"
-          width="55"
-        />
-
-        <el-table-column
-          prop="title"
-          label="标题"
-          min-width="200"
-          show-overflow-tooltip
-        />
-
-        <el-table-column
-          prop="brief"
-          label="摘要"
-          min-width="250"
-          show-overflow-tooltip
-        />
-
-        <el-table-column
-          label="向量化状态"
-          width="120"
-        >
-          <template slot-scope="scope">
-            <el-tag
-              v-if="scope.row.embeddingStatus === 3"
-              type="success"
-              size="small"
-            >
-              已完成
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.embeddingStatus === 2"
-              type="warning"
-              size="small"
-            >
-              处理中
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.embeddingStatus === 4"
-              type="danger"
-              size="small"
-            >
-              失败
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.embeddingStatus === 1"
-              type="info"
-              size="small"
-            >
-              待处理
-            </el-tag>
-            <el-tag
-              v-else
-              type="info"
-              size="small"
-            >
-              未索引
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          label="图谱化状态"
-          width="120"
-        >
-          <template slot-scope="scope">
-            <el-tag
-              v-if="scope.row.graphicalStatus === 3"
-              type="success"
-              size="small"
-            >
-              已完成
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.graphicalStatus === 2"
-              type="warning"
-              size="small"
-            >
-              处理中
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.graphicalStatus === 4"
-              type="danger"
-              size="small"
-            >
-              失败
-            </el-tag>
-            <el-tag
-              v-else-if="scope.row.graphicalStatus === 1"
-              type="info"
-              size="small"
-            >
-              待处理
-            </el-tag>
-            <el-tag
-              v-else
-              type="info"
-              size="small"
-            >
-              未索引
-            </el-tag>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          prop="createTime"
-          label="创建时间"
-          width="160"
-        />
-
-        <el-table-column
-          label="操作"
-          width="280"
-          fixed="right"
-        >
-          <template slot-scope="scope">
-            <el-button
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              @click="handleViewEmbedding(scope.row)"
-            >
-              嵌入
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              @click="handleViewGraph(scope.row)"
-            >
-              图谱
-            </el-button>
-            <el-button
-              v-if="scope.row.fileName"
-              type="text"
-              size="small"
-              @click="handlePreviewFile(scope.row)"
-            >
-              预览
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              style="color: #f56c6c"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-container">
-        <el-pagination
-          :current-page="pagination.page"
-          :page-size="pagination.pageSize"
-          :total="pagination.total"
-          layout="total, prev, pager, next, jumper"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </div>
-
-    <div slot="footer" class="dialog-footer">
-      <el-button @click="handleClose">关闭</el-button>
-    </div>
-
-    <knowledge-item-edit-dialog
-      :visible.sync="editDialogVisible"
-      :kb-uuid="kbUuid"
-      :item-info="currentItem"
-      @success="handleEditSuccess"
-    />
-
-    <knowledge-item-upload-dialog
-      :visible.sync="uploadDialogVisible"
-      :kb-uuid="kbUuid"
-      @success="handleUploadSuccess"
-    />
-
-    <knowledge-index-dialog
-      :visible.sync="indexDialogVisible"
-      :selected-items="selectedItems"
-      @success="handleIndexSuccess"
-      @remove-item="handleRemoveSelectedItem"
-      @start-checking="startIndexStatusPolling"
-    />
-
-    <item-embedding-dialog
-      :visible.sync="embeddingDialogVisible"
-      :kb-item-uuid="currentItem.itemUuid"
-      :item-title="currentItem.title"
-    />
-
-    <item-graph-dialog
-      :visible.sync="graphDialogVisible"
-      :kb-item-uuid="currentItem.itemUuid"
-      :item-title="currentItem.title"
-    />
-
+  <div>
     <el-dialog
+      v-if="visible"
       v-el-drag-dialog
-      :visible.sync="previewDialogVisible"
-      :title="`${currentItem.title} - 文件预览`"
-      width="1000px"
-      append-to-body
+      :visible="visible"
+      :title="dialogTitle"
+      :modal="true"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+      :append-to-body="true"
+      :modal-append-to-body="true"
+      class="kb-detail-dialog"
+      width="1500px"
+      destroy-on-close
+      top="5vh"
+      @close="handleClose"
     >
-      <file-preview
-        v-if="previewDialogVisible"
-        :item-data="currentItem"
+      <div style="height: 500px; overflow-y: auto;">
+        <div class="kb-detail-container">
+          <div ref="minusToolbar" class="toolbar">
+            <div class="toolbar-left">
+              <el-button
+                size="small"
+                type="primary"
+                icon="el-icon-plus"
+                :disabled="!kbUuid"
+                @click="handleAdd"
+              >
+                新建知识点
+              </el-button>
+              <el-button
+                size="small"
+                icon="el-icon-upload"
+                :disabled="!kbUuid"
+                @click="handleUpload"
+              >
+                上传文件
+              </el-button>
+              <el-button
+                size="small"
+                icon="el-icon-setting"
+                :disabled="selectedItems.length === 0"
+                @click="handleBatchIndex"
+              >
+                批量索引 ({{ selectedItems.length }})
+              </el-button>
+              <el-button
+                size="small"
+                icon="el-icon-refresh"
+                @click="handleRefreshIndexStatus"
+              >
+                刷新状态
+              </el-button>
+            </div>
+
+            <div class="toolbar-right">
+              <el-input
+                v-model="keyword"
+                placeholder="搜索知识点..."
+                size="small"
+                style="width: 250px"
+                clearable
+                @clear="handleSearch"
+                @keyup.enter.native="handleSearch"
+              >
+                <el-button
+                  slot="append"
+                  icon="el-icon-search"
+                  @click="handleSearch"
+                />
+              </el-input>
+            </div>
+          </div>
+
+          <el-table
+            ref="multipleTable"
+            v-loading="loading"
+            :element-loading-text="'正在拼命加载中...'"
+            element-loading-background="rgba(255, 255, 255, 0.5)"
+            :data="tableData"
+            highlight-current-row
+            fit
+            stripe
+            border
+            @selection-change="handleSelectionChange"
+          >
+            <el-table-column
+              type="selection"
+              width="55"
+            />
+
+            <el-table-column
+              prop="title"
+              :auto-fit="true"
+              label="标题"
+              min-width="200"
+              show-overflow-tooltip
+            />
+
+            <el-table-column
+              prop="brief"
+              :auto-fit="true"
+              label="摘要"
+              min-width="250"
+              show-overflow-tooltip
+            />
+
+            <el-table-column
+              label="向量化状态"
+              width="120"
+            >
+              <template slot-scope="scope">
+                <el-tag
+                  v-if="scope.row.embeddingStatus === 3"
+                  type="success"
+                  size="small"
+                >
+                  已完成
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.embeddingStatus === 2"
+                  type="warning"
+                  size="small"
+                >
+                  处理中
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.embeddingStatus === 4"
+                  type="danger"
+                  size="small"
+                >
+                  失败
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.embeddingStatus === 1"
+                  type="info"
+                  size="small"
+                >
+                  待处理
+                </el-tag>
+                <el-tag
+                  v-else
+                  type="info"
+                  size="small"
+                >
+                  未索引
+                </el-tag>
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              label="图谱化状态"
+              width="120"
+            >
+              <template slot-scope="scope">
+                <el-tag
+                  v-if="scope.row.graphicalStatus === 3"
+                  type="success"
+                  size="small"
+                >
+                  已完成
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.graphicalStatus === 2"
+                  type="warning"
+                  size="small"
+                >
+                  处理中
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.graphicalStatus === 4"
+                  type="danger"
+                  size="small"
+                >
+                  失败
+                </el-tag>
+                <el-tag
+                  v-else-if="scope.row.graphicalStatus === 1"
+                  type="info"
+                  size="small"
+                >
+                  待处理
+                </el-tag>
+                <el-tag
+                  v-else
+                  type="info"
+                  size="small"
+                >
+                  未索引
+                </el-tag>
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              prop="c_time"
+              label="创建时间"
+              width="160"
+            />
+
+            <el-table-column
+              label="操作"
+              width="280"
+              fixed="right"
+            >
+              <template slot-scope="scope">
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleEdit(scope.row)"
+                >
+                  编辑
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleViewEmbedding(scope.row)"
+                >
+                  嵌入
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleViewGraph(scope.row)"
+                >
+                  图谱
+                </el-button>
+                <el-button
+                  v-if="scope.row.fileName"
+                  type="text"
+                  size="small"
+                  @click="handlePreviewFile(scope.row)"
+                >
+                  预览
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
+                  style="color: #f56c6c"
+                  @click="handleDelete(scope.row)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <div class="pagination-container">
+            <el-pagination
+              :current-page="pagination.page"
+              :page-size="pagination.pageSize"
+              :total="pagination.total"
+              layout="total, prev, pager, next, jumper"
+              @current-change="handlePageChange"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="handleClose">关闭</el-button>
+      </div>
+
+      <knowledge-item-edit-dialog
+        :visible.sync="editDialogVisible"
+        :kb-uuid="kbUuid"
+        :item-info="currentItem"
+        @success="handleEditSuccess"
       />
+
+      <knowledge-item-upload-dialog
+        :visible.sync="uploadDialogVisible"
+        :kb-uuid="kbUuid"
+        @success="handleUploadSuccess"
+      />
+
+      <knowledge-index-dialog
+        :visible.sync="indexDialogVisible"
+        :selected-items="selectedItems"
+        @success="handleIndexSuccess"
+        @remove-item="handleRemoveSelectedItem"
+        @start-checking="startIndexStatusPolling"
+      />
+
+      <item-embedding-dialog
+        :visible.sync="embeddingDialogVisible"
+        :kb-item-uuid="currentItem.itemUuid"
+        :item-title="currentItem.title"
+      />
+
+      <item-graph-dialog
+        :visible.sync="graphDialogVisible"
+        :kb-item-uuid="currentItem.itemUuid"
+        :item-title="currentItem.title"
+      />
+
+      <el-dialog
+        v-el-drag-dialog
+        :visible.sync="previewDialogVisible"
+        :title="`${currentItem.title} - 文件预览`"
+        width="1000px"
+        append-to-body
+      >
+        <file-preview
+          v-if="previewDialogVisible"
+          :item-data="currentItem"
+        />
+      </el-dialog>
     </el-dialog>
-  </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -302,6 +322,7 @@ import ItemEmbeddingDialog from './ItemEmbeddingDialog.vue'
 import ItemGraphDialog from './ItemGraphDialog.vue'
 import FilePreview from '../components/FilePreview.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
+import { addResizeListener, removeResizeListener } from 'element-ui/src/utils/resize-event'
 
 export default {
   name: 'KnowledgeBaseDetailDialog',
@@ -350,20 +371,12 @@ export default {
       graphDialogVisible: false,
       previewDialogVisible: false,
       currentItem: createEmptyKbItem(),
-      indexStatusTimer: null
+      indexStatusTimer: null,
+      divHeight: 500
     }
   },
 
   computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
-    },
-
     dialogTitle () {
       return this.kbTitle ? `${this.kbTitle} - 知识点管理` : '知识点管理'
     }
@@ -373,14 +386,30 @@ export default {
     visible (val) {
       if (val && this.kbUuid) {
         this.initData()
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.setUIheight()
+          }, 100)
+        })
       } else {
         this.stopIndexStatusPolling()
       }
     }
   },
 
+  mounted () {
+    this.setUIheight()
+    this.$nextTick(() => {
+      addResizeListener(window.document.body, this.setUIheight)
+    })
+  },
+
   beforeDestroy () {
     this.stopIndexStatusPolling()
+  },
+
+  destroyed () {
+    removeResizeListener(window.document.body, this.setUIheight)
   },
 
   methods: {
@@ -632,8 +661,27 @@ export default {
      * 关闭弹窗
      */
     handleClose () {
-      this.dialogVisible = false
+      this.$emit('update:visible', false)
       this.stopIndexStatusPolling()
+    },
+
+    /**
+     * 设置UI高度
+     */
+    setUIheight () {
+      const elementHeight = document.documentElement.clientHeight - 85
+      let minusHeight = 0
+
+      // 查找所有名称包含 'minus' 的 refs
+      if (this.$refs.minusToolbar) {
+        minusHeight += this.$refs.minusToolbar.offsetHeight
+      }
+
+      // 计算高度: viewport - 偏移 - minus区域 - 基础留白 - 弹窗额外留白
+      const calculatedHeight = elementHeight - minusHeight - 150 - 170
+      this.divHeight = calculatedHeight
+
+      return calculatedHeight
     }
   }
 }
@@ -673,3 +721,4 @@ export default {
   text-align: right;
 }
 </style>
+

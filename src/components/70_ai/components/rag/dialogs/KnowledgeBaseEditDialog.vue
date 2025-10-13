@@ -404,11 +404,7 @@ export default {
 </style>
 
 <style>
-/* 确保知识库编辑弹窗在管理弹窗上层（非scoped，全局生效） */
-.kb-edit-dialog.el-dialog__wrapper {
-  z-index: 10200 !important;
-}
-
+/* 知识库编辑弹窗样式调整（非scoped，全局生效） */
 .kb-edit-dialog .el-dialog {
   margin-top: 5vh !important;
 }

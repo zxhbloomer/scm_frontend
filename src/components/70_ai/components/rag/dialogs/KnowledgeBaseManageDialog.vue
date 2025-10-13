@@ -1,146 +1,168 @@
 <template>
-  <el-dialog
-    v-el-drag-dialog
-    :visible.sync="dialogVisible"
-    title="我的知识库"
-    width="90%"
-    :close-on-click-modal="false"
-    :close-on-press-escape="false"
-    :show-close="true"
-    :append-to-body="true"
-    :modal-append-to-body="true"
-    class="kb-manage-dialog"
-    @close="handleClose"
-  >
-    <div class="kb-manage-container">
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <el-button type="primary" size="small" @click="handleAdd">
-            新增
-          </el-button>
-        </div>
-        <div class="toolbar-right">
-          <el-input
-            v-model="searchValue"
-            placeholder="请输入关键词搜索"
-            size="small"
-            style="width: 300px; margin-right: 10px"
-            @keyup.enter.native="handleSearch"
+  <div>
+    <el-dialog
+      v-if="visible"
+      v-el-drag-dialog
+      :visible="visible"
+      title="我的知识库"
+      width="1300px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="true"
+      :append-to-body="true"
+      :modal-append-to-body="true"
+      class="kb-manage-dialog"
+      destroy-on-close
+      @close="handleClose"
+    >
+      <div :style="{ height: divHeight + 'px', overflowY: 'auto' }">
+        <div class="kb-manage-container">
+          <!-- 工具栏 -->
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <el-button type="primary" size="small" @click="handleAdd">
+                新增
+              </el-button>
+            </div>
+            <div class="toolbar-right">
+              <el-input
+                v-model="searchValue"
+                placeholder="请输入关键词搜索"
+                size="small"
+                style="width: 300px; margin-right: 10px"
+                @keyup.enter.native="handleSearch"
+              />
+              <el-button type="primary" size="small" @click="handleSearch">
+                搜索
+              </el-button>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <el-table
+            ref="multipleTable"
+            v-loading="loading"
+            :data="tableData"
+            :element-loading-text="'正在拼命加载中...'"
+            element-loading-background="rgba(255, 255, 255, 0.5)"
+            height="400px"
+            stripe
+            border
+            fit
+            highlight-current-row
+            style="width: 100%; margin-top: 20px"
+          >
+            <el-table-column
+              type="index"
+              width="45"
+              label="No"
+            />
+            <el-table-column
+              prop="title"
+              label="标题"
+              min-width="200"
+              :auto-fit="true"
+            >
+              <template slot-scope="scope">
+                <el-button
+                  type="text"
+                  @click="handleOpenDetail(scope.row)"
+                >
+                  {{ scope.row.title }}
+                </el-button>
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              prop="remark"
+              label="描述"
+            />
+
+            <el-table-column
+              prop="isPublic"
+              label="是否公开"
+              width="100"
+            >
+              <template slot-scope="scope">
+                {{ scope.row.isPublic ? '是' : '否' }}
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              prop="isStrict"
+              width="100"
+            >
+              <template slot="header">
+                <field-help
+                  default-label="严格模式"
+                  help="严格模式：严格匹配知识库，知识库中如无搜索结果，直接返回无答案<br>宽松模式：知识库中如无搜索结果，将用户提问传给LLM继续请求答案"
+                />
+              </template>
+              <template slot-scope="scope">
+                {{ scope.row.isStrict ? '是' : '否' }}
+              </template>
+            </el-table-column>
+
+            <el-table-column
+              label="操作"
+              width="220"
+              align="center"
+            >
+              <template slot-scope="scope">
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleOpenDetail(scope.row)"
+                >
+                  进入知识库
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleEdit(scope.row)"
+                >
+                  编辑
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
+                  style="color: #f56c6c"
+                  @click="handleDelete(scope.row)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <pagination
+            ref="minusPaging"
+            :total="pagination.total"
+            :page.sync="pagination.page"
+            :limit.sync="pagination.pageSize"
+            @pagination="handlePageChange"
           />
-          <el-button type="primary" size="small" @click="handleSearch">
-            搜索
-          </el-button>
         </div>
       </div>
 
-      <!-- 表格 -->
-      <el-table
-        v-loading="loading"
-        :data="tableData"
-        border
-        style="width: 100%; margin-top: 20px"
-      >
-        <el-table-column
-          prop="title"
-          label="标题"
-          width="200"
-        >
-          <template slot-scope="scope">
-            <el-button
-              type="text"
-              @click="handleOpenDetail(scope.row)"
-            >
-              {{ scope.row.title }}
-            </el-button>
-          </template>
-        </el-table-column>
+      <!-- 知识库编辑弹窗 -->
+      <knowledge-base-edit-dialog
+        :visible.sync="editDialogVisible"
+        :kb-info="currentKbInfo"
+        :llm-list="llmList"
+        @success="handleEditSuccess"
+      />
 
-        <el-table-column
-          prop="remark"
-          label="描述"
-        />
-
-        <el-table-column
-          prop="isPublic"
-          label="是否公开"
-          width="100"
-        >
-          <template slot-scope="scope">
-            {{ scope.row.isPublic ? '是' : '否' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          prop="isStrict"
-          label="严格模式"
-          width="100"
-        >
-          <template slot-scope="scope">
-            {{ scope.row.isStrict ? '是' : '否' }}
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          label="操作"
-          width="220"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-button
-              type="text"
-              size="small"
-              @click="handleOpenDetail(scope.row)"
-            >
-              进入知识库
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              @click="handleEdit(scope.row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              type="text"
-              size="small"
-              style="color: #f56c6c"
-              @click="handleDelete(scope.row)"
-            >
-              删除
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          :current-page="pagination.page"
-          :page-size="pagination.pageSize"
-          :total="pagination.total"
-          layout="total, prev, pager, next"
-          @current-change="handlePageChange"
-        />
-      </div>
-    </div>
-
-    <!-- 知识库编辑弹窗 -->
-    <knowledge-base-edit-dialog
-      :visible.sync="editDialogVisible"
-      :kb-info="currentKbInfo"
-      :llm-list="llmList"
-      @success="handleEditSuccess"
-    />
-
-    <!-- 知识库详情弹窗 -->
-    <knowledge-base-detail-dialog
-      :visible.sync="detailDialogVisible"
-      :kb-uuid="currentKbUuid"
-      :kb-title="currentKbTitle"
-      @close="detailDialogVisible = false"
-    />
-  </el-dialog>
+      <!-- 知识库详情弹窗 -->
+      <knowledge-base-detail-dialog
+        :visible.sync="detailDialogVisible"
+        :kb-uuid="currentKbUuid"
+        :kb-title="currentKbTitle"
+        @close="detailDialogVisible = false"
+      />
+    </el-dialog>
+  </div>
 </template>
 
 <script>
@@ -150,6 +172,8 @@ import KnowledgeBaseDetailDialog from './KnowledgeBaseDetailDialog.vue'
 import { createEmptyKbInfo } from '../utils/knowledgeBaseUtils'
 import knowledgeBaseService from '../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
+import Pagination from '@/components/Pagination_for_dialog'
+import FieldHelp from '@/components/30_table/FieldHelp'
 
 export default {
   name: 'KnowledgeBaseManageDialog',
@@ -158,7 +182,9 @@ export default {
 
   components: {
     KnowledgeBaseEditDialog,
-    KnowledgeBaseDetailDialog
+    KnowledgeBaseDetailDialog,
+    Pagination,
+    FieldHelp
   },
 
   props: {
@@ -188,18 +214,10 @@ export default {
       detailDialogVisible: false,
       currentKbInfo: null,
       currentKbUuid: '',
-      currentKbTitle: ''
-    }
-  },
+      currentKbTitle: '',
 
-  computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
+      // 固定高度
+      divHeight: 530
     }
   },
 
@@ -259,8 +277,8 @@ export default {
     /**
      * 处理分页变化
      */
-    handlePageChange (page) {
-      this.search(page)
+    handlePageChange () {
+      this.search(this.pagination.page)
     },
 
     /**
@@ -283,14 +301,25 @@ export default {
      * 处理删除
      */
     handleDelete (row) {
-      this.$confirm(`删除后数据无法恢复，确定要删除知识库 ${row.title} 吗?`, '提示', {
+      const msgBox = this.$confirm(`删除后数据无法恢复，确定要删除知识库 ${row.title} 吗?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
+        type: 'warning',
+        customClass: 'kb-manage-delete-confirm'
+      })
+
+      // 动态设置 MessageBox wrapper 的 z-index - 延迟确保 DOM 已渲染
+      setTimeout(() => {
+        const wrapper = document.querySelector('.el-message-box__wrapper:has(.kb-manage-delete-confirm)')
+        if (wrapper) {
+          wrapper.style.zIndex = '9999999'
+        }
+      }, 100)
+
+      msgBox.then(async () => {
         try {
-          await knowledgeBaseService.delete(row.kbUuid) // ✅ 修正：使用kbUuid
-          const index = this.tableData.findIndex(item => item.kbUuid === row.kbUuid) // ✅ 修正：使用kbUuid
+          await knowledgeBaseService.delete(row.kbUuid)
+          const index = this.tableData.findIndex(item => item.kbUuid === row.kbUuid)
           if (index !== -1) {
             this.tableData.splice(index, 1)
           }
@@ -324,7 +353,7 @@ export default {
      * 关闭弹窗
      */
     handleClose () {
-      this.dialogVisible = false
+      this.$emit('update:visible', false)
     }
   }
 }
@@ -350,17 +379,5 @@ export default {
   display: flex;
   align-items: center;
 }
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
 </style>
 
-<style>
-/* 确保知识库管理弹窗在AI聊天框上层显示（非scoped，全局生效） */
-.kb-manage-dialog.el-dialog__wrapper {
-  z-index: 10100 !important;
-}
-</style>
