@@ -17,7 +17,7 @@
       top="5vh"
       @close="handleClose"
     >
-      <div style="height: 500px; overflow-y: auto;">
+      <div style="height: 550px; overflow-y: auto;">
         <div class="kb-detail-container">
           <div ref="minusToolbar" class="toolbar">
             <div class="toolbar-left">
@@ -80,15 +80,22 @@
             :element-loading-text="'正在拼命加载中...'"
             element-loading-background="rgba(255, 255, 255, 0.5)"
             :data="tableData"
+            height="400px"
             highlight-current-row
             fit
             stripe
             border
+            style="width: 100%; margin-top: 20px"
             @selection-change="handleSelectionChange"
           >
             <el-table-column
               type="selection"
               width="55"
+            />
+            <el-table-column
+              type="index"
+              width="45"
+              label="No"
             />
 
             <el-table-column
@@ -246,15 +253,13 @@
             </el-table-column>
           </el-table>
 
-          <div class="pagination-container">
-            <el-pagination
-              :current-page="pagination.page"
-              :page-size="pagination.pageSize"
-              :total="pagination.total"
-              layout="total, prev, pager, next, jumper"
-              @current-change="handlePageChange"
-            />
-          </div>
+          <pagination
+            ref="minusPaging"
+            :total="pagination.total"
+            :page.sync="pagination.page"
+            :limit.sync="pagination.pageSize"
+            @pagination="handlePageChange"
+          />
         </div>
       </div>
 
@@ -322,7 +327,7 @@ import ItemEmbeddingDialog from './ItemEmbeddingDialog.vue'
 import ItemGraphDialog from './ItemGraphDialog.vue'
 import FilePreview from '../components/FilePreview.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
-import { addResizeListener, removeResizeListener } from 'element-ui/src/utils/resize-event'
+import Pagination from '@/components/Pagination_for_dialog'
 
 export default {
   name: 'KnowledgeBaseDetailDialog',
@@ -335,7 +340,8 @@ export default {
     KnowledgeIndexDialog,
     ItemEmbeddingDialog,
     ItemGraphDialog,
-    FilePreview
+    FilePreview,
+    Pagination
   },
 
   props: {
@@ -361,7 +367,7 @@ export default {
       selectedItems: [],
       pagination: {
         page: 1,
-        pageSize: 10,
+        pageSize: 20,
         total: 0
       },
       editDialogVisible: false,
@@ -383,33 +389,20 @@ export default {
   },
 
   watch: {
-    visible (val) {
-      if (val && this.kbUuid) {
-        this.initData()
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.setUIheight()
-          }, 100)
-        })
-      } else {
-        this.stopIndexStatusPolling()
-      }
+    visible: {
+      handler (val) {
+        if (val && this.kbUuid) {
+          this.initData()
+        } else {
+          this.stopIndexStatusPolling()
+        }
+      },
+      immediate: true
     }
-  },
-
-  mounted () {
-    this.setUIheight()
-    this.$nextTick(() => {
-      addResizeListener(window.document.body, this.setUIheight)
-    })
   },
 
   beforeDestroy () {
     this.stopIndexStatusPolling()
-  },
-
-  destroyed () {
-    removeResizeListener(window.document.body, this.setUIheight)
   },
 
   methods: {
@@ -461,8 +454,7 @@ export default {
     /**
      * 分页变化
      */
-    handlePageChange (page) {
-      this.pagination.page = page
+    handlePageChange () {
       this.loadList()
     },
 
@@ -663,26 +655,8 @@ export default {
     handleClose () {
       this.$emit('update:visible', false)
       this.stopIndexStatusPolling()
-    },
-
-    /**
-     * 设置UI高度
-     */
-    setUIheight () {
-      const elementHeight = document.documentElement.clientHeight - 85
-      let minusHeight = 0
-
-      // 查找所有名称包含 'minus' 的 refs
-      if (this.$refs.minusToolbar) {
-        minusHeight += this.$refs.minusToolbar.offsetHeight
-      }
-
-      // 计算高度: viewport - 偏移 - minus区域 - 基础留白 - 弹窗额外留白
-      const calculatedHeight = elementHeight - minusHeight - 150 - 170
-      this.divHeight = calculatedHeight
-
-      return calculatedHeight
     }
+
   }
 }
 </script>
@@ -709,12 +683,6 @@ export default {
 .toolbar-right {
   display: flex;
   align-items: center;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
 }
 
 .dialog-footer {

@@ -222,10 +222,13 @@ export default {
   },
 
   watch: {
-    visible (val) {
-      if (val) {
-        this.initData()
-      }
+    visible: {
+      handler (val) {
+        if (val) {
+          this.initData()
+        }
+      },
+      immediate: true
     }
   },
 
