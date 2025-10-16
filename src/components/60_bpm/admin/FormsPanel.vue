@@ -84,7 +84,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 
 export default {
   name: 'FormsPanel',
-  components: { ellipsis,draggable },
+  components: { ellipsis, draggable },
   data () {
     return {
       moveSelect: '',

@@ -171,7 +171,7 @@
       </div>
 
     </el-form>
-<!--    <org-picker ref="orgPicker" :title="pickerTitle" multiple :type="orgPickerType" :selected="orgPickerSelected" @ok="selected" />-->
+    <!--    <org-picker ref="orgPicker" :title="pickerTitle" multiple :type="orgPickerType" :selected="orgPickerSelected" @ok="selected" />-->
 
     <SelectStaff
       v-if="settings.popsettings.one.visible"
@@ -195,7 +195,7 @@ import SelectStaff from '@/components/60_bpm/process/staffTreeDialog/index'
 
 export default {
   name: 'ApprovalNodeConfig',
-  components: { SelectStaff,OrgPicker, OrgItems },
+  components: { SelectStaff, OrgPicker, OrgItems },
   props: {
     config: {
       type: Object,

@@ -57,7 +57,7 @@ import { MessageBox } from 'element-ui'
 
 export default {
   name: 'FormProcessDesign',
-  components: { ellipsis,WDialog, LayoutHeader, FormBaseSetting, FormDesign, ProcessDesign, FormProSetting, MobilePreview },
+  components: { ellipsis, WDialog, LayoutHeader, FormBaseSetting, FormDesign, ProcessDesign, FormProSetting, MobilePreview },
   props: {
     visible: {
       type: Boolean,
@@ -341,8 +341,7 @@ export default {
           process: JSON.stringify(processNew),
           remark: this.setup.remark
         }
-        console.log('template',template)
-
+        console.log('template', template)
 
         // this.doSave((groupId, formId) => {
         //   this.isSave = true

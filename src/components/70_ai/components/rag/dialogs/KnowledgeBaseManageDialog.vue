@@ -105,10 +105,17 @@
 
             <el-table-column
               label="操作"
-              width="220"
+              width="320"
               align="center"
             >
               <template slot-scope="scope">
+                <el-button
+                  type="text"
+                  size="small"
+                  @click="handleChat(scope.row)"
+                >
+                  对话
+                </el-button>
                 <el-button
                   type="text"
                   size="small"
@@ -161,6 +168,14 @@
         :kb-title="currentKbTitle"
         @close="detailDialogVisible = false"
       />
+
+      <!-- 知识库对话弹窗 -->
+      <rag-chat-dialog
+        :visible.sync="ragChatDialogVisible"
+        :kb-uuid="currentKbUuid"
+        :kb-title="currentKbTitle"
+      />
+
     </el-dialog>
   </div>
 </template>
@@ -169,6 +184,7 @@
 import { mapActions } from 'vuex'
 import KnowledgeBaseEditDialog from './KnowledgeBaseEditDialog.vue'
 import KnowledgeBaseDetailDialog from './KnowledgeBaseDetailDialog.vue'
+import RagChatDialog from './RagChatDialog.vue'
 import { createEmptyKbInfo } from '../utils/knowledgeBaseUtils'
 import knowledgeBaseService from '../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -183,6 +199,7 @@ export default {
   components: {
     KnowledgeBaseEditDialog,
     KnowledgeBaseDetailDialog,
+    RagChatDialog,
     Pagination,
     FieldHelp
   },
@@ -212,6 +229,7 @@ export default {
       // 子弹窗控制
       editDialogVisible: false,
       detailDialogVisible: false,
+      ragChatDialogVisible: false,
       currentKbInfo: null,
       currentKbUuid: '',
       currentKbTitle: '',
@@ -332,6 +350,15 @@ export default {
           this.$message.error('删除失败: ' + (error.message || '未知错误'))
         }
       }).catch(() => {})
+    },
+
+    /**
+     * 处理对话
+     */
+    handleChat (row) {
+      this.currentKbUuid = row.kbUuid
+      this.currentKbTitle = row.title
+      this.ragChatDialogVisible = true
     },
 
     /**

@@ -167,7 +167,7 @@ export default {
       handler (newVal) {
         if (newVal && Array.isArray(newVal)) {
           this.dataJson.multipleSelData = [...newVal]
-          
+
           // 如果有新数据，发送给底部组件
           if (newVal.length > 0) {
             this.$nextTick(() => {
@@ -199,7 +199,7 @@ export default {
         // 检查数据是否真的有变化，避免不必要的同步
         const currentCount = this.dataJson.multipleSelData ? this.dataJson.multipleSelData.length : 0
         const newCount = _data.length
-        
+
         if (currentCount !== newCount || this.hasDataChanged(_data)) {
           this.dataJson.multipleSelData = _data
           // 同步表格选择状态
@@ -209,20 +209,25 @@ export default {
         }
       }
     })
-    
+
     // 如果有初始选择数据，发送给底部组件显示
     if (this.dataJson.multipleSelData && this.dataJson.multipleSelData.length > 0) {
       this.$nextTick(() => {
         EventBus.$emit(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT, this.dataJson.multipleSelData)
       })
     }
-    
+
     // 默认初始化显示（如果没有组织代码，使用默认值）
     this.$nextTick(() => {
       if (!this.dataJson.searchForm.code) {
         this.initShow()
       }
     })
+  },
+  beforeDestroy () {
+    // 组件销毁时移除事件监听，避免内存泄漏
+    EventBus.$off(this.EMITS.EMIT_ORG_DIALOG_CHANGE)
+    EventBus.$off(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT)
   },
   methods: {
     // tabs点击事件
@@ -258,17 +263,16 @@ export default {
         // 增加对象属性，columnTypeShowIcon，columnNameShowIcon
         const recorders = response.data.list
         const newRecorders = recorders.map(v => {
-          return { 
-            ...v, 
-            columnTypeShowIcon: false, 
-            columnNameShowIcon: false 
+          return {
+            ...v,
+            columnTypeShowIcon: false,
+            columnNameShowIcon: false
           }
         })
         this.dataJson.listData = newRecorders
         this.dataJson.paging = response.data
         this.dataJson.paging.records = {}
-        
-        
+
         // 加载完成后，自动勾选已经选择的员工
         this.$nextTick(() => {
           this.syncTableSelection()
@@ -283,11 +287,11 @@ export default {
       if (this.isSyncing) {
         return
       }
-      
+
       this.dataJson.multipleSelection = val
       // 更新内部维护的已选择数据
       this.dataJson.multipleSelData = deepCopy(val)
-      
+
       // 发送事件更新底部标签
       EventBus.$emit(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT, this.dataJson.multipleSelData)
     },
@@ -326,25 +330,25 @@ export default {
       if (!this.$refs.multipleTable) {
         return
       }
-      
+
       // 设置同步标志，防止触发handleSelectionChange
       this.isSyncing = true
-      
+
       try {
         // 先清空所有选择
         this.$refs.multipleTable.clearSelection()
-        
+
         // 遍历已选择的数据
         if (this.dataJson.multipleSelData && this.dataJson.multipleSelData.length > 0) {
           this.dataJson.multipleSelData.forEach(selectedItem => {
             let row = null
-            
+
             // 策略1：尝试多种标识字段匹配
             const selectedIdentifiers = [
               selectedItem.login_name,
               selectedItem.code,
               selectedItem.staff_code,
-              selectedItem.user_code, 
+              selectedItem.user_code,
               selectedItem.employee_code,
               selectedItem.staff_id,
               selectedItem.user_id,
@@ -353,7 +357,7 @@ export default {
               String(selectedItem.user_id),
               String(selectedItem.id)
             ].filter(Boolean) // 过滤掉undefined和null
-            
+
             // 尝试用所有可能的标识进行匹配
             for (const selectedId of selectedIdentifiers) {
               row = this.dataJson.listData.find(item => {
@@ -370,19 +374,19 @@ export default {
                        String(item.user_id) === selectedId ||
                        String(item.id) === selectedId
               })
-              
+
               if (row) {
                 break
               }
             }
-            
+
             // 策略2：如果按标识找不到，尝试按姓名匹配
             if (!row && selectedItem.name) {
               row = this.dataJson.listData.find(item => {
                 return item && item.name === selectedItem.name
               })
             }
-            
+
             // 如果找到，勾选该行
             if (row) {
               this.$nextTick(() => {
@@ -403,32 +407,27 @@ export default {
       if (!this.dataJson.multipleSelData || !newData) {
         return true
       }
-      
+
       if (this.dataJson.multipleSelData.length !== newData.length) {
         return true
       }
-      
+
       // 检查是否有不同的login_name
       const currentLoginNames = new Set(this.dataJson.multipleSelData.map(item => item.login_name))
       const newLoginNames = new Set(newData.map(item => item.login_name))
-      
+
       if (currentLoginNames.size !== newLoginNames.size) {
         return true
       }
-      
+
       for (const loginName of newLoginNames) {
         if (!currentLoginNames.has(loginName)) {
           return true
         }
       }
-      
+
       return false
     }
-  },
-  beforeDestroy () {
-    // 组件销毁时移除事件监听，避免内存泄漏
-    EventBus.$off(this.EMITS.EMIT_ORG_DIALOG_CHANGE)
-    EventBus.$off(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT)
   }
 }
 </script>

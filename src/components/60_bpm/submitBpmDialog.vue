@@ -62,7 +62,7 @@
                         />
                         <i class="status" style="display: none" />
                       </div>
-                      <span class="text" >{{ user.name }}</span>
+                      <span class="text">{{ user.name }}</span>
                     </div>
                     <span
                       v-if="task.isEdit &&(task.multiple || 0 === task.users.length)"
@@ -212,7 +212,7 @@ export default {
       }
     },
     listenVisible () {
-      return  this.internalVisible
+      return this.internalVisible
     },
     ...mapGetters([
       'name',

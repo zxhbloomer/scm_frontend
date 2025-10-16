@@ -5,6 +5,8 @@
 
 import { getTokenFromCookie } from './knowledgeBaseUtils'
 
+console.log('[SSE Utils] 文件已加载，版本: 2025-10-16-v3')
+
 /**
  * 通用SSE处理器（参考aiChatService.js）
  * @param {string} url - SSE端点URL
@@ -42,6 +44,8 @@ export function sseProcess (url, callbacks = {}, signal = null) {
         signal: abortSignal
       })
 
+      console.log('[SSE Process] 收到响应, status:', response.status, 'headers:', response.headers)
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
@@ -67,6 +71,50 @@ export function sseProcess (url, callbacks = {}, signal = null) {
         for (const message of messages) {
           if (message.trim() === '') continue
 
+          // 处理纯data行的SSE格式（Spring AI标准格式）
+          if (message.startsWith('data:')) {
+            const jsonData = message.slice(5).trim()
+
+            if (jsonData === '') {
+              continue
+            }
+
+            try {
+              // 解析ChatResponse JSON对象
+              const chatResponse = JSON.parse(jsonData)
+
+              // 检查顶层isError字段(严格模式错误拦截)
+              if (chatResponse.isError === true) {
+                const errorMsg = chatResponse.results?.[0]?.output?.content || '未知错误'
+                onError(new Error(errorMsg))
+                return
+              }
+
+              // 提取results数组
+              if (chatResponse.results && chatResponse.results.length > 0) {
+                const generation = chatResponse.results[0]
+                const content = generation.output?.content || ''
+
+                // 检查finishReason判断是否完成
+                const finishReason = generation.metadata?.finishReason
+                if (finishReason === 'stop') {
+                  onDone(content)
+                  return
+                } else if (finishReason === 'error') {
+                  onError(new Error(content || '未知错误'))
+                  return
+                } else if (content && content.trim().length > 0) {
+                  onChunk(content)
+                }
+              }
+            } catch (parseError) {
+              // JSON解析失败时不传递原始数据，避免显示"{...}"
+              console.warn('[SSE] JSON解析失败:', parseError.message)
+            }
+            continue
+          }
+
+          // 保留对命名事件的支持（向后兼容aideepin格式）
           let eventType = null
           let eventData = ''
 
@@ -92,10 +140,6 @@ export function sseProcess (url, callbacks = {}, signal = null) {
             case '[ERROR]':
               onError(new Error(eventData))
               return
-            default:
-              if (eventData && eventData.trim() !== '') {
-                onChunk(eventData)
-              }
           }
         }
       }

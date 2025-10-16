@@ -229,16 +229,18 @@ export default {
      * 开始流式响应
      */
     startStreaming (qaRecordUuid) {
+      console.log('[Dialog] startStreaming被调用, qaRecordUuid:', qaRecordUuid)
       this.sseAbortController = new AbortController()
 
       createKbQaStream(
         qaRecordUuid,
         {
           onStart: () => {
-            console.log('SSE流开始')
+            console.log('[Dialog] SSE流开始')
           },
 
           onThinking: () => {
+            console.log('[Dialog] 收到thinking事件')
             this.UPDATE_QA_RECORD({
               kbUuid: this.kbUuid,
               record: {
@@ -249,6 +251,7 @@ export default {
           },
 
           onChunk: (chunk) => {
+            console.log('[Dialog] onChunk被调用, chunk类型:', typeof chunk, '值:', chunk)
             this.APPEND_CHUNK({
               kbUuid: this.kbUuid,
               qaRecordUuid,

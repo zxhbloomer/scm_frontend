@@ -323,7 +323,7 @@ export default {
         this.dataJson.searchForm.pageCondition.sort = '-' + column.prop
       }
       this.getStaffDataList()
-    },
+    }
   }
 }
 </script>

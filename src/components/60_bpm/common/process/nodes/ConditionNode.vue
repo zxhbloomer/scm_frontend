@@ -45,7 +45,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 const groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 export default {
   name: 'ConditionNode',
-  components: { ellipsis,InsertButton },
+  components: { ellipsis, InsertButton },
   props: {
     config: {
       type: Object,

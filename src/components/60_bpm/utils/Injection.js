@@ -1,12 +1,12 @@
 import Vue from 'vue'
-import moment from "moment";
-import {Toast} from "vant";
+import moment from 'moment'
+import { Toast } from 'vant'
 
-//api后端接口地址
-Vue.prototype.BASE_URL = `http://${process.env.NODE_ENV === 'development' ? "localhost" : "106.13.16.28"}:10000`;
-Vue.prototype.BASE_URL = "api";
+// api后端接口地址
+Vue.prototype.BASE_URL = `http://${process.env.NODE_ENV === 'development' ? 'localhost' : '106.13.16.28'}:10000`
+Vue.prototype.BASE_URL = 'api'
 
-//文件资源前缀，用来拼接URL
+// 文件资源前缀，用来拼接URL
 Vue.prototype.RES_FILE_PRE = Vue.prototype.BASE_URL
 
 /**
@@ -14,7 +14,7 @@ Vue.prototype.RES_FILE_PRE = Vue.prototype.BASE_URL
  * @param url 资源url
  * @returns {string}
  */
-Vue.prototype.$getRes = function (url){
+Vue.prototype.$getRes = function (url) {
   const reg = /^(http:|https:).*/gi
   return reg.test(url) ? url : this.RES_FILE_PRE + url
 }
@@ -28,16 +28,16 @@ Vue.prototype.$isNotEmpty = function (obj) {
   return (obj !== undefined && obj !== null && obj !== '' && obj !== 'null')
 }
 
-//判断是否设备为移动端
-Vue.prototype.$isMobile = function (){
+// 判断是否设备为移动端
+Vue.prototype.$isMobile = function () {
   return window.screen.width < 450
 }
 
-//弹错误信息
-Vue.prototype.$showError = function (err){
-  if (Vue.prototype.$isMobile()){
+// 弹错误信息
+Vue.prototype.$showError = function (err) {
+  if (Vue.prototype.$isMobile()) {
     Toast.fail(err)
-  }else {
+  } else {
     Vue.prototype.$message.error(err)
   }
 }
@@ -50,7 +50,7 @@ Vue.prototype.$showError = function (err){
  * @returns {*}
  */
 Vue.prototype.$getDefalut = function (obj, key, df) {
-  return (obj === undefined || key === undefined || !this.$isNotEmpty(obj[key])) ? df : obj[key];
+  return (obj === undefined || key === undefined || !this.$isNotEmpty(obj[key])) ? df : obj[key]
 }
 
 /**
@@ -70,7 +70,7 @@ Vue.prototype.$deepCopy = function (obj) {
 Vue.prototype.$err = (err, def) => {
   try {
     Vue.prototype.$message.error(err.response.data.message || err.response.data)
-  }catch (e){
+  } catch (e) {
     Vue.prototype.$message.error(def)
   }
 }
@@ -94,9 +94,9 @@ Vue.prototype.$timeCoverStr = function (s, e) {
   if (s === e) {
     return '0'
   }
-  let start = moment(s);
-  let end = moment(e)
-  let years = end.diff(s, 'years')
+  const start = moment(s)
+  const end = moment(e)
+  const years = end.diff(s, 'years')
   let months = end.diff(s, 'months')
   let days = end.diff(s, 'days')
   let hours = end.diff(s, 'hours')
@@ -106,16 +106,16 @@ Vue.prototype.$timeCoverStr = function (s, e) {
   minutes = minutes % 60
   hours = hours % 24
   months = months % 12
-  //因为每月天不固定，所以天要特殊动态处理
+  // 因为每月天不固定，所以天要特殊动态处理
   if (start.date() < end.date()) {
     days = end.date() - start.date()
     if (minutes > 0 || hours > 0) {
-      days--;
+      days--
     }
   }
-  //处理超过俩月且天超过31
+  // 处理超过俩月且天超过31
   if (days > 31 && end.month() - start.month() >= 2) {
-    //将日期推至上月求差
+    // 将日期推至上月求差
     days = end.diff(start.add(end.month() - start.month() - 1, 'month'), 'days')
   }
   return `${years > 0 ? years + '年 ' : ''}${months > 0 ? months + '个月 ' : ''}
@@ -129,7 +129,7 @@ Vue.prototype.$timeCoverStr = function (s, e) {
  * @returns {number}
  */
 Array.prototype.remove = function (value) {
-  let index = this.indexOf(value)
+  const index = this.indexOf(value)
   if (index > -1) {
     this.splice(index, 1)
   }
@@ -143,18 +143,17 @@ Array.prototype.remove = function (value) {
  * @returns {number}
  */
 Array.prototype.removeByKey = function (key, val) {
-  let index = this.findIndex(value => value[key] === val)
+  const index = this.findIndex(value => value[key] === val)
   if (index > -1) {
     this.splice(index, 1)
   }
   return index
 }
 
-//对象数组转map
+// 对象数组转map
 Array.prototype.toMap = function (key) {
-  let map = new Map()
+  const map = new Map()
   this.forEach(v => map.set(v[key], v))
   return map
 }
-
 

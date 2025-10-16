@@ -44,7 +44,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 
 export default {
   name: 'ConcurrentNode',
-  components: { ellipsis,InsertButton },
+  components: { ellipsis, InsertButton },
   props: {
     config: {
       type: Object,

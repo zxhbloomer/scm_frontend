@@ -100,7 +100,7 @@ export default {
       this.$emit('closeMeCancel')
     },
     // 正常关闭页面
-    handleMeOk(val) {
+    handleMeOk (val) {
       this.$emit('closeMeOk', val)
     },
     init () {

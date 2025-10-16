@@ -76,11 +76,11 @@
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
     >
-<!--      <el-table-column-->
-<!--        type="selection"-->
-<!--        width="45"-->
-<!--        prop="id"-->
-<!--      />-->
+      <!--      <el-table-column-->
+      <!--        type="selection"-->
+      <!--        width="45"-->
+      <!--        prop="id"-->
+      <!--      />-->
       <el-table-column
         type="index"
         width="45"
@@ -337,7 +337,7 @@ export default {
       if (this.meDialogStatus) {
         this.$emit('rowDbClick', _data)
       }
-    },
+    }
   }
 }
 </script>

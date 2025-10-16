@@ -1,25 +1,25 @@
 <template>
   <div class="base-setup" @click="showIconSelect = false">
     <el-form ref="baseSetting" :model="setup" label-position="top" label-width="80px">
-<!--      <el-form-item label="表单图标">-->
-<!--        <i :class="setup.logo.icon" :style="'background:' + setup.logo.background" />-->
-<!--        <span class="change-icon">-->
-<!--          <span>-->
-<!--            <span>选择背景色</span>-->
-<!--            <el-color-picker v-model="setup.logo.background" show-alpha size="small" :predefine="colors" />-->
-<!--          </span>-->
-<!--          <span>-->
-<!--            <span>选择图标</span>-->
-<!--            <el-popover placement="bottom-start" width="402" trigger="click">-->
-<!--              <div class="icon-select">-->
-<!--                <i v-for="(i, id) in icons" :key="id" :class="i" @click="setup.logo.icon = i" />-->
-<!--              </div>-->
-<!--              <i slot="reference" :class="setup.logo.icon" />-->
-<!--            </el-popover>-->
-<!--            &lt;!&ndash;<i :class="setup.icon" @click.stop="showIconSelect = true"></i>&ndash;&gt;-->
-<!--          </span>-->
-<!--        </span>-->
-<!--      </el-form-item>-->
+      <!--      <el-form-item label="表单图标">-->
+      <!--        <i :class="setup.logo.icon" :style="'background:' + setup.logo.background" />-->
+      <!--        <span class="change-icon">-->
+      <!--          <span>-->
+      <!--            <span>选择背景色</span>-->
+      <!--            <el-color-picker v-model="setup.logo.background" show-alpha size="small" :predefine="colors" />-->
+      <!--          </span>-->
+      <!--          <span>-->
+      <!--            <span>选择图标</span>-->
+      <!--            <el-popover placement="bottom-start" width="402" trigger="click">-->
+      <!--              <div class="icon-select">-->
+      <!--                <i v-for="(i, id) in icons" :key="id" :class="i" @click="setup.logo.icon = i" />-->
+      <!--              </div>-->
+      <!--              <i slot="reference" :class="setup.logo.icon" />-->
+      <!--            </el-popover>-->
+      <!--            &lt;!&ndash;<i :class="setup.icon" @click.stop="showIconSelect = true"></i>&ndash;&gt;-->
+      <!--          </span>-->
+      <!--        </span>-->
+      <!--      </el-form-item>-->
       <el-form-item label="表单名称" :rules="getRule('请输入表单名称')" prop="name">
         <el-input v-model="setup.name" size="medium" />
       </el-form-item>
@@ -32,12 +32,12 @@
             :value="op.id"
           />
         </el-select>
-<!--        <el-popover placement="bottom-end" title="新建表单分组" width="300" trigger="click">-->
-<!--          <el-input v-model="newGroup" size="medium" placeholder="请输入新的分组名">-->
-<!--            <el-button slot="append" size="medium" type="primary" @click="addGroup">提交</el-button>-->
-<!--          </el-input>-->
-<!--          <el-button slot="reference" icon="el-icon-plus" size="medium" type="primary">新建分组</el-button>-->
-<!--        </el-popover>-->
+        <!--        <el-popover placement="bottom-end" title="新建表单分组" width="300" trigger="click">-->
+        <!--          <el-input v-model="newGroup" size="medium" placeholder="请输入新的分组名">-->
+        <!--            <el-button slot="append" size="medium" type="primary" @click="addGroup">提交</el-button>-->
+        <!--          </el-input>-->
+        <!--          <el-button slot="reference" icon="el-icon-plus" size="medium" type="primary">新建分组</el-button>-->
+        <!--        </el-popover>-->
       </el-form-item>
       <el-form-item label="表单说明">
         <el-input
@@ -63,20 +63,20 @@
         </el-select>
         <el-input v-model="setup.settings.notify.title" size="medium" style="width: 68%; float:right;" placeholder="消息通知标题" />
       </el-form-item>
-<!--      <el-form-item label="谁可以管理此表单">-->
-<!--        <el-select-->
-<!--          v-model="setup.settings.admin"-->
-<!--          value-key="name"-->
-<!--          class="select-u"-->
-<!--          placeholder="请选择可以管理此表单的人员"-->
-<!--          size="medium"-->
-<!--          clearable-->
-<!--          multiple-->
-<!--          @click.native="selectUser('admin')"-->
-<!--        >-->
-<!--          <el-option v-for="(wc, index) in setup.settings.admin" :key="index" :label="wc.name" :value="wc" />-->
-<!--        </el-select>-->
-<!--      </el-form-item>-->
+      <!--      <el-form-item label="谁可以管理此表单">-->
+      <!--        <el-select-->
+      <!--          v-model="setup.settings.admin"-->
+      <!--          value-key="name"-->
+      <!--          class="select-u"-->
+      <!--          placeholder="请选择可以管理此表单的人员"-->
+      <!--          size="medium"-->
+      <!--          clearable-->
+      <!--          multiple-->
+      <!--          @click.native="selectUser('admin')"-->
+      <!--        >-->
+      <!--          <el-option v-for="(wc, index) in setup.settings.admin" :key="index" :label="wc.name" :value="wc" />-->
+      <!--        </el-select>-->
+      <!--      </el-form-item>-->
     </el-form>
     <org-picker ref="orgPicker" title="请选择可以管理此表单的人员" multiple :selected="select" @ok="selected" />
   </div>

@@ -97,7 +97,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 
 export default {
   name: 'ConditionGroupItemConfig',
-  components: { ellipsis,OrgPicker, OrgItems },
+  components: { ellipsis, OrgPicker, OrgItems },
   data () {
     return {
       ValueType,

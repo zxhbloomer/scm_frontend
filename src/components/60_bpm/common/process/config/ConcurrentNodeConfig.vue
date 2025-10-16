@@ -6,9 +6,9 @@
 
 <script>
 export default {
-  name: "ConcurrentNodeConfig",
+  name: 'ConcurrentNodeConfig',
   components: {},
-  data() {
+  data () {
     return {}
   },
   methods: {}

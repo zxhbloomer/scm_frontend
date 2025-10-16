@@ -41,13 +41,13 @@
         :loading="settings.loading"
         @click="handleSelect"
       >确定</el-button>
-<!--      <el-button-->
-<!--        type="primary"-->
-<!--        icon="el-icon-edit-outline"-->
-<!--        :disabled="!settings.btnShowStatus.showInsert"-->
-<!--        :loading="settings.loading"-->
-<!--        @click="handleClear"-->
-<!--      >清空</el-button>-->
+      <!--      <el-button-->
+      <!--        type="primary"-->
+      <!--        icon="el-icon-edit-outline"-->
+      <!--        :disabled="!settings.btnShowStatus.showInsert"-->
+      <!--        :loading="settings.loading"-->
+      <!--        @click="handleClear"-->
+      <!--      >清空</el-button>-->
       <el-button
         type="primary"
         icon="el-icon-camera-solid"
@@ -68,7 +68,7 @@ import FooterSelected from '@/components/60_bpm/process/staffTreeDialog/bottom/f
 import { EventBus } from '@/common/eventbus/eventbus'
 
 export default {
-  components: {  LeftTree, RightUserStaff, RightPostStaff, FooterSelected },
+  components: { LeftTree, RightUserStaff, RightPostStaff, FooterSelected },
   directives: { elDragDialog },
   props: {
     visible: {
@@ -189,7 +189,7 @@ export default {
     },
     handleClose () {
       // 插入选择的
-      EventBus.$emit(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT,[])
+      EventBus.$emit(this.EMITS.EMIT_ORG_DIALOG_STAFF_SELECT, [])
       this.$emit('emitCloseCancel')
     }
   }

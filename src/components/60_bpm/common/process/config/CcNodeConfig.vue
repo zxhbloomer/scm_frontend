@@ -5,7 +5,7 @@
       <el-checkbox v-model="config.shouldAdd" label="允许发起人添加抄送人" />
     </div>
     <org-items v-model="select" />
-<!--    <org-picker ref="orgPicker" multiple type="org" :selected="select" @ok="selected" />-->
+    <!--    <org-picker ref="orgPicker" multiple type="org" :selected="select" @ok="selected" />-->
     <SelectStaff
       v-if="settings.popsettings.one.visible"
       :visible="settings.popsettings.one.visible"
@@ -27,7 +27,7 @@ import SelectStaff from '@/components/60_bpm/process/staffTreeDialog/index.vue'
 
 export default {
   name: 'CcNodeConfigVue',
-  components: {SelectStaff, OrgPicker, OrgItems },
+  components: { SelectStaff, OrgPicker, OrgItems },
   props: {
     config: {
       type: Object,

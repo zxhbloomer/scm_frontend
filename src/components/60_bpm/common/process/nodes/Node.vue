@@ -38,7 +38,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 
 export default {
   name: 'Node',
-  components: { ellipsis,InsertButton },
+  components: { ellipsis, InsertButton },
   props: {
     // 是否为根节点
     isRoot: {

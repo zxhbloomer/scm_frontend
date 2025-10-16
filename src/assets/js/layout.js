@@ -24,7 +24,7 @@ const initPanelsLayout = [
   { x: 5, y: 0, w: 12, h: 10, i: 15, name: '当月信息统计-采购' },
   { x: 5, y: 0, w: 12, h: 10, i: 16, name: '当月信息统计-销售' },
   { x: 5, y: 0, w: 7, h: 6, i: 17, name: '今日信息统计' },
-  { x: 5, y: 0, w: 12, h: 10, i: 18, name: '预警' },
+  { x: 5, y: 0, w: 12, h: 10, i: 18, name: '预警' }
 ]
 
 export { initPanelsLayout }

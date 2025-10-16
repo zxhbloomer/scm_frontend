@@ -39,7 +39,7 @@ import WDialog from '@/components/60_bpm/common/WDialog'
 
 export default {
   name: 'FormProSetting',
-  components: {WDialog, PrintTemplateDesign },
+  components: { WDialog, PrintTemplateDesign },
   data () {
     return {
       printVisible: false,

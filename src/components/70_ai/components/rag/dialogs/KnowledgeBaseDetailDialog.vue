@@ -108,7 +108,6 @@
 
             <el-table-column
               prop="brief"
-              :auto-fit="true"
               label="摘要"
               min-width="250"
               show-overflow-tooltip
@@ -208,7 +207,7 @@
 
             <el-table-column
               label="操作"
-              width="280"
+              width="320"
               fixed="right"
             >
               <template slot-scope="scope">
@@ -312,6 +311,7 @@
           :item-data="currentItem"
         />
       </el-dialog>
+
     </el-dialog>
   </div>
 </template>

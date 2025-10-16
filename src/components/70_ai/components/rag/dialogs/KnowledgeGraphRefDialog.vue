@@ -2,8 +2,8 @@
   <el-dialog
     v-el-drag-dialog
     :visible.sync="dialogVisible"
-    title="引用图谱"
-    width="1200px"
+    title="引用图11谱"
+    width="800px"
     :close-on-click-modal="false"
     @close="handleClose"
   >

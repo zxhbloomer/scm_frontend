@@ -1,10 +1,18 @@
 <template>
   <el-dialog
+    v-if="visible"
     v-el-drag-dialog
-    :visible.sync="dialogVisible"
+    :visible="visible"
     title="批量上传文档"
-    width="800px"
+    :modal="true"
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="false"
+    :append-to-body="true"
+    :modal-append-to-body="true"
+    class="kb-upload-dialog"
+    width="800px"
+    destroy-on-close
     @close="handleClose"
   >
     <el-form :model="formData" label-width="120px">
@@ -101,17 +109,6 @@ export default {
     }
   },
 
-  computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
-    }
-  },
-
   watch: {
     visible (val) {
       if (val) {
@@ -183,8 +180,8 @@ export default {
         const response = await knowledgeBaseService.batchCreateItems(params)
 
         this.$message.success(`成功创建 ${response.data.length} 个知识项`)
-        this.dialogVisible = false
         this.$emit('success')
+        this.$emit('update:visible', false)
       } catch (error) {
         console.error('批量创建知识项失败:', error)
         this.$message.error('批量创建失败：' + (error.message || '未知错误'))
@@ -201,7 +198,8 @@ export default {
     },
 
     handleClose () {
-      this.dialogVisible = false
+      this.$emit('update:visible', false)
+      this.$emit('close')
       this.resetForm()
     }
   }

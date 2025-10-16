@@ -1,10 +1,17 @@
 <template>
   <el-dialog
+    v-if="visible"
     v-el-drag-dialog
-    :visible.sync="dialogVisible"
+    :visible="visible"
     title="选择索引类型"
-    width="550px"
+    :modal="true"
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="false"
+    :append-to-body="true"
+    :modal-append-to-body="true"
+    width="550px"
+    destroy-on-close
     @close="handleClose"
   >
     <div class="index-container">
@@ -96,15 +103,6 @@ export default {
   },
 
   computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
-    },
-
     canSubmit () {
       return this.selectedItems.length > 0 && this.selectedIndexTypes.length > 0
     }
@@ -164,7 +162,8 @@ export default {
      * 关闭弹窗
      */
     handleClose () {
-      this.dialogVisible = false
+      this.$emit('update:visible', false)
+      this.$emit('close')
       this.selectedIndexTypes = [INDEX_TYPE.EMBEDDING]
     }
   }

@@ -155,7 +155,7 @@ const varExp = /\${\w+}/gi
 
 export default {
   name: 'FormDesign',
-  components: { WDialog,draggable, FormComponentConfig, FormDesignRender, FormRender, FormConfig },
+  components: { WDialog, draggable, FormComponentConfig, FormDesignRender, FormRender, FormConfig },
   data () {
     return {
       formData: {},

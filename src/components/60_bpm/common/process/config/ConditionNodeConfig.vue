@@ -59,7 +59,7 @@ import ellipsis from '@/components/60_bpm/common/Ellipsis'
 
 export default {
   name: 'ConditionNodeConfig',
-  components: {ellipsis, HttpReq, draggable, GroupItem },
+  components: { ellipsis, HttpReq, draggable, GroupItem },
   props: {
     config: {
       type: Object,

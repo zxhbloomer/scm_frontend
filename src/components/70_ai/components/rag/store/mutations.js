@@ -123,13 +123,13 @@ export default {
   /**
    * 追加内容块到QA记录的回答中
    */
-  APPEND_CHUNK (state, { kbUuid, recordUuid, chunk }) {
+  APPEND_CHUNK (state, { kbUuid, qaRecordUuid, chunk }) {
     const records = state.kbUuidToQaRecords[kbUuid]
     if (!records) return
 
-    const record = records.find(r => r.uuid === recordUuid)
+    const record = records.find(r => r.uuid === qaRecordUuid)
     if (record) {
-      record.answer = (record.answer || '') + chunk
+      record.qaAnswer = (record.qaAnswer || '') + chunk
     }
   },
 

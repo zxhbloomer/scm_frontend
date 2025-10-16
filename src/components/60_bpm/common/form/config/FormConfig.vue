@@ -41,7 +41,7 @@ import deepCopy from 'deep-copy'
 
 export default {
   name: 'FormConfig',
-  components: { WDialog,ActionConfig, CodeEditor, ConditionConfig },
+  components: { WDialog, ActionConfig, CodeEditor, ConditionConfig },
   data () {
     return {
       ruleDialog: false,

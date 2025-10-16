@@ -138,23 +138,23 @@ export default {
       }
     },
     // 获取组织类型标签颜色
-    getOrgTagType(type) {
-      switch(type) {
+    getOrgTagType (type) {
+      switch (type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
-          return 'warning'  // 橙色
+          return 'warning' // 橙色
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:
-          return ''         // 蓝色（默认）
+          return '' // 蓝色（默认）
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_DEPT:
-          return 'success'  // 绿色
+          return 'success' // 绿色
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION:
-          return 'info'     // 灰色
+          return 'info' // 灰色
         default:
           return 'info'
       }
     },
     // 获取组织类型标签文本
-    getOrgTagText(type) {
-      switch(type) {
+    getOrgTagText (type) {
+      switch (type) {
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_GROUP:
           return '集团'
         case this.CONSTANTS.DICT_ORG_SETTING_TYPE_COMPANY:

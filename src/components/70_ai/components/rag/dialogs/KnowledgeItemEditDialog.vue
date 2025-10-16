@@ -1,10 +1,17 @@
 <template>
   <el-dialog
+    v-if="visible"
     v-el-drag-dialog
-    :visible.sync="dialogVisible"
+    :visible="visible"
     :title="isEdit ? '编辑知识点' : '新增知识点'"
-    width="700px"
+    :modal="true"
     :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    :show-close="false"
+    :append-to-body="true"
+    :modal-append-to-body="true"
+    width="700px"
+    destroy-on-close
     @close="handleClose"
   >
     <div class="item-edit-container">
@@ -88,15 +95,6 @@ export default {
   },
 
   computed: {
-    dialogVisible: {
-      get () {
-        return this.visible
-      },
-      set (val) {
-        this.$emit('update:visible', val)
-      }
-    },
-
     isEdit () {
       return this.formData.id && this.formData.id !== '0'
     },
@@ -173,7 +171,8 @@ export default {
      * 关闭弹窗
      */
     handleClose () {
-      this.dialogVisible = false
+      this.$emit('update:visible', false)
+      this.$emit('close')
       this.formData = createEmptyKbItem()
     }
   }

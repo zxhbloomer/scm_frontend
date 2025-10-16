@@ -9,6 +9,8 @@
     </div>
     <div style="display:flex;">
       <avatar
+        v-for="(user, i) in task.users"
+        :key="'user_'+i"
         :closeable="user.enableEdit"
         :size="38"
         show-y
@@ -16,8 +18,6 @@
         :type="user.type"
         :name="user.name"
         @close="delUser(i)"
-        v-for="(user, i) in task.users"
-        :key="'user_'+i"
       />
       <span v-if="task.enableEdit && (task.multiple || task.users.length === 0)" class="add-user" @click="$emit('addUser', task)">
         <i class="el-icon-plus" />
