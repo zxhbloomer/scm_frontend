@@ -287,6 +287,10 @@ export default {
         // 编辑模式
         this.formData = { ...this.kbInfo }
 
+        // 类型转换：将数字转换为布尔值
+        this.formData.isPublic = Boolean(this.formData.isPublic)
+        this.formData.isStrict = Boolean(this.formData.isStrict)
+
         // 确保模型ID有效
         if (this.formData.ingestModelId) {
           const modelExists = this.llmList.find(

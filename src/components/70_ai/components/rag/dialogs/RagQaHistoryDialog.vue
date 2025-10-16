@@ -1,12 +1,17 @@
 <template>
   <el-dialog
+    v-if="dialogVisible"
     v-el-drag-dialog
     :visible.sync="dialogVisible"
-    title="历史问答记录"
-    width="80%"
+    title="选择索引类型"
+    :modal="true"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
-    append-to-body
+    :show-close="false"
+    :append-to-body="true"
+    :modal-append-to-body="true"
+    width="1000px"
+    destroy-on-close
     @close="handleClose"
     @opened="handleOpened"
   >
@@ -126,10 +131,16 @@
 
     <!-- 详情对话框 -->
     <el-dialog
+      v-el-drag-dialog
       :visible.sync="detailDialogVisible"
       title="问答详情"
       width="70%"
-      append-to-body
+      :modal="true"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+      :append-to-body="true"
+      :modal-append-to-body="true"
     >
       <div v-if="currentDetail" class="detail-content">
         <div class="detail-section">
