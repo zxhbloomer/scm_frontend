@@ -45,6 +45,16 @@
             placeholder="请输入内容"
           />
         </el-form-item>
+
+        <!-- 立即索引开关（仅新增时显示） -->
+        <el-form-item v-if="!isEdit" label="立即索引">
+          <el-switch
+            v-model="indexAfterCreate"
+            active-text="是"
+            inactive-text="否"
+          />
+          <span class="form-tip">（开启后将自动创建向量索引和知识图谱）</span>
+        </el-form-item>
       </el-form>
     </div>
 
@@ -90,7 +100,8 @@ export default {
   data () {
     return {
       submitting: false,
-      formData: createEmptyKbItem()
+      formData: createEmptyKbItem(),
+      indexAfterCreate: true // 立即索引开关，默认开启
     }
   },
 
@@ -147,7 +158,11 @@ export default {
 
       this.submitting = true
       try {
-        const response = await knowledgeBaseService.itemSaveOrUpdate(this.formData)
+        // 调用API时传递 indexAfterCreate 参数
+        const response = await knowledgeBaseService.itemSaveOrUpdate(
+          this.formData,
+          this.indexAfterCreate
+        )
         const data = response.data || response
 
         this.$message.success(this.isEdit ? '编辑成功' : '创建成功')
@@ -174,6 +189,7 @@ export default {
       this.$emit('update:visible', false)
       this.$emit('close')
       this.formData = createEmptyKbItem()
+      this.indexAfterCreate = true // 重置为默认值
     }
   }
 }
@@ -186,5 +202,11 @@ export default {
 
 .dialog-footer {
   text-align: right;
+}
+
+.form-tip {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #909399;
 }
 </style>

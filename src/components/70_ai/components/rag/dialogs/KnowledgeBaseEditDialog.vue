@@ -80,22 +80,6 @@
                 style="width: 100%"
               />
             </div>
-
-            <div class="form-item">
-              <div class="form-label">Token计数器</div>
-              <el-radio-group
-                v-model="formData.ingestTokenEstimator"
-                @change="handleTokenEstimatorChange"
-              >
-                <el-radio
-                  v-for="item in tokenEstimatorOptions"
-                  :key="item.value"
-                  :label="item.value"
-                >
-                  {{ item.label }}
-                </el-radio>
-              </el-radio-group>
-            </div>
           </div>
         </el-collapse-item>
 
@@ -135,21 +119,48 @@
         <el-collapse-item title="文档召回设置" name="retrieve">
           <div class="form-section">
             <div class="form-item">
-              <div class="form-label">文档召回最大数量</div>
-              <el-input-number
+              <div class="form-label">
+                文档召回最大数量
+                <el-tooltip placement="top">
+                  <div slot="content">
+                    控制返回文档片段的数量（Top-K检索）<br>
+                    LangChain推荐值：5（适用于大多数场景）<br>
+                    合理范围：3-100
+                  </div>
+                  <i class="el-icon-question" />
+                </el-tooltip>
+              </div>
+              <el-slider
                 v-model="formData.retrieveMaxResults"
-                style="width: 100%"
+                :min="1"
+                :max="100"
+                :step="1"
+                :marks="{5: '推荐'}"
+                show-input
+                :show-input-controls="false"
               />
             </div>
 
             <div class="form-item">
-              <div class="form-label">文档召回最小分数</div>
-              <el-input-number
+              <div class="form-label">
+                文档召回最小分数
+                <el-tooltip placement="top">
+                  <div slot="content">
+                    过滤低质量结果，只保留相似度 ≥ 阈值的文档<br>
+                    LangChain推荐值：0.5（标准模式）<br>
+                    0.0-0.5：宽松模式，0.5-0.7：标准模式，0.7-1.0：严格模式
+                  </div>
+                  <i class="el-icon-question" />
+                </el-tooltip>
+              </div>
+              <el-slider
                 v-model="formData.retrieveMinScore"
-                :precision="1"
                 :min="0"
                 :max="1"
-                style="width: 100%"
+                :step="0.05"
+                :marks="{0.5: '推荐'}"
+                show-input
+                :show-input-controls="false"
               />
             </div>
           </div>
@@ -169,13 +180,27 @@
             </div>
 
             <div class="form-item">
-              <div class="form-label">响应时的创造性/随机性</div>
-              <el-input-number
+              <div class="form-label">
+                响应时的创造性/随机性（Temperature）
+                <el-tooltip placement="top">
+                  <div slot="content">
+                    控制LLM输出的随机性和创造性<br>
+                    0：完全确定性（每次相同问题得到相同答案）<br>
+                    0-0.3：推荐用于知识库问答（准确性优先）<br>
+                    0.5-0.7：适合对话场景（平衡准确性和自然性）<br>
+                    0.7-1.0：高创造性（适合创意写作，可能产生幻觉）
+                  </div>
+                  <i class="el-icon-question" />
+                </el-tooltip>
+              </div>
+              <el-slider
                 v-model="formData.queryLlmTemperature"
-                :precision="1"
                 :min="0"
                 :max="1"
-                style="width: 100%"
+                :step="0.1"
+                :marks="{0: '推荐', 0.5: '平衡', 1.0: '创造'}"
+                show-input
+                :show-input-controls="false"
               />
             </div>
           </div>
@@ -198,7 +223,6 @@
 </template>
 
 <script>
-import { TOKEN_ESTIMATOR } from '../constants/knowledgeBase'
 import { createEmptyKbInfo } from '../utils/knowledgeBaseUtils'
 import knowledgeBaseService from '../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -227,8 +251,7 @@ export default {
     return {
       submitting: false,
       formData: createEmptyKbInfo(),
-      activeNames: ['vector'],
-      tokenEstimatorOptions: TOKEN_ESTIMATOR
+      activeNames: ['vector']
     }
   },
 
@@ -312,18 +335,6 @@ export default {
           }
         }
       }
-
-      // 设置默认Token计数器
-      if (!this.formData.ingestTokenEstimator && TOKEN_ESTIMATOR.length > 0) {
-        this.formData.ingestTokenEstimator = TOKEN_ESTIMATOR[0].value
-      }
-    },
-
-    /**
-     * 处理Token计数器变化
-     */
-    handleTokenEstimatorChange (value) {
-      this.formData.ingestTokenEstimator = value
     },
 
     /**
@@ -375,8 +386,18 @@ export default {
   margin-bottom: 20px;
 }
 
+/* 折叠面板内的 form-section 不需要底部间距 */
+.config-collapse .form-section {
+  margin-bottom: 0;
+}
+
 .form-item {
   margin-bottom: 20px;
+}
+
+/* 折叠面板内最后一个 form-item 不需要底部间距 */
+.config-collapse .form-item:last-child {
+  margin-bottom: 0;
 }
 
 .form-label {
@@ -411,5 +432,20 @@ export default {
 /* 知识库编辑弹窗样式调整（非scoped，全局生效） */
 .kb-edit-dialog .el-dialog {
   margin-top: 5vh !important;
+}
+
+/* 手风琴折叠面板样式 */
+.kb-edit-dialog .el-collapse-item__content {
+  background-color: #f5f7fa;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.kb-edit-dialog .el-collapse-item__wrap {
+  border-bottom: none;
+}
+
+.kb-edit-dialog .el-collapse-item {
+  margin-bottom: 10px;
 }
 </style>

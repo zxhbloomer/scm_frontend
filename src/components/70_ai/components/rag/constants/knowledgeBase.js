@@ -24,12 +24,12 @@ export const EMPTY_KB_INFO = {
   remark: '',
   isPublic: false,
   isStrict: true,
-  ingestMaxOverlap: 0,
+  ingestMaxOverlap: 200, // LangChain推荐值：200 tokens（10%重叠率，chunk_size=2000）
   ingestTokenEstimator: '',
   ingestModelName: '',
   ingestModelId: '',
-  retrieveMaxResults: 0,
-  retrieveMinScore: 0,
+  retrieveMaxResults: 5, // LangChain推荐值：5（适用于大多数场景）
+  retrieveMinScore: 0.5, // LangChain推荐值：0.5（过滤低质量结果）
   querySystemMessage: '',
   queryLlmTemperature: 0
 }
