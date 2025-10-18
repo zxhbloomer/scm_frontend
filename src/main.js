@@ -19,6 +19,10 @@ import App from './App'
 import store from './store'
 import router from './router'
 
+// 导入并安装 AI 模块
+import AiModule from '@/components/70_ai'
+Vue.use(AiModule, { store })
+
 import './icons' // icon
 
 // Vite环境下的SVG图标虚拟模块导入

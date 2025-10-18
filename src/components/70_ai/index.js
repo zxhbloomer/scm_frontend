@@ -24,6 +24,9 @@ import aiChatService from './api/aiChatService.js'
 // 工具和混入
 import chatMixin from './utils/chatMixin.js'
 
+// Store模块
+import aiStoreModules from './store'
+
 // 导出所有组件
 export {
   // 主要组件
@@ -51,6 +54,12 @@ export {
 // Vue插件安装方法
 export default {
   install (Vue, options = {}) {
+    // 动态注册Vuex Store模块
+    const { store } = options
+    if (store && !store.state.chat) {
+      store.registerModule('chat', aiStoreModules.modules.chat)
+    }
+
     // 注册全局组件
     Vue.component('ChatBubble', ChatBubble)
     Vue.component('ChatPanel', ChatPanel)
@@ -75,8 +84,8 @@ export default {
   }
 }
 
-// Vuex模块导入辅助（如果需要）
-// export { default as chatStore } from '@/store/modules/70_chat'
+// Vuex模块已通过动态注册方式集成
+// Store模块会在插件install时自动注册到全局store
 
 // 样式文件导入（如果需要全局样式）
 // import './styles/chat.scss'
