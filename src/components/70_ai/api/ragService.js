@@ -147,9 +147,7 @@ class RAGService {
         }
       }
     } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('RAG SSE request aborted')
-      } else {
+      if (error.name !== 'AbortError') {
         console.error('RAG SSE error:', error)
         onError(error.message || '请求失败')
       }

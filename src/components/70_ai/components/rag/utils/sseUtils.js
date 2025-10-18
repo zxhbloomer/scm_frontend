@@ -4,8 +4,6 @@
 
 import { getTokenFromCookie } from './knowledgeBaseUtils'
 
-console.log('[SSE Utils] 文件已加载，版本: 2025-10-16-v3')
-
 /**
  * 通用SSE流式数据处理器
  * @param {string} url - SSE端点URL
@@ -42,8 +40,6 @@ export function sseProcess (url, callbacks = {}, signal = null) {
         credentials: 'include',
         signal: abortSignal
       })
-
-      console.log('[SSE Process] 收到响应, status:', response.status, 'headers:', response.headers)
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)

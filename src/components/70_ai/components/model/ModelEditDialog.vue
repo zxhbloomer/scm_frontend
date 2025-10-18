@@ -327,13 +327,10 @@ export default {
 
       try {
         const detail = await getModelConfigDetail(this.currentModelId)
-        console.log('模型详情数据:', detail)
-        console.log('高级设置数据:', detail.advSettingVoList)
 
         // 如果后端没有返回高级设置，根据供应商和基础模型生成默认配置
         let advSettings = detail.advSettingVoList || []
         if (advSettings.length === 0 && detail.providerName && detail.baseName) {
-          console.log('后端未返回高级设置，生成默认配置')
           advSettings = getModelDefaultConfig(detail.providerName, detail.baseName)
         }
 
@@ -343,7 +340,6 @@ export default {
           // 字段名映射：API返回advSettingVoList，前端使用advSettingDTOList
           advSettingDTOList: advSettings
         }
-        console.log('表单高级设置:', this.form.advSettingDTOList)
       } catch (error) {
         console.error('获取模型详情失败:', error)
         this.$message.error('获取模型详情失败')
