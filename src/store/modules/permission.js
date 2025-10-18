@@ -1,7 +1,9 @@
+/* eslint-disable no-unused-vars */
 import { constantRoutes, convertToOneRouter, setAsyncRouters, setRedirectRouter, deepRecursiveLoadComponent } from '@/router'
 import { getPermissionAndTopNavApi } from '@/api/user'
 import { asyncRoutesArray, asyncRoutesAll, topNav } from '@/router/devMenu'
 import deepcopy from 'deep-copy'
+/* eslint-enable no-unused-vars */
 
 /**
  * Use meta.role to determine if the current user has permission

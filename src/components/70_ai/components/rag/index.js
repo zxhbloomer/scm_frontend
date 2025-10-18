@@ -6,24 +6,22 @@
 import KnowledgeBaseManageDialog from './dialogs/KnowledgeBaseManageDialog.vue'
 import KnowledgeBaseEditDialog from './dialogs/KnowledgeBaseEditDialog.vue'
 import KnowledgeBaseDetailDialog from './dialogs/KnowledgeBaseDetailDialog.vue'
-import KnowledgeBaseQaDialog from './dialogs/KnowledgeBaseQaDialog.vue'
 import KnowledgeItemEditDialog from './dialogs/KnowledgeItemEditDialog.vue'
 import KnowledgeItemUploadDialog from './dialogs/KnowledgeItemUploadDialog.vue'
 import KnowledgeIndexDialog from './dialogs/KnowledgeIndexDialog.vue'
-import KnowledgeSelectorDialog from './dialogs/KnowledgeSelectorDialog.vue'
-import KnowledgeReferenceDialog from './dialogs/KnowledgeReferenceDialog.vue'
-import KnowledgeGraphRefDialog from './dialogs/KnowledgeGraphRefDialog.vue'
 import ItemEmbeddingDialog from './dialogs/ItemEmbeddingDialog.vue'
 import ItemGraphDialog from './dialogs/ItemGraphDialog.vue'
+import RagChatDialog from './dialogs/RagChatDialog.vue'
+import RagChatGraphDialog from './dialogs/RagChatGraphDialog.vue'
+import RagChatRefDialog from './dialogs/RagChatRefDialog.vue'
+import RagQaHistoryDialog from './dialogs/RagQaHistoryDialog.vue'
 
 import ItemEmbeddingList from './components/ItemEmbeddingList.vue'
 import ItemGraphViewer from './components/ItemGraphViewer.vue'
 import FilePreview from './components/FilePreview.vue'
 import QaMessageList from './components/QaMessageList.vue'
 
-import knowledgeBaseService from './api/knowledgeBaseService'
-
-import knowledgeBaseMixin from './mixins/knowledgeBaseMixin'
+import knowledgeBaseService from '../../api/knowledgeBaseService'
 
 import * as knowledgeBaseConstants from './constants/knowledgeBase'
 import * as indexTypes from './constants/indexTypes'
@@ -32,33 +30,29 @@ import * as knowledgeBaseUtils from './utils/knowledgeBaseUtils'
 import * as sseUtils from './utils/sseUtils'
 import * as graphUtils from './utils/graphUtils'
 
-import knowledgeBaseStore from './store'
-
 export {
   KnowledgeBaseManageDialog,
   KnowledgeBaseEditDialog,
   KnowledgeBaseDetailDialog,
-  KnowledgeBaseQaDialog,
   KnowledgeItemEditDialog,
   KnowledgeItemUploadDialog,
   KnowledgeIndexDialog,
-  KnowledgeSelectorDialog,
-  KnowledgeReferenceDialog,
-  KnowledgeGraphRefDialog,
   ItemEmbeddingDialog,
   ItemGraphDialog,
+  RagChatDialog,
+  RagChatGraphDialog,
+  RagChatRefDialog,
+  RagQaHistoryDialog,
   ItemEmbeddingList,
   ItemGraphViewer,
   FilePreview,
   QaMessageList,
   knowledgeBaseService,
-  knowledgeBaseMixin,
   knowledgeBaseConstants,
   indexTypes,
   knowledgeBaseUtils,
   sseUtils,
-  graphUtils,
-  knowledgeBaseStore
+  graphUtils
 }
 
 export default {
@@ -66,15 +60,15 @@ export default {
     Vue.component('KnowledgeBaseManageDialog', KnowledgeBaseManageDialog)
     Vue.component('KnowledgeBaseEditDialog', KnowledgeBaseEditDialog)
     Vue.component('KnowledgeBaseDetailDialog', KnowledgeBaseDetailDialog)
-    Vue.component('KnowledgeBaseQaDialog', KnowledgeBaseQaDialog)
     Vue.component('KnowledgeItemEditDialog', KnowledgeItemEditDialog)
     Vue.component('KnowledgeItemUploadDialog', KnowledgeItemUploadDialog)
     Vue.component('KnowledgeIndexDialog', KnowledgeIndexDialog)
-    Vue.component('KnowledgeSelectorDialog', KnowledgeSelectorDialog)
-    Vue.component('KnowledgeReferenceDialog', KnowledgeReferenceDialog)
-    Vue.component('KnowledgeGraphRefDialog', KnowledgeGraphRefDialog)
     Vue.component('ItemEmbeddingDialog', ItemEmbeddingDialog)
     Vue.component('ItemGraphDialog', ItemGraphDialog)
+    Vue.component('RagChatDialog', RagChatDialog)
+    Vue.component('RagChatGraphDialog', RagChatGraphDialog)
+    Vue.component('RagChatRefDialog', RagChatRefDialog)
+    Vue.component('RagQaHistoryDialog', RagQaHistoryDialog)
     Vue.component('ItemEmbeddingList', ItemEmbeddingList)
     Vue.component('ItemGraphViewer', ItemGraphViewer)
     Vue.component('FilePreview', FilePreview)

@@ -76,7 +76,7 @@
 <script>
 // ✅ 引入 SCM 标准上传组件
 import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile'
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
@@ -129,7 +129,7 @@ export default {
      * }
      */
     handleUploadSuccess (res) {
-      // 参考comment.vue的实现：将timestamp设置到data中
+      // 处理timestamp字段
       const timestamp = res.response.data.timestamp || res.response.timestamp
 
       const fileInfo = {

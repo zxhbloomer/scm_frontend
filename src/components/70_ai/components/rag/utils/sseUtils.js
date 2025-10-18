@@ -1,6 +1,5 @@
 /**
- * SSE流式通信工具
- * 复用scm-ai的SSE模式，适配aideepin知识库问答格式
+ * SSE流式数据处理工具
  */
 
 import { getTokenFromCookie } from './knowledgeBaseUtils'
@@ -8,7 +7,7 @@ import { getTokenFromCookie } from './knowledgeBaseUtils'
 console.log('[SSE Utils] 文件已加载，版本: 2025-10-16-v3')
 
 /**
- * 通用SSE处理器（参考aiChatService.js）
+ * 通用SSE流式数据处理器
  * @param {string} url - SSE端点URL
  * @param {Object} callbacks - 回调函数
  * @param {AbortSignal} signal - 中止信号
@@ -114,7 +113,7 @@ export function sseProcess (url, callbacks = {}, signal = null) {
             continue
           }
 
-          // 保留对命名事件的支持（向后兼容aideepin格式）
+          // 保留对命名事件的支持（向后兼容性）
           let eventType = null
           let eventData = ''
 

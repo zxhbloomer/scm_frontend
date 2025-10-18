@@ -176,7 +176,7 @@
 </template>
 
 <script>
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import {
   initCytoscape,
   renderGraph,

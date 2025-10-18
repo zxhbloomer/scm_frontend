@@ -74,7 +74,7 @@
 
 <script>
 import { createEmptyKbItem } from '../utils/knowledgeBaseUtils'
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {

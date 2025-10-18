@@ -1,11 +1,9 @@
 /**
  * 知识库API服务
- * 基于aideepin API完整实现，使用scm的request封装
+ * 使用scm的request封装
  */
 
 import request from '@/utils/request'
-import { createKbQaStream } from '../utils/sseUtils'
-import { getTenantId } from '@/utils/tenant'
 
 class KnowledgeBaseService {
   constructor () {
@@ -223,95 +221,6 @@ class KnowledgeBaseService {
     })
   }
 
-  // ==================== QA 问答 ====================
-
-  /**
-   * 搜索QA记录
-   * @param {string} kbUuid - 知识库UUID
-   * @param {string} keyword - 关键词
-   * @param {number} currentPage - 当前页
-   * @param {number} pageSize - 每页大小
-   */
-  qaRecordSearch (kbUuid, keyword = '', currentPage = 1, pageSize = 20) {
-    return request({
-      url: `${this.baseURL}/qa/search`,
-      method: 'get',
-      params: {
-        kbUuid,
-        keyword,
-        currentPage,
-        pageSize
-      }
-    })
-  }
-
-  /**
-   * 添加QA记录
-   * @param {string} kbUuid - 知识库UUID
-   * @param {Object} qaContent - QA内容 { question, modelName }
-   */
-  qaRecordAdd (kbUuid, qaContent) {
-    return request({
-      url: `${this.baseURL}/qa/add/${kbUuid}`,
-      method: 'post',
-      data: qaContent
-    })
-  }
-
-  /**
-   * 删除QA记录
-   * @param {string} uuid - QA记录UUID
-   */
-  qaRecordDelete (uuid) {
-    return request({
-      url: `${this.baseURL}/qa/del/${uuid}`,
-      method: 'post'
-    })
-  }
-
-  /**
-   * 清空所有QA记录
-   */
-  qaRecordClear () {
-    return request({
-      url: `${this.baseURL}/qa/clear`,
-      method: 'post'
-    })
-  }
-
-  /**
-   * SSE流式问答
-   * @param {string} qaRecordUuid - QA记录UUID
-   * @param {Object} callbacks - 回调函数
-   * @param {AbortSignal} signal - 中止信号
-   * @returns {Function} 取消函数
-   */
-  qaAskStream (qaRecordUuid, callbacks, signal = null) {
-    return createKbQaStream(qaRecordUuid, callbacks, signal)
-  }
-
-  /**
-   * 获取嵌入引用
-   * @param {string} qaRecordUuid - QA记录UUID
-   */
-  embeddingRef (qaRecordUuid) {
-    return request({
-      url: `${this.baseURL}/qa/embedding-ref/${qaRecordUuid}`,
-      method: 'get'
-    })
-  }
-
-  /**
-   * 获取图谱引用
-   * @param {string} qaRecordUuid - QA记录UUID
-   */
-  graphRef (qaRecordUuid) {
-    return request({
-      url: `${this.baseURL}/qa/graph-ref/${qaRecordUuid}`,
-      method: 'get'
-    })
-  }
-
   /**
    * 批量创建知识项（从前端上传的文件数组）
    * @param {Object} params - 参数对象
@@ -330,61 +239,6 @@ class KnowledgeBaseService {
         indexAfterUpload: params.indexAfterUpload
       }
     })
-  }
-
-  // ==================== 文件操作 ====================
-
-  /**
-   * 加载文件内容
-   * @param {string} fileUrl - 文件URL
-   */
-  loadFileContent (fileUrl) {
-    return request({
-      url: fileUrl,
-      method: 'get',
-      responseType: 'text'
-    })
-  }
-
-  /**
-   * 构建上传URL
-   * @param {string} kbUuid - 知识库UUID
-   * @param {boolean} indexAfterUpload - 是否上传后立即索引
-   */
-  getUploadUrl (kbUuid, indexAfterUpload = false) {
-    const baseURL = process.env.VUE_APP_BASE_API || ''
-    return `${baseURL}/api/v1/ai/knowledge-base/upload/${kbUuid}?indexAfterUpload=${indexAfterUpload}`
-  }
-
-  /**
-   * 获取上传请求头
-   */
-  getUploadHeaders () {
-    const token = this._getToken()
-    const headers = {
-      'wms-Token': token,
-      'Authorization': token
-    }
-
-    // 添加租户ID（使用统一方法）
-    const tenantId = getTenantId()
-    if (tenantId) {
-      headers['X-Tenant-ID'] = tenantId
-    }
-
-    return headers
-  }
-
-  // ==================== 私有方法 ====================
-
-  /**
-   * 获取Token（从Cookie）
-   * @private
-   */
-  _getToken () {
-    const cookies = document.cookie.split(';')
-    const tokenCookie = cookies.find(row => row.trim().startsWith('wms-Token='))
-    return tokenCookie ? tokenCookie.split('=')[1] : ''
   }
 }
 

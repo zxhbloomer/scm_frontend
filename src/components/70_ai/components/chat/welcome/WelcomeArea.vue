@@ -115,7 +115,7 @@ export default {
   data () {
     return {
       displayQuestions: [],
-      // 来自备份aiChatService.js的快捷问题列表
+      // 快捷问题列表
       quickQuestions: [
         '如何创建采购订单？',
         '库存不足怎么处理？',
@@ -181,12 +181,12 @@ export default {
       return 'el-icon-chat-dot-round'
     },
 
-    // 来自备份aiChatService.js的智能问题建议 - 完全复制
+    // 智能问题建议
     getQuestionSuggestions (userInput) {
       const suggestions = []
       const input = userInput.toLowerCase()
 
-      // 关键词匹配建议 - 来自备份的完整映射
+      // 关键词匹配建议
       const keywordSuggestions = {
         '采购': [
           '如何创建采购订单？',

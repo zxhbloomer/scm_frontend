@@ -317,7 +317,7 @@
 </template>
 
 <script>
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import { INDEX_CHECK_INTERVAL } from '../constants/indexTypes'
 import { createEmptyKbItem } from '../utils/knowledgeBaseUtils'
 import KnowledgeItemEditDialog from './KnowledgeItemEditDialog.vue'

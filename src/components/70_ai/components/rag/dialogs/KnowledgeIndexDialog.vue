@@ -76,7 +76,7 @@
 
 <script>
 import { INDEX_TYPE } from '../constants/indexTypes'
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {

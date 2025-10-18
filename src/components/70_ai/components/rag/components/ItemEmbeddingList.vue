@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import knowledgeBaseService from '../api/knowledgeBaseService'
+import knowledgeBaseService from '../../../api/knowledgeBaseService'
 
 export default {
   name: 'ItemEmbeddingList',

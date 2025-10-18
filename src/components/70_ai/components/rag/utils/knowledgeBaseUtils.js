@@ -1,6 +1,5 @@
 /**
  * 知识库工具函数
- * 基于aideepin知识库逻辑
  */
 
 import { EMPTY_KB_INFO, EMPTY_KB_ITEM, EMPTY_QA_RECORD } from '../constants/knowledgeBase'
@@ -56,16 +55,6 @@ export function getFileMimeType (fileName) {
 }
 
 /**
- * 检查文件是否支持
- * @param {string} fileName - 文件名
- */
-export function isFileSupported (fileName) {
-  const supportedExtensions = ['txt', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']
-  const ext = getFileExtension(fileName)
-  return supportedExtensions.includes(ext)
-}
-
-/**
  * 格式化文件大小
  * @param {number} bytes - 字节数
  */
@@ -75,31 +64,6 @@ export function formatFileSize (bytes) {
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-/**
- * 验证知识库配置
- * 注意：aideepin依赖后端验证，前端只检查必填项
- * @param {Object} kbInfo - 知识库信息
- */
-export function validateKbInfo (kbInfo) {
-  const errors = []
-
-  if (!kbInfo.title || kbInfo.title.trim() === '') {
-    errors.push('标题不能为空')
-  }
-
-  return errors
-}
-
-/**
- * 构建知识库上传URL
- * @param {string} kbUuid - 知识库UUID
- * @param {boolean} indexAfterUpload - 是否上传后立即索引
- */
-export function buildUploadUrl (kbUuid, indexAfterUpload = false) {
-  const baseURL = process.env.VUE_APP_BASE_API || ''
-  return `${baseURL}/api/knowledge-base/upload/${kbUuid}?indexAfterUpload=${indexAfterUpload}`
 }
 
 /**

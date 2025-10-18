@@ -1,6 +1,6 @@
 /**
  * 知识图谱工具函数
- * 基于aideepin图谱逻辑，使用cytoscape.js
+ * 使用cytoscape.js进行图谱可视化
  */
 
 import cytoscape from 'cytoscape'
@@ -83,9 +83,6 @@ export function initCytoscape (containerOrId) {
       ]
     })
 
-    console.log('[graphUtils] Cytoscape实例创建成功，准备返回cy对象')
-    console.log('[graphUtils] cy对象类型:', typeof cy)
-    console.log('[graphUtils] cy对象:', cy)
     return cy
   } catch (e) {
     console.error('[graphUtils] Cytoscape实例创建失败:', e)
@@ -100,10 +97,6 @@ export function initCytoscape (containerOrId) {
  * @returns {Object} { nodes, edges }
  */
 export function transformGraphData (vertices, edges) {
-  console.log('[graphUtils] 开始转换图谱数据')
-  console.log('[graphUtils] 输入顶点数:', vertices.length)
-  console.log('[graphUtils] 输入边数:', edges.length)
-
   const nodes = vertices.map(vertex => ({
     group: 'nodes',
     data: {
@@ -112,9 +105,6 @@ export function transformGraphData (vertices, edges) {
       description: vertex.description
     }
   }))
-
-  console.log('[graphUtils] 转换后节点数:', nodes.length)
-  console.log('[graphUtils] 节点数据示例:', nodes[0])
 
   const edgeElements = edges.map(edge => {
     const edgeData = {
@@ -127,11 +117,8 @@ export function transformGraphData (vertices, edges) {
         description: edge.description
       }
     }
-    console.log('[graphUtils] 边数据:', edge, '-> 转换后:', edgeData)
     return edgeData
   })
-
-  console.log('[graphUtils] 转换后边数:', edgeElements.length)
 
   return { nodes, edges: edgeElements }
 }
@@ -149,8 +136,6 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     return
   }
 
-  console.log('[graphUtils] renderGraph开始, 顶点数:', vertices.length, '边数:', edges.length)
-
   const {
     clearExisting = true,
     layout = 'cose',
@@ -160,23 +145,17 @@ export function renderGraph (cy, vertices, edges, options = {}) {
 
   // 清除现有元素
   if (clearExisting) {
-    console.log('[graphUtils] 清除现有元素')
     cy.$('node').remove()
     cy.$('edge').remove()
   }
 
   // 转换数据
-  console.log('[graphUtils] 转换数据...')
   const { nodes, edges: edgeElements } = transformGraphData(vertices, edges)
-
-  console.log('[graphUtils] 数据转换完成, 节点:', nodes.length, '边:', edgeElements.length)
 
   // 添加节点
   if (nodes.length > 0) {
-    console.log('[graphUtils] 添加节点到cytoscape...')
     try {
       cy.add(nodes)
-      console.log('[graphUtils] 节点添加成功')
     } catch (e) {
       console.error('[graphUtils] 添加节点失败:', e)
     }
@@ -192,10 +171,8 @@ export function renderGraph (cy, vertices, edges, options = {}) {
 
   // 添加边
   if (edgeElements.length > 0) {
-    console.log('[graphUtils] 添加边到cytoscape...')
     try {
       cy.add(edgeElements)
-      console.log('[graphUtils] 边添加成功')
     } catch (e) {
       console.error('[graphUtils] 添加边失败:', e)
       console.error('[graphUtils] 失败的边数据:', edgeElements)
@@ -210,10 +187,7 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     }
   }
 
-  console.log('[graphUtils] renderGraph完成，当前cy元素数:', cy.elements().length)
-
   // 应用布局
-  console.log('[graphUtils] 应用布局:', layout)
   applyLayout(cy, layout)
 }
 
@@ -228,17 +202,10 @@ export function applyLayout (cy, layoutName = 'cose') {
     return
   }
 
-  console.log('[graphUtils] applyLayout开始, 布局名称:', layoutName)
-
   try {
     const layoutOptions = getLayoutOptions(layoutName)
-    console.log('[graphUtils] 布局选项:', layoutOptions)
-
     const layout = cy.layout(layoutOptions)
-    console.log('[graphUtils] 布局对象创建成功，开始运行...')
-
     layout.run()
-    console.log('[graphUtils] 布局运行完成')
   } catch (e) {
     console.error('[graphUtils] 布局应用失败:', e)
   }
@@ -314,16 +281,6 @@ export function getLayoutOptions (layoutName = 'cose') {
   }
 
   return layouts[layoutName] || layouts.cose
-}
-
-/**
- * 检查图谱是否为空
- * @param {Object} cy - cytoscape实例
- * @returns {boolean}
- */
-export function isGraphEmpty (cy) {
-  if (!cy) return true
-  return cy.elements().length === 0
 }
 
 /**
@@ -412,40 +369,4 @@ export function fitToCanvas (cy, padding = 50) {
   if (!cy) return
 
   cy.fit(cy.elements(), padding)
-}
-
-/**
- * 缩放图谱到节点
- * @param {Object} cy - cytoscape实例
- * @param {string} nodeId - 节点ID
- */
-export function zoomToNode (cy, nodeId) {
-  if (!cy) return
-
-  const node = findNode(cy, nodeId)
-  if (node) {
-    cy.animate({
-      fit: {
-        eles: node,
-        padding: 50
-      },
-      duration: 500
-    })
-  }
-}
-
-/**
- * 获取节点的邻居
- * @param {Object} cy - cytoscape实例
- * @param {string} nodeId - 节点ID
- * @returns {Array} 邻居节点列表
- */
-export function getNodeNeighbors (cy, nodeId) {
-  if (!cy) return []
-
-  const node = findNode(cy, nodeId)
-  if (!node) return []
-
-  const neighbors = node.neighborhood('node')
-  return neighbors.map(n => n.data())
 }
