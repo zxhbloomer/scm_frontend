@@ -169,13 +169,32 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     }
   }
 
+  // 创建节点ID集合用于验证边的有效性
+  const nodeIds = new Set(nodes.map(node => node.data.id))
+
+  // 过滤有效的边（源节点和目标节点都存在）
+  const validEdges = edgeElements.filter(edge => {
+    const hasSource = nodeIds.has(edge.data.source)
+    const hasTarget = nodeIds.has(edge.data.target)
+
+    if (!hasSource || !hasTarget) {
+      console.warn(
+        `[graphUtils] 跳过无效边 ${edge.data.id}: ` +
+        `source=${edge.data.source}(${hasSource ? '存在' : '不存在'}), ` +
+        `target=${edge.data.target}(${hasTarget ? '存在' : '不存在'})`
+      )
+      return false
+    }
+    return true
+  })
+
   // 添加边
-  if (edgeElements.length > 0) {
+  if (validEdges.length > 0) {
     try {
-      cy.add(edgeElements)
+      cy.add(validEdges)
     } catch (e) {
       console.error('[graphUtils] 添加边失败:', e)
-      console.error('[graphUtils] 失败的边数据:', edgeElements)
+      console.error('[graphUtils] 失败的边数据:', validEdges)
     }
 
     // 绑定边点击事件
@@ -185,6 +204,12 @@ export function renderGraph (cy, vertices, edges, options = {}) {
         onEdgeClick(clickedEdge.data())
       })
     }
+  }
+
+  // 如果有被过滤掉的边，显示统计信息
+  const filteredCount = edgeElements.length - validEdges.length
+  if (filteredCount > 0) {
+    console.warn(`[graphUtils] 过滤了 ${filteredCount} 条无效边（源或目标节点不存在）`)
   }
 
   // 应用布局
