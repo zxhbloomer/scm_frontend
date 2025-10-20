@@ -214,7 +214,7 @@
                       </div>
 
                       <el-switch
-                        :value="item.status"
+                        :value="item.enabled"
                         :disabled="!hasPermission()"
                         @change="(val) => changeStatus(val, item)"
                       />
