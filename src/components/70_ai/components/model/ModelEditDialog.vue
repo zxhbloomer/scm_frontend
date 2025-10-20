@@ -27,7 +27,7 @@
           </div>
 
           <div class="section-content">
-            <el-form-item label="模型名称" prop="name" class="model-name-form">
+            <el-form-item label="模型名称" prop="modelName" class="model-name-form">
               <template #label>
                 <div class="flex items-center">
                   模型名称
@@ -37,7 +37,7 @@
                 </div>
               </template>
               <el-input
-                v-model="form.name"
+                v-model="form.modelName"
                 maxlength="255"
                 placeholder="请输入模型名称"
                 show-word-limit
@@ -46,8 +46,8 @@
 
             <el-row :gutter="20">
               <el-col :span="12">
-                <el-form-item label="模型类型" prop="type">
-                  <el-select v-model="form.type" placeholder="请选择模型类型" class="w-full">
+                <el-form-item label="模型类型" prop="modelType">
+                  <el-select v-model="form.modelType" placeholder="请选择模型类型" class="w-full">
                     <el-option
                       v-for="option in modelTypeOptions"
                       :key="option.value"
@@ -58,15 +58,15 @@
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="基础模型" prop="baseName">
+                <el-form-item label="基础模型" prop="deploymentName">
                   <el-autocomplete
-                    v-model="form.baseName"
+                    v-model="form.deploymentName"
                     :fetch-suggestions="fetchSuggestions"
                     placeholder="请输入或选择基础模型"
                     class="w-full"
                     clearable
                     @select="selectAutoComplete"
-                    @clear="clearBaseName"
+                    @clear="clearDeploymentName"
                   >
                     <template #default="{ item }">
                       <div class="flex w-full items-center gap-2">
@@ -81,17 +81,17 @@
               </el-col>
             </el-row>
 
-            <el-form-item label="API地址" prop="apiUrl">
+            <el-form-item label="API地址" prop="baseUrl">
               <el-input
-                v-model="form.apiUrl"
+                v-model="form.baseUrl"
                 maxlength="255"
                 placeholder="请输入API地址"
               />
             </el-form-item>
 
-            <el-form-item label="API密钥" prop="appKey">
+            <el-form-item label="API密钥" prop="apiKey">
               <el-input
-                v-model="form.appKey"
+                v-model="form.apiKey"
                 type="password"
                 maxlength="255"
                 placeholder="请输入API密钥"
@@ -179,15 +179,11 @@
 import {
   modelTypeOptions,
   ModelTypeEnum,
-  ModelPermissionTypeEnum,
-  ModelOwnerTypeTypeEnum,
   baseModelTypeMap,
   ModelBaseTypeEnum
 } from '../../constants/model'
-import {
-  getModelDefaultConfig,
-  transformModelConfig
-} from '../../utils/modelUtils'
+// 删除了ModelPermissionTypeEnum, ModelOwnerTypeTypeEnum - 新系统不使用
+// 删除了getModelDefaultConfig, transformModelConfig - 新系统使用内置方法
 import {
   editModelConfig,
   getModelConfigDetail
@@ -226,37 +222,45 @@ export default {
       loading: false,
       baseModelTypeOptions: [],
 
-      // 表单数据
+      // 表单数据 - 字段名对应新后端AiModelConfigVo
       form: {
         id: '',
-        name: '',
-        type: ModelTypeEnum.LLM,
-        providerName: ModelBaseTypeEnum.DeepSeek,
-        permissionType: ModelPermissionTypeEnum.PUBLIC,
-        status: true,
-        owner: '',
-        ownerType: ModelOwnerTypeTypeEnum.SYSTEM,
-        baseName: '',
-        appKey: '',
-        apiUrl: '',
+        modelName: '', // 从name改为modelName
+        modelType: ModelTypeEnum.LLM, // 从type改为modelType
+        provider: ModelBaseTypeEnum.DeepSeek, // 从providerName改为provider
+        enabled: true, // 从status改为enabled
+        deploymentName: '', // 从baseName改为deploymentName
+        apiKey: '', // 从appKey改为apiKey
+        baseUrl: '', // 从apiUrl改为baseUrl
+        // 高级参数直接字段
+        temperature: 0.7,
+        maxTokens: 1024,
+        topP: 1.0,
+        timeout: 60,
+        // 模型能力标记
+        supportChat: false,
+        supportVision: false,
+        supportEmbedding: false,
+        // 保留advSettingDTOList用于UI展示
         advSettingDTOList: []
+        // 删除owner, ownerType, permissionType - 新系统不使用
       },
 
-      // 表单验证规则
+      // 表单验证规则 - 更新为新字段名
       formRules: {
-        name: [
+        modelName: [
           { required: true, message: '请输入模型名称', trigger: 'blur' }
         ],
-        type: [
+        modelType: [
           { required: true, message: '请选择模型类型', trigger: 'change' }
         ],
-        baseName: [
+        deploymentName: [
           { required: true, message: '请选择基础模型', trigger: 'blur' }
         ],
-        apiUrl: [
+        baseUrl: [
           { required: true, message: '请输入API地址', trigger: 'blur' }
         ],
-        appKey: [
+        apiKey: [
           { required: true, message: '请输入API密钥', trigger: 'blur' }
         ]
       }
@@ -269,6 +273,29 @@ export default {
     modelTitle () {
       const action = this.currentModelId ? '编辑模型' : '添加模型'
       return `${action}（${this.supplierModelItem.name}）`
+    },
+
+    /**
+     * 根据模型类型过滤基础模型列表
+     */
+    filteredBaseModelOptions () {
+      if (!this.form.modelType) {
+        return this.baseModelTypeOptions
+      }
+
+      // 根据模型类型筛选对应能力的模型
+      return this.baseModelTypeOptions.filter(model => {
+        switch (this.form.modelType) {
+          case 'LLM':
+            return model.supportChat === true
+          case 'VISION':
+            return model.supportVision === true
+          case 'EMBEDDING':
+            return model.supportEmbedding === true
+          default:
+            return true
+        }
+      })
     }
   },
   watch: {
@@ -280,6 +307,19 @@ export default {
           this.getDetail()
         }
       }
+    },
+
+    /**
+     * 监听模型类型变化，清空基础模型选择和能力标记
+     */
+    'form.modelType' (newVal, oldVal) {
+      if (oldVal && newVal !== oldVal) {
+        this.form.deploymentName = ''
+        this.form.supportChat = false
+        this.form.supportVision = false
+        this.form.supportEmbedding = false
+        this.form.advSettingDTOList = []
+      }
     }
   },
   methods: {
@@ -289,21 +329,23 @@ export default {
     initForm () {
       this.form = {
         id: '',
-        name: '',
-        type: ModelTypeEnum.LLM,
-        providerName: this.supplierModelItem.value,
-        permissionType: this.modelKey === 'personal'
-          ? ModelPermissionTypeEnum.PRIVATE
-          : ModelPermissionTypeEnum.PUBLIC,
-        status: true,
-        owner: this.modelKey === 'personal' ? this.getCurrentUserId() : '',
-        ownerType: this.modelKey === 'personal'
-          ? ModelOwnerTypeTypeEnum.PERSONAL
-          : ModelOwnerTypeTypeEnum.SYSTEM,
-        baseName: '',
-        appKey: '',
-        apiUrl: '',
+        modelName: '',
+        modelType: ModelTypeEnum.LLM,
+        provider: this.supplierModelItem.value,
+        enabled: true,
+        deploymentName: '',
+        apiKey: '',
+        baseUrl: '',
+        temperature: 0.7,
+        maxTokens: 4096,
+        topP: 1.0,
+        timeout: 60,
+        // 模型能力标记
+        supportChat: false,
+        supportVision: false,
+        supportEmbedding: false,
         advSettingDTOList: []
+        // 删除owner, ownerType, permissionType - 新系统不使用
       }
     },
 
@@ -328,29 +370,65 @@ export default {
       try {
         const detail = await getModelConfigDetail(this.currentModelId)
 
-        // 如果后端没有返回高级设置，根据供应商和基础模型生成默认配置
-        let advSettings = detail.advSettingVoList || []
-        if (advSettings.length === 0 && detail.providerName && detail.baseName) {
-          advSettings = getModelDefaultConfig(detail.providerName, detail.baseName)
-        }
+        // 新系统：后端直接返回temperature, maxTokens, topP, timeout字段
+        // 需要将这些字段转换为advSettingDTOList用于UI展示
+        const advSettings = this.buildAdvSettingDTOList(detail)
 
         this.form = {
           ...this.form,
           ...detail,
-          // 字段名映射：API返回advSettingVoList，前端使用advSettingDTOList
           advSettingDTOList: advSettings
         }
       } catch (error) {
-        console.error('获取模型详情失败:', error)
         this.$message.error('获取模型详情失败')
       }
     },
 
     /**
-     * 自动完成建议
+     * 将后端字段转换为前端advSettingDTOList
+     */
+    buildAdvSettingDTOList (detail) {
+      return [
+        {
+          name: 'temperature',
+          label: 'Temperature',
+          value: detail.temperature || 0.7,
+          minValue: 0,
+          maxValue: 2,
+          enable: true
+        },
+        {
+          name: 'top_p',
+          label: 'Top P',
+          value: detail.topP || 1.0,
+          minValue: 0,
+          maxValue: 1,
+          enable: true
+        },
+        {
+          name: 'max_tokens',
+          label: 'Max Tokens',
+          value: detail.maxTokens || 4096,
+          minValue: 1,
+          maxValue: 100000,
+          enable: true
+        },
+        {
+          name: 'timeout',
+          label: 'Timeout (秒)',
+          value: detail.timeout || 60,
+          minValue: 1,
+          maxValue: 600,
+          enable: true
+        }
+      ]
+    },
+
+    /**
+     * 自动完成建议 - 使用根据模型类型过滤后的选项
      */
     fetchSuggestions (queryString, callback) {
-      const suggestions = this.baseModelTypeOptions
+      const suggestions = this.filteredBaseModelOptions
         .filter(item => {
           if (!queryString) return true
           return item.label.toLowerCase().includes(queryString.toLowerCase())
@@ -365,20 +443,32 @@ export default {
     },
 
     /**
-     * 选择自动完成选项
+     * 选择自动完成选项 - 自动填充能力标记（不显示在UI）
      */
     selectAutoComplete (item) {
-      this.form.baseName = item.value
-      this.form.advSettingDTOList = getModelDefaultConfig(
-        this.supplierModelItem.value,
-        this.form.baseName
-      )
+      this.form.deploymentName = item.value
+
+      // 自动填充模型能力标记（不显示在UI，但保存到后端）
+      const selectedModel = this.filteredBaseModelOptions.find(m => m.value === item.value)
+      if (selectedModel) {
+        this.form.supportChat = selectedModel.supportChat || false
+        this.form.supportVision = selectedModel.supportVision || false
+        this.form.supportEmbedding = selectedModel.supportEmbedding || false
+      }
+
+      // 新系统：生成默认高级设置用于UI展示
+      this.form.advSettingDTOList = this.buildAdvSettingDTOList({
+        temperature: 0.7,
+        topP: 1.0,
+        maxTokens: 4096,
+        timeout: 60
+      })
     },
 
     /**
      * 清空基础模型
      */
-    clearBaseName () {
+    clearDeploymentName () {
       this.form.advSettingDTOList = []
     },
 
@@ -429,8 +519,26 @@ export default {
     async handleSave (isContinue = false) {
       this.loading = true
       try {
-        // 转换数据格式
-        const submitData = transformModelConfig(this.form)
+        // 新系统：将advSettingDTOList转换为直接字段
+        const submitData = {
+          id: this.form.id,
+          modelName: this.form.modelName,
+          modelType: this.form.modelType,
+          provider: this.form.provider,
+          enabled: this.form.enabled,
+          deploymentName: this.form.deploymentName,
+          apiKey: this.form.apiKey,
+          baseUrl: this.form.baseUrl,
+          // 从advSettingDTOList中提取参数值
+          temperature: this.getParamValue('temperature'),
+          maxTokens: this.getParamValue('max_tokens'),
+          topP: this.getParamValue('top_p'),
+          timeout: this.getParamValue('timeout'),
+          // 能力标记
+          supportChat: this.form.supportChat,
+          supportVision: this.form.supportVision,
+          supportEmbedding: this.form.supportEmbedding
+        }
 
         await editModelConfig(submitData)
 
@@ -448,11 +556,18 @@ export default {
           this.handleDialogCancel()
         }
       } catch (error) {
-        console.error('保存模型失败:', error)
         this.$message.error('保存模型失败')
       } finally {
         this.loading = false
       }
+    },
+
+    /**
+     * 从advSettingDTOList中获取参数值
+     */
+    getParamValue (paramName) {
+      const param = this.form.advSettingDTOList.find(p => p.name === paramName)
+      return param && param.enable ? param.value : null
     },
 
     /**
@@ -630,5 +745,16 @@ export default {
 
 .text-gray-400 {
   color: #909399;
+}
+
+/* 模型能力复选框样式 */
+.capability-checkboxes {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.capability-checkboxes :deep(.el-checkbox) {
+  margin-right: 0;
 }
 </style>

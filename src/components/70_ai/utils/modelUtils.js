@@ -32,13 +32,17 @@ export function maskAppKey (key) {
  * @returns {string} - 图标名称
  */
 export function getModelSvg (modelItem) {
-  switch (modelItem.providerName) {
+  // 兼容新旧字段名：provider（新系统）、providerName（旧系统）
+  const provider = modelItem.provider || modelItem.providerName
+  switch (provider) {
     case ModelBaseTypeEnum.DeepSeek:
       return 'deepSeek'
     case ModelBaseTypeEnum.ZhiPuAI:
       return 'zhiPuAi'
     case ModelBaseTypeEnum.OpenAI:
       return 'openAi'
+    case ModelBaseTypeEnum.SiliconFlow:
+      return 'siliconflow'
     default:
       return 'openAi'
   }
@@ -57,8 +61,7 @@ export function getModelDefaultConfig (supplierType, baseModelType = '') {
   switch (supplierType) {
     case ModelBaseTypeEnum.OpenAI:
     case ModelBaseTypeEnum.ZhiPuAI:
-    case ModelBaseTypeEnum.QianFan:
-    case ModelBaseTypeEnum.Ollama: {
+    case ModelBaseTypeEnum.SiliconFlow: {
       const includesBaseModelValues = baseModelTypeMap[supplierType]?.map(e => e.value) || []
       lastDefaultValue = includesBaseModelValues.includes(baseModelType) ? defaultAdvancedSetValue[supplierType] : []
       break

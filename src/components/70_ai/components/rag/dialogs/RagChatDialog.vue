@@ -328,7 +328,7 @@ export default {
 
         if (callback) callback()
       } catch (error) {
-        console.error('加载消息失败:', error)
+        // 加载消息失败
       }
     },
 

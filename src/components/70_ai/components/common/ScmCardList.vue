@@ -212,7 +212,6 @@ export default {
           this.noMore = this.listSize * this.endPage >= this.listTotal
         }
       } catch (error) {
-        console.error('加载列表数据失败:', error)
         this.isLoadError = true
       } finally {
         this.bottomLoading = false

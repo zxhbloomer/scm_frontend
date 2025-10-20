@@ -576,7 +576,7 @@ export default {
           this.stopIndexStatusPolling()
         }
       } catch (error) {
-        console.error('检查索引状态失败:', error)
+        // 检查索引状态失败
       }
     },
 

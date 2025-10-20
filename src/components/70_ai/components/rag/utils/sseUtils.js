@@ -104,7 +104,6 @@ export function sseProcess (url, callbacks = {}, signal = null) {
               }
             } catch (parseError) {
               // JSON解析失败时不传递原始数据，避免显示"{...}"
-              console.warn('[SSE] JSON解析失败:', parseError.message)
             }
             continue
           }

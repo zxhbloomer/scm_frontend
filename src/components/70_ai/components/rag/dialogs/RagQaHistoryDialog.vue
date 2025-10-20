@@ -258,7 +258,6 @@ export default {
           this.total = 0
         }
       } catch (error) {
-        console.error('加载历史记录失败:', error)
         this.$message.error('加载历史记录失败: ' + (error.message || '未知错误'))
         this.historyList = []
         this.total = 0
@@ -306,7 +305,6 @@ export default {
         }
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('删除问答记录失败:', error)
           this.$message.error('删除失败: ' + (error.message || '未知错误'))
         }
       }
@@ -338,7 +336,6 @@ export default {
         }
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('清空问答记录失败:', error)
           this.$message.error('清空失败: ' + (error.message || '未知错误'))
         }
       }
@@ -361,7 +358,6 @@ export default {
       try {
         return marked(text)
       } catch (error) {
-        console.error('Markdown渲染失败:', error)
         return text
       }
     },

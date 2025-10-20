@@ -143,8 +143,7 @@ export default {
       this.$message.success(`文件 ${fileInfo.fileName} 上传成功`)
     },
 
-    handleUploadError (err) {
-      console.error('文件上传失败:', err)
+    handleUploadError (_err) {
       this.$message.error('文件上传失败，请重试')
     },
 
@@ -183,7 +182,6 @@ export default {
         this.$emit('success')
         this.$emit('update:visible', false)
       } catch (error) {
-        console.error('批量创建知识项失败:', error)
         this.$message.error('批量创建失败：' + (error.message || '未知错误'))
       } finally {
         this.submitting = false

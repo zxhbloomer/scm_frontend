@@ -16,7 +16,6 @@ export function initCytoscape (containerOrId) {
     : containerOrId
 
   if (!container) {
-    console.error('Cytoscape容器不存在')
     return null
   }
 
@@ -85,7 +84,6 @@ export function initCytoscape (containerOrId) {
 
     return cy
   } catch (e) {
-    console.error('[graphUtils] Cytoscape实例创建失败:', e)
     return null
   }
 }
@@ -132,7 +130,6 @@ export function transformGraphData (vertices, edges) {
  */
 export function renderGraph (cy, vertices, edges, options = {}) {
   if (!cy) {
-    console.error('[graphUtils] renderGraph: cy实例不存在')
     return
   }
 
@@ -157,7 +154,7 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     try {
       cy.add(nodes)
     } catch (e) {
-      console.error('[graphUtils] 添加节点失败:', e)
+      // 添加节点失败
     }
 
     // 绑定节点点击事件
@@ -178,11 +175,6 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     const hasTarget = nodeIds.has(edge.data.target)
 
     if (!hasSource || !hasTarget) {
-      console.warn(
-        `[graphUtils] 跳过无效边 ${edge.data.id}: ` +
-        `source=${edge.data.source}(${hasSource ? '存在' : '不存在'}), ` +
-        `target=${edge.data.target}(${hasTarget ? '存在' : '不存在'})`
-      )
       return false
     }
     return true
@@ -193,8 +185,7 @@ export function renderGraph (cy, vertices, edges, options = {}) {
     try {
       cy.add(validEdges)
     } catch (e) {
-      console.error('[graphUtils] 添加边失败:', e)
-      console.error('[graphUtils] 失败的边数据:', validEdges)
+      // 添加边失败
     }
 
     // 绑定边点击事件
@@ -204,12 +195,6 @@ export function renderGraph (cy, vertices, edges, options = {}) {
         onEdgeClick(clickedEdge.data())
       })
     }
-  }
-
-  // 如果有被过滤掉的边，显示统计信息
-  const filteredCount = edgeElements.length - validEdges.length
-  if (filteredCount > 0) {
-    console.warn(`[graphUtils] 过滤了 ${filteredCount} 条无效边（源或目标节点不存在）`)
   }
 
   // 应用布局
@@ -223,7 +208,6 @@ export function renderGraph (cy, vertices, edges, options = {}) {
  */
 export function applyLayout (cy, layoutName = 'cose') {
   if (!cy) {
-    console.error('[graphUtils] applyLayout: cy实例不存在')
     return
   }
 
@@ -232,7 +216,7 @@ export function applyLayout (cy, layoutName = 'cose') {
     const layout = cy.layout(layoutOptions)
     layout.run()
   } catch (e) {
-    console.error('[graphUtils] 布局应用失败:', e)
+    // 布局应用失败
   }
 }
 

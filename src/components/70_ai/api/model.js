@@ -1,7 +1,7 @@
 // AI模型API服务
 import request from '@/utils/request'
 
-// API基础路径 - 对应SCM后端SystemAIModelConfigController
+// API基础路径 - 对应SCM后端AiModelConfigController
 const API_BASE = '/api/v1/ai/model/config'
 
 /**
@@ -10,16 +10,21 @@ const API_BASE = '/api/v1/ai/model/config'
  * @returns {Promise} - 模型列表数据
  */
 export function getModelConfigList (params) {
+  const data = {
+    keyword: params.keyword || '' // 搜索关键词
+  }
+
+  // 只有提供了providerName且不为空时，才添加到请求参数中
+  if (params.providerName) {
+    data.providerName = params.providerName
+  }
+
   return request({
     url: `${API_BASE}/source/list`,
     method: 'post',
-    data: {
-      current: params.current || 1,
-      pageSize: params.pageSize || 10,
-      owner: params.owner || '', // 模型拥有者
-      keyword: params.keyword || '', // 搜索关键词
-      providerName: params.providerName || '' // 供应商名称
-    }
+    data
+    // 删除了owner字段 - 新系统不使用owner
+    // 删除了分页参数 - 新系统不分页
   })
 }
 
@@ -34,17 +39,24 @@ export function editModelConfig (data) {
     method: 'post',
     data: {
       id: data.id || undefined,
-      name: data.name,
-      type: data.type,
-      providerName: data.providerName,
-      permissionType: data.permissionType,
-      status: data.status,
-      owner: data.owner,
-      ownerType: data.ownerType,
-      baseName: data.baseName,
-      appKey: data.appKey,
-      apiUrl: data.apiUrl,
-      advSettingDTOList: data.advSettingDTOList || []
+      modelName: data.modelName, // 字段名从name改为modelName
+      modelType: data.modelType, // 字段名从type改为modelType
+      provider: data.provider, // 字段名从providerName改为provider
+      enabled: data.enabled, // 字段名从status改为enabled
+      deploymentName: data.deploymentName, // 字段名从baseName改为deploymentName
+      apiKey: data.apiKey, // 字段名从appKey改为apiKey
+      baseUrl: data.baseUrl, // 字段名从apiUrl改为baseUrl
+      // 高级参数直接字段
+      temperature: data.temperature,
+      maxTokens: data.maxTokens,
+      topP: data.topP,
+      timeout: data.timeout,
+      // 模型能力标记
+      supportChat: data.supportChat,
+      supportVision: data.supportVision,
+      supportEmbedding: data.supportEmbedding
+      // 删除了owner, ownerType, permissionType字段 - 新系统不使用
+      // 删除了advSettingDTOList - 改为直接字段
     }
   })
 }
@@ -74,95 +86,79 @@ export function deleteModelConfig (id) {
 }
 
 /**
- * 获取模型名称列表
- * @returns {Promise} - 模型名称列表
+ * 获取可用的语言模型列表
+ * @returns {Promise} - 语言模型列表
  */
-export function getModelConfigNameList () {
+export function getLlmModels () {
   return request({
-    url: `${API_BASE}/source/name/list`,
-    method: 'get'
-  })
-}
-
-// 个人模型相关API（如果需要支持个人级别的模型管理）
-
-/**
- * 获取个人模型列表
- * @param {Object} params - 查询参数
- * @returns {Promise} - 个人模型列表数据
- */
-export function getPersonalModelConfigList (params) {
-  // 设置owner为当前用户ID，表示获取个人模型
-  return getModelConfigList({
-    ...params,
-    owner: params.owner || getUserId() // 需要从用户状态中获取用户ID
+    url: `${API_BASE}/llm-models`,
+    method: 'post'
   })
 }
 
 /**
- * 编辑个人模型配置
- * @param {Object} data - 模型配置数据
- * @returns {Promise} - 编辑结果
+ * 获取可用的视觉模型列表
+ * @returns {Promise} - 视觉模型列表
  */
-export function editPersonalModelConfig (data) {
-  // 设置为个人级别的模型
-  return editModelConfig({
-    ...data,
-    owner: data.owner || getUserId(),
-    ownerType: 'PERSONAL',
-    permissionType: 'PRIVATE'
+export function getVisionModels () {
+  return request({
+    url: `${API_BASE}/vision-models`,
+    method: 'post'
   })
 }
 
 /**
- * 获取个人模型详情
- * @param {string} id - 模型ID
- * @returns {Promise} - 模型详情数据
+ * 获取可用的嵌入模型列表
+ * @returns {Promise} - 嵌入模型列表
  */
-export function getPersonalModelConfigDetail (id) {
-  return getModelConfigDetail(id)
+export function getEmbeddingModels () {
+  return request({
+    url: `${API_BASE}/embedding-models`,
+    method: 'post'
+  })
 }
 
 /**
- * 删除个人模型
- * @param {string} id - 模型ID
- * @returns {Promise} - 删除结果
+ * 获取默认模型配置
+ * @returns {Promise} - 默认模型配置 {defaultLlm: modelId, defaultVision: modelId, defaultEmbedding: modelId}
  */
-export function deletePersonalModelConfig (id) {
-  return deleteModelConfig(id)
+export function getDefaultModels () {
+  return request({
+    url: `${API_BASE}/default-models`,
+    method: 'post'
+  })
 }
-
-// 工具函数
 
 /**
- * 获取当前用户ID
- * @returns {string} - 用户ID
+ * 设置默认模型
+ * @param {Object} data - 默认模型配置数据
+ * @param {string} data.modelType - 模型类型：LLM/VISION/EMBEDDING
+ * @param {number} data.modelId - 模型ID
+ * @returns {Promise} - 设置结果
  */
-function getUserId () {
-  // 这里需要根据SCM前端的用户状态管理方式来获取用户ID
-  // 可能需要从Vuex store或者本地存储中获取
-  try {
-    // 假设从store中获取
-    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    return userInfo.id || ''
-  } catch (e) {
-    // 获取用户ID失败，使用默认值
-    return ''
-  }
+export function setDefaultModel (data) {
+  return request({
+    url: `${API_BASE}/default-model`,
+    method: 'post',
+    data: {
+      modelType: data.modelType,
+      modelId: data.modelId
+    }
+  })
 }
+
+// 删除了getModelConfigNameList - 新系统暂不需要此接口
+// 删除了个人模型相关API - 新系统不区分个人/系统模型
 
 // 导出所有API函数
 export default {
-  // 系统级模型API
   getModelConfigList,
   editModelConfig,
   getModelConfigDetail,
   deleteModelConfig,
-  getModelConfigNameList,
-
-  // 个人级模型API
-  getPersonalModelConfigList,
-  editPersonalModelConfig,
-  getPersonalModelConfigDetail,
-  deletePersonalModelConfig
+  getLlmModels,
+  getVisionModels,
+  getEmbeddingModels,
+  getDefaultModels,
+  setDefaultModel
 }

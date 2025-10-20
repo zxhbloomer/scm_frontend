@@ -446,7 +446,6 @@ class AIChatService {
 
       return result || []
     } catch (error) {
-      console.error('获取历史消息失败:', error)
       return []
     }
   }
@@ -555,7 +554,6 @@ class AIChatService {
 
       return response.data
     } catch (error) {
-      console.error('清空对话内容失败:', error)
       throw new Error(error.message || '清空对话内容失败')
     }
   }
@@ -572,7 +570,7 @@ class AIChatService {
       // 可以发送到分析服务
       // analytics.track(action, data)
     } catch (error) {
-      console.error('用户行为跟踪失败:', error)
+      // 用户行为跟踪失败
     }
   }
 }

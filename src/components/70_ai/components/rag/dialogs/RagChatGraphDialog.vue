@@ -204,7 +204,6 @@ export default {
           this.isEmpty = true
         }
       } catch (error) {
-        console.error('加载图谱数据失败:', error)
         this.$message.error('加载图谱数据失败: ' + (error.message || '未知错误'))
         this.graphData = null
         this.isEmpty = true
@@ -228,7 +227,6 @@ export default {
     initCytoscape () {
       const container = document.getElementById('ragGraphCy')
       if (!container) {
-        console.error('找不到图谱容器元素')
         return
       }
 

@@ -140,7 +140,6 @@ class RAGService {
                 }
               } catch (e) {
                 // JSON解析失败时不传递原始数据，避免显示"{...}"
-                console.warn('[RAG SSE] JSON解析失败:', e.message)
               }
             }
           }
@@ -148,7 +147,6 @@ class RAGService {
       }
     } catch (error) {
       if (error.name !== 'AbortError') {
-        console.error('RAG SSE error:', error)
         onError(error.message || '请求失败')
       }
     }

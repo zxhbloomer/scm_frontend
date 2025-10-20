@@ -77,7 +77,7 @@ export default {
           }
         }
       } catch (error) {
-        console.warn('HTML脚本执行失败:', error)
+        // HTML脚本执行失败
       }
     },
 

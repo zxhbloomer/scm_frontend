@@ -104,7 +104,6 @@ export default {
           this.references = []
         }
       } catch (error) {
-        console.error('加载引用资料失败:', error)
         this.$message.error('加载引用资料失败: ' + (error.message || '未知错误'))
         this.references = []
       } finally {

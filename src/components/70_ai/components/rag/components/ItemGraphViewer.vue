@@ -249,7 +249,6 @@ export default {
           this.renderGraphVisualization()
         }
       } catch (error) {
-        console.error('加载图谱失败:', error)
         this.$message.error('加载图谱失败: ' + (error.message || '未知错误'))
       } finally {
         this.loading = false
@@ -288,7 +287,6 @@ export default {
       const container = this.$refs.cyContainer
 
       if (!container) {
-        console.error('图谱容器不存在')
         return
       }
 
@@ -300,7 +298,6 @@ export default {
       this.cy = Object.freeze(cyInstance)
 
       if (!this.cy) {
-        console.error('Cytoscape实例创建失败')
         return
       }
 

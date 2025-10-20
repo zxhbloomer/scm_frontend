@@ -12,6 +12,84 @@
     :modal-append-to-body="true"
   >
     <div class="h-full w-full">
+      <!-- 默认模型配置区域 -->
+      <div class="default-models-section">
+        <div class="section-title">
+          <svg-icon icon-class="setting" class="title-icon" />
+          默认模型配置
+        </div>
+        <div class="default-models-grid">
+          <div class="default-model-item">
+            <span class="model-label">默认语言模型：</span>
+            <el-select
+              v-model="defaultModels.llm"
+              placeholder="请选择默认语言模型"
+              clearable
+              filterable
+              @change="updateDefaultModel('LLM')"
+            >
+              <el-option
+                v-for="model in llmModels"
+                :key="model.id"
+                :label="getModelOptionLabel(model)"
+                :value="model.id"
+              >
+                <span class="model-option">
+                  <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
+                  <span>{{ model.modelName }}</span>
+                </span>
+              </el-option>
+            </el-select>
+          </div>
+
+          <div class="default-model-item">
+            <span class="model-label">默认视觉模型：</span>
+            <el-select
+              v-model="defaultModels.vision"
+              placeholder="请选择默认视觉模型"
+              clearable
+              filterable
+              @change="updateDefaultModel('VISION')"
+            >
+              <el-option
+                v-for="model in visionModels"
+                :key="model.id"
+                :label="getModelOptionLabel(model)"
+                :value="model.id"
+              >
+                <span class="model-option">
+                  <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
+                  <span>{{ model.modelName }}</span>
+                </span>
+              </el-option>
+            </el-select>
+          </div>
+
+          <div class="default-model-item">
+            <span class="model-label">默认嵌入模型：</span>
+            <el-select
+              v-model="defaultModels.embedding"
+              placeholder="请选择默认嵌入模型"
+              clearable
+              filterable
+              @change="updateDefaultModel('EMBEDDING')"
+            >
+              <el-option
+                v-for="model in embeddingModels"
+                :key="model.id"
+                :label="getModelOptionLabel(model)"
+                :value="model.id"
+              >
+                <span class="model-option">
+                  <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
+                  <span>{{ model.modelName }}</span>
+                </span>
+              </el-option>
+            </el-select>
+          </div>
+        </div>
+      </div>
+
       <!-- 分割面板：左侧供应商列表，右侧模型列表 -->
       <div class="model-settings-container">
         <!-- 左侧供应商列表 -->
@@ -67,7 +145,6 @@
                 mode="remote"
                 :remote-func="getModelConfigListWrapper"
                 :remote-params="{
-                  owner: '',
                   keyword: keyword,
                   providerName: activeModelType
                 }"
@@ -85,8 +162,8 @@
                         <svg-icon :icon-class="getModelSvg(item)" class="model-icon" />
                       </div>
                       <div class="model-item-info">
-                        <el-tooltip :content="item.name" :disabled="(item.name || '').length <= 20">
-                          <div class="one-line-text model-name">{{ item.name }}</div>
+                        <el-tooltip :content="item.modelName" :disabled="(item.modelName || '').length <= 20">
+                          <div class="one-line-text model-name">{{ item.modelName }}</div>
                         </el-tooltip>
                         <div class="model-creator">
                           <span class="creator-label">创建者</span>
@@ -107,8 +184,8 @@
                         <el-tooltip :content="getTypeName(item)" :disabled="(getTypeName(item) || '').length <= 20">
                           <div class="one-line-text body-value-item">{{ getTypeName(item) }}</div>
                         </el-tooltip>
-                        <el-tooltip :content="item.baseName" :disabled="(item.baseName || '').length <= 20">
-                          <div class="one-line-text body-value-item">{{ item.baseName || '-' }}</div>
+                        <el-tooltip :content="item.deploymentName" :disabled="(item.deploymentName || '').length <= 20">
+                          <div class="one-line-text body-value-item">{{ item.deploymentName || '-' }}</div>
                         </el-tooltip>
                       </div>
                     </div>
@@ -137,7 +214,7 @@
                       </div>
 
                       <el-switch
-                        :value="item.status"
+                        :value="item.enabled"
                         :disabled="!hasPermission()"
                         @change="(val) => changeStatus(val, item)"
                       />
@@ -167,7 +244,7 @@
 <script>
 import { modelList, modelTypeOptions } from '../../constants/model'
 import { getModelSvg, characterLimit } from '../../utils/modelUtils'
-import { getModelConfigList, editModelConfig, deleteModelConfig } from '../../api/model'
+import { getModelConfigList, editModelConfig, deleteModelConfig, getLlmModels, getVisionModels, getEmbeddingModels, getDefaultModels, setDefaultModel } from '../../api/model'
 import ModelEditDialog from './ModelEditDialog.vue'
 import ScmCardList from '../common/ScmCardList.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -193,7 +270,22 @@ export default {
       keyword: '', // 搜索关键词
       loading: false,
       showModelConfigDrawer: false, // 编辑抽屉显示状态
-      currentModelId: '' // 当前编辑的模型ID
+      currentModelId: '', // 当前编辑的模型ID
+      llmModels: [], // 可用的语言模型列表
+      visionModels: [], // 可用的视觉模型列表
+      embeddingModels: [], // 可用的嵌入模型列表
+      defaultModels: {
+        llm: null,
+        vision: null,
+        embedding: null
+      }
+    }
+  },
+  watch: {
+    visible (val) {
+      if (val) {
+        this.loadDefaultModels()
+      }
     }
   },
   created () {
@@ -255,7 +347,7 @@ export default {
      */
     deleteModel (item) {
       this.$confirm(
-        `确定要删除模型 "${characterLimit(item.name)}" 吗？`,
+        `确定要删除模型 "${characterLimit(item.modelName)}" 吗？`,
         '删除确认',
         {
           confirmButtonText: '确认删除',
@@ -268,7 +360,6 @@ export default {
           this.$message.success('删除成功')
           this.$refs.modelCardListRef?.reload()
         } catch (error) {
-          console.error('删除模型失败:', error)
           this.$message.error('删除模型失败')
         }
       }).catch(() => {
@@ -286,7 +377,7 @@ export default {
         // 禁用时需要确认
         try {
           await this.$confirm(
-            `确定要${action}模型 "${characterLimit(item.name)}" 吗？`,
+            `确定要${action}模型 "${characterLimit(item.modelName)}" 吗？`,
             '状态确认',
             {
               confirmButtonText: `确认${action}`,
@@ -303,12 +394,11 @@ export default {
       try {
         await editModelConfig({
           ...item,
-          status: newValue
+          enabled: newValue
         })
         this.$message.success(`${action}成功`)
         this.$refs.modelCardListRef?.reload()
       } catch (error) {
-        console.error(`${action}模型失败:`, error)
         this.$message.error(`${action}模型失败`)
       } finally {
         this.loading = false
@@ -327,6 +417,8 @@ export default {
      */
     refreshHandler () {
       this.$refs.modelCardListRef?.reload()
+      // 同时刷新默认模型配置下拉框数据
+      this.loadDefaultModels()
     },
 
     /**
@@ -349,8 +441,8 @@ export default {
      */
     getTypeName (item) {
       if (!item) return '-'
-      const typeOption = modelTypeOptions.find(e => e.value === item.type)
-      return typeOption ? typeOption.label : item.type || '-'
+      const typeOption = modelTypeOptions.find(e => e.value === item.modelType)
+      return typeOption ? typeOption.label : item.modelType || '-'
     },
 
     /**
@@ -360,6 +452,81 @@ export default {
       // 根据SCM的权限系统来检查权限
       // 这里先返回true，实际应该检查用户权限
       return true
+    },
+
+    /**
+     * 加载默认模型配置（分别调用4个API）
+     */
+    async loadDefaultModels () {
+      try {
+        // 1. 获取语言模型列表
+        const llmResponse = await getLlmModels()
+        const llmData = llmResponse.data || llmResponse
+        this.llmModels = llmData || []
+
+        // 2. 获取视觉模型列表
+        const visionResponse = await getVisionModels()
+        const visionData = visionResponse.data || visionResponse
+        this.visionModels = visionData || []
+
+        // 3. 获取嵌入模型列表
+        const embeddingResponse = await getEmbeddingModels()
+        const embeddingData = embeddingResponse.data || embeddingResponse
+        this.embeddingModels = embeddingData || []
+
+        // 4. 获取默认选中的模型ID
+        const defaultResponse = await getDefaultModels()
+        const defaultData = defaultResponse.data || defaultResponse
+        this.defaultModels = {
+          llm: defaultData.defaultLlm || null,
+          vision: defaultData.defaultVision || null,
+          embedding: defaultData.defaultEmbedding || null
+        }
+      } catch (error) {
+        this.$message.error('加载默认模型配置失败')
+      }
+    },
+
+    /**
+     * 更新默认模型
+     * @param {string} modelType - 模型类型：LLM/VISION/EMBEDDING
+     */
+    async updateDefaultModel (modelType) {
+      const modelIdMap = {
+        LLM: this.defaultModels.llm,
+        VISION: this.defaultModels.vision,
+        EMBEDDING: this.defaultModels.embedding
+      }
+
+      const modelId = modelIdMap[modelType]
+
+      try {
+        await setDefaultModel({
+          modelType,
+          modelId
+        })
+        this.$message.success('默认模型设置成功')
+
+        // 更新成功后，重新加载默认模型配置
+        await this.loadDefaultModels()
+      } catch (error) {
+        this.$message.error('设置默认模型失败')
+        // 回滚到之前的值
+        this.loadDefaultModels()
+      }
+    },
+
+    /**
+     * 获取模型选项标签
+     * @param {Object} model - 模型对象
+     * @returns {string} - 标签文本
+     */
+    getModelOptionLabel (model) {
+      if (!model) return ''
+      if (model.deploymentName) {
+        return `${model.modelName} (${model.deploymentName})`
+      }
+      return model.modelName
     }
   }
 }
@@ -367,7 +534,66 @@ export default {
 
 <style scoped>
 .model-settings-dialog {
-  min-height: 600px;
+  min-height: 700px;
+}
+
+/* 默认模型配置区域样式 */
+.default-models-section {
+  background: linear-gradient(135deg, #f5f7fa 0%, #ecf0f1 100%);
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+}
+
+.title-icon {
+  width: 18px !important;
+  height: 18px !important;
+  margin-right: 8px;
+  color: #409eff;
+}
+
+.default-models-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.default-model-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.model-label {
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  min-width: 110px;
+}
+
+.default-model-item .el-select {
+  flex: 1;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-icon {
+  width: 16px !important;
+  height: 16px !important;
 }
 
 .model-settings-container {

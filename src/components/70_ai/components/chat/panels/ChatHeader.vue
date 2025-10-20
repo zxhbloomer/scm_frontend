@@ -112,7 +112,7 @@
 <script>
 import ModelSettingsDialog from '../../model/ModelSettingsDialog.vue'
 import { KnowledgeBaseManageDialog } from '../../rag'
-import { getModelConfigNameList } from '../../../api/model'
+import { getModelConfigList } from '../../../api/model'
 
 export default {
   name: 'ChatHeader',
@@ -169,22 +169,24 @@ export default {
 
   methods: {
     /**
-     * 加载模型列表
+     * 加载模型列表（适配新系统API）
      */
     async loadModelList () {
       try {
-        const response = await getModelConfigNameList()
+        const response = await getModelConfigList({
+          keyword: '',
+          providerName: '' // 空字符串表示获取所有供应商的模型
+        })
         const data = response.data || response
 
         this.llmList = (data || []).map(item => ({
           ...item,
-          label: item.modelTitle || item.modelName,
-          value: item.modelId,
-          id: item.modelId,
+          label: item.modelName, // 新系统使用modelName字段
+          value: item.id,
+          id: item.id,
           name: item.modelName
         }))
       } catch (error) {
-        console.error('[ChatHeader] 加载模型列表失败:', error)
         this.llmList = []
       }
     },

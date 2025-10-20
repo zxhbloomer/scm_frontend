@@ -156,7 +156,6 @@ const actions = {
         commit('SET_ERROR', '用户会话信息不完整，无法加载历史消息')
       }
     } catch (error) {
-      console.error('聊天初始化失败:', error)
       commit('SET_ERROR', error.message)
     } finally {
       commit('SET_LOADING', false)
@@ -370,7 +369,6 @@ const actions = {
         commit('SET_MESSAGES', [...formattedMessages, ...state.messages])
       }
     } catch (error) {
-      console.error('加载历史消息失败:', error)
       commit('SET_ERROR', error.message)
     }
   },
