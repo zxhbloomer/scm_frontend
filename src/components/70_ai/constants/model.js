@@ -491,6 +491,11 @@ export const defaultAdvancedSetValueMap = {
 // 供应商模型列表
 export const modelList = [
   {
+    value: 'ALL',
+    name: '全部',
+    icon: 'list'
+  },
+  {
     value: ModelBaseTypeEnum.DeepSeek,
     name: 'DeepSeek',
     icon: 'deepSeek'
