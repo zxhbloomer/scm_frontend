@@ -36,7 +36,7 @@
               >
                 <span class="model-option">
                   <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
-                  <span>{{ model.modelName }}</span>
+                  <span>{{ getModelName(model) }}</span>
                 </span>
               </el-option>
             </el-select>
@@ -59,7 +59,7 @@
               >
                 <span class="model-option">
                   <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
-                  <span>{{ model.modelName }}</span>
+                  <span>{{ getModelName(model) }}</span>
                 </span>
               </el-option>
             </el-select>
@@ -82,7 +82,7 @@
               >
                 <span class="model-option">
                   <svg-icon :icon-class="getModelSvg(model)" class="option-icon" />
-                  <span>{{ model.modelName }}</span>
+                  <span>{{ getModelName(model) }}</span>
                 </span>
               </el-option>
             </el-select>
@@ -162,8 +162,8 @@
                         <svg-icon :icon-class="getModelSvg(item)" class="model-icon" />
                       </div>
                       <div class="model-item-info">
-                        <el-tooltip :content="item.modelName" :disabled="(item.modelName || '').length <= 20">
-                          <div class="one-line-text model-name">{{ item.modelName }}</div>
+                        <el-tooltip :content="getModelName(item)" :disabled="(getModelName(item) || '').length <= 20">
+                          <div class="one-line-text model-name">{{ getModelName(item) }}</div>
                         </el-tooltip>
                         <div class="model-creator">
                           <span class="creator-label">创建者</span>
@@ -184,8 +184,8 @@
                         <el-tooltip :content="getTypeName(item)" :disabled="(getTypeName(item) || '').length <= 20">
                           <div class="one-line-text body-value-item">{{ getTypeName(item) }}</div>
                         </el-tooltip>
-                        <el-tooltip :content="item.deploymentName" :disabled="(item.deploymentName || '').length <= 20">
-                          <div class="one-line-text body-value-item">{{ item.deploymentName || '-' }}</div>
+                        <el-tooltip :content="getDeploymentName(item)" :disabled="(getDeploymentName(item) || '').length <= 20">
+                          <div class="one-line-text body-value-item">{{ getDeploymentName(item) }}</div>
                         </el-tooltip>
                       </div>
                     </div>
@@ -214,7 +214,7 @@
                       </div>
 
                       <el-switch
-                        :value="item.enabled"
+                        :value="item.status"
                         :disabled="!hasPermission()"
                         @change="(val) => changeStatus(val, item)"
                       />
@@ -228,15 +228,25 @@
       </div>
     </div>
 
+    <!-- 模型添加弹窗 -->
+    <ModelAddDialog
+      :visible="showModelAddDrawer"
+      :supplier-model-item="supplierModelItem"
+      :model-key="'system'"
+      @close="showModelAddDrawer = false"
+      @refresh="refreshHandler"
+      @update:visible="showModelAddDrawer = $event"
+    />
+
     <!-- 模型编辑弹窗 -->
     <ModelEditDialog
-      :visible="showModelConfigDrawer"
+      :visible="showModelEditDrawer"
       :current-model-id="currentModelId"
       :supplier-model-item="supplierModelItem"
       :model-key="'system'"
       @close="handleCancel"
       @refresh="refreshHandler"
-      @update:visible="showModelConfigDrawer = $event"
+      @update:visible="showModelEditDrawer = $event"
     />
   </el-dialog>
 </template>
@@ -245,6 +255,7 @@
 import { modelList, modelTypeOptions } from '../../constants/model'
 import { getModelSvg, characterLimit } from '../../utils/modelUtils'
 import { getModelConfigList, editModelConfig, deleteModelConfig, getLlmModels, getVisionModels, getEmbeddingModels, getDefaultModels, setDefaultModel } from '../../api/model'
+import ModelAddDialog from './ModelAddDialog.vue'
 import ModelEditDialog from './ModelEditDialog.vue'
 import ScmCardList from '../common/ScmCardList.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -252,6 +263,7 @@ import elDragDialog from '@/directive/el-drag-dialog'
 export default {
   name: 'ModelSettingsDialog',
   components: {
+    ModelAddDialog,
     ModelEditDialog,
     ScmCardList
   },
@@ -265,11 +277,12 @@ export default {
   data () {
     return {
       modelList: modelList,
-      activeModelType: 'DeepSeek', // 默认选中DeepSeek
-      supplierModelItem: modelList[0], // 当前选中的供应商
+      activeModelType: 'ALL', // 默认选中"全部"
+      supplierModelItem: modelList[0], // 当前选中的供应商（"全部"）
       keyword: '', // 搜索关键词
       loading: false,
-      showModelConfigDrawer: false, // 编辑抽屉显示状态
+      showModelAddDrawer: false, // 添加对话框显示状态
+      showModelEditDrawer: false, // 编辑对话框显示状态
       currentModelId: '', // 当前编辑的模型ID
       llmModels: [], // 可用的语言模型列表
       visionModels: [], // 可用的视觉模型列表
@@ -296,7 +309,7 @@ export default {
      * 初始化
      */
     init () {
-      // 设置默认选中的供应商
+      // 设置默认选中"全部"（modelList[0]）
       this.supplierModelItem = this.modelList[0]
       this.activeModelType = this.modelList[0].value
     },
@@ -305,7 +318,17 @@ export default {
      * 包装getModelConfigList，适配ScmCardList组件
      */
     async getModelConfigListWrapper (params) {
-      const response = await getModelConfigList(params)
+      // 构建查询参数
+      const queryParams = {
+        keyword: params.keyword || ''
+      }
+
+      // 只有不是"全部"时，才传providerName参数
+      if (params.providerName && params.providerName !== 'ALL') {
+        queryParams.providerName = params.providerName
+      }
+
+      const response = await getModelConfigList(queryParams)
       return response
     },
 
@@ -330,24 +353,39 @@ export default {
      * 添加模型
      */
     addModel () {
-      this.currentModelId = ''
-      this.showModelConfigDrawer = true
+      // 判断是否选择了"全部"
+      if (this.activeModelType === 'ALL') {
+        this.showErrorMsg('请先选择供应商，然后点击"添加模型"按钮完成模型的添加')
+        return
+      }
+
+      this.showModelAddDrawer = true
     },
 
     /**
      * 编辑模型
      */
     editModel (item) {
-      this.currentModelId = item.id
-      this.showModelConfigDrawer = true
+      // 设置当前编辑的模型ID
+      this.currentModelId = String(item.id || '')
+
+      // 根据模型的provider字段找到对应的供应商配置
+      const foundSupplier = this.modelList.find(supplier => supplier.value === item.provider)
+      if (foundSupplier) {
+        this.supplierModelItem = foundSupplier
+      }
+
+      // 显示编辑对话框
+      this.showModelEditDrawer = true
     },
 
     /**
      * 删除模型
      */
     deleteModel (item) {
+      const modelName = item.modelName || item.model_name
       this.$confirm(
-        `确定要删除模型 "${characterLimit(item.modelName)}" 吗？`,
+        `确定要删除模型 "${characterLimit(modelName)}" 吗？`,
         '删除确认',
         {
           confirmButtonText: '确认删除',
@@ -360,7 +398,7 @@ export default {
           this.$message.success('删除成功')
           this.$refs.modelCardListRef?.reload()
         } catch (error) {
-          this.$message.error('删除模型失败')
+          this.showErrorMsg('删除模型失败')
         }
       }).catch(() => {
         // 用户取消删除
@@ -372,12 +410,13 @@ export default {
      */
     async changeStatus (newValue, item) {
       const action = newValue ? '启用' : '禁用'
+      const modelName = item.modelName || item.model_name
 
       if (!newValue) {
         // 禁用时需要确认
         try {
           await this.$confirm(
-            `确定要${action}模型 "${characterLimit(item.modelName)}" 吗？`,
+            `确定要${action}模型 "${characterLimit(modelName)}" 吗？`,
             '状态确认',
             {
               confirmButtonText: `确认${action}`,
@@ -392,14 +431,21 @@ export default {
 
       this.loading = true
       try {
+        // 后端字段映射：兼容两种命名方式
         await editModelConfig({
-          ...item,
-          enabled: newValue
+          id: item.id,
+          modelName: item.modelName || item.model_name,
+          modelType: item.modelType || item.type,
+          provider: item.provider,
+          enabled: newValue,
+          deploymentName: item.deploymentName || item.base_name,
+          apiKey: item.apiKey || item.api_key,
+          baseUrl: item.baseUrl || item.api_url
         })
         this.$message.success(`${action}成功`)
         this.$refs.modelCardListRef?.reload()
       } catch (error) {
-        this.$message.error(`${action}模型失败`)
+        this.showErrorMsg(`${action}模型失败`)
       } finally {
         this.loading = false
       }
@@ -437,20 +483,37 @@ export default {
     },
 
     /**
+     * 获取模型名称（兼容两种命名方式）
+     */
+    getModelName (item) {
+      if (!item) return '-'
+      return item.modelName || item.model_name || '-'
+    },
+
+    /**
      * 获取类型名称
      */
     getTypeName (item) {
       if (!item) return '-'
-      const typeOption = modelTypeOptions.find(e => e.value === item.modelType)
-      return typeOption ? typeOption.label : item.modelType || '-'
+      // 兼容两种命名：modelType 或 type
+      const type = item.modelType || item.type
+      const typeOption = modelTypeOptions.find(e => e.value === type)
+      return typeOption ? typeOption.label : type || '-'
+    },
+
+    /**
+     * 获取基础模型名称（兼容两种命名方式）
+     */
+    getDeploymentName (item) {
+      if (!item) return '-'
+      // 兼容两种命名：deploymentName 或 base_name
+      return item.deploymentName || item.base_name || '-'
     },
 
     /**
      * 检查权限
      */
     hasPermission () {
-      // 根据SCM的权限系统来检查权限
-      // 这里先返回true，实际应该检查用户权限
       return true
     },
 
@@ -483,7 +546,7 @@ export default {
           embedding: defaultData.defaultEmbedding || null
         }
       } catch (error) {
-        this.$message.error('加载默认模型配置失败')
+        this.showErrorMsg('加载默认模型配置失败')
       }
     },
 
@@ -510,7 +573,7 @@ export default {
         // 更新成功后，重新加载默认模型配置
         await this.loadDefaultModels()
       } catch (error) {
-        this.$message.error('设置默认模型失败')
+        this.showErrorMsg('设置默认模型失败')
         // 回滚到之前的值
         this.loadDefaultModels()
       }
@@ -523,10 +586,14 @@ export default {
      */
     getModelOptionLabel (model) {
       if (!model) return ''
-      if (model.deploymentName) {
-        return `${model.modelName} (${model.deploymentName})`
+      // 后端返回的字段是下划线命名：model_name, base_name
+      const modelName = model.model_name || model.modelName || ''
+      const baseName = model.base_name || model.deploymentName || ''
+
+      if (baseName) {
+        return `${modelName} (${baseName})`
       }
-      return model.modelName
+      return modelName
     }
   }
 }
