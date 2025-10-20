@@ -31,7 +31,7 @@
             <div class="readonly-info-section">
               <div class="info-row">
                 <span class="info-label">模型名称：</span>
-                <span class="info-value">{{ form.modelName || '-' }}</span>
+                <span class="info-value">{{ form.name || '-' }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">模型类型：</span>
@@ -39,7 +39,11 @@
               </div>
               <div class="info-row">
                 <span class="info-label">基础模型：</span>
-                <span class="info-value">{{ form.deploymentName || '-' }}</span>
+                <span class="info-value">{{ form.modelName || '-' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">部署名称：</span>
+                <span class="info-value">{{ form.deploymentName || '-' }} <span style="color: #909399; font-size: 12px;">(Azure场景使用)</span></span>
               </div>
             </div>
 
@@ -177,6 +181,7 @@ export default {
       // 表单数据
       form: {
         id: '',
+        name: '',
         modelName: '',
         modelType: ModelTypeEnum.LLM,
         provider: ModelBaseTypeEnum.DeepSeek,
@@ -264,6 +269,7 @@ export default {
     initForm () {
       this.form = {
         id: '',
+        name: '',
         modelName: '',
         modelType: ModelTypeEnum.LLM,
         provider: this.supplierModelItem.value,
@@ -308,6 +314,7 @@ export default {
         const detail = response.data || response
 
         // 兼容驼峰命名和下划线命名
+        const name = detail.name || ''
         const modelName = detail.modelName || detail.model_name || ''
         const deploymentName = detail.deploymentName || detail.base_name || ''
         const modelType = detail.modelType || detail.type || ModelTypeEnum.LLM
@@ -321,6 +328,7 @@ export default {
         this.form = {
           ...this.form,
           id: detail.id || '',
+          name: name,
           modelName: modelName,
           modelType: modelType,
           provider: detail.provider || this.supplierModelItem.value,
@@ -425,6 +433,7 @@ export default {
         // 将advSettingDTOList转换为直接字段
         const submitData = {
           id: this.form.id,
+          name: this.form.name,
           modelName: this.form.modelName,
           modelType: this.form.modelType,
           provider: this.form.provider,

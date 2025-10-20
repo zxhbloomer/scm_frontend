@@ -27,7 +27,7 @@
           </div>
 
           <div class="section-content">
-            <el-form-item prop="modelName" class="model-name-form" required>
+            <el-form-item prop="name" class="model-name-form" required>
               <template #label>
                 <div class="flex items-center">
                   模型名称
@@ -37,9 +37,9 @@
                 </div>
               </template>
               <el-input
-                v-model="form.modelName"
-                maxlength="255"
-                placeholder="请输入模型名称"
+                v-model="form.name"
+                maxlength="200"
+                placeholder="请输入模型名称(用于前端显示)"
                 show-word-limit
               />
             </el-form-item>
@@ -67,20 +67,23 @@
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item prop="deploymentName" required>
+                <el-form-item prop="modelName" required>
                   <template #label>
                     <div class="flex items-center">
                       基础模型
+                      <el-tooltip content="API调用时使用的模型标识符" placement="top">
+                        <i class="el-icon-question ml-1 text-gray-400" />
+                      </el-tooltip>
                     </div>
                   </template>
                   <el-autocomplete
-                    v-model="form.deploymentName"
+                    v-model="form.modelName"
                     :fetch-suggestions="fetchSuggestions"
                     placeholder="请输入或选择基础模型"
                     class="w-full"
                     clearable
                     @select="selectAutoComplete"
-                    @clear="clearDeploymentName"
+                    @clear="clearModelName"
                   >
                     <template #default="{ item }">
                       <div class="flex w-full items-center gap-2">
@@ -228,6 +231,7 @@ export default {
 
       // 表单数据
       form: {
+        name: '',
         modelName: '',
         modelType: ModelTypeEnum.LLM,
         provider: ModelBaseTypeEnum.DeepSeek,
@@ -250,14 +254,14 @@ export default {
 
       // 表单验证规则 - 所有字段必填
       formRules: {
-        modelName: [
+        name: [
           { required: true, message: '请输入模型名称', trigger: 'blur' }
+        ],
+        modelName: [
+          { required: true, message: '请选择基础模型', trigger: 'blur' }
         ],
         modelType: [
           { required: true, message: '请选择模型类型', trigger: 'change' }
-        ],
-        deploymentName: [
-          { required: true, message: '请选择基础模型', trigger: 'blur' }
         ],
         baseUrl: [
           { required: true, message: '请输入API地址', trigger: 'blur' }
@@ -312,7 +316,7 @@ export default {
      */
     'form.modelType' (newVal, oldVal) {
       if (oldVal && newVal !== oldVal) {
-        this.form.deploymentName = ''
+        this.form.modelName = ''
         this.form.supportChat = false
         this.form.supportVision = false
         this.form.supportEmbedding = false
@@ -326,6 +330,7 @@ export default {
      */
     initForm () {
       this.form = {
+        name: '',
         modelName: '',
         modelType: ModelTypeEnum.LLM,
         provider: this.supplierModelItem.value,
@@ -419,7 +424,7 @@ export default {
      * 选择自动完成选项 - 自动填充能力标记（不显示在UI）
      */
     selectAutoComplete (item) {
-      this.form.deploymentName = item.value
+      this.form.modelName = item.value
 
       // 自动填充模型能力标记（不显示在UI，但保存到后端）
       const selectedModel = this.filteredBaseModelOptions.find(m => m.value === item.value)
@@ -441,7 +446,7 @@ export default {
     /**
      * 清空基础模型
      */
-    clearDeploymentName () {
+    clearModelName () {
       this.form.advSettingDTOList = []
     },
 
@@ -494,6 +499,7 @@ export default {
       try {
         // 将advSettingDTOList转换为直接字段
         const submitData = {
+          name: this.form.name,
           modelName: this.form.modelName,
           modelType: this.form.modelType,
           provider: this.form.provider,

@@ -483,11 +483,12 @@ export default {
     },
 
     /**
-     * 获取模型名称（兼容两种命名方式）
+     * 获取模型名称（兼容多种命名方式）
      */
     getModelName (item) {
       if (!item) return '-'
-      return item.modelName || item.model_name || '-'
+      // 优先使用name字段(显示名称),其次是modelName/model_name(基础模型)
+      return item.name || item.modelName || item.model_name || '-'
     },
 
     /**
