@@ -8,6 +8,7 @@ const state = {
   avatar: '',
   introduction: '',
   roles: [],
+  userId: null, // 用户ID (从session_bean.staff_id获取)
   // AI会话UUID
   conv_uuid: '',
   // session信息
@@ -29,6 +30,9 @@ const mutations = {
   },
   SET_ROLES: (state, roles) => {
     state.roles = roles
+  },
+  SET_USER_ID: (state, userId) => {
+    state.userId = userId
   },
   SET_CONV_UUID: (state, conv_uuid) => {
     state.conv_uuid = conv_uuid
@@ -117,6 +121,20 @@ const actions = {
         commit('SET_INTRODUCTION', introduction)
         commit('SET_CONV_UUID', conv_uuid || '')
         commit('SET_SESSION_BEAN', user_session_bean)
+
+        // 设置用户ID (从session_bean中获取staff_Id，注意是大写I)
+        console.log('🔍 getUserInfoAction 调试:', {
+          'user_session_bean': user_session_bean,
+          'user_session_bean.staff_Id': user_session_bean ? user_session_bean.staff_Id : undefined,
+          'data完整内容': data
+        })
+
+        if (user_session_bean && user_session_bean.staff_Id) {
+          console.log('✅ 设置 userId:', user_session_bean.staff_Id)
+          commit('SET_USER_ID', user_session_bean.staff_Id)
+        } else {
+          console.warn('⚠️ 无法从 session_bean 获取 staff_Id')
+        }
         resolve(data)
       }).catch(error => {
         reject(error)

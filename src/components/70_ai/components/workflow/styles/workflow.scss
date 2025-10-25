@@ -1,0 +1,319 @@
+/**
+ * AI Workflow 工作流样式文件
+ * 基于 aideepin 原始样式,适配 AntV X6 图编辑引擎
+ */
+
+// ==================== 导入 AntV X6 基础样式 ====================
+@import '~@antv/x6/dist/x6.css';
+
+// ==================== 工作流容器布局 ====================
+.workflow-designer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+
+  // 主内容区域
+  .workflow-main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  // 拖放区域
+  .workflow-dndflow {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+
+    @media screen and (min-width: 768px) {
+      flex-direction: row;
+    }
+  }
+
+  // 左侧节点面板
+  .workflow-sidebar {
+    border-right: 1px solid #eee;
+    padding: 15px 10px;
+    font-size: 12px;
+    background: #fcfcfc;
+    overflow-y: auto;
+
+    > * {
+      margin-bottom: 10px;
+    }
+  }
+
+  // 画布容器
+  .workflow-canvas-container {
+    flex: 1;
+    background: #f5f5f5;
+    position: relative;
+  }
+
+  // 右侧属性面板
+  .workflow-right-panel {
+    min-width: 400px;
+    background: #fff;
+    border-left: 1px solid #eee;
+    overflow-y: auto;
+  }
+}
+
+// ==================== AntV X6 节点样式 ====================
+.x6-node {
+  border: 1px solid #eee;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  padding: 10px;
+  border-radius: 10px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 220px;
+  cursor: move;
+
+  // 选中状态
+  &.x6-node-selected {
+    border: 1px solid #409eff;
+
+    .x6-port {
+      background: #409eff;
+    }
+  }
+
+  // 节点头部
+  .workflow-node-header {
+    height: 45px;
+    line-height: 45px;
+    margin-bottom: 10px;
+    text-align: center;
+    font-weight: 600;
+    width: 100%;
+  }
+
+  // 节点内容行
+  .workflow-node-content-line {
+    height: 40px;
+    line-height: 40px;
+    background: #9696961a;
+    margin-bottom: 10px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    padding: 0 10px;
+  }
+}
+
+// ==================== AntV X6 连接桩样式 ====================
+.x6-port {
+  background: #555;
+  height: 16px;
+  width: 8px;
+  border-radius: 4px;
+
+  // 鼠标悬停效果
+  &:hover {
+    background: #409eff;
+  }
+}
+
+// ==================== AntV X6 边样式 ====================
+.x6-edge {
+  // 选中状态
+  &.x6-edge-selected {
+    .x6-edge-path {
+      stroke: #409eff;
+      stroke-width: 2;
+    }
+
+    .x6-edge-label {
+      background: #409eff;
+      color: #fff;
+    }
+  }
+
+  // 边的路径
+  .x6-edge-path {
+    stroke: #888;
+    stroke-width: 1.5;
+    fill: none;
+  }
+
+  // 边的标签
+  .x6-edge-label {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+}
+
+// ==================== 工具栏样式 ====================
+.workflow-toolbar {
+  position: absolute;
+  right: 20px;
+  top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 100;
+
+  .el-button {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// ==================== Element UI 组件适配 ====================
+.workflow-designer {
+  // Collapse 折叠面板样式
+  .el-collapse {
+    .el-collapse-item__header {
+      padding-top: 5px;
+      padding-bottom: 5px;
+      height: auto;
+      line-height: normal;
+    }
+
+    .el-collapse-item__content {
+      padding-top: 0;
+    }
+  }
+
+  // Scrollbar 滚动条样式
+  .el-scrollbar {
+    height: 100%;
+
+    .el-scrollbar__wrap {
+      overflow-x: hidden;
+    }
+  }
+}
+
+// ==================== 节点选择器样式 ====================
+.workflow-node-selector {
+  width: 100%;
+
+  .node-category {
+    margin-bottom: 16px;
+
+    .category-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #f5f7fa;
+      border-radius: 4px;
+    }
+
+    .node-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      .node-item {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
+        cursor: grab;
+        background: #fff;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: #409eff;
+          box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+        }
+
+        &:active {
+          cursor: grabbing;
+        }
+
+        .node-icon {
+          margin-right: 8px;
+          font-size: 18px;
+        }
+
+        .node-name {
+          flex: 1;
+          font-size: 13px;
+          color: #606266;
+        }
+      }
+    }
+  }
+}
+
+// ==================== 运行时样式 ====================
+.workflow-runtime {
+  // 运行中的节点
+  .x6-node-running {
+    border-color: #67c23a;
+    animation: pulse-green 2s infinite;
+  }
+
+  // 错误节点
+  .x6-node-error {
+    border-color: #f56c6c;
+    background: #fef0f0;
+  }
+
+  // 等待中的节点
+  .x6-node-waiting {
+    border-color: #e6a23c;
+    animation: pulse-orange 2s infinite;
+  }
+
+  // 完成的节点
+  .x6-node-completed {
+    border-color: #67c23a;
+  }
+}
+
+// ==================== 动画效果 ====================
+@keyframes pulse-green {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(103, 194, 58, 0);
+  }
+}
+
+@keyframes pulse-orange {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(230, 162, 60, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(230, 162, 60, 0);
+  }
+}
+
+// ==================== 响应式设计 ====================
+@media screen and (max-width: 768px) {
+  .workflow-designer {
+    .workflow-right-panel {
+      min-width: 100%;
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.3s;
+
+      &.is-visible {
+        transform: translateX(0);
+      }
+    }
+  }
+}

@@ -79,6 +79,16 @@
           />
         </el-tooltip>
 
+        <!-- 工作流管理 -->
+        <el-tooltip content="工作流管理" placement="bottom">
+          <el-button
+            type="text"
+            icon="el-icon-s-operation"
+            class="action-btn workflow-manage-btn"
+            @click="openWorkflowManage"
+          />
+        </el-tooltip>
+
         <!-- 关闭按钮 -->
         <el-button
           type="text"
@@ -106,12 +116,19 @@
       :llm-list="llmList"
       @update:visible="showKnowledgeBase = $event"
     />
+
+    <!-- 工作流管理弹窗 -->
+    <WorkflowDialog
+      :visible="showWorkflow"
+      @update:visible="showWorkflow = $event"
+    />
   </div>
 </template>
 
 <script>
 import ModelSettingsDialog from '../../model/ModelSettingsDialog.vue'
 import { KnowledgeBaseManageDialog } from '../../rag'
+import WorkflowDialog from '../../workflow/WorkflowDialog.vue'
 import { getModelConfigList } from '../../../api/model'
 
 export default {
@@ -119,7 +136,8 @@ export default {
 
   components: {
     ModelSettingsDialog,
-    KnowledgeBaseManageDialog
+    KnowledgeBaseManageDialog,
+    WorkflowDialog
   },
 
   props: {
@@ -147,6 +165,7 @@ export default {
     return {
       showModelSettings: false,
       showKnowledgeBase: false,
+      showWorkflow: false,
       llmList: []
     }
   },
@@ -210,6 +229,13 @@ export default {
      */
     openKnowledgeBaseManage () {
       this.showKnowledgeBase = true
+    },
+
+    /**
+     * 打开工作流管理弹窗
+     */
+    openWorkflowManage () {
+      this.showWorkflow = true
     }
   }
 }
@@ -400,6 +426,11 @@ export default {
 /* 知识库管理按钮样式 */
 .kb-manage-btn:hover {
   background: rgba(230, 162, 60, 0.3);
+}
+
+/* 工作流管理按钮样式 */
+.workflow-manage-btn:hover {
+  background: rgba(133, 199, 58, 0.3);
 }
 
 /* 响应式调整 */
