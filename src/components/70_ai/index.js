@@ -60,6 +60,17 @@ export default {
       store.registerModule('chat', aiStoreModules.modules.chat)
     }
 
+    // 注册 AI 命名空间（包含 workflow 和 workflowRuntime）
+    if (store && !store.state.ai) {
+      store.registerModule('ai', {
+        namespaced: true,
+        modules: {
+          workflow: aiStoreModules.modules.workflow,
+          workflowRuntime: aiStoreModules.modules.workflowRuntime
+        }
+      })
+    }
+
     // 注册全局组件
     Vue.component('ChatBubble', ChatBubble)
     Vue.component('ChatPanel', ChatPanel)
