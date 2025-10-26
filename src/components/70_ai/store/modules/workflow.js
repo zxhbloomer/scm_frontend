@@ -36,15 +36,26 @@ const state = {
 const getters = {
   /**
    * 获取工作流信息 (by UUID)
+   * 如果是当前激活的工作流，返回 activeWorkflowInfo（深拷贝副本）
+   * 否则从列表中查找（用于列表展示）
    */
   getWorkflowInfo: (state) => (wfUuid) => {
-    // 在我的工作流中查找
+    // 如果是当前激活的工作流，返回深拷贝后的数据（用于编辑）
+    if (state.activeUuid === wfUuid && state.activeWorkflowInfo.workflowUuid) {
+      return state.activeWorkflowInfo
+    }
+
+    // 否则从列表中查找（用于其他场景，如列表展示）
     let wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid)
-    if (wf) return wf
+    if (wf) {
+      return wf
+    }
 
     // 再在公开工作流中查找
     wf = state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
-    if (wf) return wf
+    if (wf) {
+      return wf
+    }
 
     // 如果都没找到，返回undefined
     return undefined
@@ -115,14 +126,33 @@ const mutations = {
 
   /**
    * 设置当前激活的工作流
-   * 简单策略：关闭/切换时直接清空，打开时重新加载
+   * 从列表中获取工作流数据，并进行深拷贝以避免编辑污染原列表
+   * 注意：LIST 会同步修改（DELETE_NODE 会修改列表和 activeWorkflowInfo），
+   * 但下次打开时仍需要从刚刚重新加载的列表中取数据
    */
   SET_ACTIVE (state, wfUuid) {
     state.activeUuid = wfUuid
 
-    // 关闭或切换工作流时，直接清空数据，避免数据缓存问题
-    // 下次打开时会从列表中重新加载
-    state.activeWorkflowInfo = EMPTY_WORKFLOW_INFO()
+    if (!wfUuid) {
+      // 关闭工作流时直接清空
+      state.activeWorkflowInfo = EMPTY_WORKFLOW_INFO()
+      return
+    }
+
+    // 从列表中查找工作流
+    let workflow = state.myWorkflows.find(item => item.workflowUuid === wfUuid)
+
+    if (!workflow) {
+      workflow = state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+    }
+
+    if (workflow) {
+      // 深拷贝工作流数据到 activeWorkflowInfo，避免编辑污染原列表
+      // 即使列表中的数据被修改过，深拷贝会复制当前状态
+      state.activeWorkflowInfo = JSON.parse(JSON.stringify(workflow))
+    } else {
+      state.activeWorkflowInfo = EMPTY_WORKFLOW_INFO()
+    }
   },
 
   /**
@@ -356,6 +386,7 @@ const mutations = {
 
   /**
    * 删除节点
+   * 同时删除 activeWorkflowInfo 中的节点（如果当前工作流是激活状态）
    */
   DELETE_NODE (state, { wfUuid, nodeUuid }) {
     const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid)
@@ -368,6 +399,14 @@ const mutations = {
     const idx = wf.nodes.findIndex(node => node.uuid === nodeUuid)
     if (idx > -1) {
       wf.nodes.splice(idx, 1)
+    }
+
+    // 如果这是当前激活的工作流，也要同时删除 activeWorkflowInfo 中的节点
+    if (state.activeUuid === wfUuid && state.activeWorkflowInfo.workflowUuid) {
+      const activeIdx = state.activeWorkflowInfo.nodes.findIndex(node => node.uuid === nodeUuid)
+      if (activeIdx > -1) {
+        state.activeWorkflowInfo.nodes.splice(activeIdx, 1)
+      }
     }
 
     // 删除相关的边
@@ -417,6 +456,15 @@ const mutations = {
 
   SET_SUBMITTING (state, submitting) {
     state.submitting = submitting
+  },
+
+  /**
+   * 清空工作流列表
+   * 用于关闭工作流时清空已修改的数据，确保重新加载时获取最新数据
+   */
+  CLEAR_WORKFLOWS (state) {
+    state.myWorkflows = []
+    state.publicWorkflows = []
   }
 }
 
@@ -436,7 +484,6 @@ const actions = {
         commit('SET_WORKFLOW_COMPONENTS', response.data)
       }
     } catch (error) {
-      console.error('加载工作流组件失败:', error)
       throw error
     }
   },
@@ -458,7 +505,6 @@ const actions = {
         }
       }
     } catch (error) {
-      console.error('加载我的工作流失败:', error)
       throw error
     } finally {
       commit('SET_LOADING_MY_WORKFLOWS', false)
@@ -477,7 +523,6 @@ const actions = {
         commit('APPEND_WORKFLOWS', { workflows: response.data.records, isMine: false })
       }
     } catch (error) {
-      console.error('加载公开工作流失败:', error)
       throw error
     } finally {
       commit('SET_LOADING_PUBLIC_WORKFLOWS', false)
@@ -499,7 +544,6 @@ const actions = {
         commit('SET_OPERATORS', response.data)
       }
     } catch (error) {
-      console.error('加载运算符失败:', error)
       throw error
     }
   },
@@ -522,10 +566,28 @@ const actions = {
       }
       return true
     } catch (error) {
-      console.error('保存工作流失败:', error)
       throw error
     } finally {
       commit('SET_SUBMITTING', false)
+    }
+  },
+
+  /**
+   * 关闭工作流并重新加载列表
+   * 防止编辑未保存的数据污染列表，确保下次打开时显示最新的数据库数据
+   */
+  async closeWorkflow ({ commit, dispatch }) {
+    // 清除激活状态
+    commit('SET_ACTIVE', '')
+
+    // 重新加载列表数据，确保列表中的数据是最新的、未污染的
+    try {
+      // 关键：清空列表，确保下面的重新加载会替换而不是追加
+      commit('CLEAR_WORKFLOWS')
+
+      await dispatch('loadMyWorkflows', { page: 1, pageSize: 20 })
+    } catch (error) {
+      // 不抛出错误，防止关闭流程被中断
     }
   }
 }

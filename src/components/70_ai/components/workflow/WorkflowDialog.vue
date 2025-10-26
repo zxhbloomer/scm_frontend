@@ -91,8 +91,19 @@ export default {
 
     /**
      * 关闭弹窗
+     * 在关闭前调用 closeWorkflow 清空工作流数据，确保下次打开时显示最新数据
      */
-    handleClose () {
+    async handleClose () {
+      // 调用 closeWorkflow action 清空 activeUuid 和重新加载列表
+      try {
+        await this.$store.dispatch('ai/workflow/closeWorkflow')
+      } catch (error) {
+        // 处理错误，但仍继续关闭弹窗
+        // eslint-disable-next-line no-console
+        console.error('closeWorkflow failed:', error)
+      }
+
+      // 关闭弹窗
       this.isFullscreen = false
       this.$emit('update:visible', false)
     }

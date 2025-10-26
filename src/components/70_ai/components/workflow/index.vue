@@ -40,7 +40,7 @@
             </el-tab-pane>
 
             <!-- Tab 2: 工作流流程图 -->
-            <el-tab-pane label="工作流流程图" name="design">
+            <el-tab-pane label="工作流流程图" name="design" class="design-tab-pane">
               <workflow-designer
                 v-if="activeWorkflow.workflowUuid"
                 ref="workflowDesigner"
@@ -91,7 +91,8 @@ export default {
 
     activeWorkflow () {
       if (this.activeUuid) {
-        return this.getWorkflowInfo(this.activeUuid) || {}
+        const wf = this.getWorkflowInfo(this.activeUuid) || {}
+        return wf
       }
       return {}
     }
@@ -104,8 +105,16 @@ export default {
     },
 
     handleBack () {
-      // 清除选中状态
-      this.$store.commit('ai/workflow/SET_ACTIVE', '')
+      // 关闭工作流并重新加载列表
+      this.$store.dispatch('ai/workflow/closeWorkflow')
+        .then(() => {
+          // closeWorkflow 完成
+        })
+        .catch((error) => {
+          // 处理错误
+          // eslint-disable-next-line no-console
+          console.error('closeWorkflow failed:', error)
+        })
     },
 
     /**
@@ -118,8 +127,6 @@ export default {
         this.$nextTick(() => {
           if (this.$refs.workflowDesigner && this.$refs.workflowDesigner.waitForValidSizeAndResize) {
             this.$refs.workflowDesigner.waitForValidSizeAndResize()
-          } else {
-            console.warn('WorkflowDesigner ref 不存在或没有 waitForValidSizeAndResize 方法')
           }
         })
       }
@@ -216,6 +223,13 @@ export default {
         height: 100%;
       }
     }
+  }
+
+  // 确保设计器tab撑满
+  ::v-deep .design-tab-pane {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

@@ -57,6 +57,7 @@
 <script>
 import { mapState, mapGetters, mapMutations } from 'vuex'
 import { Graph } from '@antv/x6'
+import { Selection } from '@antv/x6-plugin-selection'
 import { registerAllWorkflowNodes } from '../utils/registerX6Nodes'
 import WorkflowNodePalette from './WorkflowNodePalette.vue'
 import WorkflowPropertyPanel from './WorkflowPropertyPanel.vue'
@@ -122,19 +123,23 @@ export default {
   },
 
   watch: {
-    // 监听 workflow prop 变化，重新渲染图形
-    'workflow.uuid': {
-      handler (newUuid, oldUuid) {
-        // 忽略初始化时的触发（mounted 已经处理了）
-        if (!oldUuid) {
+    // 监听整个 workflow 对象的变化
+    workflow: {
+      handler (newWorkflow, oldWorkflow) {
+        // 只有在图已初始化后才处理工作流切换
+        if (!this.graph) {
           return
         }
 
-        // UUID 变化时，清空并重新渲染
-        if (newUuid && newUuid !== oldUuid) {
+        // 比较 UUID 判断是否是不同的工作流
+        const newUuid = newWorkflow?.uuid || newWorkflow?.workflowUuid
+        const oldUuid = oldWorkflow?.uuid || oldWorkflow?.workflowUuid
+
+        if (newUuid && oldUuid && newUuid !== oldUuid) {
           this.clearAndRerenderGraph()
         }
-      }
+      },
+      deep: false // 不需要深度监听,只监听对象引用变化
     }
   },
 
@@ -237,6 +242,7 @@ export default {
         container,
         width,
         height,
+        autoResize: true, // 自动调整画布大小以适应容器
         background: {
           color: '#f5f5f5'
         },
@@ -289,13 +295,6 @@ export default {
             return sourceCell && targetCell && sourceCell !== targetCell
           }
         },
-        selecting: {
-          enabled: true,
-          multiple: false,
-          rubberband: false,
-          movable: true,
-          showNodeSelectionBox: true
-        },
         snapline: {
           enabled: true
         },
@@ -310,26 +309,50 @@ export default {
         }
       })
 
+      // 使用 Selection 插件
+      this.graph.use(
+        new Selection({
+          enabled: true,
+          multiple: false,
+          rubberband: false,
+          movable: true,
+          showNodeSelectionBox: true
+        })
+      )
+
       this.bindEvents()
     },
 
     bindEvents () {
+      // 获取Selection插件
+      const selection = this.graph.getPlugin('selection')
+
       // 节点点击事件
-      this.graph.on('node:click', ({ node, e }) => {
-        const wfNode = this.workflow.nodes.find(n =>
-          (n.nodeUuid || n.node_uuid) === node.id
-        )
-        if (wfNode) {
-          this.selectedWfNode = wfNode
-          this.hidePropertyPanel = false
+      this.graph.on('node:click', ({ node }) => {
+        if (selection) {
+          selection.select(node)
         }
       })
 
+      // 监听Selection插件的选中事件
+      if (selection) {
+        selection.on('node:selected', ({ node }) => {
+          const wfNode = this.workflow.nodes.find(n => n.uuid === node.id)
+
+          if (wfNode) {
+            this.selectedWfNode = wfNode
+            this.hidePropertyPanel = false
+          }
+        })
+
+        selection.on('node:unselected', ({ node }) => {
+          // 节点取消选中
+        })
+      }
+
       // 节点拖拽结束事件
       this.graph.on('node:moved', ({ node, e }) => {
-        const wfNode = this.workflow.nodes.find(n =>
-          (n.nodeUuid || n.node_uuid) === node.id
-        )
+        const wfNode = this.workflow.nodes.find(n => n.uuid === node.id)
         if (wfNode) {
           const position = node.getPosition()
           wfNode.positionX = position.x
@@ -344,15 +367,14 @@ export default {
         }
       })
 
-      // 选中状态变化
-      this.graph.on('selection:changed', ({ selected, unselected }) => {
-        if (unselected.length > 0 && this.selectedWfNode) {
-          const unselectedNode = unselected[0]
-          const selectedNodeId = this.selectedWfNode.nodeUuid || this.selectedWfNode.node_uuid
-          if (unselectedNode.id === selectedNodeId) {
-            this.hidePropertyPanel = true
-          }
+      // 画布空白区域点击事件
+      this.graph.on('blank:click', () => {
+        const selection = this.graph.getPlugin('selection')
+        if (selection) {
+          selection.reset()
         }
+        this.hidePropertyPanel = true
+        this.selectedWfNode = null
       })
 
       // 删除事件（使用 X6 内置的键盘删除功能）
@@ -401,15 +423,14 @@ export default {
       this.workflow.nodes.forEach((node, index) => {
         // 安全检查：确保节点有 wfComponent
         if (!node.wfComponent || !node.wfComponent.name) {
-          console.warn('跳过渲染缺少 wfComponent 的节点:', node)
           return
         }
 
-        // 参考 aideepin 的逻辑：使用 || 运算符
-        // 当 positionX 为 0 时，视为"未设置"，使用默认值
-        // 这符合 aideepin 的设计：后端存储 0，前端当作未设置处理
-        const px = node.positionX || (initX + 230 * index)
-        const py = node.positionY || initY
+        // 修复逻辑：使用 !== null 和 !== undefined 检查
+        // 而不是 || 运算符，这样可以保证 positionX=0 的节点正确显示
+        // 原因：positionX=0 是有效的坐标值，不应该被视为"未设置"
+        const px = node.positionX !== null && node.positionX !== undefined ? node.positionX : (initX + 230 * index)
+        const py = node.positionY !== null && node.positionY !== undefined ? node.positionY : initY
 
         this.addNodeToGraph(node, px, py)
       })
@@ -447,7 +468,7 @@ export default {
       const shapeName = wfNode.wfComponent.name.toLowerCase()
 
       const nodeConfig = {
-        id: wfNode.nodeUuid || wfNode.node_uuid,
+        id: wfNode.uuid,
         x,
         y,
         shape: shapeName,
@@ -543,12 +564,7 @@ export default {
 
       // 支持多种可能的 ID 字段格式
       const findNode = (nodeId) => {
-        return this.workflow.nodes.find(n =>
-          n.nodeUuid === nodeId ||
-          n.node_uuid === nodeId ||
-          n.uuid === nodeId ||
-          n.id === nodeId
-        )
+        return this.workflow.nodes.find(n => n.uuid === nodeId)
       }
 
       const sourceNode = findNode(sourceNodeId)
@@ -573,9 +589,7 @@ export default {
     },
 
     deleteNode (nodeId) {
-      const index = this.workflow.nodes.findIndex(n =>
-        (n.nodeUuid || n.node_uuid) === nodeId
-      )
+      const index = this.workflow.nodes.findIndex(n => n.uuid === nodeId)
       if (index !== -1) {
         const deletedNode = this.workflow.nodes.splice(index, 1)[0]
         if (!this.workflow.deleteNodes) {
@@ -671,7 +685,6 @@ export default {
     waitForValidSizeAndResize () {
       const container = this.$refs.graphContainer
       if (!container) {
-        console.warn('waitForValidSizeAndResize: container 不存在')
         return
       }
 
@@ -688,8 +701,6 @@ export default {
           this.handleResize()
         } else if (attemptCount < maxAttempts) {
           setTimeout(checkSize, checkInterval)
-        } else {
-          console.error('❌ 等待容器尺寸超时，容器始终为 0')
         }
       }
 
@@ -742,5 +753,22 @@ export default {
   background-color: #fff;
   border-left: 1px solid #eee;
   overflow-y: auto;
+}
+</style>
+
+<style lang="scss">
+/* X6 Selection 选中框样式 */
+.x6-widget-selection-inner {
+  border: 2px solid #2563eb !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* 重要: 覆盖X6默认的隐藏单选节点的样式 */
+.x6-widget-selection-inner[data-selection-length='1'] {
+  display: block !important;
+}
+
+.x6-widget-selection-box {
+  opacity: 0;
 }
 </style>
