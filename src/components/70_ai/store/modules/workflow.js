@@ -115,20 +115,14 @@ const mutations = {
 
   /**
    * 设置当前激活的工作流
+   * 简单策略：关闭/切换时直接清空，打开时重新加载
    */
   SET_ACTIVE (state, wfUuid) {
     state.activeUuid = wfUuid
 
-    // 在工作流列表中查找
-    const selected = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
-                    state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
-
-    if (selected) {
-      state.activeWorkflowInfo = selected
-    } else {
-      // 如果没找到，重置为空
-      state.activeWorkflowInfo = EMPTY_WORKFLOW_INFO()
-    }
+    // 关闭或切换工作流时，直接清空数据，避免数据缓存问题
+    // 下次打开时会从列表中重新加载
+    state.activeWorkflowInfo = EMPTY_WORKFLOW_INFO()
   },
 
   /**
