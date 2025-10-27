@@ -4,6 +4,7 @@
  */
 
 import { nanoid } from 'nanoid'
+import { generate } from 'random-words'
 
 /**
  * 生成工作流UUID (32位不带横线)
@@ -213,6 +214,9 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
     createMailSend(newWfNode)
   } else if (componentName === 'HttpRequest') {
     createHttpRequest(newWfNode)
+  } else if (componentName === 'DocumentExtractor') {
+    // 🔥 新增：DocumentExtractor 节点自动创建 ref_input
+    createDocumentExtractor(workflow, newWfNode)
   }
 
   workflow.nodes.push(newWfNode)
@@ -690,4 +694,45 @@ export function getColorClassByComponentName (name) {
     start: 'color-primary'
   }
   return colorMap[lowerName] || ''
+}
+
+/**
+ * 创建文档提取节点配置
+ * 🔥 自动创建一个 ref_input 关联到 Start 节点的第一个文件输入
+ * @param {object} workflow WorkflowInfo
+ * @param {object} node WorkflowNode
+ */
+function createDocumentExtractor (workflow, node) {
+  // 查找开始节点
+  const startNode = workflow.nodes.find(item => item.wfComponent && item.wfComponent.name === 'Start')
+
+  if (!startNode) {
+    console.warn('⚠️ DocumentExtractor: Start node not found')
+    return
+  }
+
+  // 获取所有文件类型的输入（type === 4）
+  const fileInputs = startNode.inputConfig?.user_inputs?.filter(input => input.type === 4) || []
+
+  if (fileInputs.length === 0) {
+    console.warn('⚠️ DocumentExtractor: No file inputs found in Start node')
+    return
+  }
+
+  // 自动创建一个 ref_input，关联到第一个文件输入
+  const firstFileInput = fileInputs[0]
+  const refInput = {
+    uuid: generateUuid(),
+    name: 'var_' + generate({ minLength: 1, maxLength: 20 }),
+    node_param_name: firstFileInput.name,
+    node_uuid: startNode.nodeUuid || startNode.uuid
+  }
+
+  // 添加到 ref_inputs
+  node.inputConfig.ref_inputs.push(refInput)
+
+  console.log('✅ DocumentExtractor: Auto-created ref_input:', {
+    refInputName: refInput.name,
+    linkedTo: startNode.title + '.' + (firstFileInput.title || firstFileInput.name)
+  })
 }

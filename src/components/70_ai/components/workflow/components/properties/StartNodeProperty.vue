@@ -228,6 +228,14 @@ export default {
           nodeUuid: this.wfNode.uuid,
           idx: index
         })
+
+        // 通知 WorkflowDesigner 更新 X6 节点
+        this.$nextTick(() => {
+          this.$root.$emit('workflow:update-node', {
+            nodeUuid: this.wfNode.uuid,
+            nodeData: this.wfNode
+          })
+        })
       }
     },
 
@@ -246,6 +254,14 @@ export default {
               newInput: { ...this.tmpItem }
             })
           }
+
+          // 通知 WorkflowDesigner 更新 X6 节点
+          this.$nextTick(() => {
+            this.$root.$emit('workflow:update-node', {
+              nodeUuid: this.wfNode.uuid,
+              nodeData: this.wfNode
+            })
+          })
 
           this.handleClose()
         }

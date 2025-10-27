@@ -6,7 +6,7 @@
     <!-- 用户输入列表 -->
     <div class="node-content">
       <div
-        v-for="userInputDef in (node.inputConfig || node.input_config || {}).user_inputs || []"
+        v-for="userInputDef in localUserInputs"
         :key="userInputDef.uuid"
         class="content-line"
       >
@@ -46,11 +46,30 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态，用于显示
+      localUserInputs: []
+    }
+  },
+
   computed: {
     node () {
       const nodeData = this.getNode().data
       return nodeData
     }
+  },
+
+  mounted () {
+    // 初始化本地状态
+    const node = this.getNode()
+    this.localUserInputs = [...(node.data.inputConfig?.user_inputs || [])]
+
+    // 🔥 关键：监听 X6 节点数据变化事件
+    node.on('change:data', ({ current }) => {
+      // 更新本地状态，触发视图更新
+      this.localUserInputs = [...(current.inputConfig?.user_inputs || [])]
+    })
   }
 }
 </script>

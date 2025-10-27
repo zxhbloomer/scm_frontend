@@ -62,7 +62,7 @@ export default {
 
   data () {
     return {
-      isFullscreen: false
+      isFullscreen: true // 默认最大化
     }
   },
 
@@ -104,7 +104,7 @@ export default {
       }
 
       // 关闭弹窗
-      this.isFullscreen = false
+      // 注意：由于有 destroy-on-close，组件会被销毁，不需要重置 isFullscreen
       this.$emit('update:visible', false)
     }
   }

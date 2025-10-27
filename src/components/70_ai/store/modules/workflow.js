@@ -36,29 +36,14 @@ const state = {
 const getters = {
   /**
    * 获取工作流信息 (by UUID)
-   * 如果是当前激活的工作流，返回 activeWorkflowInfo（深拷贝副本）
-   * 否则从列表中查找（用于列表展示）
+   * 严格参考 aideepin 实现：直接从 myWorkflows/publicWorkflows 查找返回
    */
   getWorkflowInfo: (state) => (wfUuid) => {
-    // 如果是当前激活的工作流，返回深拷贝后的数据（用于编辑）
-    if (state.activeUuid === wfUuid && state.activeWorkflowInfo.workflowUuid) {
-      return state.activeWorkflowInfo
-    }
-
-    // 否则从列表中查找（用于其他场景，如列表展示）
-    let wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid)
+    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid)
     if (wf) {
       return wf
     }
-
-    // 再在公开工作流中查找
-    wf = state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
-    if (wf) {
-      return wf
-    }
-
-    // 如果都没找到，返回undefined
-    return undefined
+    return state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
   },
 
   /**
@@ -343,10 +328,10 @@ const mutations = {
 
   /**
    * 添加引用输入到节点
+   * 严格参考 aideepin 实现
    */
   ADD_REF_INPUT_TO_NODE (state, { wfUuid, nodeUuid, newInput }) {
-    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
-              state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+    const wf = getters.getWorkflowInfo(state)(wfUuid)
     if (wf) {
       const node = wf.nodes.find(n => n.uuid === nodeUuid)
       if (node) {
@@ -357,10 +342,10 @@ const mutations = {
 
   /**
    * 添加用户输入到节点
+   * 严格参考 aideepin 实现
    */
   ADD_USER_INPUT_TO_NODE (state, { wfUuid, nodeUuid, newInput }) {
-    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
-              state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+    const wf = getters.getWorkflowInfo(state)(wfUuid)
     if (wf) {
       const node = wf.nodes.find(n => n.uuid === nodeUuid)
       if (node) {
@@ -371,10 +356,10 @@ const mutations = {
 
   /**
    * 删除引用输入
+   * 严格参考 aideepin 实现
    */
   DELETE_REF_INPUT (state, { wfUuid, nodeUuid, idx }) {
-    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
-              state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+    const wf = getters.getWorkflowInfo(state)(wfUuid)
     if (wf) {
       const node = wf.nodes.find(n => n.uuid === nodeUuid)
       if (node) {
@@ -385,10 +370,10 @@ const mutations = {
 
   /**
    * 删除用户输入
+   * 严格参考 aideepin 实现
    */
   DELETE_USER_INPUT (state, { wfUuid, nodeUuid, idx }) {
-    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
-              state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+    const wf = getters.getWorkflowInfo(state)(wfUuid)
     if (wf) {
       const node = wf.nodes.find(n => n.uuid === nodeUuid)
       if (node) {

@@ -125,6 +125,33 @@ export default {
   },
 
   watch: {
+    // 🔥 监听 workflow.nodes 的深度变化，同步更新 X6 节点数据
+    'workflow.nodes': {
+      handler (newNodes) {
+        if (!this.graph || !newNodes) {
+          return
+        }
+
+        // 遍历所有节点，同步数据到 X6
+        newNodes.forEach(wfNode => {
+          const x6Node = this.graph.getCellById(wfNode.uuid)
+          if (x6Node && x6Node.isNode()) {
+            // 获取 X6 节点的当前数据
+            const currentData = x6Node.getData()
+
+            // 比较数据是否有变化（特别是 nodeConfig）
+            const hasChanged = JSON.stringify(currentData) !== JSON.stringify(wfNode)
+
+            if (hasChanged) {
+              // 更新 X6 节点数据，触发 vue-shape 重新渲染
+              x6Node.setData(wfNode)
+            }
+          }
+        })
+      },
+      deep: true // 深度监听
+    },
+
     // 监听整个 workflow 对象的变化
     workflow: {
       handler (newWorkflow, oldWorkflow) {
@@ -150,6 +177,41 @@ export default {
     this.$nextTick(() => {
       this.initGraph()
       this.renderGraphWhenReady()
+    })
+
+    // 监听节点配置变化事件，手动更新 X6 节点
+    this.$root.$on('workflow:update-node', ({ nodeUuid, nodeData }) => {
+      if (!this.graph) {
+        return
+      }
+
+      const x6Node = this.graph.getCellById(nodeUuid)
+
+      if (x6Node && x6Node.isNode()) {
+        // 🔥 方案A：注入开始节点信息
+        const enhancedNodeData = this.injectStartNodeFileInputs(nodeData)
+
+        // 🔥 关键修复：创建新对象，触发 vue-shape 重新渲染
+        // X6-vue-shape 通过 provide/inject 传递数据，需要触发 provide 更新
+        const newData = {
+          ...enhancedNodeData,
+          nodeConfig: { ...enhancedNodeData.nodeConfig },
+          inputConfig: {
+            ...enhancedNodeData.inputConfig,
+            ref_inputs: [...(enhancedNodeData.inputConfig.ref_inputs || [])],
+            user_inputs: [...(enhancedNodeData.inputConfig.user_inputs || [])]
+          }
+        }
+
+        // 使用 prop 方法更新，这会正确触发 change:data 事件
+        x6Node.prop('data', newData)
+      }
+
+      // 🔥 关键：如果更新的是开始节点，需要更新所有其他节点的 startNodeFileInputs
+      if (nodeData.wfComponent && nodeData.wfComponent.name === 'Start') {
+        console.log('🔥 开始节点更新，同步所有节点的文件信息')
+        this.updateAllNodesStartFileInputs()
+      }
     })
 
     // 监听窗口 resize 事件，调整 graph 尺寸
@@ -179,6 +241,9 @@ export default {
   },
 
   beforeDestroy () {
+    // 移除事件监听
+    this.$root.$off('workflow:update-node')
+
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
     }
@@ -318,7 +383,7 @@ export default {
           multiple: false,
           rubberband: false,
           movable: true,
-          showNodeSelectionBox: true
+          showNodeSelectionBox: false // 不使用X6默认选中框，使用自定义CSS样式
         })
       )
 
@@ -331,6 +396,11 @@ export default {
 
       // 节点点击事件
       this.graph.on('node:click', ({ node }) => {
+        // 移除所有边的删除按钮
+        this.graph.getEdges().forEach(edge => {
+          edge.removeTools()
+        })
+
         if (selection) {
           selection.select(node)
         }
@@ -369,8 +439,51 @@ export default {
         }
       })
 
+      // 边点击事件 - 显示删除按钮
+      this.graph.on('edge:click', ({ edge }) => {
+        // 先移除其他边上的所有工具
+        this.graph.getEdges().forEach(e => {
+          if (e.id !== edge.id) {
+            e.removeTools()
+          }
+        })
+
+        // 给当前点击的边添加删除按钮
+        edge.addTools([
+          {
+            name: 'button-remove',
+            args: {
+              distance: '50%', // 按钮位置：边的中点
+              offset: { x: 0, y: 0 },
+              attrs: {
+                circle: {
+                  r: 8,
+                  fill: '#ff4d4f',
+                  stroke: '#fff',
+                  strokeWidth: 2,
+                  cursor: 'pointer'
+                },
+                text: {
+                  text: '×',
+                  fontSize: 14,
+                  fill: '#fff',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  textAnchor: 'middle',
+                  textVerticalAnchor: 'middle'
+                }
+              }
+            }
+          }
+        ])
+      })
+
       // 画布空白区域点击事件
       this.graph.on('blank:click', () => {
+        // 移除所有边的删除按钮
+        this.graph.getEdges().forEach(edge => {
+          edge.removeTools()
+        })
         const selection = this.graph.getPlugin('selection')
         if (selection) {
           selection.reset()
@@ -470,12 +583,16 @@ export default {
 
       const shapeName = wfNode.wfComponent.name.toLowerCase()
 
+      // 🔥 方案A：注入开始节点的文件输入信息
+      // 让节点组件可以直接访问开始节点的文件列表
+      const enhancedWfNode = this.injectStartNodeFileInputs(wfNode)
+
       const nodeConfig = {
         id: wfNode.uuid,
         x,
         y,
         shape: shapeName,
-        data: wfNode
+        data: enhancedWfNode
       }
 
       try {
@@ -621,7 +738,15 @@ export default {
         if (!this.workflow.deleteNodes) {
           this.workflow.deleteNodes = []
         }
-        this.workflow.deleteNodes.push(deletedNode)
+        // 修复：只推入UUID字符串，而不是整个node对象
+        // 后端期望 deleteNodes 是 List<String>，不是 List<Node>
+        this.workflow.deleteNodes.push(deletedNode.uuid)
+
+        // 如果删除的是当前选中的节点，关闭属性面板
+        if (this.selectedWfNode && this.selectedWfNode.uuid === nodeId) {
+          this.selectedWfNode = null
+          this.hidePropertyPanel = true
+        }
 
         // 删除相关的边
         if (this.workflow.edges) {
@@ -646,7 +771,9 @@ export default {
         if (!this.workflow.deleteEdges) {
           this.workflow.deleteEdges = []
         }
-        this.workflow.deleteEdges.push(deletedEdge)
+        // 修复：只推入UUID字符串，而不是整个edge对象
+        // 后端期望 deleteEdges 是 List<String>，不是 List<Edge>
+        this.workflow.deleteEdges.push(deletedEdge.uuid)
       }
     },
 
@@ -732,6 +859,67 @@ export default {
 
       // 立即开始第一次检查
       checkSize()
+    },
+
+    /**
+     * 🔥 方案A：注入开始节点的文件输入信息
+     * 让所有节点都能访问到开始节点的文件列表
+     * 模仿 aideepin 的实现逻辑
+     */
+    injectStartNodeFileInputs (wfNode) {
+      if (!this.workflow || !this.workflow.nodes) {
+        return wfNode
+      }
+
+      // 查找开始节点
+      const startNode = this.workflow.nodes.find(n => n.wfComponent && n.wfComponent.name === 'Start')
+      if (!startNode) {
+        return wfNode
+      }
+
+      // 获取所有文件类型的输入（type === 4）
+      const fileInputs = startNode.inputConfig?.user_inputs?.filter(input => input.type === 4) || []
+
+      // 注入到节点数据中
+      return {
+        ...wfNode,
+        startNodeFileInputs: fileInputs
+      }
+    },
+
+    /**
+     * 🔥 当开始节点的文件输入变化时，更新所有节点的 startNodeFileInputs
+     * 确保所有节点都能看到最新的文件列表
+     */
+    updateAllNodesStartFileInputs () {
+      if (!this.graph || !this.workflow) {
+        return
+      }
+
+      // 获取所有节点
+      const nodes = this.graph.getNodes()
+
+      nodes.forEach(x6Node => {
+        const nodeData = x6Node.getData()
+        if (!nodeData) return
+
+        // 重新注入开始节点信息
+        const enhancedData = this.injectStartNodeFileInputs(nodeData)
+
+        // 创建新对象触发更新
+        const newData = {
+          ...enhancedData,
+          nodeConfig: { ...enhancedData.nodeConfig },
+          inputConfig: {
+            ...enhancedData.inputConfig,
+            ref_inputs: [...(enhancedData.inputConfig.ref_inputs || [])],
+            user_inputs: [...(enhancedData.inputConfig.user_inputs || [])]
+          }
+        }
+
+        // 更新节点数据
+        x6Node.setData(newData)
+      })
     }
   }
 }
@@ -783,18 +971,27 @@ export default {
 </style>
 
 <style lang="scss">
-/* X6 Selection 选中框样式 */
-.x6-widget-selection-inner {
-  border: 2px solid #2563eb !important;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+/* 节点选中样式 - 直接修改节点border */
+/* 通用选择器：匹配所有以 -node 结尾的节点 */
+.x6-node-selected [class$="-node"] {
+  border: 2px solid #409eff !important;
+  box-shadow: 0 0 8px rgba(64, 158, 255, 0.6) !important;
 }
 
-/* 重要: 覆盖X6默认的隐藏单选节点的样式 */
-.x6-widget-selection-inner[data-selection-length='1'] {
-  display: block !important;
-}
-
-.x6-widget-selection-box {
-  opacity: 0;
-}
+/*
+  支持的节点类型：
+  - start-node (开始)
+  - answer-node (生成回答)
+  - end-node (结束)
+  - classifier-node (分类器)
+  - document-extractor-node (文档提取)
+  - faq-extractor-node (FAQ提取)
+  - keyword-extractor-node (关键词提取)
+  - knowledge-retrieval-node (知识检索)
+  - human-feedback-node (人工反馈)
+  - http-request-node (HTTP请求)
+  - mail-send-node (邮件发送)
+  - template-node (模板)
+  - switcher-node (分支)
+*/
 </style>

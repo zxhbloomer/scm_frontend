@@ -39,9 +39,9 @@ export default {
   name: 'WfLLMSelector',
 
   props: {
-    // 当前选中的模型名称(对应model_name字段)
+    // 当前选中的模型名称(对应model_name字段，只接受字符串)
     modelName: {
-      type: [String, Number],
+      type: String,
       default: ''
     }
   },
@@ -49,7 +49,7 @@ export default {
   data () {
     return {
       // 本地选中的模型ID
-      selectedModelId: this.modelName
+      selectedModelId: null
     }
   },
 
@@ -60,21 +60,70 @@ export default {
   watch: {
     // 监听prop变化,同步到本地状态
     modelName (newVal) {
-      this.selectedModelId = newVal
+      this.updateSelectedModelId(newVal)
+    },
+
+    // 监听模型列表加载完成，初始化选中项
+    llmOptions: {
+      immediate: true,
+      handler () {
+        if (this.modelName && this.llmOptions.length > 0) {
+          this.updateSelectedModelId(this.modelName)
+        }
+      }
+    }
+  },
+
+  mounted () {
+    // 组件挂载时，根据 modelName 查找对应的 ID
+    if (this.modelName) {
+      this.updateSelectedModelId(this.modelName)
     }
   },
 
   methods: {
+    /**
+     * 根据模型名称更新选中的模型ID
+     * @param {String} modelName 模型名称（只接受字符串）
+     */
+    updateSelectedModelId (modelName) {
+      if (!modelName) {
+        this.selectedModelId = null
+        return
+      }
+
+      // 只接受字符串格式的模型名称
+      if (typeof modelName !== 'string') {
+        console.warn('[WfLLMSelector] 数据格式错误：model_name 应该是字符串，实际是:', typeof modelName, '，值为:', modelName)
+        this.selectedModelId = null
+        return
+      }
+
+      // 按模型名称查找对应的ID
+      const model = this.llmOptions.find(opt => opt.label === modelName)
+
+      if (model) {
+        this.selectedModelId = model.value
+      } else {
+        this.selectedModelId = null
+      }
+    },
+
     /**
      * 处理模型选择
      * 严格参考 aideepin 的 handleSelect 方法
      * @param {Number} modelId 选中的模型ID
      */
     handleSelect (modelId) {
-      // 触发事件,传递模型名称给父组件
-      // 注意: aideepin 传递 modelName, scm-ai 这里传递 modelId
-      // 因为 scm-ai 使用数据库主键ID, aideepin 使用 modelName 字符串
-      this.$emit('llm-selected', modelId)
+      // 根据ID查找模型对象
+      const model = this.getLlmById(modelId)
+
+      // 触发事件，传递模型名称给父组件（与 aideepin 保持一致）
+      if (model) {
+        this.$emit('llm-selected', model.name)
+      } else {
+        this.$emit('llm-selected', '')
+      }
     }
   }
 }

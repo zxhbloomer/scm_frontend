@@ -7,7 +7,7 @@
     <div class="node-content">
       <div class="model-line">
         <i class="el-icon-cpu model-icon" />
-        <span class="model-name">{{ node.nodeConfig.model_name || '未选择模型' }}</span>
+        <span class="model-name">{{ localModelName || '未选择模型' }}</span>
       </div>
     </div>
   </div>
@@ -31,10 +31,29 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态，用于显示
+      localModelName: ''
+    }
+  },
+
   computed: {
     node () {
       return this.getNode().data
     }
+  },
+
+  mounted () {
+    // 初始化本地状态
+    const node = this.getNode()
+    this.localModelName = node.data.nodeConfig?.model_name || ''
+
+    // 🔥 关键：监听 X6 节点数据变化事件
+    node.on('change:data', ({ current }) => {
+      // 更新本地状态，触发视图更新
+      this.localModelName = current.nodeConfig?.model_name || ''
+    })
   }
 }
 </script>

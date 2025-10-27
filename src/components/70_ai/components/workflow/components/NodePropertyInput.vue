@@ -55,6 +55,7 @@
 
 <script>
 import { nanoid } from 'nanoid'
+import { generate } from 'random-words'
 import WfVariableSelector from './WfVariableSelector.vue'
 
 export default {
@@ -128,7 +129,7 @@ export default {
 
       const newRefInput = {
         uuid: nanoid(32).replace(/-/g, ''),
-        name: `var_${this.generateRandomString()}`,
+        name: `var_${generate({ minLength: 1, maxLength: 20 })}`,
         node_param_name: nodeParamName,
         node_uuid: startNode.uuid
       }
@@ -138,6 +139,14 @@ export default {
         nodeUuid: this.wfNode.uuid,
         newInput: newRefInput
       })
+
+      // 通知 WorkflowDesigner 更新 X6 节点
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     },
 
     onDelete (index) {
@@ -145,6 +154,14 @@ export default {
         wfUuid: this.workflow.workflowUuid,
         nodeUuid: this.wfNode.uuid,
         idx: index
+      })
+
+      // 通知 WorkflowDesigner 更新 X6 节点
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
       })
     },
 
@@ -161,16 +178,6 @@ export default {
 
       // 如果没有Start节点，返回第一个节点（不包括当前节点）
       return this.workflow.nodes.find(n => n.uuid !== this.wfNode.uuid)
-    },
-
-    generateRandomString () {
-      const chars = 'abcdefghijklmnopqrstuvwxyz'
-      let result = ''
-      const length = Math.floor(Math.random() * 10) + 5 // 5-15个字符
-      for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length))
-      }
-      return result
     }
   }
 }

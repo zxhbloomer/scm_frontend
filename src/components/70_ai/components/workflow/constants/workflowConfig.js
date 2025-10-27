@@ -186,8 +186,7 @@ export const CANVAS_CONFIG = {
   // 选择框
   SELECTING: {
     enabled: true,
-    rubberband: true,
-    showNodeSelectionBox: true
+    rubberband: true
   },
 
   // 对齐线

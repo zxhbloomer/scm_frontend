@@ -31,34 +31,67 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态
+      localRefInputs: [],
+      // 开始节点的文件输入列表
+      startNodeFileInputs: []
+    }
+  },
+
   computed: {
     node () {
       return this.getNode().data
     },
 
     firstFileInput () {
-      if (!this.node.inputConfig.ref_inputs || this.node.inputConfig.ref_inputs.length === 0) {
+      if (!this.localRefInputs || this.localRefInputs.length === 0) {
         return null
       }
-      return this.node.inputConfig.ref_inputs[0]
+      return this.localRefInputs[0]
     },
 
     firstFileInputName () {
       return this.firstFileInput?.name || ''
     },
 
+    /**
+     * 🔥 方案A：模仿 aideepin 实现
+     * 始终显示开始节点第一个文件输入的 title
+     * 不管 ref_input 关联的是哪个文件
+     */
     firstFileInputTitle () {
-      if (!this.firstFileInput) return ''
-
-      const workflow = this.$store.getters['ai/workflow/getWorkflowInfo'](this.node.workflowUuid)
-      if (!workflow) return ''
-
-      const startNode = workflow.nodes.find(n => n.wfComponent && n.wfComponent.name === 'Start')
-      if (!startNode) return ''
-
-      const fileInput = startNode.inputConfig.user_inputs.find(input => input.type === 4)
-      return fileInput?.title || ''
+      // 从注入的 startNodeFileInputs 获取第一个文件的 title
+      if (this.startNodeFileInputs && this.startNodeFileInputs.length > 0) {
+        return this.startNodeFileInputs[0].title || this.startNodeFileInputs[0].name || ''
+      }
+      return ''
     }
+  },
+
+  mounted () {
+    // 初始化本地状态
+    const node = this.getNode()
+    this.localRefInputs = [...(node.data.inputConfig?.ref_inputs || [])]
+    this.startNodeFileInputs = [...(node.data.startNodeFileInputs || [])]
+
+    console.log('📝 DocumentExtractorNode mounted (方案A):', {
+      nodeUuid: node.id,
+      初始refInputs: this.localRefInputs,
+      开始节点文件列表: this.startNodeFileInputs
+    })
+
+    // 监听 X6 节点数据变化事件
+    node.on('change:data', ({ current }) => {
+      console.log('🔄 DocumentExtractorNode change:data:', {
+        新refInputs: current.inputConfig?.ref_inputs,
+        新文件列表: current.startNodeFileInputs
+      })
+
+      this.localRefInputs = [...(current.inputConfig?.ref_inputs || [])]
+      this.startNodeFileInputs = [...(current.startNodeFileInputs || [])]
+    })
   }
 }
 </script>
