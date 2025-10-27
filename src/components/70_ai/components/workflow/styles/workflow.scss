@@ -1,6 +1,6 @@
 /**
  * AI Workflow 工作流样式文件
- * 基于 aideepin 原始样式,适配 AntV X6 图编辑引擎
+ * 适配 AntV X6 图编辑引擎
  */
 
 // ==================== 导入 AntV X6 基础样式 ====================
@@ -64,27 +64,22 @@
 
 // ==================== AntV X6 节点样式 ====================
 .x6-node {
-  border: 1px solid #eee;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  padding: 10px;
-  border-radius: 10px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  width: 220px;
-  cursor: move;
+  cursor: grab !important;
 
   // 选中状态
   &.x6-node-selected {
-    border: 1px solid #409eff;
-
+    // 连接桩颜色
     .x6-port {
-      background: #409eff;
+      background: #2563eb !important;
     }
   }
+
+  // 拖动时显示抓取图标
+  &.x6-node-dragging {
+    cursor: grabbing !important;
+  }
+}
+
 
   // 节点头部
   .workflow-node-header {
@@ -297,6 +292,7 @@
     box-shadow: 0 0 0 10px rgba(230, 162, 60, 0);
   }
 }
+
 
 // ==================== 响应式设计 ====================
 @media screen and (max-width: 768px) {

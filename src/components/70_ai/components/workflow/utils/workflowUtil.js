@@ -124,14 +124,25 @@ export function emptyWfNodeRuntime () {
  * @returns {object} X6 Node
  */
 export function wfNodeToX6Node (node) {
+  // 根据节点类型设置正确的尺寸，与 registerX6Nodes.js 保持一致
+  const width = 220
+  let height = 100 // 默认高度
+
+  const componentName = node.wfComponent.name
+  if (componentName === 'End') {
+    height = 80
+  } else if (['Classifier', 'Switcher', 'AnswerNode', 'Template'].includes(componentName)) {
+    height = 120 // 复杂节点较高
+  }
+
   return {
     id: node.nodeUuid || node.node_uuid || node.uuid, // 优先使用 nodeUuid，与后端保持一致
-    shape: node.wfComponent.name.toLowerCase(), // X6 使用 shape 而非 type
+    shape: componentName.toLowerCase(), // X6 使用 shape 而非 type
     data: node,
     x: node.positionX,
     y: node.positionY,
-    width: 220,
-    height: 60
+    width,
+    height
   }
 }
 
@@ -167,7 +178,7 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
   newWfNode.uuid = newWfNode.nodeUuid // 保留 uuid 作为兼容字段
   newWfNode.title = component.title
   newWfNode.workflowId = workflow.id
-  newWfNode.workflowUuid = workflow.uuid
+  newWfNode.workflowUuid = workflow.workflowUuid
   newWfNode.wfComponent = component
   newWfNode.workflowComponentId = component.id
   newWfNode.inputConfig = { user_inputs: [], ref_inputs: [] }
@@ -181,6 +192,9 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
   if (componentName === 'Start') {
     // Start 节点需要默认的 user_inputs（参考后端 AiWorkflowNodeService.createStartNode）
     createStartNode(newWfNode)
+  } else if (componentName === 'End') {
+    // End 节点需要默认的 nodeConfig（参考 aideepin EndNodeProperty.vue）
+    createEndNode(newWfNode)
   } else if (componentName === 'Classifier') {
     createClassifierNode(newWfNode, defaultModelName)
   } else if (componentName === 'Answer') {
@@ -193,12 +207,6 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
     createFaqExtractor(newWfNode, defaultModelName)
   } else if (componentName === 'KnowledgeRetrieval') {
     createKnowledgeRetrieval(newWfNode)
-  } else if (componentName === 'Dalle3') {
-    createDalle3(newWfNode)
-  } else if (componentName === 'Tongyiwanx') {
-    createTongyiwanx(newWfNode)
-  } else if (componentName === 'Google') {
-    createGoogle(newWfNode)
   } else if (componentName === 'HumanFeedback') {
     createHumanFeedback(newWfNode)
   } else if (componentName === 'MailSend') {
@@ -225,7 +233,7 @@ export function createNewEdge (params) {
     sourceNodeUuid: source,
     sourceHandle: sourceHandle,
     targetNodeUuid: target,
-    workflowUuid: workflow.uuid
+    workflowUuid: workflow.workflowUuid
   }
 
   workflow.edges.push(wfEdge)
@@ -278,7 +286,7 @@ export function createNewEdgeData (workflow, source, sourceHandle, target) {
     sourceNodeUuid: source,
     sourceHandle: sourceHandle || '',
     targetNodeUuid: target,
-    workflowUuid: workflow.uuid
+    workflowUuid: workflow.workflowUuid
   }
 
   workflow.edges.push(wfEdge)
@@ -319,7 +327,6 @@ export function updateEdgeBySourceHandle (params) {
 
   const wfEdge = workflow.edges.find(item => item.sourceHandle === sourceHandle)
   if (!wfEdge) {
-    console.warn('no edge found for sourceHandle')
     return
   }
 
@@ -406,6 +413,18 @@ function createStartNode (node) {
   node.inputConfig = {
     user_inputs: [userInputDef],
     ref_inputs: []
+  }
+}
+
+/**
+ * 创建结束节点配置
+ * 参考 aideepin EndNodeProperty.vue: nodeConfig.result = '任务执行完成'
+ * @param {object} node WorkflowNode
+ */
+function createEndNode (node) {
+  // 初始化 nodeConfig，设置默认完成提示文本
+  node.nodeConfig = {
+    result: '任务执行完成'
   }
 }
 
@@ -515,44 +534,6 @@ function createKnowledgeRetrieval (node) {
     top_n: 3,
     is_strict: true,
     default_response: ''
-  }
-}
-
-/**
- * 创建 DALL-E 3 图片生成节点配置
- * @param {object} node WorkflowNode
- */
-function createDalle3 (node) {
-  node.nodeConfig = {
-    prompt: '',
-    size: '1024x1024',
-    quality: 'standard'
-  }
-}
-
-/**
- * 创建通义万相图片生成节点配置
- * @param {object} node WorkflowNode
- */
-function createTongyiwanx (node) {
-  node.nodeConfig = {
-    model_name: '',
-    prompt: '',
-    size: '1024*1024',
-    seed: -1
-  }
-}
-
-/**
- * 创建Google搜索节点配置
- * @param {object} node WorkflowNode
- */
-function createGoogle (node) {
-  node.nodeConfig = {
-    query: '',
-    country: 'cn',
-    language: 'zh-cn',
-    top_n: 5
   }
 }
 
@@ -677,9 +658,6 @@ export function getIconClassByComponentName (name) {
     faqextractor: 'el-icon-question',
     switcher: 'el-icon-share',
     template: 'el-icon-tickets',
-    dalle3: 'el-icon-picture-outline',
-    tongyiwanx: 'el-icon-picture-outline',
-    google: 'el-icon-search',
     humanfeedback: 'el-icon-user',
     mailsend: 'el-icon-message',
     httprequest: 'el-icon-connection',
@@ -705,9 +683,6 @@ export function getColorClassByComponentName (name) {
     faqextractor: 'color-success',
     switcher: 'color-warning',
     template: 'color-info',
-    dalle3: 'color-danger',
-    tongyiwanx: 'color-danger',
-    google: 'color-success',
     humanfeedback: 'color-info',
     mailsend: 'color-warning',
     httprequest: 'color-primary',

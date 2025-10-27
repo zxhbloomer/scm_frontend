@@ -94,10 +94,12 @@ export default {
   computed: {
     ...mapState({
       wfComponents: state => state.ai.workflow.wfComponents,
-      currentUserId: state => state.user.userId // 修正：使用userId而不是不存在的uuid
+      currentUserId: state => state.user.userId, // 修正：使用userId而不是不存在的uuid
+      activeUuid: state => state.ai.workflow.activeUuid
     }),
 
     ...mapGetters({
+      getWorkflowInfo: 'ai/workflow/getWorkflowInfo',
       getWfComponent: 'ai/workflow/getWfComponent'
     }),
 
@@ -417,7 +419,7 @@ export default {
       }
 
       const initX = 10
-      const initY = 50
+      const initY = 10
 
       // 渲染节点（跳过缺少 wfComponent 的节点）
       this.workflow.nodes.forEach((node, index) => {
@@ -426,11 +428,12 @@ export default {
           return
         }
 
-        // 修复逻辑：使用 !== null 和 !== undefined 检查
-        // 而不是 || 运算符，这样可以保证 positionX=0 的节点正确显示
-        // 原因：positionX=0 是有效的坐标值，不应该被视为"未设置"
-        const px = node.positionX !== null && node.positionX !== undefined ? node.positionX : (initX + 230 * index)
-        const py = node.positionY !== null && node.positionY !== undefined ? node.positionY : initY
+        // 参考 aideepin WorkflowDefine.vue:50-51 的实现
+        // 使用 ? 运算符检查是否有真实坐标值
+        // 原因：新建节点的初始坐标为 0，但 0 作为有效坐标会导致紧贴画布左上角
+        // 应该使用默认的分布式位置 (10 + 230*i, 50)
+        const px = node.positionX ? node.positionX : initX + 230 * index
+        const py = node.positionY ? node.positionY : initY
 
         this.addNodeToGraph(node, px, py)
       })
@@ -483,10 +486,24 @@ export default {
     },
 
     addEdgeToGraph (wfEdge) {
+      // 获取目标节点以确定正确的端口
+      const targetNode = this.workflow.nodes.find(n => n.uuid === wfEdge.targetNodeUuid)
+      let targetPort = 'top' // 默认端口
+
+      if (targetNode && targetNode.wfComponent) {
+        const targetComponentName = targetNode.wfComponent.name
+        // 根据目标节点类型确定端口
+        // End 节点使用 'left'，其他大多数节点使用 'top'
+        if (targetComponentName === 'End') {
+          targetPort = 'left'
+        }
+        // 其他节点的处理可以在这里添加
+      }
+
       this.graph.addEdge({
         id: wfEdge.uuid,
         source: { cell: wfEdge.sourceNodeUuid, port: wfEdge.sourceHandle || 'bottom' },
-        target: { cell: wfEdge.targetNodeUuid, port: 'top' },
+        target: { cell: wfEdge.targetNodeUuid, port: targetPort },
         attrs: {
           line: {
             stroke: '#8f8f8f',
@@ -549,6 +566,15 @@ export default {
       createNewNode(this.workflow, this.uiWorkflow, component, position)
 
       const newNode = this.workflow.nodes[this.workflow.nodes.length - 1]
+
+      // ✅ 关键修复：新节点也需要同步到 Vuex store，确保 NodePropertyInput 能找到它
+      // 直接修改本地 workflow 对象的 nodes 数组不会自动同步到 Vuex store
+      // 因此需要通过 mutation 来更新 store 中的工作流对象
+      this.$store.commit('ai/workflow/ADD_NODE_TO_WORKFLOW', {
+        wfUuid: this.workflow.workflowUuid,
+        newNode: newNode
+      })
+
       this.addNodeToGraph(newNode, position.x, position.y)
 
       // 选择节点功能暂时移除
@@ -636,7 +662,7 @@ export default {
 
         // 更新节点和边的 ID
         this.updateNodesAndEdgesId({
-          wfUuid: this.workflow.uuid,
+          wfUuid: this.workflow.workflowUuid,
           updatedWorkflow: response.data
         })
 

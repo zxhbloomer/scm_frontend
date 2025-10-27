@@ -104,9 +104,6 @@ export default {
         'FaqExtractor': 'el-icon-question',
         'Switcher': 'el-icon-set-up',
         'Template': 'el-icon-tickets',
-        'Dalle3': 'el-icon-picture',
-        'Tongyiwanx': 'el-icon-picture-outline',
-        'Google': 'el-icon-search',
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link'

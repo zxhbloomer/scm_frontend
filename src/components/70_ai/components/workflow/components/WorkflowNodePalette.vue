@@ -54,9 +54,6 @@ export default {
         'FaqExtractor': 'el-icon-question',
         'Switcher': 'el-icon-set-up',
         'Template': 'el-icon-tickets',
-        'Dalle3': 'el-icon-picture',
-        'Tongyiwanx': 'el-icon-picture-outline',
-        'Google': 'el-icon-search',
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link'
@@ -77,9 +74,6 @@ export default {
         'FaqExtractor': '#20B2AA',
         'Switcher': '#FFD700',
         'Template': '#87CEEB',
-        'Dalle3': '#FF00FF',
-        'Tongyiwanx': '#FF00FF',
-        'Google': '#2E8B57',
         'HumanFeedback': '#696969',
         'MailSend': '#FFA500',
         'HttpRequest': '#708090'
@@ -164,10 +158,7 @@ export default {
 .node-item:nth-child(8) .node-icon { color: #20B2AA; }  // FaqExtractor
 .node-item:nth-child(9) .node-icon { color: #FFD700; }  // Switcher
 .node-item:nth-child(10) .node-icon { color: #87CEEB; } // Template
-.node-item:nth-child(11) .node-icon { color: #FF00FF; } // Dalle3
-.node-item:nth-child(12) .node-icon { color: #FF00FF; } // Tongyiwanx
-.node-item:nth-child(13) .node-icon { color: #2E8B57; } // Google
-.node-item:nth-child(14) .node-icon { color: #696969; } // HumanFeedback
-.node-item:nth-child(15) .node-icon { color: #FFA500; } // MailSend
-.node-item:nth-child(16) .node-icon { color: #708090; } // HttpRequest
+.node-item:nth-child(11) .node-icon { color: #696969; } // HumanFeedback
+.node-item:nth-child(12) .node-icon { color: #FFA500; } // MailSend
+.node-item:nth-child(13) .node-icon { color: #708090; } // HttpRequest
 </style>

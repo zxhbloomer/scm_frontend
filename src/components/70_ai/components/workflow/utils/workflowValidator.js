@@ -271,9 +271,6 @@ export function validateNodeConfig (node) {
     case 'MailSend':
       validateMailSendNode(node, errors)
       break
-    case 'Google':
-      validateGoogleNode(node, errors)
-      break
   }
 
   return {
@@ -380,11 +377,3 @@ function validateMailSendNode (node, errors) {
   }
 }
 
-/**
- * 验证 Google 搜索节点
- */
-function validateGoogleNode (node, errors) {
-  if (!node.nodeConfig.query || node.nodeConfig.query.trim() === '') {
-    errors.push('Google搜索节点必须设置查询内容')
-  }
-}

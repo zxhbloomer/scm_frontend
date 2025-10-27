@@ -60,11 +60,12 @@ export default {
       store.registerModule('chat', aiStoreModules.modules.chat)
     }
 
-    // 注册 AI 命名空间（包含 workflow 和 workflowRuntime）
+    // 注册 AI 命名空间（包含 app, workflow 和 workflowRuntime）
     if (store && !store.state.ai) {
       store.registerModule('ai', {
         namespaced: true,
         modules: {
+          app: aiStoreModules.modules.app,
           workflow: aiStoreModules.modules.workflow,
           workflowRuntime: aiStoreModules.modules.workflowRuntime
         }

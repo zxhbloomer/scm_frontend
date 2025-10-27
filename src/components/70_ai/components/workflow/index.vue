@@ -98,6 +98,21 @@ export default {
     }
   },
 
+  /**
+   * 组件挂载时加载AI模型列表
+   * 严格参考 aideepin App.vue onMounted 方法
+   * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\App.vue (Line 183-185)
+   */
+  mounted () {
+    // 加载所有类型的AI模型列表
+    this.$store.dispatch('ai/app/loadAllModels')
+      .catch(error => {
+        // eslint-disable-next-line no-console
+        console.error('加载AI模型列表失败:', error)
+        this.$message.error('加载AI模型列表失败,请刷新页面重试')
+      })
+  },
+
   methods: {
     handleSelectWorkflow (workflow) {
       // 工作流选中后自动切换到流程执行页签

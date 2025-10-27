@@ -17,10 +17,7 @@ export const NODE_TYPES = {
   KNOWLEDGE_RETRIEVAL: 'knowledgeretrieval',
   HTTP_REQUEST: 'httprequest',
   HUMAN_FEEDBACK: 'humanfeedback',
-  EMAIL_SEND: 'mailsend',
-  GOOGLE_SEARCH: 'google',
-  IMAGE_GEN_DALLE3: 'dalle3',
-  IMAGE_GEN_TONGYI: 'tongyiwanx'
+  EMAIL_SEND: 'mailsend'
 }
 
 // 节点类型中文名称映射
@@ -37,10 +34,7 @@ export const NODE_TYPE_LABELS = {
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: '知识检索',
   [NODE_TYPES.HTTP_REQUEST]: 'HTTP请求',
   [NODE_TYPES.HUMAN_FEEDBACK]: '人工反馈',
-  [NODE_TYPES.EMAIL_SEND]: '邮件发送',
-  [NODE_TYPES.GOOGLE_SEARCH]: '谷歌搜索',
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: 'DALL-E 3图像生成',
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: '通义万相图像生成'
+  [NODE_TYPES.EMAIL_SEND]: '邮件发送'
 }
 
 // 节点分类
@@ -64,11 +58,8 @@ export const NODE_TYPE_CATEGORY_MAP = {
   [NODE_TYPES.FAQ_EXTRACT]: NODE_CATEGORIES.TOOLS,
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: NODE_CATEGORIES.TOOLS,
   [NODE_TYPES.HTTP_REQUEST]: NODE_CATEGORIES.TOOLS,
-  [NODE_TYPES.GOOGLE_SEARCH]: NODE_CATEGORIES.TOOLS,
   [NODE_TYPES.HUMAN_FEEDBACK]: NODE_CATEGORIES.OUTPUT,
-  [NODE_TYPES.EMAIL_SEND]: NODE_CATEGORIES.OUTPUT,
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: NODE_CATEGORIES.OUTPUT,
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: NODE_CATEGORIES.OUTPUT
+  [NODE_TYPES.EMAIL_SEND]: NODE_CATEGORIES.OUTPUT
 }
 
 // 节点图标映射 (使用Element UI图标)
@@ -85,10 +76,7 @@ export const NODE_TYPE_ICONS = {
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: 'el-icon-reading',
   [NODE_TYPES.HTTP_REQUEST]: 'el-icon-link',
   [NODE_TYPES.HUMAN_FEEDBACK]: 'el-icon-user',
-  [NODE_TYPES.EMAIL_SEND]: 'el-icon-message',
-  [NODE_TYPES.GOOGLE_SEARCH]: 'el-icon-search',
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: 'el-icon-picture',
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: 'el-icon-picture-outline'
+  [NODE_TYPES.EMAIL_SEND]: 'el-icon-message'
 }
 
 // 节点颜色映射
@@ -105,10 +93,7 @@ export const NODE_TYPE_COLORS = {
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: '#409EFF',
   [NODE_TYPES.HTTP_REQUEST]: '#909399',
   [NODE_TYPES.HUMAN_FEEDBACK]: '#E6A23C',
-  [NODE_TYPES.EMAIL_SEND]: '#67C23A',
-  [NODE_TYPES.GOOGLE_SEARCH]: '#409EFF',
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: '#F56C6C',
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: '#F56C6C'
+  [NODE_TYPES.EMAIL_SEND]: '#67C23A'
 }
 
 // 节点是否允许多个实例
@@ -125,10 +110,7 @@ export const NODE_TYPE_MULTIPLE_ALLOWED = {
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: true,
   [NODE_TYPES.HTTP_REQUEST]: true,
   [NODE_TYPES.HUMAN_FEEDBACK]: true,
-  [NODE_TYPES.EMAIL_SEND]: true,
-  [NODE_TYPES.GOOGLE_SEARCH]: true,
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: true,
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: true
+  [NODE_TYPES.EMAIL_SEND]: true
 }
 
 // 节点默认配置
@@ -203,22 +185,5 @@ export const NODE_DEFAULT_CONFIG = {
       mail: '',
       password: ''
     }
-  },
-  [NODE_TYPES.GOOGLE_SEARCH]: {
-    query: '',
-    country: 'cn',
-    language: 'zh-cn',
-    top_n: 5
-  },
-  [NODE_TYPES.IMAGE_GEN_DALLE3]: {
-    prompt: '',
-    size: '1024x1024',
-    quality: 'standard'
-  },
-  [NODE_TYPES.IMAGE_GEN_TONGYI]: {
-    model_name: '',
-    prompt: '',
-    size: '1024*1024',
-    seed: 0
   }
 }

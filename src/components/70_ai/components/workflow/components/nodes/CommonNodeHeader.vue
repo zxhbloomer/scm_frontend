@@ -28,6 +28,9 @@
  * CommonNodeHeader 组件
  * 工作流节点的通用头部组件
  * 严格参考 aideepin CommonNodeHeader.vue 实现
+ *
+ * 注意: 需要使用 inject: ['getNode'] 从X6依赖注入系统获取节点对象
+ * 参考X6文档: https://github.com/antvis/x6/blob/master/site/docs/tutorial/intermediate/vue.zh.md
  */
 import { getIconClassByComponentName } from '../../utils/workflowUtil'
 
@@ -41,6 +44,10 @@ export default {
     }
   },
 
+  // 从X6的Vue shape依赖注入系统获取节点对象
+  // 参考X6官方文档: inject: ['getNode'] 是获取X6节点的标准方式
+  inject: ['getNode'],
+
   computed: {
     iconClass () {
       return getIconClassByComponentName(this.wfNode.wfComponent.name)
@@ -50,12 +57,16 @@ export default {
   methods: {
     handleCommand (command) {
       if (command === 'delete') {
-        // 使用 mutation 而非 action
-        // SCM workflow.js 使用 mutation: DELETE_NODE
-        this.$store.commit('ai/workflow/DELETE_NODE', {
-          wfUuid: this.wfNode.workflowUuid,
-          nodeUuid: this.wfNode.uuid
-        })
+        try {
+          // 通过X6注入的getNode()获取X6节点,然后删除
+          // getNode是X6 Vue shape中的标准依赖注入属性
+          const node = this.getNode()
+          if (node) {
+            node.remove()
+          }
+        } catch (error) {
+          this.$message.error('删除节点失败: ' + error.message)
+        }
       }
     }
   }

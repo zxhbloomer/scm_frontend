@@ -14,6 +14,3 @@ export * from './workflowConfig'
 
 // 导出所有 SSE 事件相关常量
 export * from './sseEvents'
-
-// 导出图像生成和其他节点相关常量
-export * from './imageGeneration'

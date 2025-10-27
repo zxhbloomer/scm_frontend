@@ -329,6 +329,19 @@ const mutations = {
   },
 
   /**
+   * 添加节点到工作流
+   * 用于同步 WorkflowDesigner 中创建的新节点到 Vuex store
+   */
+  ADD_NODE_TO_WORKFLOW (state, { wfUuid, newNode }) {
+    const wf = state.myWorkflows.find(item => item.workflowUuid === wfUuid) ||
+              state.publicWorkflows.find(item => item.workflowUuid === wfUuid)
+
+    if (wf) {
+      wf.nodes.push(newNode)
+    }
+  },
+
+  /**
    * 添加引用输入到节点
    */
   ADD_REF_INPUT_TO_NODE (state, { wfUuid, nodeUuid, newInput }) {
@@ -497,11 +510,29 @@ const actions = {
       const { workflowSearchMine } = await import('../../components/workflow/utils')
       const response = await workflowSearchMine('', page, pageSize)
       if (response.data && response.data.records) {
-        commit('APPEND_WORKFLOWS', { workflows: response.data.records, isMine: true })
+        // ✅ 必须对返回的数据进行清理和规范化，确保节点uuid字段正确
+        const cleanedWorkflows = response.data.records.map(workflow => {
+          // 规范化节点中的uuid字段
+          if (workflow.nodes && Array.isArray(workflow.nodes)) {
+            workflow.nodes.forEach(node => {
+              // 确保节点有 uuid 字段（用于Vuex store查找）
+              if (!node.uuid && (node.nodeUuid || node.node_uuid)) {
+                node.uuid = node.nodeUuid || node.node_uuid
+              }
+              // 确保节点有 nodeUuid 字段（与后端保持一致）
+              if (!node.nodeUuid && (node.uuid || node.node_uuid)) {
+                node.nodeUuid = node.uuid || node.node_uuid
+              }
+            })
+          }
+          return workflow
+        })
+
+        commit('APPEND_WORKFLOWS', { workflows: cleanedWorkflows, isMine: true })
 
         // 如果是第一次加载且activeUuid为空，自动选中第一个
-        if (response.data.records.length > 0 && !rootState.ai.workflow.activeUuid) {
-          commit('SET_ACTIVE', response.data.records[0].workflowUuid)
+        if (cleanedWorkflows.length > 0 && !rootState.ai.workflow.activeUuid) {
+          commit('SET_ACTIVE', cleanedWorkflows[0].workflowUuid)
         }
       }
     } catch (error) {
@@ -520,7 +551,25 @@ const actions = {
       const { workflowSearchPublic } = await import('../../components/workflow/utils')
       const response = await workflowSearchPublic('', page, pageSize)
       if (response.data && response.data.records) {
-        commit('APPEND_WORKFLOWS', { workflows: response.data.records, isMine: false })
+        // ✅ 必须对返回的数据进行清理和规范化（与loadMyWorkflows保持一致）
+        const cleanedWorkflows = response.data.records.map(workflow => {
+          // 规范化节点中的uuid字段
+          if (workflow.nodes && Array.isArray(workflow.nodes)) {
+            workflow.nodes.forEach(node => {
+              // 确保节点有 uuid 字段（用于Vuex store查找）
+              if (!node.uuid && (node.nodeUuid || node.node_uuid)) {
+                node.uuid = node.nodeUuid || node.node_uuid
+              }
+              // 确保节点有 nodeUuid 字段（与后端保持一致）
+              if (!node.nodeUuid && (node.uuid || node.node_uuid)) {
+                node.nodeUuid = node.uuid || node.node_uuid
+              }
+            })
+          }
+          return workflow
+        })
+
+        commit('APPEND_WORKFLOWS', { workflows: cleanedWorkflows, isMine: false })
       }
     } catch (error) {
       throw error

@@ -224,7 +224,7 @@ export default {
       const index = this.wfNode.inputConfig.user_inputs.findIndex(item => item.uuid === row.uuid)
       if (index > -1) {
         this.$store.commit('ai/workflow/DELETE_USER_INPUT', {
-          wfUuid: this.workflow.uuid,
+          wfUuid: this.workflow.workflowUuid,
           nodeUuid: this.wfNode.uuid,
           idx: index
         })
@@ -241,7 +241,7 @@ export default {
           } else {
             // 新增模式
             this.$store.commit('ai/workflow/ADD_USER_INPUT_TO_NODE', {
-              wfUuid: this.workflow.uuid,
+              wfUuid: this.workflow.workflowUuid,
               nodeUuid: this.wfNode.uuid,
               newInput: { ...this.tmpItem }
             })

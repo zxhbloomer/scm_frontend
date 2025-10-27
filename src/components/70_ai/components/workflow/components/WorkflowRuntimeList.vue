@@ -238,13 +238,13 @@ export default {
     }),
 
     runtimeList () {
-      if (!this.workflow.uuid) return []
-      return this.getRuntimes(this.workflow.uuid) || []
+      if (!this.workflow.workflowUuid) return []
+      return this.getRuntimes(this.workflow.workflowUuid) || []
     },
 
     canRun () {
       // 判断工作流是否可以运行
-      if (!this.workflow.uuid || !this.workflow.nodes || this.workflow.nodes.length < 2) {
+      if (!this.workflow.workflowUuid || !this.workflow.nodes || this.workflow.nodes.length < 2) {
         return false
       }
 
@@ -296,15 +296,15 @@ export default {
 
         if (loadMore) {
           // 加载更多：追加到列表前面（因为是倒序）
-          const existingList = this.getRuntimes(this.workflow.uuid) || []
+          const existingList = this.getRuntimes(this.workflow.workflowUuid) || []
           this.setRuntimes({
-            wfUuid: this.workflow.uuid,
+            wfUuid: this.workflow.workflowUuid,
             runtimes: [...records, ...existingList]
           })
         } else {
           // 首次加载：直接设置
           this.setRuntimes({
-            wfUuid: this.workflow.uuid,
+            wfUuid: this.workflow.workflowUuid,
             runtimes: records
           })
         }
@@ -345,7 +345,7 @@ export default {
         const input = this.userInput.trim() ? { user_input: this.userInput } : {}
 
         const response = await workflowRun({
-          wfUuid: this.workflow.uuid,
+          wfUuid: this.workflow.workflowUuid,
           input
         })
 
@@ -354,14 +354,14 @@ export default {
         const runtime = {
           ...response.data,
           runtime_uuid: response.data.uuid || response.data.runtime_uuid,
-          wf_uuid: this.workflow.uuid,
+          wf_uuid: this.workflow.workflowUuid,
           status_remark: response.data.statusRemark || response.data.status_remark,
           loading: true,
           status: 1 // 运行中
         }
 
         this.unshiftRuntimes({
-          wfUuid: this.workflow.uuid,
+          wfUuid: this.workflow.workflowUuid,
           runtimes: [runtime]
         })
 
@@ -380,7 +380,7 @@ export default {
         // 模拟执行完成
         setTimeout(() => {
           this.updateRuntimeSuccess({
-            wfUuid: this.workflow.uuid,
+            wfUuid: this.workflow.workflowUuid,
             runtimeUuid: runtime.runtime_uuid,
             outputJson: JSON.stringify({ result: '执行完成（模拟）' })
           })
@@ -402,7 +402,7 @@ export default {
         try {
           await workflowRuntimeDelete(runtimeUuid)
           this.deleteRuntimeMutation({
-            wfUuid: this.workflow.uuid,
+            wfUuid: this.workflow.workflowUuid,
             runtimeUuid
           })
           this.$message.success('删除成功')

@@ -104,27 +104,6 @@
           :ui-workflow="uiWorkflow"
         />
 
-        <!-- Dalle3 DALL-E 3图像生成节点 -->
-        <dalle3-node-property
-          v-else-if="selectedNode.wfComponent.name === 'Dalle3'"
-          :workflow="workflow"
-          :wf-node="selectedNode"
-        />
-
-        <!-- Tongyiwanx 通义万相图像生成节点 -->
-        <tongyiwanx-node-property
-          v-else-if="selectedNode.wfComponent.name === 'Tongyiwanx'"
-          :workflow="workflow"
-          :wf-node="selectedNode"
-        />
-
-        <!-- Google Google搜索节点 -->
-        <google-node-property
-          v-else-if="selectedNode.wfComponent.name === 'Google'"
-          :workflow="workflow"
-          :wf-node="selectedNode"
-        />
-
         <!-- HttpRequest HTTP请求节点 -->
         <http-request-node-property
           v-else-if="selectedNode.wfComponent.name === 'HttpRequest'"
@@ -188,9 +167,6 @@ import FaqExtractorNodeProperty from './properties/FaqExtractorNodeProperty.vue'
 import KnowledgeRetrievalNodeProperty from './properties/KnowledgeRetrievalNodeProperty.vue'
 import DocumentExtractorNodeProperty from './properties/DocumentExtractorNodeProperty.vue'
 import SwitcherNodeProperty from './properties/SwitcherNodeProperty.vue'
-import Dalle3NodeProperty from './properties/Dalle3NodeProperty.vue'
-import TongyiwanxNodeProperty from './properties/TongyiwanxNodeProperty.vue'
-import GoogleNodeProperty from './properties/GoogleNodeProperty.vue'
 import HttpRequestNodeProperty from './properties/HttpRequestNodeProperty.vue'
 import MailSendNodeProperty from './properties/MailSendNodeProperty.vue'
 import HumanFeedbackNodeProperty from './properties/HumanFeedbackNodeProperty.vue'
@@ -209,9 +185,6 @@ export default {
     KnowledgeRetrievalNodeProperty,
     DocumentExtractorNodeProperty,
     SwitcherNodeProperty,
-    Dalle3NodeProperty,
-    TongyiwanxNodeProperty,
-    GoogleNodeProperty,
     HttpRequestNodeProperty,
     MailSendNodeProperty,
     HumanFeedbackNodeProperty
@@ -254,7 +227,7 @@ export default {
       if (this.selectedNode && this.nodeTitle) {
         this.selectedNode.title = this.nodeTitle
         this.$store.commit('ai/workflow/UPDATE_NODE_TITLE', {
-          wfUuid: this.workflow.uuid,
+          wfUuid: this.workflow.workflowUuid,
           nodeUuid: this.selectedNode.uuid,
           newTitle: this.nodeTitle
         })
@@ -273,9 +246,6 @@ export default {
         'FaqExtractor': 'el-icon-question',
         'Switcher': 'el-icon-set-up',
         'Template': 'el-icon-tickets',
-        'Dalle3': 'el-icon-picture',
-        'Tongyiwanx': 'el-icon-picture-outline',
-        'Google': 'el-icon-search',
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link'

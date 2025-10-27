@@ -113,7 +113,7 @@ export default {
       }
 
       let nodeParamName = ''
-      if (startNode.wfComponent.name === 'Start' && startNode.inputConfig.user_inputs.length > 0) {
+      if (startNode.wfComponent && startNode.wfComponent.name === 'Start' && startNode.inputConfig && startNode.inputConfig.user_inputs && startNode.inputConfig.user_inputs.length > 0) {
         if (this.whiteListUserInputTypes.length > 0) {
           const enableUserInput = startNode.inputConfig.user_inputs.find(
             item => this.whiteListUserInputTypes.includes(item.type)
@@ -134,7 +134,7 @@ export default {
       }
 
       this.$store.commit('ai/workflow/ADD_REF_INPUT_TO_NODE', {
-        wfUuid: this.workflow.uuid,
+        wfUuid: this.workflow.workflowUuid,
         nodeUuid: this.wfNode.uuid,
         newInput: newRefInput
       })
@@ -142,7 +142,7 @@ export default {
 
     onDelete (index) {
       this.$store.commit('ai/workflow/DELETE_REF_INPUT', {
-        wfUuid: this.workflow.uuid,
+        wfUuid: this.workflow.workflowUuid,
         nodeUuid: this.wfNode.uuid,
         idx: index
       })

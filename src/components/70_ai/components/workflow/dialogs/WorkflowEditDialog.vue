@@ -187,7 +187,7 @@ export default {
           const workflow = this.$store.getters['ai/workflow/getWorkflowInfo'](val)
           if (workflow) {
             this.formData = {
-              uuid: workflow.uuid,
+              uuid: workflow.workflowUuid,
               title: workflow.title,
               remark: workflow.remark,
               isPublic: workflow.isPublic,
