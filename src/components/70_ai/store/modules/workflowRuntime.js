@@ -2,34 +2,45 @@
  * Workflow Runtime Vuex Module
  * 工作流运行时状态管理模块
  * 基于 aideepin 原始实现,适配 Vue 2.7.16 + Vuex 3.1.0
+ *
+ * 重要修改：
+ * - aideepin 使用 Vue 3（支持 Map/Set 响应式）
+ * - SCM 使用 Vue 2.7（不支持 Map/Set 响应式）
+ * - 必须将 Map/Set 改为普通对象以确保响应式工作
  */
 
+import Vue from 'vue'
 import { RUNTIME_STATUS } from '../../components/workflow/constants'
 
 const state = {
   // 运行时数据映射 (workflowUuid -> WorkflowRuntime[])
-  wfUuidToRuntimes: new Map(),
+  // Vue 2: 使用普通对象代替 Map
+  wfUuidToRuntimes: {},
 
   // 运行时加载状态映射 (workflowUuid -> boolean)
-  wfUuidToRuntimeLoading: new Map(),
+  // Vue 2: 使用普通对象代替 Map
+  wfUuidToRuntimeLoading: {},
 
   // 当前正在运行的工作流UUID集合
-  runningWorkflows: new Set()
+  // Vue 2: 使用普通对象代替 Set（值为 true/false）
+  runningWorkflows: {}
 }
 
 const getters = {
   /**
    * 获取工作流的运行时列表
+   * Vue 2: 使用对象属性访问代替 Map.get()
    */
   getRuntimes: (state) => (wfUuid) => {
-    return state.wfUuidToRuntimes.get(wfUuid) || []
+    return state.wfUuidToRuntimes[wfUuid] || []
   },
 
   /**
    * 获取运行时信息 (by runtimeUuid)
+   * Vue 2: 使用 Object.values() 代替 Map.values()
    */
   getRuntime: (state) => (runtimeUuid) => {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         return runtime
@@ -55,16 +66,18 @@ const getters = {
 
   /**
    * 判断工作流是否正在运行
+   * Vue 2: 检查对象属性是否为 true
    */
   isRunning: (state) => (wfUuid) => {
-    return state.runningWorkflows.has(wfUuid)
+    return Boolean(state.runningWorkflows[wfUuid])
   },
 
   /**
    * 获取最新的运行时
+   * Vue 2: 使用对象属性访问代替 Map.get()
    */
   getLatestRuntime: (state) => (wfUuid) => {
-    const runtimes = state.wfUuidToRuntimes.get(wfUuid)
+    const runtimes = state.wfUuidToRuntimes[wfUuid]
     if (!runtimes || runtimes.length === 0) return null
     return runtimes[0] // 最新的在最前面
   }
@@ -91,49 +104,54 @@ const mutations = {
 
   /**
    * 设置运行时列表
+   * Vue 2: 使用 Vue.set() 确保新属性是响应式的
    */
   SET_RUNTIMES (state, { wfUuid, runtimes }) {
     runtimes.forEach((runtime) => {
       mutations.INIT_RUNTIME(state, runtime)
     })
-    state.wfUuidToRuntimes.set(wfUuid, runtimes.reverse())
+    // 关键修改：使用 Vue.set() 代替 Map.set()
+    Vue.set(state.wfUuidToRuntimes, wfUuid, runtimes.reverse())
   },
 
   /**
    * 添加运行时到列表头部 (最新的)
+   * Vue 2: 使用对象属性和 Vue.set()
    */
   UNSHIFT_RUNTIMES (state, { wfUuid, runtimes }) {
     runtimes.forEach((runtime) => {
       mutations.INIT_RUNTIME(state, runtime)
     })
-    const records = state.wfUuidToRuntimes.get(wfUuid)
+    const records = state.wfUuidToRuntimes[wfUuid]
     if (records) {
       records.unshift(...runtimes.reverse())
     } else {
-      state.wfUuidToRuntimes.set(wfUuid, runtimes.reverse())
+      Vue.set(state.wfUuidToRuntimes, wfUuid, runtimes.reverse())
     }
   },
 
   /**
    * 添加运行时到列表尾部
+   * Vue 2: 使用对象属性和 Vue.set()
    */
   APPEND_RUNTIMES (state, { wfUuid, runtimes }) {
     runtimes.forEach((runtime) => {
       mutations.INIT_RUNTIME(state, runtime)
     })
-    const records = state.wfUuidToRuntimes.get(wfUuid)
+    const records = state.wfUuidToRuntimes[wfUuid]
     if (records) {
       records.push(...runtimes.reverse())
     } else {
-      state.wfUuidToRuntimes.set(wfUuid, runtimes.reverse())
+      Vue.set(state.wfUuidToRuntimes, wfUuid, runtimes.reverse())
     }
   },
 
   /**
    * 更新运行时prologue (开场白)
+   * Vue 2: 使用 Object.values()
    */
   UPDATE_RUNTIME_PROLOGUE (state, { runtimeUuid, prologue }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         runtime.prologue = prologue || ''
@@ -144,9 +162,10 @@ const mutations = {
 
   /**
    * 设置运行时节点列表
+   * Vue 2: 使用 Object.values()
    */
   SET_RUNTIME_NODES (state, { runtimeUuid, nodes, workflowNodes }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         nodes.forEach((node) => {
@@ -173,9 +192,10 @@ const mutations = {
 
   /**
    * 添加运行时节点
+   * Vue 2: 使用 Object.values()
    */
   APPEND_RUNTIME_NODE (state, { runtimeUuid, runtimeNode, workflowNodes }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         // 关联工作流节点信息
@@ -200,9 +220,10 @@ const mutations = {
 
   /**
    * 添加输入到运行时节点
+   * Vue 2: 使用 Object.values()
    */
   APPEND_INPUT_TO_RUNTIME_NODE (state, { runtimeUuid, runtimeNodeUuid, inputJson }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         const runtimeNode = runtime.nodes.find(n => n.node_runtime_uuid === runtimeNodeUuid)
@@ -222,9 +243,10 @@ const mutations = {
 
   /**
    * 添加输出到运行时节点
+   * Vue 2: 使用 Object.values()
    */
   APPEND_OUTPUT_TO_RUNTIME_NODE (state, { runtimeUuid, runtimeNodeUuid, outputJson }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         const runtimeNode = runtime.nodes.find(n => n.node_runtime_uuid === runtimeNodeUuid)
@@ -243,9 +265,10 @@ const mutations = {
 
   /**
    * 添加chunk到运行时节点 (流式输出)
+   * Vue 2: 使用 Object.values()
    */
   APPEND_CHUNK_TO_RUNTIME_NODE (state, { runtimeUuid, runtimeNodeUuid, chunk }) {
-    for (const runtimes of state.wfUuidToRuntimes.values()) {
+    for (const runtimes of Object.values(state.wfUuidToRuntimes)) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
         const runtimeNode = runtime.nodes.find(n => n.node_runtime_uuid === runtimeNodeUuid)
@@ -263,9 +286,10 @@ const mutations = {
 
   /**
    * 更新运行时状态为成功
+   * Vue 2: 使用对象属性和 Vue.delete()
    */
   UPDATE_RUNTIME_SUCCESS (state, { wfUuid, runtimeUuid, outputJson }) {
-    const runtimes = state.wfUuidToRuntimes.get(wfUuid)
+    const runtimes = state.wfUuidToRuntimes[wfUuid]
     if (runtimes) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
@@ -279,14 +303,15 @@ const mutations = {
       }
     }
     // 从运行中集合移除
-    state.runningWorkflows.delete(wfUuid)
+    Vue.delete(state.runningWorkflows, wfUuid)
   },
 
   /**
    * 更新运行时状态为失败
+   * Vue 2: 使用对象属性和 Vue.delete()
    */
   UPDATE_RUNTIME_ERROR (state, { wfUuid, runtimeUuid, errorMsg }) {
-    const runtimes = state.wfUuidToRuntimes.get(wfUuid)
+    const runtimes = state.wfUuidToRuntimes[wfUuid]
     if (runtimes) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
@@ -295,14 +320,15 @@ const mutations = {
       }
     }
     // 从运行中集合移除
-    state.runningWorkflows.delete(wfUuid)
+    Vue.delete(state.runningWorkflows, wfUuid)
   },
 
   /**
    * 更新运行时状态为运行中
+   * Vue 2: 使用对象属性和 Vue.set()
    */
   UPDATE_RUNTIME_RUNNING (state, { wfUuid, runtimeUuid }) {
-    const runtimes = state.wfUuidToRuntimes.get(wfUuid)
+    const runtimes = state.wfUuidToRuntimes[wfUuid]
     if (runtimes) {
       const runtime = runtimes.find(item => item.runtime_uuid === runtimeUuid)
       if (runtime) {
@@ -310,14 +336,15 @@ const mutations = {
       }
     }
     // 添加到运行中集合
-    state.runningWorkflows.add(wfUuid)
+    Vue.set(state.runningWorkflows, wfUuid, true)
   },
 
   /**
    * 删除运行时
+   * Vue 2: 使用对象属性
    */
   DELETE_RUNTIME (state, { wfUuid, runtimeUuid }) {
-    const runtimes = state.wfUuidToRuntimes.get(wfUuid)
+    const runtimes = state.wfUuidToRuntimes[wfUuid]
     if (runtimes) {
       const idx = runtimes.findIndex(item => item.runtime_uuid === runtimeUuid)
       if (idx > -1) {
@@ -328,17 +355,19 @@ const mutations = {
 
   /**
    * 清空工作流的所有运行时
+   * Vue 2: 使用 Vue.set() 和 Vue.delete()
    */
   CLEAR_RUNTIMES (state, wfUuid) {
-    state.wfUuidToRuntimes.set(wfUuid, [])
-    state.runningWorkflows.delete(wfUuid)
+    Vue.set(state.wfUuidToRuntimes, wfUuid, [])
+    Vue.delete(state.runningWorkflows, wfUuid)
   },
 
   /**
    * 设置运行时加载状态
+   * Vue 2: 使用 Vue.set()
    */
   SET_RUNTIME_LOADING (state, { wfUuid, loading }) {
-    state.wfUuidToRuntimeLoading.set(wfUuid, loading)
+    Vue.set(state.wfUuidToRuntimeLoading, wfUuid, loading)
   }
 }
 

@@ -2,8 +2,14 @@
  * Workflow Vuex Module
  * 工作流状态管理模块
  * 基于 aideepin 原始实现,适配 Vue 2.7.16 + Vuex 3.1.0
+ *
+ * 重要修改：
+ * - aideepin 使用 Vue 3（支持 Map 响应式）
+ * - SCM 使用 Vue 2.7（不支持 Map 响应式）
+ * - 必须将 Map 改为普通对象以确保响应式工作
  */
 
+import Vue from 'vue'
 import { emptyWorkflowInfo } from '../../components/workflow/utils/workflowUtil'
 
 const EMPTY_WORKFLOW_INFO = emptyWorkflowInfo
@@ -22,7 +28,8 @@ const state = {
   publicWorkflows: [], // 公共工作流列表
 
   // X6画布数据映射 (workflowUuid -> {nodes: [], edges: []})
-  wfUuidToUIWorkflow: new Map(),
+  // Vue 2: 使用普通对象代替 Map
+  wfUuidToUIWorkflow: {},
 
   // 加载状态
   loadingMyWorkflows: false,
@@ -85,9 +92,10 @@ const getters = {
 
   /**
    * 获取X6 UI Workflow
+   * Vue 2: 使用对象属性访问代替 Map.get()
    */
   getUIWorkflow: (state) => (wfUuid) => {
-    return state.wfUuidToUIWorkflow.get(wfUuid) || { nodes: [], edges: [] }
+    return state.wfUuidToUIWorkflow[wfUuid] || { nodes: [], edges: [] }
   }
 }
 
@@ -436,9 +444,10 @@ const mutations = {
 
   /**
    * 设置UI Workflow
+   * Vue 2: 使用 Vue.set() 确保响应式
    */
   SET_UI_WORKFLOW (state, { wfUuid, uiWorkflow }) {
-    state.wfUuidToUIWorkflow.set(wfUuid, uiWorkflow)
+    Vue.set(state.wfUuidToUIWorkflow, wfUuid, uiWorkflow)
   },
 
   /**
@@ -682,9 +691,10 @@ function deleteEdgesByNodeUuid (workflow, deletedNodeUuid) {
 
 /**
  * 删除UI节点
+ * Vue 2: 使用对象属性访问代替 Map.get()
  */
 function deleteUiNode (state, wfUuid, nodeUuid) {
-  const uiWorkflow = state.wfUuidToUIWorkflow.get(wfUuid)
+  const uiWorkflow = state.wfUuidToUIWorkflow[wfUuid]
   if (!uiWorkflow) return
 
   const idx = uiWorkflow.nodes.findIndex(node => node.id === nodeUuid)
@@ -695,9 +705,10 @@ function deleteUiNode (state, wfUuid, nodeUuid) {
 
 /**
  * 删除UI边
+ * Vue 2: 使用对象属性访问代替 Map.get()
  */
 function deleteUiEdge (state, wfUuid, edgeId) {
-  const uiWorkflow = state.wfUuidToUIWorkflow.get(wfUuid)
+  const uiWorkflow = state.wfUuidToUIWorkflow[wfUuid]
   if (!uiWorkflow) return
 
   const idx = uiWorkflow.edges.findIndex(edge => edge.id === edgeId)

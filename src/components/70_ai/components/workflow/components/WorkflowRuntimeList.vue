@@ -11,84 +11,94 @@
       <div v-else class="runtime-list">
         <div v-for="runtime in runtimeList" :key="runtime.runtime_uuid || runtime.uuid" class="runtime-item">
           <!-- 用户输入消息 -->
-          <div class="message-wrapper user-message">
-            <div class="message-header">
-              <div class="message-info">
-                <i class="el-icon-user" />
-                <span class="message-label">用户输入</span>
-                <span class="message-time">{{ formatTime(runtime.cTime || runtime.c_time) }}</span>
+          <div class="message-row user-message-row">
+            <div class="message-wrapper user-message">
+              <div class="message-header">
+                <div class="message-info">
+                  <span class="message-label">用户输入</span>
+                  <span class="message-time">{{ formatTime(runtime.cTime || runtime.c_time) }}</span>
+                </div>
+                <el-button
+                  type="text"
+                  size="small"
+                  icon="el-icon-delete"
+                  class="delete-btn"
+                  @click="handleDelete(runtime.runtime_uuid || runtime.uuid)"
+                >
+                  删除
+                </el-button>
               </div>
-              <el-button
-                type="text"
-                size="small"
-                icon="el-icon-delete"
-                class="delete-btn"
-                @click="handleDelete(runtime.runtime_uuid || runtime.uuid)"
-              >
-                删除
-              </el-button>
-            </div>
-            <div class="message-content">
-              <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
-                <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
-                  <span class="input-label">{{ key }}:</span>
-                  <span class="input-value">{{ formatValue(value) }}</span>
+              <div class="message-content">
+                <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
+                  <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
+                    <span class="input-label">{{ key }}:</span>
+                    <span class="input-value">{{ formatValue(value) }}</span>
+                  </div>
+                </div>
+                <div v-else class="no-input">
+                  <span>无输入</span>
                 </div>
               </div>
-              <div v-else class="no-input">
-                <span>无输入</span>
-              </div>
+            </div>
+            <div class="message-avatar">
+              <el-avatar :size="36" icon="el-icon-user" />
             </div>
           </div>
 
           <!-- AI 输出消息 -->
-          <div class="message-wrapper ai-message">
-            <div class="message-header">
-              <div class="message-info">
+          <div class="message-row ai-message-row">
+            <div class="message-avatar">
+              <el-avatar :size="36" class="ai-avatar">
                 <i class="el-icon-s-operation" />
-                <span class="message-label">工作流输出</span>
-                <el-tag :type="getStatusType(runtime.status)" size="mini">
-                  {{ getStatusText(runtime.status) }}
-                </el-tag>
-              </div>
-              <el-button
-                v-if="!runtime.loading && runtime.status !== 1"
-                type="text"
-                size="small"
-                @click="showExecutionDetail(runtime)"
-              >
-                执行详情
-              </el-button>
+              </el-avatar>
             </div>
-            <div class="message-content">
-              <!-- 运行中状态 -->
-              <div v-if="runtime.loading || runtime.status === 1" class="loading-content">
-                <i class="el-icon-loading" />
-                <span>工作流执行中...</span>
-              </div>
-
-              <!-- 成功状态 -->
-              <div v-else-if="runtime.status === 2 && runtime.output" class="output-content">
-                <div v-if="typeof runtime.output === 'string'" class="output-text">
-                  {{ runtime.output }}
+            <div class="message-wrapper ai-message">
+              <div class="message-header">
+                <div class="message-info">
+                  <span class="message-label">工作流输出</span>
+                  <el-tag :type="getStatusType(runtime.status)" size="mini">
+                    {{ getStatusText(runtime.status) }}
+                  </el-tag>
                 </div>
-                <div v-else-if="typeof runtime.output === 'object'" class="output-object">
-                  <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
-                    <span class="output-label">{{ key }}:</span>
-                    <span class="output-value">{{ formatValue(value) }}</span>
+                <el-button
+                  v-if="!runtime.loading && runtime.status !== 1"
+                  type="text"
+                  size="small"
+                  @click="showExecutionDetail(runtime)"
+                >
+                  执行详情
+                </el-button>
+              </div>
+              <div class="message-content">
+                <!-- 运行中状态 -->
+                <div v-if="runtime.loading || runtime.status === 1" class="loading-content">
+                  <i class="el-icon-loading" />
+                  <span>工作流执行中...</span>
+                </div>
+
+                <!-- 成功状态 -->
+                <div v-else-if="runtime.status === 2 && runtime.output" class="output-content">
+                  <div v-if="typeof runtime.output === 'string'" class="output-text">
+                    {{ runtime.output }}
+                  </div>
+                  <div v-else-if="typeof runtime.output === 'object'" class="output-object">
+                    <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
+                      <span class="output-label">{{ key }}:</span>
+                      <span class="output-value">{{ formatValue(value) }}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- 失败状态 -->
-              <div v-else-if="runtime.status === 4" class="error-content">
-                <i class="el-icon-warning" />
-                <span>{{ runtime.status_remark || runtime.statusRemark || '工作流执行失败' }}</span>
-              </div>
+                <!-- 失败状态 -->
+                <div v-else-if="runtime.status === 4" class="error-content">
+                  <i class="el-icon-warning" />
+                  <span>{{ runtime.status_remark || runtime.statusRemark || '工作流执行失败' }}</span>
+                </div>
 
-              <!-- 其他状态 -->
-              <div v-else class="no-output">
-                <span>无输出</span>
+                <!-- 其他状态 -->
+                <div v-else class="no-output">
+                  <span>无输出</span>
+                </div>
               </div>
             </div>
           </div>
@@ -107,26 +117,11 @@
 
     <!-- 底部：运行工作流区域 -->
     <div class="runtime-footer">
-      <div class="run-section">
-        <el-input
-          v-model="userInput"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入内容（可选）"
-          :disabled="running"
-        />
-        <div class="run-actions">
-          <el-button
-            type="primary"
-            icon="el-icon-video-play"
-            :loading="running"
-            :disabled="!canRun"
-            @click="handleRun"
-          >
-            {{ running ? '运行中...' : '运行' }}
-          </el-button>
-        </div>
-      </div>
+      <workflow-run-detail
+        ref="runDetailRef"
+        :workflow="workflow"
+        @run="handleRunWorkflow"
+      />
     </div>
 
     <!-- 执行详情对话框 -->
@@ -204,9 +199,14 @@
 <script>
 import { mapState, mapGetters, mapMutations } from 'vuex'
 import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete } from '@/components/70_ai/api/workflowService'
+import WorkflowRunDetail from './WorkflowRunDetail.vue'
 
 export default {
   name: 'WorkflowRuntimeList',
+
+  components: {
+    WorkflowRunDetail
+  },
 
   props: {
     workflow: {
@@ -217,7 +217,6 @@ export default {
 
   data () {
     return {
-      userInput: '',
       running: false,
       loading: false,
       loadedAll: false,
@@ -237,8 +236,15 @@ export default {
       getRuntimes: 'ai/workflowRuntime/getRuntimes'
     }),
 
+    // 明确表达"workflow 是否就绪可以加载数据"这个概念
+    workflowReady () {
+      return Boolean(this.workflow.id && this.workflow.workflowUuid)
+    },
+
     runtimeList () {
-      if (!this.workflow.workflowUuid) return []
+      if (!this.workflow.workflowUuid) {
+        return []
+      }
       return this.getRuntimes(this.workflow.workflowUuid) || []
     },
 
@@ -256,10 +262,11 @@ export default {
   },
 
   watch: {
-    'workflow.id': {
+    // 只需要一个 watch，监听 workflow 是否就绪
+    workflowReady: {
       immediate: true,
-      handler (newId) {
-        if (newId) {
+      handler (isReady) {
+        if (isReady) {
           this.loadRuntimeList()
         }
       }
@@ -277,7 +284,10 @@ export default {
     }),
 
     async loadRuntimeList (loadMore = false) {
-      if (this.loading || !this.workflow.id) return
+      // 防止重复加载（例如快速滚动）
+      if (this.loading) {
+        return
+      }
 
       if (!loadMore) {
         this.currentPage = 1
@@ -285,9 +295,10 @@ export default {
       }
 
       this.loading = true
+
       try {
         const response = await workflowRuntimeSearch({
-          workflowId: this.workflow.id, // 使用数字型 ID
+          workflowId: this.workflow.id,
           currentPage: this.currentPage,
           pageSize: this.pageSize
         })
@@ -337,12 +348,16 @@ export default {
       }
     },
 
-    async handleRun () {
+    async handleRunWorkflow (inputs) {
       if (this.running || !this.canRun) return
 
       this.running = true
       try {
-        const input = this.userInput.trim() ? { user_input: this.userInput } : {}
+        // 构造输入对象
+        const input = {}
+        inputs.forEach(item => {
+          input[item.name] = item.content
+        })
 
         const response = await workflowRun({
           wfUuid: this.workflow.workflowUuid,
@@ -365,7 +380,11 @@ export default {
           runtimes: [runtime]
         })
 
-        this.userInput = ''
+        // 通知RunDetail组件运行完成
+        if (this.$refs.runDetailRef) {
+          this.$refs.runDetailRef.runDone()
+        }
+
         this.$message.success('工作流已开始执行')
 
         // 滚动到底部
@@ -388,6 +407,11 @@ export default {
       } catch (error) {
         console.error('运行工作流失败:', error)
         this.$message.error(error.message || '运行工作流失败')
+
+        // 通知RunDetail组件运行失败
+        if (this.$refs.runDetailRef) {
+          this.$refs.runDetailRef.runError()
+        }
       } finally {
         this.running = false
       }
@@ -529,27 +553,85 @@ export default {
 }
 
 .runtime-list {
-  max-width: 900px;
+  max-width: 100%;
   margin: 0 auto;
+  width: 100%;
+  padding: 0 20px;
 }
 
 .runtime-item {
   margin-bottom: 32px;
+  width: 100%;
+}
+
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  &.user-message-row {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  &.ai-message-row {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
+}
+
+.message-avatar {
+  flex-shrink: 0;
+
+  ::v-deep .el-avatar {
+    background-color: #409eff;
+
+    &.ai-avatar {
+      background-color: #67c23a;
+    }
+  }
 }
 
 .message-wrapper {
-  margin-bottom: 16px;
-  padding: 16px;
+  padding: 12px 16px;
   border-radius: 8px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 85%;
+  word-wrap: break-word;
+  line-height: 1.5;
+  transition: all 0.3s ease;
 
   &.user-message {
-    border-left: 3px solid #409eff;
+    background: linear-gradient(to right, #5fa3f5, #4a9ff5);
+    color: white;
+
+    .message-label,
+    .message-time,
+    .input-label,
+    .input-value {
+      color: white;
+    }
+
+    .message-header {
+      border-bottom-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .delete-btn {
+      color: white;
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .no-input {
+      color: rgba(255, 255, 255, 0.7);
+    }
   }
 
   &.ai-message {
-    border-left: 3px solid #67c23a;
+    background-color: #ffffff;
+    color: #303133;
+    border: 1px solid #e4e7ed;
   }
 }
 
@@ -567,14 +649,8 @@ export default {
   align-items: center;
   gap: 8px;
 
-  i {
-    font-size: 16px;
-    color: #909399;
-  }
-
   .message-label {
     font-weight: 500;
-    color: #303133;
   }
 
   .message-time {
@@ -666,16 +742,6 @@ export default {
   border-top: 1px solid #e4e7ed;
   background-color: #fff;
   padding: 16px;
-}
-
-.run-section {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.run-actions {
-  margin-top: 12px;
-  text-align: right;
 }
 
 .execution-detail {
