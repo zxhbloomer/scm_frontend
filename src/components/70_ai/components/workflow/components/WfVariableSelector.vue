@@ -78,9 +78,22 @@ export default {
         children: []
       }
 
+      // 使用 Set 追踪已添加的节点 UUID，避免重复
+      const addedNodeUuids = new Set()
+
       const nodes = this.workflow.nodes || []
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]
+
+        // 检查 wfComponent 是否存在
+        if (!node.wfComponent) {
+          continue
+        }
+
+        // 检查是否已经添加过此节点（去重）
+        if (addedNodeUuids.has(node.uuid)) {
+          continue
+        }
 
         // 排除当前节点和End节点
         if (this.excludeNodes.includes(node.uuid) || node.wfComponent.name === 'End') {
@@ -111,11 +124,16 @@ export default {
           }
         } else {
           // 其他节点：添加输出
+          // 使用 node.title，如果为空则使用 wfComponent.title 作为备用
+          const nodeLabel = node.title || node.wfComponent.title || node.wfComponent.name
           componentOutputGroup.children.push({
-            label: node.title,
+            label: nodeLabel,
             value: `${node.uuid}::output`
           })
         }
+
+        // 标记此节点已添加
+        addedNodeUuids.add(node.uuid)
       }
 
       return [userInputGroup, componentOutputGroup]

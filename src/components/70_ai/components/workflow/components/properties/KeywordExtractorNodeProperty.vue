@@ -1,9 +1,10 @@
 <template>
   <div class="keyword-extractor-node-property">
-    <!-- 引用输入配置 -->
+    <!-- 引用输入配置 (不显示变量名) -->
     <node-property-input
       :workflow="workflow"
       :wf-node="wfNode"
+      :show-var-name="false"
     />
 
     <!-- 模型选择 -->

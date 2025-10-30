@@ -74,7 +74,22 @@
  * 4. 监听 nodeConfig.cases 变化，动态更新端口
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
-import { getInputLabelFromParamName } from '../../utils/workflowUtil'
+
+// 运算符描述映射（硬编码，参考 aideepin 后端返回的数据）
+const OPERATOR_DESC_MAP = {
+  'contains': '包含',
+  'not contains': '不包含',
+  'start with': '开始于',
+  'end with': '结束于',
+  '=': '等于',
+  '≠': '不等于',
+  '>': '大于',
+  '<': '小于',
+  '≥': '大于等于',
+  '≤': '小于等于',
+  'empty': '为空',
+  'not empty': '不为空'
+}
 
 export default {
   name: 'SwitcherNode',
@@ -101,18 +116,45 @@ export default {
     /**
      * 获取输入标签
      * 参考 aideepin getInputLabelFromParamName
+     *
+     * 简化实现：直接从 node.data 中查找
+     * 因为 X6 Vue Shape 组件无法访问外部 Vuex store
      */
     getInputLabel (nodeUuid, paramName) {
-      const workflow = this.$store.getters['ai/workflow/getWorkflowInfo'](this.node.workflowUuid)
-      if (!workflow) return ''
-      return getInputLabelFromParamName(workflow, nodeUuid, paramName)
+      // 1. 从当前画布的 X6 Graph 中查找对应节点
+      const x6Node = this.getNode()
+      const graph = x6Node.model.graph
+
+      if (!graph) return paramName
+
+      // 2. 查找目标节点
+      const targetX6Node = graph.getCellById(nodeUuid)
+      if (!targetX6Node) return paramName
+
+      const targetNodeData = targetX6Node.getData()
+      if (!targetNodeData) return paramName
+
+      // 3. 从 inputConfig.user_inputs 中查找
+      const userInputs = targetNodeData.inputConfig?.user_inputs || []
+      const input = userInputs.find(item => item.name === paramName)
+      if (input) {
+        return input.title || input.name
+      }
+
+      // 4. 如果是节点输出，返回节点标题
+      if (paramName === 'output') {
+        return targetNodeData.title || targetNodeData.wfComponent?.title || ''
+      }
+
+      return paramName
     },
 
     /**
      * 获取运算符描述
+     * 使用硬编码映射表，避免访问 Vuex store
      */
     getOperatorDesc (operator) {
-      return this.$store.getters['ai/workflow/getOperatorDesc'](operator)
+      return OPERATOR_DESC_MAP[operator] || operator
     },
 
     /**

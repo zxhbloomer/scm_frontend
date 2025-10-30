@@ -1,6 +1,8 @@
 // AI工作流API服务
 // 严格参照 AIDeepin index.ts 中的 Workflow API 实现 (lines 638-749)
 import request from '@/utils/request'
+import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source'
+import store from '@/store'
 
 // API基础路径 - 对应SCM后端WorkflowController
 const API_BASE = '/api/v1/ai/workflow'
@@ -128,20 +130,97 @@ export function workflowList (params) {
 }
 
 /**
- * 运行工作流 - 简单POST版本(返回Promise)
- * 用于简单调用场景，返回运行时ID
+ * 运行工作流 - SSE 流式版本
+ * 严格参考 aideepin: workflowRun + commonSseProcess (index.ts line 95-165, 677-687)
+ * 对应后端: WorkflowController.run(@PathVariable String wfUuid, @RequestBody List<JSONObject> inputs)
+ *
  * @param {Object} params - 运行参数
  * @param {string} params.wfUuid - 工作流UUID
- * @param {Object} params.input - 用户输入对象
- * @returns {Promise} - 包含运行时信息的Promise
+ * @param {Array} params.inputs - 用户输入数组 [{name: string, content: {value: any, type: number}}]
+ * @param {AbortSignal} params.signal - 取消信号（可选）
+ * @param {Function} params.startCallback - START 事件回调
+ * @param {Function} params.messageReceived - 消息接收回调 (chunk, eventName)
+ * @param {Function} params.doneCallback - DONE 事件回调
+ * @param {Function} params.errorCallback - ERROR 事件回调
+ * @returns {void} - 无返回值，通过回调处理事件
  */
 export function workflowRun (params) {
-  return request({
-    url: `${API_BASE}/run`,
-    method: 'post',
-    data: {
-      wf_uuid: params.wfUuid,
-      input: params.input || {}
+  const {
+    wfUuid,
+    inputs = [],
+    signal,
+    startCallback,
+    messageReceived,
+    doneCallback,
+    errorCallback
+  } = params
+
+  // 获取认证 token（参考 aideepin line 113）
+  const token = store.getters.token || ''
+
+  // 构造请求URL（包含路径参数，参考 aideepin line 686）
+  // 注意：fetchEventSource 不会自动添加 baseURL，需要手动拼接
+  const url = `${process.env.VUE_APP_BASE_API}${API_BASE}/run/${wfUuid}`
+
+  // 使用 fetchEventSource 处理 SSE（参考 aideepin line 109-165）
+  fetchEventSource(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+      'X-Tenant-ID': localStorage.getItem('X-Tenant-ID') || 'scm_tenant_20250519_001'
+    },
+    signal,
+    body: JSON.stringify(inputs),
+
+    // 连接打开回调（参考 aideepin line 119-133）
+    async onopen (response) {
+      if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
+        // SSE 连接成功
+        return
+      } else if (response.status === 401) {
+        console.error('无登录权限')
+        throw new Error('无登录权限')
+      } else {
+        console.error('SSE connection error:', response.status)
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+    },
+
+    // 消息接收回调（参考 aideepin line 134-156）
+    onmessage (eventMessage) {
+      const eventName = eventMessage.event || ''
+      const data = eventMessage.data || ''
+
+      // 处理特殊事件
+      if (eventName === '[START]' || eventName === 'start') {
+        if (startCallback) {
+          startCallback(data)
+        }
+      } else if (eventName === '[DONE]' || eventName === 'done') {
+        if (doneCallback) {
+          doneCallback(data)
+        }
+      } else if (eventName === '[ERROR]' || eventName === 'error') {
+        if (errorCallback) {
+          errorCallback(data)
+        }
+      } else {
+        // 其他事件（节点事件：NODE_RUN, NODE_INPUT, NODE_OUTPUT, NODE_CHUNK）
+        if (messageReceived) {
+          messageReceived(data, eventName)
+        }
+      }
+    },
+
+    // 错误回调（参考 aideepin line 157-164）
+    onerror (error) {
+      console.error('[workflowRun] SSE error:', error)
+      if (errorCallback) {
+        errorCallback(error.message || '工作流执行失败')
+      }
+      // 抛出错误以关闭连接
+      throw error
     }
   })
 }

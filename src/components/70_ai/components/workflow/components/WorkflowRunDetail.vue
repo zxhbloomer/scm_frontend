@@ -340,11 +340,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 16px;
   background: #fff;
-  border-top: 1px solid #e4e7ed;
-  max-height: 400px;
-  overflow-y: auto;
 }
 
 .user-inputs-section {

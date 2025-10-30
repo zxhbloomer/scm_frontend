@@ -32,9 +32,10 @@
         <div class="tab-area">
           <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
             <!-- Tab 1: 流程执行 -->
-            <el-tab-pane label="流程执行" name="runtime">
+            <el-tab-pane label="流程执行" name="runtime" class="runtime-tab-pane">
               <workflow-runtime-list
                 v-if="activeWorkflow.workflowUuid"
+                ref="workflowRuntimeList"
                 :workflow="activeWorkflow"
               />
             </el-tab-pane>
@@ -45,6 +46,7 @@
                 v-if="activeWorkflow.workflowUuid"
                 ref="workflowDesigner"
                 :workflow="activeWorkflow"
+                @run="handleRunFromDesigner"
               />
             </el-tab-pane>
           </el-tabs>
@@ -145,6 +147,23 @@ export default {
           }
         })
       }
+    },
+
+    /**
+     * 处理从设计器发起的运行请求
+     * 切换到流程执行tab，直接触发WorkflowRuntimeList的运行
+     * 参考 aideepin: WorkflowDefine.vue onRun() 显示运行模态框
+     */
+    handleRunFromDesigner () {
+      // 切换到流程执行tab
+      this.activeTab = 'runtime'
+
+      // 等待tab切换完成后，直接调用运行方法
+      this.$nextTick(() => {
+        if (this.$refs.workflowRuntimeList && this.$refs.workflowRuntimeList.handleRun) {
+          this.$refs.workflowRuntimeList.handleRun()
+        }
+      })
     }
   }
 }
@@ -223,28 +242,33 @@ export default {
     height: 100%;
     display: flex;
     flex-direction: column;
-
-    .el-tabs__header {
-      margin: 0;
-      padding: 0 24px;
-      border-bottom: 1px solid #e4e7ed;
-    }
-
-    .el-tabs__content {
-      flex: 1;
-      overflow: hidden;
-
-      .el-tab-pane {
-        height: 100%;
-      }
-    }
   }
 
-  // 确保设计器tab撑满
-  ::v-deep .design-tab-pane {
+  ::v-deep .el-tabs__header {
+    margin: 0;
+    padding: 0 24px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+
+  ::v-deep .el-tabs__content {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  ::v-deep .el-tab-pane {
     height: 100%;
+  }
+
+  // 只给激活的 tab-pane 设置 flex 布局
+  ::v-deep .el-tab-pane[style*="display: none"] {
+    display: none !important;
+  }
+
+  ::v-deep .el-tab-pane:not([style*="display: none"]) {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    overflow: hidden;
   }
 }
 </style>

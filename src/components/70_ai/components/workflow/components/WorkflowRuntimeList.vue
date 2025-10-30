@@ -1,128 +1,130 @@
 <template>
   <div class="workflow-runtime-list">
     <!-- 内容区域：运行历史列表 -->
-    <div ref="scrollContainer" class="runtime-scroll-container" @scroll="handleScroll">
-      <div v-if="!runtimeList.length" class="empty-state">
-        <i class="el-icon-finished" />
-        <p>暂无运行记录</p>
-        <p class="hint">点击下方"运行"按钮开始执行工作流</p>
-      </div>
+    <main ref="mainContainer" class="runtime-scroll-container" :style="{ height: mainHeight }">
+      <div ref="scrollContainer" class="runtime-scroll-inner" @scroll="handleScroll">
+        <div v-if="!runtimeList.length" class="empty-state">
+          <i class="el-icon-finished" />
+          <p>暂无运行记录</p>
+          <p class="hint">点击下方"运行"按钮开始执行工作流</p>
+        </div>
 
-      <div v-else class="runtime-list">
-        <div v-for="runtime in runtimeList" :key="runtime.runtime_uuid || runtime.uuid" class="runtime-item">
-          <!-- 用户输入消息 -->
-          <div class="message-row user-message-row">
-            <div class="message-wrapper user-message">
-              <div class="message-header">
-                <div class="message-info">
-                  <span class="message-label">用户输入</span>
-                  <span class="message-time">{{ formatTime(runtime.cTime || runtime.c_time) }}</span>
-                </div>
-                <el-button
-                  type="text"
-                  size="small"
-                  icon="el-icon-delete"
-                  class="delete-btn"
-                  @click="handleDelete(runtime.runtime_uuid || runtime.uuid)"
-                >
-                  删除
-                </el-button>
-              </div>
-              <div class="message-content">
-                <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
-                  <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
-                    <span class="input-label">{{ key }}:</span>
-                    <span class="input-value">{{ formatValue(value) }}</span>
+        <div v-else class="runtime-list">
+          <div v-for="runtime in runtimeList" :key="runtime.runtime_uuid || runtime.uuid" class="runtime-item">
+            <!-- 用户输入消息 -->
+            <div class="message-row user-message-row">
+              <div class="message-wrapper user-message">
+                <div class="message-header">
+                  <div class="message-info">
+                    <span class="message-label">用户输入</span>
+                    <span class="message-time">{{ formatTime(runtime.cTime || runtime.c_time) }}</span>
                   </div>
+                  <el-button
+                    type="text"
+                    size="small"
+                    icon="el-icon-delete"
+                    class="delete-btn"
+                    @click="handleDelete(runtime.runtime_uuid || runtime.uuid)"
+                  >
+                    删除
+                  </el-button>
                 </div>
-                <div v-else class="no-input">
-                  <span>无输入</span>
-                </div>
-              </div>
-            </div>
-            <div class="message-avatar">
-              <el-avatar :size="36" icon="el-icon-user" />
-            </div>
-          </div>
-
-          <!-- AI 输出消息 -->
-          <div class="message-row ai-message-row">
-            <div class="message-avatar">
-              <el-avatar :size="36" class="ai-avatar">
-                <i class="el-icon-s-operation" />
-              </el-avatar>
-            </div>
-            <div class="message-wrapper ai-message">
-              <div class="message-header">
-                <div class="message-info">
-                  <span class="message-label">工作流输出</span>
-                  <el-tag :type="getStatusType(runtime.status)" size="mini">
-                    {{ getStatusText(runtime.status) }}
-                  </el-tag>
-                </div>
-                <el-button
-                  v-if="!runtime.loading && runtime.status !== 1"
-                  type="text"
-                  size="small"
-                  @click="showExecutionDetail(runtime)"
-                >
-                  执行详情
-                </el-button>
-              </div>
-              <div class="message-content">
-                <!-- 运行中状态 -->
-                <div v-if="runtime.loading || runtime.status === 1" class="loading-content">
-                  <i class="el-icon-loading" />
-                  <span>工作流执行中...</span>
-                </div>
-
-                <!-- 成功状态 -->
-                <div v-else-if="runtime.status === 2 && runtime.output" class="output-content">
-                  <div v-if="typeof runtime.output === 'string'" class="output-text">
-                    {{ runtime.output }}
-                  </div>
-                  <div v-else-if="typeof runtime.output === 'object'" class="output-object">
-                    <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
-                      <span class="output-label">{{ key }}:</span>
-                      <span class="output-value">{{ formatValue(value) }}</span>
+                <div class="message-content">
+                  <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
+                    <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
+                      <span class="input-label">{{ key }}:</span>
+                      <span class="input-value">{{ formatValue(value) }}</span>
                     </div>
                   </div>
+                  <div v-else class="no-input">
+                    <span>无输入</span>
+                  </div>
                 </div>
+              </div>
+              <div class="message-avatar">
+                <el-avatar :size="36" icon="el-icon-user" />
+              </div>
+            </div>
 
-                <!-- 失败状态 -->
-                <div v-else-if="runtime.status === 4" class="error-content">
-                  <i class="el-icon-warning" />
-                  <span>{{ runtime.status_remark || runtime.statusRemark || '工作流执行失败' }}</span>
+            <!-- AI 输出消息 -->
+            <div class="message-row ai-message-row">
+              <div class="message-avatar">
+                <el-avatar :size="36" class="ai-avatar">
+                  <i class="el-icon-s-operation" />
+                </el-avatar>
+              </div>
+              <div class="message-wrapper ai-message">
+                <div class="message-header">
+                  <div class="message-info">
+                    <span class="message-label">工作流输出</span>
+                    <el-tag :type="getStatusType(runtime.status)" size="mini">
+                      {{ getStatusText(runtime.status) }}
+                    </el-tag>
+                  </div>
+                  <el-button
+                    v-if="!runtime.loading && runtime.status !== 1"
+                    type="text"
+                    size="small"
+                    @click="showExecutionDetail(runtime)"
+                  >
+                    执行详情
+                  </el-button>
                 </div>
+                <div class="message-content">
+                  <!-- 运行中状态 -->
+                  <div v-if="runtime.loading || runtime.status === 1" class="loading-content">
+                    <i class="el-icon-loading" />
+                    <span>工作流执行中...</span>
+                  </div>
 
-                <!-- 其他状态 -->
-                <div v-else class="no-output">
-                  <span>无输出</span>
+                  <!-- 成功状态 -->
+                  <div v-else-if="runtime.status === 2 && runtime.output" class="output-content">
+                    <div v-if="typeof runtime.output === 'string'" class="output-text">
+                      {{ runtime.output }}
+                    </div>
+                    <div v-else-if="typeof runtime.output === 'object'" class="output-object">
+                      <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
+                        <span class="output-label">{{ key }}:</span>
+                        <span class="output-value">{{ formatValue(value) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 失败状态 -->
+                  <div v-else-if="runtime.status === 4" class="error-content">
+                    <i class="el-icon-warning" />
+                    <span>{{ runtime.status_remark || runtime.statusRemark || '工作流执行失败' }}</span>
+                  </div>
+
+                  <!-- 其他状态 -->
+                  <div v-else class="no-output">
+                    <span>无输出</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 加载更多提示 -->
-      <div v-if="loading" class="loading-more">
-        <i class="el-icon-loading" />
-        <span>加载中...</span>
+        <!-- 加载更多提示 -->
+        <div v-if="loading" class="loading-more">
+          <i class="el-icon-loading" />
+          <span>加载中...</span>
+        </div>
+        <div v-if="loadedAll && runtimeList.length" class="loaded-all">
+          <span>已加载全部记录</span>
+        </div>
       </div>
-      <div v-if="loadedAll && runtimeList.length" class="loaded-all">
-        <span>已加载全部记录</span>
-      </div>
-    </div>
+    </main>
 
     <!-- 底部：运行工作流区域 -->
-    <div class="runtime-footer">
+    <footer ref="footerContainer" class="runtime-footer">
       <workflow-run-detail
         ref="runDetailRef"
         :workflow="workflow"
         @run="handleRunWorkflow"
       />
-    </div>
+    </footer>
 
     <!-- 执行详情对话框 -->
     <el-dialog
@@ -223,7 +225,9 @@ export default {
       currentPage: 1,
       pageSize: 20,
       detailDialogVisible: false,
-      currentRuntimeDetail: null
+      currentRuntimeDetail: null,
+      mainHeight: 'auto',
+      currentController: null // 用于取消SSE连接
     }
   },
 
@@ -270,6 +274,29 @@ export default {
           this.loadRuntimeList()
         }
       }
+    }
+  },
+
+  mounted () {
+    this.calculateMainHeight()
+    // 监听窗口大小变化
+    window.addEventListener('resize', this.calculateMainHeight)
+  },
+
+  updated () {
+    this.$nextTick(() => {
+      this.calculateMainHeight()
+    })
+  },
+
+  beforeDestroy () {
+    // 清理resize监听器
+    window.removeEventListener('resize', this.calculateMainHeight)
+
+    // 清理SSE连接
+    if (this.currentController) {
+      this.currentController.abort()
+      this.currentController = null
     }
   },
 
@@ -348,72 +375,132 @@ export default {
       }
     },
 
-    async handleRunWorkflow (inputs) {
-      if (this.running || !this.canRun) return
+    /**
+     * 运行工作流
+     * 参考aideepin: RunDetail.vue handleSubmit() (lines 122-202)
+     * 对应后端: WorkflowController.run() 返回SSE流
+     */
+    handleRunWorkflow (inputs) {
+      // 防止重复点击
+      if (this.running || !this.canRun) {
+        return
+      }
 
       this.running = true
-      try {
-        // 构造输入对象
-        const input = {}
-        inputs.forEach(item => {
-          input[item.name] = item.content
-        })
 
-        const response = await workflowRun({
-          wfUuid: this.workflow.workflowUuid,
-          input
-        })
+      // 构造输入数组（保持与后端List<JSONObject>格式一致）
+      const inputList = inputs.map(item => ({
+        name: item.name,
+        content: item.content,
+        required: item.required || false
+      }))
 
-        // 添加新的运行记录到列表头部
-        // 转换后端返回的 camelCase 字段为 snake_case (Vuex 模块期望的格式)
-        const runtime = {
-          ...response.data,
-          runtime_uuid: response.data.uuid || response.data.runtime_uuid,
-          wf_uuid: this.workflow.workflowUuid,
-          status_remark: response.data.statusRemark || response.data.status_remark,
-          loading: true,
-          status: 1 // 运行中
-        }
+      // 创建AbortController用于取消SSE连接
+      const controller = new AbortController()
+      this.currentController = controller
 
-        this.unshiftRuntimes({
-          wfUuid: this.workflow.workflowUuid,
-          runtimes: [runtime]
-        })
+      // 使用回调函数处理SSE事件流
+      workflowRun({
+        wfUuid: this.workflow.workflowUuid,
+        inputs: inputList,
+        signal: controller.signal,
 
-        // 通知RunDetail组件运行完成
-        if (this.$refs.runDetailRef) {
-          this.$refs.runDetailRef.runDone()
-        }
-
-        this.$message.success('工作流已开始执行')
-
-        // 滚动到底部
-        this.$nextTick(() => {
-          const container = this.$refs.scrollContainer
-          if (container) {
-            container.scrollTop = container.scrollHeight
+        // [START]事件回调：工作流启动
+        startCallback: (wfRuntimeJson) => {
+          if (!wfRuntimeJson) {
+            this.$message.error('启动失败')
+            this.running = false
+            return
           }
-        })
 
-        // TODO: 实现 SSE 监听执行状态
-        // 模拟执行完成
-        setTimeout(() => {
-          this.updateRuntimeSuccess({
-            wfUuid: this.workflow.workflowUuid,
-            runtimeUuid: runtime.runtime_uuid,
-            outputJson: JSON.stringify({ result: '执行完成（模拟）' })
+          // 解析runtime对象
+          const runtime = JSON.parse(wfRuntimeJson)
+
+          // 将用户输入保存到runtime.input（用于聊天显示）
+          runtime.input = {}
+          inputs.forEach(item => {
+            runtime.input[item.name] = item.content
           })
-        }, 3000)
-      } catch (error) {
-        console.error('运行工作流失败:', error)
-        this.$message.error(error.message || '运行工作流失败')
 
-        // 通知RunDetail组件运行失败
-        if (this.$refs.runDetailRef) {
-          this.$refs.runDetailRef.runError()
+          // 添加到Vuex store
+          this.unshiftRuntimes({
+            wfUuid: this.workflow.workflowUuid,
+            runtimes: [runtime]
+          })
+
+          // 成功提示
+          this.$message.success('工作流已开始执行')
+
+          // 滚动到底部
+          this.$nextTick(() => {
+            const container = this.$refs.scrollContainer
+            if (container) {
+              container.scrollTop = container.scrollHeight
+            }
+          })
+        },
+
+        // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx
+        messageReceived: (chunk, eventName) => {
+          console.log('[Workflow Event]', eventName, chunk)
+
+          // TODO: 根据eventName更新节点状态
+          // 例如：
+          // - NODE_RUN_xxx: 节点开始执行
+          // - NODE_CHUNK_xxx: 节点输出chunk
+          // - NODE_OUTPUT_xxx: 节点执行完成
+        },
+
+        // [DONE]事件回调：工作流执行完成
+        doneCallback: (chunk) => {
+          this.running = false
+          this.currentController = null
+
+          // 通知WorkflowRunDetail组件运行完成
+          if (this.$refs.runDetailRef) {
+            this.$refs.runDetailRef.runDone()
+          }
+
+          this.$message.success('工作流执行完成')
+
+          // 如果有返回数据，解析并更新Vuex
+          if (chunk) {
+            try {
+              const result = JSON.parse(chunk)
+              console.log('[Workflow Done]', result)
+              // TODO: 更新runtime状态为成功
+              // this.updateRuntimeSuccess({ ... })
+            } catch (e) {
+              console.warn('DONE事件数据解析失败:', e)
+            }
+          }
+        },
+
+        // [ERROR]事件回调：工作流执行失败
+        errorCallback: (error) => {
+          this.running = false
+          this.currentController = null
+
+          console.error('运行工作流失败:', error)
+          this.$message.error(error || '工作流执行失败')
+
+          // 通知WorkflowRunDetail组件运行失败
+          if (this.$refs.runDetailRef) {
+            this.$refs.runDetailRef.runError()
+          }
         }
-      } finally {
+      })
+    },
+
+    /**
+     * 取消工作流执行
+     */
+    handleCancelRun () {
+      if (this.currentController) {
+        this.currentController.abort()
+        this.currentController = null
         this.running = false
+        this.$message.info('已取消工作流执行')
       }
     },
 
@@ -508,6 +595,21 @@ export default {
         4: 'el-icon-close'
       }
       return iconMap[status] || 'el-icon-info'
+    },
+
+    /**
+     * 动态计算main区域的高度
+     * 公式：main高度 = 100% - footer高度
+     */
+    calculateMainHeight () {
+      this.$nextTick(() => {
+        const footerEl = this.$refs.footerContainer
+        if (footerEl) {
+          const footerHeight = footerEl.offsetHeight
+          const totalFixedHeight = footerHeight + 100
+          this.mainHeight = `calc(100% - ${totalFixedHeight}px)`
+        }
+      })
     }
   }
 }
@@ -516,13 +618,18 @@ export default {
 <style lang="scss" scoped>
 .workflow-runtime-list {
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  position: relative;
+}
+
+/* main: 动态计算高度 */
+.runtime-scroll-container {
+  overflow: hidden;
   background-color: #f5f7fa;
 }
 
-.runtime-scroll-container {
-  flex: 1;
+/* 内部真正滚动的容器 */
+.runtime-scroll-inner {
+  height: 100%;
   overflow-y: auto;
   padding: 16px;
 }
