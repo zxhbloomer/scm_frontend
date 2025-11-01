@@ -78,7 +78,7 @@
                   </div>
 
                   <!-- 有输出内容（包括loading中的流式输出）：优先显示output -->
-                  <div v-else-if="runtime.output && runtime.output.trim() !== ''" class="output-content">
+                  <div v-else-if="runtime.output && (typeof runtime.output === 'string' ? runtime.output.trim() !== '' : Object.keys(runtime.output).length > 0)" class="output-content">
                     <!-- loading时显示流式指示器在顶部 -->
                     <div v-if="runtime.loading" class="streaming-header">
                       <i class="el-icon-loading" />
