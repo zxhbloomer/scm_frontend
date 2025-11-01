@@ -10,21 +10,21 @@
         </div>
 
         <div v-else class="runtime-list">
-          <div v-for="runtime in runtimeList" :key="runtime.runtime_uuid || runtime.uuid" class="runtime-item">
+          <div v-for="runtime in runtimeList" :key="runtime.runtimeUuid" class="runtime-item">
             <!-- 用户输入消息 -->
             <div class="message-row user-message-row">
               <div class="message-wrapper user-message">
                 <div class="message-header">
                   <div class="message-info">
                     <span class="message-label">用户输入</span>
-                    <span class="message-time">{{ formatTime(runtime.cTime || runtime.c_time) }}</span>
+                    <span class="message-time">{{ formatTime(runtime.cTime || runtime.CTime) }}</span>
                   </div>
                   <el-button
                     type="text"
                     size="small"
                     icon="el-icon-delete"
                     class="delete-btn"
-                    @click="handleDelete(runtime.runtime_uuid || runtime.uuid)"
+                    @click="handleDelete(runtime.runtimeUuid)"
                   >
                     删除
                   </el-button>
@@ -71,32 +71,40 @@
                   </el-button>
                 </div>
                 <div class="message-content">
-                  <!-- 运行中状态 -->
-                  <div v-if="runtime.loading || runtime.status === 1" class="loading-content">
-                    <i class="el-icon-loading" />
-                    <span>工作流执行中...</span>
-                  </div>
-
-                  <!-- 成功状态 -->
-                  <div v-else-if="runtime.status === 2 && runtime.output" class="output-content">
-                    <div v-if="typeof runtime.output === 'string'" class="output-text">
-                      {{ runtime.output }}
-                    </div>
-                    <div v-else-if="typeof runtime.output === 'object'" class="output-object">
-                      <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
-                        <span class="output-label">{{ key }}:</span>
-                        <span class="output-value">{{ formatValue(value) }}</span>
-                      </div>
-                    </div>
-                  </div>
-
                   <!-- 失败状态 -->
-                  <div v-else-if="runtime.status === 4" class="error-content">
+                  <div v-if="runtime.status === 4" class="error-content">
                     <i class="el-icon-warning" />
                     <span>{{ runtime.status_remark || runtime.statusRemark || '工作流执行失败' }}</span>
                   </div>
 
-                  <!-- 其他状态 -->
+                  <!-- 有输出内容（包括loading中的流式输出）：优先显示output -->
+                  <div v-else-if="runtime.output && runtime.output.trim() !== ''" class="output-content">
+                    <!-- loading时显示流式指示器在顶部 -->
+                    <div v-if="runtime.loading" class="streaming-header">
+                      <i class="el-icon-loading" />
+                      <span>工作流执行中...</span>
+                    </div>
+
+                    <div class="output-text-wrapper">
+                      <div v-if="typeof runtime.output === 'string'" class="output-text">
+                        {{ runtime.output }}
+                      </div>
+                      <div v-else-if="typeof runtime.output === 'object'" class="output-object">
+                        <div v-for="(value, key) in runtime.output" :key="key" class="output-item">
+                          <span class="output-label">{{ key }}:</span>
+                          <span class="output-value">{{ formatValue(value) }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 运行中但还没有输出：loading=true 且 output为空 -->
+                  <div v-else-if="runtime.loading" class="loading-content">
+                    <i class="el-icon-loading" />
+                    <span>工作流执行中...</span>
+                  </div>
+
+                  <!-- 其他状态：已完成但无输出 -->
                   <div v-else class="no-output">
                     <span>无输出</span>
                   </div>
@@ -128,12 +136,19 @@
 
     <!-- 执行详情对话框 -->
     <el-dialog
+      v-el-drag-dialog
       :visible.sync="detailDialogVisible"
       title="执行详情"
+      :modal="true"
       width="800px"
       :close-on-click-modal="false"
+      :close-on-press-escape="false"
       :show-close="true"
+      :append-to-body="true"
+      :modal-append-to-body="true"
+      class="execution-detail-dialog"
       destroy-on-close
+      top="5vh"
     >
       <div v-if="currentRuntimeDetail" class="execution-detail">
         <!-- 基本信息 -->
@@ -199,12 +214,14 @@
 </template>
 
 <script>
-import { mapState, mapGetters, mapMutations } from 'vuex'
 import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete } from '@/components/70_ai/api/workflowService'
 import WorkflowRunDetail from './WorkflowRunDetail.vue'
+import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
   name: 'WorkflowRuntimeList',
+
+  directives: { elDragDialog },
 
   components: {
     WorkflowRunDetail
@@ -227,29 +244,21 @@ export default {
       detailDialogVisible: false,
       currentRuntimeDetail: null,
       mainHeight: 'auto',
-      currentController: null // 用于取消SSE连接
+      currentController: null, // 用于取消SSE连接
+      scrollTimer: null, // 用于滚动防抖
+      localRuntimeList: [] // 本地runtime列表，不使用Vuex
     }
   },
 
   computed: {
-    ...mapState({
-      activeUuid: state => state.ai.workflow.activeUuid
-    }),
-
-    ...mapGetters({
-      getRuntimes: 'ai/workflowRuntime/getRuntimes'
-    }),
-
     // 明确表达"workflow 是否就绪可以加载数据"这个概念
     workflowReady () {
       return Boolean(this.workflow.id && this.workflow.workflowUuid)
     },
 
     runtimeList () {
-      if (!this.workflow.workflowUuid) {
-        return []
-      }
-      return this.getRuntimes(this.workflow.workflowUuid) || []
+      // 使用本地列表
+      return this.localRuntimeList
     },
 
     canRun () {
@@ -274,6 +283,14 @@ export default {
           this.loadRuntimeList()
         }
       }
+    },
+
+    // 监听运行时列表变化，自动滚动到底部
+    runtimeList: {
+      handler () {
+        this.scrollToBottom()
+      },
+      deep: true
     }
   },
 
@@ -298,17 +315,15 @@ export default {
       this.currentController.abort()
       this.currentController = null
     }
+
+    // 清理滚动定时器
+    if (this.scrollTimer) {
+      clearTimeout(this.scrollTimer)
+      this.scrollTimer = null
+    }
   },
 
   methods: {
-    ...mapMutations({
-      setRuntimes: 'ai/workflowRuntime/SET_RUNTIMES',
-      unshiftRuntimes: 'ai/workflowRuntime/UNSHIFT_RUNTIMES',
-      deleteRuntimeMutation: 'ai/workflowRuntime/DELETE_RUNTIME',
-      updateRuntimeSuccess: 'ai/workflowRuntime/UPDATE_RUNTIME_SUCCESS',
-      updateRuntimeError: 'ai/workflowRuntime/UPDATE_RUNTIME_ERROR',
-      updateRuntimeRunning: 'ai/workflowRuntime/UPDATE_RUNTIME_RUNNING'
-    }),
 
     async loadRuntimeList (loadMore = false) {
       // 防止重复加载（例如快速滚动）
@@ -332,22 +347,57 @@ export default {
 
         const records = response.data.records || []
 
+        // 转换并校验后端数据结构：将outputData/inputData展开为output/input
+        const validRecords = []
+        records.forEach(runtime => {
+          // 【防御性校验】必须有runtimeUuid，否则跳过
+          if (!runtime.runtimeUuid) {
+            console.warn('⚠️ 跳过无效runtime（缺少runtimeUuid）:', runtime)
+            return
+          }
+
+          // 处理input: 从inputData提取到input
+          if (runtime.inputData && typeof runtime.inputData === 'object') {
+            runtime.input = {}
+            for (const [key, value] of Object.entries(runtime.inputData)) {
+              runtime.input[key] = value
+            }
+          } else {
+            // 如果没有inputData，设置空对象
+            runtime.input = runtime.input || {}
+          }
+
+          // 处理output: 从outputData.output.value提取到output
+          if (runtime.outputData && typeof runtime.outputData === 'object') {
+            if (runtime.outputData.output && runtime.outputData.output.value) {
+              runtime.output = runtime.outputData.output.value
+            } else {
+              // 兼容其他格式
+              runtime.output = runtime.outputData
+            }
+          } else {
+            // 如果没有outputData，设置空字符串
+            runtime.output = runtime.output || ''
+          }
+
+          // 【防御性校验】通过所有检查的记录才添加到列表
+          validRecords.push(runtime)
+        })
+
+        console.log(`✅ 有效记录: ${validRecords.length}/${records.length}`)
+
+        // 【重要】后端返回的是倒序（最新在前），需要反转为正序（最老在前）
+        const reversedRecords = validRecords.reverse()
+
         if (loadMore) {
-          // 加载更多：追加到列表前面（因为是倒序）
-          const existingList = this.getRuntimes(this.workflow.workflowUuid) || []
-          this.setRuntimes({
-            wfUuid: this.workflow.workflowUuid,
-            runtimes: [...records, ...existingList]
-          })
+          // 加载更多：追加到列表前面
+          this.localRuntimeList = [...reversedRecords, ...this.localRuntimeList]
         } else {
           // 首次加载：直接设置
-          this.setRuntimes({
-            wfUuid: this.workflow.workflowUuid,
-            runtimes: records
-          })
+          this.localRuntimeList = reversedRecords
         }
 
-        if (records.length < this.pageSize) {
+        if (validRecords.length < this.pageSize) {
           this.loadedAll = true
         } else {
           this.currentPage++
@@ -376,6 +426,30 @@ export default {
     },
 
     /**
+     * 滚动到底部
+     * 参考AI Chat的MessageList.vue和知识库Chat的RagChatDialog.vue
+     */
+    scrollToBottom () {
+      // 清除之前的定时器
+      if (this.scrollTimer) {
+        clearTimeout(this.scrollTimer)
+      }
+
+      // 使用requestAnimationFrame确保DOM已更新
+      this.scrollTimer = setTimeout(() => {
+        this.$nextTick(() => {
+          const scrollContainer = this.$refs.scrollContainer
+          if (scrollContainer) {
+            scrollContainer.scrollTo({
+              top: scrollContainer.scrollHeight,
+              behavior: 'smooth'
+            })
+          }
+        })
+      }, 50) // 50ms防抖
+    },
+
+    /**
      * 运行工作流
      * 参考aideepin: RunDetail.vue handleSubmit() (lines 122-202)
      * 对应后端: WorkflowController.run() 返回SSE流
@@ -399,6 +473,10 @@ export default {
       const controller = new AbortController()
       this.currentController = controller
 
+      // 用于累积工作流输出
+      let accumulatedOutput = ''
+      let currentRuntimeUuid = null
+
       // 使用回调函数处理SSE事件流
       workflowRun({
         wfUuid: this.workflow.workflowUuid,
@@ -416,22 +494,26 @@ export default {
           // 解析runtime对象
           const runtime = JSON.parse(wfRuntimeJson)
 
+          // 保存runtime UUID用于后续更新
+          currentRuntimeUuid = runtime.runtimeUuid
+
           // 将用户输入保存到runtime.input（用于聊天显示）
           runtime.input = {}
           inputs.forEach(item => {
             runtime.input[item.name] = item.content
           })
 
-          // 添加到Vuex store
-          this.unshiftRuntimes({
-            wfUuid: this.workflow.workflowUuid,
-            runtimes: [runtime]
-          })
+          // 初始化output为空字符串
+          runtime.output = ''
+          runtime.loading = true // 设置loading状态
+
+          // 添加到本地列表（最新的在最后面，像微信聊天一样）
+          this.localRuntimeList.push(runtime)
 
           // 成功提示
           this.$message.success('工作流已开始执行')
 
-          // 滚动到底部
+          // 滚动到底部（显示最新消息）
           this.$nextTick(() => {
             const container = this.$refs.scrollContainer
             if (container) {
@@ -442,13 +524,72 @@ export default {
 
         // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx
         messageReceived: (chunk, eventName) => {
-          console.log('[Workflow Event]', eventName, chunk)
+          console.log(`📨 [messageReceived] eventName: ${eventName}, chunk length: ${chunk ? chunk.length : 0}`)
 
-          // TODO: 根据eventName更新节点状态
-          // 例如：
-          // - NODE_RUN_xxx: 节点开始执行
-          // - NODE_CHUNK_xxx: 节点输出chunk
-          // - NODE_OUTPUT_xxx: 节点执行完成
+          // 处理NODE_CHUNK事件：累积LLM流式输出
+          if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
+            console.log(`📝 [NODE_CHUNK] 收到chunk: "${chunk}", 累积前长度: ${accumulatedOutput.length}`)
+            accumulatedOutput += chunk
+            console.log(`📝 [NODE_CHUNK] 累积后总长度: ${accumulatedOutput.length}`)
+
+            // 🔧 完全参考RAG实现:使用splice替换对象（不使用$nextTick，避免批量合并）
+            if (currentRuntimeUuid) {
+              const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+              console.log(`📝 [NODE_CHUNK] 查找runtime, index: ${index}, currentRuntimeUuid: ${currentRuntimeUuid}`)
+              if (index !== -1) {
+                const oldRuntime = this.localRuntimeList[index]
+                const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                this.localRuntimeList.splice(index, 1, newRuntime)
+
+                console.log(`✅ [NODE_CHUNK] 已更新runtime.output, 当前output长度: ${accumulatedOutput.length}`)
+              } else {
+                console.warn(`⚠️ [NODE_CHUNK] 未找到对应的runtime, currentRuntimeUuid: ${currentRuntimeUuid}`)
+              }
+            } else {
+              console.warn(`⚠️ [NODE_CHUNK] currentRuntimeUuid为空`)
+            }
+          }
+
+          // 处理NODE_OUTPUT事件：节点执行完成，提取最终输出
+          if (eventName && eventName.startsWith('[NODE_OUTPUT_')) {
+            console.log(`📤 [NODE_OUTPUT] 收到事件, 当前累积长度: ${accumulatedOutput.length}`)
+            if (chunk && currentRuntimeUuid) {
+              try {
+                const outputData = JSON.parse(chunk)
+                const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+                if (index !== -1) {
+                  // 检查输出数据格式：{name:"output", content:{value:"xxx"}}
+                  if (outputData.content && outputData.content.value) {
+                    const nodeOutput = outputData.content.value
+                    // 🔧 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
+                    // 这样既支持流式LLM节点(有NODE_CHUNK)，也支持非流式节点(只有NODE_OUTPUT)
+                    if (accumulatedOutput.length === 0) {
+                      accumulatedOutput = nodeOutput
+                      console.log(`📤 [NODE_OUTPUT] 无累积内容，使用NODE_OUTPUT: ${nodeOutput.length}字符`)
+                    } else {
+                      console.log(`📤 [NODE_OUTPUT] 保留累积内容: ${accumulatedOutput.length}字符 (忽略NODE_OUTPUT的${nodeOutput.length}字符)`)
+                    }
+                    const oldRuntime = this.localRuntimeList[index]
+                    const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                    this.localRuntimeList.splice(index, 1, newRuntime)
+                  } else if (outputData.output) {
+                  // 兼容旧格式：{output: "xxx"}
+                    if (accumulatedOutput.length === 0) {
+                      accumulatedOutput = outputData.output
+                      console.log(`📤 [NODE_OUTPUT] 使用旧格式output: ${accumulatedOutput.length}字符`)
+                    } else {
+                      console.log(`📤 [NODE_OUTPUT] 保留累积内容(旧格式): ${accumulatedOutput.length}字符`)
+                    }
+                    const oldRuntime = this.localRuntimeList[index]
+                    const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                    this.localRuntimeList.splice(index, 1, newRuntime)
+                  }
+                }
+              } catch (e) {
+                console.warn('Failed to parse NODE_OUTPUT data:', e)
+              }
+            }
+          }
         },
 
         // [DONE]事件回调：工作流执行完成
@@ -461,19 +602,22 @@ export default {
             this.$refs.runDetailRef.runDone()
           }
 
-          this.$message.success('工作流执行完成')
-
-          // 如果有返回数据，解析并更新Vuex
-          if (chunk) {
-            try {
-              const result = JSON.parse(chunk)
-              console.log('[Workflow Done]', result)
-              // TODO: 更新runtime状态为成功
-              // this.updateRuntimeSuccess({ ... })
-            } catch (e) {
-              console.warn('DONE事件数据解析失败:', e)
+          // 更新runtime状态为成功，保存最终输出（使用splice确保响应式）
+          if (currentRuntimeUuid) {
+            const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+            if (index !== -1) {
+              const oldRuntime = this.localRuntimeList[index]
+              const newRuntime = {
+                ...oldRuntime,
+                status: 3, // 3-成功 (后端WORKFLOW_PROCESS_STATUS_SUCCESS)
+                loading: false,
+                output: oldRuntime.output || accumulatedOutput
+              }
+              this.localRuntimeList.splice(index, 1, newRuntime)
             }
           }
+
+          this.$message.success('工作流执行完成')
         },
 
         // [ERROR]事件回调：工作流执行失败
@@ -512,10 +656,8 @@ export default {
       }).then(async () => {
         try {
           await workflowRuntimeDelete(runtimeUuid)
-          this.deleteRuntimeMutation({
-            wfUuid: this.workflow.workflowUuid,
-            runtimeUuid
-          })
+          // 从本地列表删除
+          this.localRuntimeList = this.localRuntimeList.filter(r => r.runtimeUuid !== runtimeUuid)
           this.$message.success('删除成功')
         } catch (error) {
           console.error('删除运行记录失败:', error)
@@ -551,6 +693,10 @@ export default {
 
     formatValue (value) {
       if (value === null || value === undefined) return ''
+      // 处理工作流输入/输出的特殊格式：{type:1, value:"xxx", title:"xxx"}
+      if (typeof value === 'object' && value.value !== undefined) {
+        return this.formatValue(value.value) // 递归提取value字段
+      }
       if (typeof value === 'object') {
         return JSON.stringify(value, null, 2)
       }
@@ -558,20 +704,24 @@ export default {
     },
 
     getStatusType (status) {
+      // 对齐后端WorkflowConstants状态定义
       const typeMap = {
-        1: 'info', // 运行中
-        2: 'success', // 成功
-        3: 'warning', // 部分成功
-        4: 'danger' // 失败
+        0: 'info', // READY-就绪
+        1: 'info', // RUNNING-运行中
+        2: 'warning', // WAITING_INPUT-等待输入
+        3: 'success', // SUCCESS-成功
+        4: 'danger' // FAIL-失败
       }
       return typeMap[status] || 'info'
     },
 
     getStatusText (status) {
+      // 对齐后端WorkflowConstants状态定义
       const textMap = {
+        0: '就绪',
         1: '运行中',
-        2: '成功',
-        3: '部分成功',
+        2: '等待输入',
+        3: '成功',
         4: '失败'
       }
       return textMap[status] || '未知'
@@ -806,7 +956,8 @@ export default {
   font-style: italic;
 }
 
-.loading-content {
+.loading-content,
+.loading-placeholder {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -817,9 +968,51 @@ export default {
   }
 }
 
+.streaming-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #409eff;
+  margin-bottom: 12px;
+  padding: 8px;
+  background-color: #ecf5ff;
+  border-radius: 4px;
+
+  i {
+    font-size: 16px;
+    animation: rotating 1s linear infinite;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 500;
+  }
+}
+
 .output-text {
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.streaming-indicator {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  color: #409eff;
+
+  i {
+    font-size: 14px;
+    animation: rotating 1s linear infinite;
+  }
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .error-content {
