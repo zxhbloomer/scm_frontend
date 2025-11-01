@@ -707,7 +707,6 @@ function createDocumentExtractor (workflow, node) {
   const startNode = workflow.nodes.find(item => item.wfComponent && item.wfComponent.name === 'Start')
 
   if (!startNode) {
-    console.warn('⚠️ DocumentExtractor: Start node not found')
     return
   }
 
@@ -715,7 +714,6 @@ function createDocumentExtractor (workflow, node) {
   const fileInputs = startNode.inputConfig?.user_inputs?.filter(input => input.type === 4) || []
 
   if (fileInputs.length === 0) {
-    console.warn('⚠️ DocumentExtractor: No file inputs found in Start node')
     return
   }
 
@@ -730,9 +728,4 @@ function createDocumentExtractor (workflow, node) {
 
   // 添加到 ref_inputs
   node.inputConfig.ref_inputs.push(refInput)
-
-  console.log('✅ DocumentExtractor: Auto-created ref_input:', {
-    refInputName: refInput.name,
-    linkedTo: startNode.title + '.' + (firstFileInput.title || firstFileInput.name)
-  })
 }

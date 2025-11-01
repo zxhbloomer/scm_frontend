@@ -150,7 +150,11 @@
       destroy-on-close
       top="5vh"
     >
-      <div v-if="currentRuntimeDetail" class="execution-detail">
+      <div
+        v-if="currentRuntimeDetail"
+        class="execution-detail"
+        :style="{ height: dialogContentHeight + 'px', overflowY: 'auto' }"
+      >
         <!-- 基本信息 -->
         <div class="detail-section">
           <h4>基本信息</h4>
@@ -161,10 +165,10 @@
               </el-tag>
             </el-descriptions-item>
             <el-descriptions-item label="执行时间">
-              {{ formatTime(currentRuntimeDetail.cTime || currentRuntimeDetail.c_time) }}
+              {{ getRuntimeTime(currentRuntimeDetail) }}
             </el-descriptions-item>
-            <el-descriptions-item v-if="currentRuntimeDetail.elapsedMs || currentRuntimeDetail.elapsed_ms" label="耗时">
-              {{ currentRuntimeDetail.elapsedMs || currentRuntimeDetail.elapsed_ms }}ms
+            <el-descriptions-item v-if="getElapsedMs(currentRuntimeDetail)" label="耗时">
+              {{ getElapsedMs(currentRuntimeDetail) }}ms
             </el-descriptions-item>
           </el-descriptions>
         </div>
@@ -172,31 +176,64 @@
         <!-- 节点执行详情 -->
         <div v-if="currentRuntimeDetail.nodes && currentRuntimeDetail.nodes.length" class="detail-section">
           <h4>节点执行详情</h4>
-          <el-timeline>
-            <el-timeline-item
-              v-for="(node, index) in currentRuntimeDetail.nodes"
-              :key="index"
-              :type="getNodeStatusType(node.status)"
-              :icon="getNodeStatusIcon(node.status)"
-            >
-              <div class="node-detail">
-                <div class="node-header">
-                  <span class="node-name">{{ node.name || node.componentName || node.component_name }}</span>
-                  <el-tag :type="getStatusType(node.status)" size="mini">
-                    {{ getStatusText(node.status) }}
-                  </el-tag>
-                </div>
-                <div v-if="node.output" class="node-output">
-                  <div class="output-label">输出:</div>
-                  <div class="output-value">{{ formatValue(node.output) }}</div>
-                </div>
-                <div v-if="node.errorMsg || node.error_msg" class="node-error">
-                  <i class="el-icon-warning" />
-                  <span>{{ node.errorMsg || node.error_msg }}</span>
-                </div>
+
+          <!-- 节点卡片列表 -->
+          <div v-for="(node, index) in currentRuntimeDetail.nodes" :key="index" class="node-card">
+            <!-- 节点标题 -->
+            <div class="node-header">
+              <span class="node-name">{{ getNodeDisplayName(node) }}</span>
+              <el-tag :type="getNodeStatusType(getActualNodeStatus(node))" size="mini">
+                {{ getNodeStatusText(getActualNodeStatus(node)) }}
+              </el-tag>
+            </div>
+
+            <!-- 输入参数区 -->
+            <div v-if="node.inputData && Object.keys(node.inputData).length > 0" class="node-section">
+              <div class="section-title">
+                输入
               </div>
-            </el-timeline-item>
-          </el-timeline>
+              <div v-for="(value, key) in node.inputData" :key="`input_${key}`" class="param-item">
+                <span class="param-label">{{ key }}:</span>
+                <span class="param-value">{{ formatValue(value) }}</span>
+              </div>
+            </div>
+
+            <!-- 输出参数区 -->
+            <div v-if="node.outputData && Object.keys(node.outputData).length > 0" class="node-section">
+              <div class="section-title">
+                输出
+              </div>
+              <div v-for="(value, key) in node.outputData" :key="`output_${key}`" class="param-item">
+                <!-- 特殊处理：type=4显示图片 -->
+                <template v-if="value && value.type === 4 && value.value && Array.isArray(value.value)">
+                  <div class="param-label">
+                    {{ key }}:
+                  </div>
+                  <div class="image-list">
+                    <el-image
+                      v-for="(url, idx) in value.value"
+                      :key="idx"
+                      :src="url"
+                      :preview-src-list="value.value"
+                      fit="cover"
+                      style="width: 100px; height: 100px;"
+                    />
+                  </div>
+                </template>
+                <!-- 常规参数 -->
+                <template v-else>
+                  <span class="param-label">{{ key }}:</span>
+                  <span class="param-value">{{ formatValue(value) }}</span>
+                </template>
+              </div>
+            </div>
+
+            <!-- 错误信息（如果有）-->
+            <div v-if="node.statusRemark" class="node-error">
+              <i class="el-icon-warning" />
+              <span>{{ node.statusRemark }}</span>
+            </div>
+          </div>
         </div>
 
         <!-- 错误信息 -->
@@ -214,7 +251,7 @@
 </template>
 
 <script>
-import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete } from '@/components/70_ai/api/workflowService'
+import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete, getRuntimeNodeDetails } from '@/components/70_ai/api/workflowService'
 import WorkflowRunDetail from './WorkflowRunDetail.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 
@@ -271,6 +308,11 @@ export default {
       const hasEnd = this.workflow.nodes.some(n => n.wfComponent && n.wfComponent.name === 'End')
 
       return hasStart && hasEnd
+    },
+
+    // 执行详情弹窗内容高度 = 浏览器高度 - 100px
+    dialogContentHeight () {
+      return window.innerHeight - 200
     }
   },
 
@@ -352,7 +394,6 @@ export default {
         records.forEach(runtime => {
           // 【防御性校验】必须有runtimeUuid，否则跳过
           if (!runtime.runtimeUuid) {
-            console.warn('⚠️ 跳过无效runtime（缺少runtimeUuid）:', runtime)
             return
           }
 
@@ -383,8 +424,6 @@ export default {
           // 【防御性校验】通过所有检查的记录才添加到列表
           validRecords.push(runtime)
         })
-
-        console.log(`✅ 有效记录: ${validRecords.length}/${records.length}`)
 
         // 【重要】后端返回的是倒序（最新在前），需要反转为正序（最老在前）
         const reversedRecords = validRecords.reverse()
@@ -524,35 +563,23 @@ export default {
 
         // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx
         messageReceived: (chunk, eventName) => {
-          console.log(`📨 [messageReceived] eventName: ${eventName}, chunk length: ${chunk ? chunk.length : 0}`)
-
           // 处理NODE_CHUNK事件：累积LLM流式输出
           if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
-            console.log(`📝 [NODE_CHUNK] 收到chunk: "${chunk}", 累积前长度: ${accumulatedOutput.length}`)
             accumulatedOutput += chunk
-            console.log(`📝 [NODE_CHUNK] 累积后总长度: ${accumulatedOutput.length}`)
 
             // 🔧 完全参考RAG实现:使用splice替换对象（不使用$nextTick，避免批量合并）
             if (currentRuntimeUuid) {
               const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
-              console.log(`📝 [NODE_CHUNK] 查找runtime, index: ${index}, currentRuntimeUuid: ${currentRuntimeUuid}`)
               if (index !== -1) {
                 const oldRuntime = this.localRuntimeList[index]
                 const newRuntime = { ...oldRuntime, output: accumulatedOutput }
                 this.localRuntimeList.splice(index, 1, newRuntime)
-
-                console.log(`✅ [NODE_CHUNK] 已更新runtime.output, 当前output长度: ${accumulatedOutput.length}`)
-              } else {
-                console.warn(`⚠️ [NODE_CHUNK] 未找到对应的runtime, currentRuntimeUuid: ${currentRuntimeUuid}`)
               }
-            } else {
-              console.warn(`⚠️ [NODE_CHUNK] currentRuntimeUuid为空`)
             }
           }
 
           // 处理NODE_OUTPUT事件：节点执行完成，提取最终输出
           if (eventName && eventName.startsWith('[NODE_OUTPUT_')) {
-            console.log(`📤 [NODE_OUTPUT] 收到事件, 当前累积长度: ${accumulatedOutput.length}`)
             if (chunk && currentRuntimeUuid) {
               try {
                 const outputData = JSON.parse(chunk)
@@ -565,9 +592,6 @@ export default {
                     // 这样既支持流式LLM节点(有NODE_CHUNK)，也支持非流式节点(只有NODE_OUTPUT)
                     if (accumulatedOutput.length === 0) {
                       accumulatedOutput = nodeOutput
-                      console.log(`📤 [NODE_OUTPUT] 无累积内容，使用NODE_OUTPUT: ${nodeOutput.length}字符`)
-                    } else {
-                      console.log(`📤 [NODE_OUTPUT] 保留累积内容: ${accumulatedOutput.length}字符 (忽略NODE_OUTPUT的${nodeOutput.length}字符)`)
                     }
                     const oldRuntime = this.localRuntimeList[index]
                     const newRuntime = { ...oldRuntime, output: accumulatedOutput }
@@ -576,9 +600,6 @@ export default {
                   // 兼容旧格式：{output: "xxx"}
                     if (accumulatedOutput.length === 0) {
                       accumulatedOutput = outputData.output
-                      console.log(`📤 [NODE_OUTPUT] 使用旧格式output: ${accumulatedOutput.length}字符`)
-                    } else {
-                      console.log(`📤 [NODE_OUTPUT] 保留累积内容(旧格式): ${accumulatedOutput.length}字符`)
                     }
                     const oldRuntime = this.localRuntimeList[index]
                     const newRuntime = { ...oldRuntime, output: accumulatedOutput }
@@ -586,7 +607,7 @@ export default {
                   }
                 }
               } catch (e) {
-                console.warn('Failed to parse NODE_OUTPUT data:', e)
+                // 忽略解析错误
               }
             }
           }
@@ -668,10 +689,22 @@ export default {
       })
     },
 
-    showExecutionDetail (runtime) {
+    async showExecutionDetail (runtime) {
       this.currentRuntimeDetail = runtime
       this.detailDialogVisible = true
-      // TODO: 如果没有节点详情，从后端加载
+
+      if (!runtime.nodes || runtime.nodes.length === 0) {
+        try {
+          const response = await getRuntimeNodeDetails(runtime.id)
+
+          if (response.success && response.data && response.data.length > 0) {
+            runtime.nodes = response.data
+            this.currentRuntimeDetail = { ...runtime, nodes: response.data }
+          }
+        } catch (error) {
+          this.$message.error('加载节点详情失败')
+        }
+      }
     },
 
     formatTime (time) {
@@ -703,6 +736,62 @@ export default {
       return String(value)
     },
 
+    /**
+     * 获取节点显示名称
+     * 通过 nodeId 关联 workflow.nodes 获取节点标题
+     */
+    getNodeDisplayName (node) {
+      if (!node || !node.nodeId) {
+        return '未命名节点'
+      }
+
+      // 通过 nodeId 查找 workflow.nodes
+      const workflowNode = this.workflow.nodes?.find(n => n.id === node.nodeId)
+
+      if (workflowNode) {
+        // 优先级：title > wfComponent.title > wfComponent.name
+        return workflowNode.title ||
+               workflowNode.wfComponent?.title ||
+               workflowNode.wfComponent?.name ||
+               '未命名节点'
+      }
+
+      return '未命名节点'
+    },
+
+    /**
+     * 安全获取时间字段（兼容驼峰和下划线命名）
+     */
+    getTimeField (obj, fieldName) {
+      if (!obj) return null
+      // 尝试驼峰命名（首字母小写）
+      const camelCase = fieldName
+      // 尝试下划线命名
+      const snakeCase = fieldName.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      // 尝试首字母大写的版本（兼容后端返回 CTime 而不是 cTime）
+      const pascalCase = fieldName.charAt(0).toUpperCase() + fieldName.slice(1)
+
+      return obj[camelCase] || obj[snakeCase] || obj[pascalCase] || null
+    },
+
+    /**
+     * 格式化运行时对象的时间显示
+     */
+    getRuntimeTime (runtime) {
+      const time = this.getTimeField(runtime, 'cTime') ||
+                   this.getTimeField(runtime, 'createTime')
+      return this.formatTime(time)
+    },
+
+    /**
+     * 获取耗时毫秒数
+     */
+    getElapsedMs (runtime) {
+      return this.getTimeField(runtime, 'elapsedMs') ||
+             this.getTimeField(runtime, 'elapsed_ms') ||
+             null
+    },
+
     getStatusType (status) {
       // 对齐后端WorkflowConstants状态定义
       const typeMap = {
@@ -727,14 +816,47 @@ export default {
       return textMap[status] || '未知'
     },
 
+    /**
+     * 获取节点状态类型（用于标签颜色）
+     * 节点状态定义：1-等待中, 2-运行中, 3-成功, 4-失败
+     */
     getNodeStatusType (status) {
       const typeMap = {
-        1: 'primary',
-        2: 'success',
-        3: 'warning',
-        4: 'danger'
+        1: 'info', // 等待中 - 灰色
+        2: 'primary', // 运行中 - 蓝色
+        3: 'success', // 成功 - 绿色
+        4: 'danger' // 失败 - 红色
       }
       return typeMap[status] || 'info'
+    },
+
+    /**
+     * 获取节点状态文本
+     * 节点状态定义：1-等待中, 2-运行中, 3-成功, 4-失败
+     */
+    getNodeStatusText (status) {
+      const textMap = {
+        1: '等待中',
+        2: '运行中',
+        3: '成功',
+        4: '失败'
+      }
+      return textMap[status] || '未知'
+    },
+
+    /**
+     * 获取节点实际显示状态
+     * 兼容后端未更新节点最终状态的情况
+     * 如果 runtime 整体已成功，但节点还是运行中状态，则推断为成功
+     */
+    getActualNodeStatus (node) {
+      // 如果 runtime 整体已成功，但节点还是运行中状态（后端未更新），则显示为成功
+      if (this.currentRuntimeDetail &&
+          this.currentRuntimeDetail.status === 3 &&
+          node.status === 2) {
+        return 3 // 返回成功状态
+      }
+      return node.status
     },
 
     getNodeStatusIcon (status) {
@@ -1056,51 +1178,97 @@ export default {
     }
   }
 
-  .node-detail {
-    .node-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+  .node-card {
+    border: 1px solid #e4e7ed;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    background-color: #fff;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .node-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background-color: #f5f7fa;
+    border-radius: 4px;
+    margin-bottom: 12px;
+
+    .node-name {
+      font-weight: 500;
+      color: #303133;
+      font-size: 14px;
+    }
+  }
+
+  .node-section {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #606266;
+      padding-bottom: 8px;
       margin-bottom: 8px;
+      border-bottom: 1px solid #ebeef5;
+    }
+  }
 
-      .node-name {
-        font-weight: 500;
-        color: #303133;
-      }
+  .param-item {
+    display: flex;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+
+    &:last-child {
+      margin-bottom: 0;
     }
 
-    .node-output {
-      margin-top: 8px;
-      padding: 8px;
-      background-color: #f5f7fa;
-      border-radius: 4px;
-
-      .output-label {
-        font-weight: 500;
-        color: #606266;
-        margin-bottom: 4px;
-      }
-
-      .output-value {
-        color: #303133;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
+    .param-label {
+      min-width: 100px;
+      font-weight: 500;
+      color: #606266;
+      flex-shrink: 0;
     }
 
-    .node-error {
-      margin-top: 8px;
-      padding: 8px;
-      background-color: #fef0f0;
-      border-radius: 4px;
-      color: #f56c6c;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .param-value {
+      color: #303133;
+      word-break: break-word;
+      white-space: pre-wrap;
+      flex: 1;
+    }
+  }
 
-      i {
-        font-size: 16px;
-      }
+  .image-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .node-error {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #fef0f0;
+    border-radius: 4px;
+    color: #f56c6c;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+
+    i {
+      font-size: 16px;
+      flex-shrink: 0;
     }
   }
 }

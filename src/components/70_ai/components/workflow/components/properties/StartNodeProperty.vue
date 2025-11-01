@@ -242,17 +242,12 @@ export default {
     handleSubmit () {
       this.$refs.formRef.validate((valid) => {
         if (valid) {
-          // 调试日志：查看提交的数据
-          console.log('StartNodeProperty - handleSubmit - tmpItem:', JSON.parse(JSON.stringify(this.tmpItem)))
-
           const index = this.wfNode.inputConfig.user_inputs.findIndex(item => item.uuid === this.tmpItem.uuid)
           if (index > -1) {
             // 编辑模式
-            console.log('StartNodeProperty - 编辑模式 - index:', index)
             Object.assign(this.wfNode.inputConfig.user_inputs[index], { ...this.tmpItem })
           } else {
             // 新增模式
-            console.log('StartNodeProperty - 新增模式')
             this.$store.commit('ai/workflow/ADD_USER_INPUT_TO_NODE', {
               wfUuid: this.workflow.workflowUuid,
               nodeUuid: this.wfNode.uuid,

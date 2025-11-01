@@ -94,7 +94,6 @@ export default {
 
       // 只接受字符串格式的模型名称
       if (typeof modelName !== 'string') {
-        console.warn('[WfLLMSelector] 数据格式错误：model_name 应该是字符串，实际是:', typeof modelName, '，值为:', modelName)
         this.selectedModelId = null
         return
       }

@@ -209,7 +209,6 @@ export default {
 
       // 🔥 关键：如果更新的是开始节点，需要更新所有其他节点的 startNodeFileInputs
       if (nodeData.wfComponent && nodeData.wfComponent.name === 'Start') {
-        console.log('🔥 开始节点更新，同步所有节点的文件信息')
         this.updateAllNodesStartFileInputs()
       }
     })

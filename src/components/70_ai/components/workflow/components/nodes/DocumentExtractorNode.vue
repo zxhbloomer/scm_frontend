@@ -76,19 +76,8 @@ export default {
     this.localRefInputs = [...(node.data.inputConfig?.ref_inputs || [])]
     this.startNodeFileInputs = [...(node.data.startNodeFileInputs || [])]
 
-    console.log('📝 DocumentExtractorNode mounted (方案A):', {
-      nodeUuid: node.id,
-      初始refInputs: this.localRefInputs,
-      开始节点文件列表: this.startNodeFileInputs
-    })
-
     // 监听 X6 节点数据变化事件
     node.on('change:data', ({ current }) => {
-      console.log('🔄 DocumentExtractorNode change:data:', {
-        新refInputs: current.inputConfig?.ref_inputs,
-        新文件列表: current.startNodeFileInputs
-      })
-
       this.localRefInputs = [...(current.inputConfig?.ref_inputs || [])]
       this.startNodeFileInputs = [...(current.startNodeFileInputs || [])]
     })
