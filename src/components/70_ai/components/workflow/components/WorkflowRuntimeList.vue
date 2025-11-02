@@ -31,7 +31,15 @@
                 <div class="message-content">
                   <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
                     <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
-                      <span class="input-value">{{ formatValue(value) }}</span>
+                      <!-- ⭐ 判断是否为附件数组（支持新旧两种格式） -->
+                      <template v-if="isAttachmentArray(value)">
+                        <!-- 使用SCM标准附件展示组件，normalizeAttachments转换旧格式 -->
+                        <PreviewDescription :attachment-files="normalizeAttachments(value)" />
+                      </template>
+                      <template v-else>
+                        <!-- 普通文本展示 -->
+                        <span class="input-value">{{ formatValue(value) }}</span>
+                      </template>
                     </div>
                   </div>
                   <div v-else class="no-input">
@@ -192,8 +200,18 @@
                 输入
               </div>
               <div v-for="(value, key) in node.inputData" :key="`input_${key}`" class="param-item">
-                <span class="param-label">{{ key }}:</span>
-                <span class="param-value">{{ formatValue(value) }}</span>
+                <!-- ⭐ 特殊处理：附件类型使用SCM标准组件显示 -->
+                <template v-if="isAttachmentArray(value)">
+                  <div class="param-label">
+                    {{ key }}:
+                  </div>
+                  <PreviewDescription :attachment-files="normalizeAttachments(value)" />
+                </template>
+                <!-- 常规参数 -->
+                <template v-else>
+                  <span class="param-label">{{ key }}:</span>
+                  <span class="param-value">{{ formatValue(value) }}</span>
+                </template>
               </div>
             </div>
 
@@ -203,21 +221,12 @@
                 输出
               </div>
               <div v-for="(value, key) in node.outputData" :key="`output_${key}`" class="param-item">
-                <!-- 特殊处理：type=4显示图片 -->
-                <template v-if="value && value.type === 4 && value.value && Array.isArray(value.value)">
+                <!-- ⭐ 特殊处理：type=4显示附件（使用SCM标准组件） -->
+                <template v-if="isAttachmentArray(value)">
                   <div class="param-label">
                     {{ key }}:
                   </div>
-                  <div class="image-list">
-                    <el-image
-                      v-for="(url, idx) in value.value"
-                      :key="idx"
-                      :src="url"
-                      :preview-src-list="value.value"
-                      fit="cover"
-                      style="width: 100px; height: 100px;"
-                    />
-                  </div>
+                  <PreviewDescription :attachment-files="normalizeAttachments(value)" />
                 </template>
                 <!-- 常规参数 -->
                 <template v-else>
@@ -252,6 +261,7 @@
 <script>
 import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete, getRuntimeNodeDetails, resumeWorkflowRun } from '@/components/70_ai/api/workflowService'
 import WorkflowRunDetail from './WorkflowRunDetail.vue'
+import PreviewDescription from '@/components/51_preview_description/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
@@ -260,7 +270,8 @@ export default {
   directives: { elDragDialog },
 
   components: {
-    WorkflowRunDetail
+    WorkflowRunDetail,
+    PreviewDescription
   },
 
   props: {
@@ -514,6 +525,7 @@ export default {
       // 用于累积工作流输出
       let accumulatedOutput = ''
       let currentRuntimeUuid = null
+      let lastOutputData = null // ⭐ 保存最后一次NODE_OUTPUT的数据（用于兜底恢复）
 
       // 使用回调函数处理SSE事件流
       workflowRun({
@@ -535,10 +547,15 @@ export default {
           // 保存runtime UUID用于后续更新
           currentRuntimeUuid = runtime.runtimeUuid
 
-          // 将用户输入保存到runtime.input（用于聊天显示）
+          // ⭐ 将用户输入保存到runtime.input（用于聊天显示）
           runtime.input = {}
           inputs.forEach(item => {
-            runtime.input[item.name] = item.content
+            // ⭐ 如果是附件类型，保存完整附件对象数组；否则保存content
+            if (item.attachments) {
+              runtime.input[item.name] = item.attachments
+            } else {
+              runtime.input[item.name] = item.content
+            }
           })
 
           // 初始化output为空字符串
@@ -584,15 +601,18 @@ export default {
 
           // 处理NODE_CHUNK事件：累积LLM流式输出
           if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
-            accumulatedOutput += chunk
+            // ⭐ 修复：检查chunk是否有效，避免拼接null/undefined导致显示"null"/"undefined"
+            if (chunk !== null && chunk !== undefined) {
+              accumulatedOutput += chunk
 
-            // 🔧 完全参考RAG实现:使用splice替换对象（不使用$nextTick，避免批量合并）
-            if (currentRuntimeUuid) {
-              const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
-              if (index !== -1) {
-                const oldRuntime = this.localRuntimeList[index]
-                const newRuntime = { ...oldRuntime, output: accumulatedOutput }
-                this.localRuntimeList.splice(index, 1, newRuntime)
+              // 🔧 完全参考RAG实现:使用splice替换对象（不使用$nextTick，避免批量合并）
+              if (currentRuntimeUuid) {
+                const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+                if (index !== -1) {
+                  const oldRuntime = this.localRuntimeList[index]
+                  const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                  this.localRuntimeList.splice(index, 1, newRuntime)
+                }
               }
             }
           }
@@ -602,27 +622,43 @@ export default {
             if (chunk && currentRuntimeUuid) {
               try {
                 const outputData = JSON.parse(chunk)
+                lastOutputData = outputData // ⭐ 保存最后一次NODE_OUTPUT数据（用于doneCallback兜底恢复）
                 const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
                 if (index !== -1) {
                   // 检查输出数据格式：{name:"output", content:{value:"xxx"}}
-                  if (outputData.content && outputData.content.value) {
+                  // ⭐ 关键修复：只处理name="output"的NODE_OUTPUT事件，忽略其他name（如var_files、attachments等）
+                  if (outputData.name === 'output' && outputData.content && outputData.content.value !== undefined && outputData.content.value !== null) {
                     const nodeOutput = outputData.content.value
-                    // 🔧 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
-                    // 这样既支持流式LLM节点(有NODE_CHUNK)，也支持非流式节点(只有NODE_OUTPUT)
-                    if (accumulatedOutput.length === 0) {
-                      accumulatedOutput = nodeOutput
+
+                    // ⭐ 修复：只有当nodeOutput不是字符串"null"且不为空时才处理
+                    // 关键问题：某些节点可能输出字符串"null"，需要过滤掉并允许后续真正内容覆盖
+                    if (nodeOutput !== 'null' && nodeOutput !== '') {
+                      // 🔧 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
+                      // 特别处理：如果accumulatedOutput是字符串"null"，也要覆盖它
+                      if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
+                        accumulatedOutput = nodeOutput
+                      }
+                      const oldRuntime = this.localRuntimeList[index]
+                      const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                      this.localRuntimeList.splice(index, 1, newRuntime)
                     }
-                    const oldRuntime = this.localRuntimeList[index]
-                    const newRuntime = { ...oldRuntime, output: accumulatedOutput }
-                    this.localRuntimeList.splice(index, 1, newRuntime)
-                  } else if (outputData.output) {
-                  // 兼容旧格式：{output: "xxx"}
-                    if (accumulatedOutput.length === 0) {
-                      accumulatedOutput = outputData.output
+                  } else if (outputData.name && outputData.name !== 'output') {
+                    // 忽略非output的NODE_OUTPUT事件（如var_files、attachments等）
+                    console.log('[DEBUG] NODE_OUTPUT: name=' + outputData.name + '，非output输出，忽略')
+                  } else if (outputData.name === 'output' && outputData.output !== undefined && outputData.output !== null) {
+                    // 兼容旧格式：{name:"output", output: "xxx"}
+                    // ⭐ 修复：只有当name="output"且output不是字符串"null"且不为空时才处理
+                    if (outputData.output !== 'null' && outputData.output !== '') {
+                      if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
+                        accumulatedOutput = outputData.output
+                      }
+                      const oldRuntime = this.localRuntimeList[index]
+                      const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                      this.localRuntimeList.splice(index, 1, newRuntime)
                     }
-                    const oldRuntime = this.localRuntimeList[index]
-                    const newRuntime = { ...oldRuntime, output: accumulatedOutput }
-                    this.localRuntimeList.splice(index, 1, newRuntime)
+                  } else if (outputData.name && outputData.name !== 'output' && outputData.output !== undefined) {
+                    // 忽略非output的NODE_OUTPUT事件（旧格式）
+                    console.log('[DEBUG] NODE_OUTPUT: 旧格式，name=' + outputData.name + '，非output输出，忽略')
                   }
                 }
               } catch (e) {
@@ -647,11 +683,29 @@ export default {
             const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
             if (index !== -1) {
               const oldRuntime = this.localRuntimeList[index]
+
+              // ⭐ 增强的output处理逻辑：多重fallback确保output不为空
+              let finalOutput = oldRuntime.output || accumulatedOutput
+
+              // 🛡️ 兜底1：如果finalOutput仍然为空，尝试从lastOutputData恢复
+              if (!finalOutput && lastOutputData) {
+                if (lastOutputData.content && lastOutputData.content.value) {
+                  finalOutput = lastOutputData.content.value
+                } else if (lastOutputData.output) {
+                  finalOutput = lastOutputData.output
+                }
+              }
+
+              // 🛡️ 兜底2：如果仍然为空，设置为空字符串（避免null）
+              if (finalOutput === null || finalOutput === undefined) {
+                finalOutput = ''
+              }
+
               const newRuntime = {
                 ...oldRuntime,
                 status: 3, // 3-成功 (后端WORKFLOW_PROCESS_STATUS_SUCCESS)
                 loading: false,
-                output: oldRuntime.output || accumulatedOutput
+                output: finalOutput // 使用增强后的output
               }
               this.localRuntimeList.splice(index, 1, newRuntime)
             }
@@ -796,6 +850,64 @@ export default {
         return JSON.stringify(value, null, 2)
       }
       return String(value)
+    },
+
+    // ⭐ 新增：判断是否为附件数组（支持新旧两种格式）
+    isAttachmentArray (value) {
+      // ⭐ 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
+      let actualValue = value
+      if (typeof value === 'object' && !Array.isArray(value) && value.value !== undefined) {
+        actualValue = value.value
+      }
+
+      if (!Array.isArray(actualValue) || actualValue.length === 0) {
+        return false
+      }
+
+      // 新格式：[{fileName: "xx", url: "xx", timestamp: xxx}]
+      if (actualValue[0].fileName !== undefined && actualValue[0].url !== undefined) {
+        return true
+      }
+
+      // 旧格式：["http://...file1.pdf", "http://...file2.pdf"]
+      if (typeof actualValue[0] === 'string' && actualValue[0].startsWith('http')) {
+        return true
+      }
+
+      return false
+    },
+
+    // ⭐ 新增：将附件数组标准化为新格式（兼容旧格式）
+    normalizeAttachments (value) {
+      // ⭐ 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
+      let actualValue = value
+      if (typeof value === 'object' && !Array.isArray(value) && value.value !== undefined) {
+        actualValue = value.value
+      }
+
+      if (!Array.isArray(actualValue) || actualValue.length === 0) {
+        return []
+      }
+
+      // 如果已经是新格式，直接返回
+      if (actualValue[0].fileName !== undefined && actualValue[0].url !== undefined) {
+        return actualValue
+      }
+
+      // 旧格式转换为新格式
+      if (typeof actualValue[0] === 'string' && actualValue[0].startsWith('http')) {
+        return actualValue.map(url => {
+          // 从URL中提取文件名（最后一个/后面的部分）
+          const fileName = url.substring(url.lastIndexOf('/') + 1)
+          return {
+            fileName: fileName,
+            url: url,
+            timestamp: null // 旧数据没有时间戳
+          }
+        })
+      }
+
+      return []
     },
 
     /**

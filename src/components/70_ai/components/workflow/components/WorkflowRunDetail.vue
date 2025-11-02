@@ -51,29 +51,37 @@
                 <span class="placeholder-text">下拉选择(待实现)</span>
               </div>
 
-              <!-- 类型4: FILES - 文件上传 -->
-              <el-upload
-                v-if="userInput.content.type === 4"
-                ref="uploadRef"
-                class="upload-area"
-                drag
-                action="/scm/api/v1/ai/file/upload"
-                :multiple="true"
-                :limit="getFileLimit(userInput.uuid)"
-                :on-change="handleFileListChange"
-                :on-success="handleUploadSuccess"
-                :on-error="handleUploadError"
-                :disabled="submitting"
-                :auto-upload="false"
-              >
-                <i class="el-icon-upload" />
-                <div class="el-upload__text">
-                  将文件拖到此处，或<em>点击上传</em>
+              <!-- 类型4: FILES - 文件上传 (SCM标准模式) -->
+              <template v-if="userInput.content.type === 4">
+                <!-- 上传组件 -->
+                <Simple-upload-mutil-file
+                  :accept="'*'"
+                  @upload-success="handleUploadFileSuccess"
+                  @upload-error="handleUploadFileError"
+                />
+
+                <!-- 已上传附件列表 -->
+                <div v-if="doc_att.length > 0" style="margin-top: 10px;">
+                  <el-descriptions
+                    title=""
+                    :column="1"
+                    :label-style="{ display: 'none' }"
+                    direction="horizontal"
+                    border
+                  >
+                    <el-descriptions-item
+                      v-for="(file, index) in doc_att"
+                      :key="index"
+                    >
+                      <span>
+                        附件名称：{{ file.fileName }} &nbsp;
+                        文件上传日期：{{ formatTimestamp(file.timestamp) }} &nbsp;
+                        <span class="clickable" @click="handleRemoveFile(file)">删除</span>
+                      </span>
+                    </el-descriptions-item>
+                  </el-descriptions>
                 </div>
-                <div slot="tip" class="el-upload__tip">
-                  支持格式: TXT、PDF、DOC、DOCX、XLS、XLSX、PPT、PPTX；文件大小: 不超过10M
-                </div>
-              </el-upload>
+              </template>
 
               <!-- 类型5: BOOL - 开关 -->
               <el-switch
@@ -135,9 +143,13 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import SimpleUploadMutilFile from '@/components/10_file/SimpleUploadMutilFile/index.vue'
 
 export default {
   name: 'WorkflowRunDetail',
+  components: {
+    SimpleUploadMutilFile
+  },
 
   props: {
     workflow: {
@@ -149,8 +161,9 @@ export default {
   data () {
     return {
       userInputs: [],
-      uploadedFileUuids: [],
-      fileListLength: 0,
+      // ⭐ SCM标准附件数据结构（参考项目管理页面）
+      doc_att: [], // 完整附件对象数组
+      doc_att_file: [], // URL数组
       submitting: false,
       // 人机交互相关状态（参考aideepin: RunDetail.vue lines 55-57）
       humanFeedback: false,
@@ -217,90 +230,99 @@ export default {
             required: input.required || false
           }))
 
-          this.uploadedFileUuids = []
-          this.fileListLength = 0
+          // ⭐ 重置附件数据
+          this.doc_att = []
+          this.doc_att_file = []
         })
       }
     }
   },
 
   methods: {
-    // 获取文件上传数量限制
-    getFileLimit (inputUuid) {
-      const input = this.userInputDefinitions.find(item => item.uuid === inputUuid)
-      return input?.limit || 10
-    },
+    // ⭐ 上传成功处理（参考项目管理页面）
+    handleUploadFileSuccess (res) {
+      // res.response 结构: {code: 0, data: {url, fileName}, timestamp}
 
-    // 文件列表变化
-    handleFileListChange (file, fileList) {
-      this.fileListLength = fileList.length
+      // 1. 添加时间戳到附件对象
+      res.response.data.timestamp = res.response.timestamp
 
-      // 如果所有文件都上传完成，触发运行
-      if (this.uploadedFileUuids.length === this.fileListLength) {
-        this.handleRun()
-      }
-    },
+      // 2. 保存完整附件对象（用于页面展示）
+      this.doc_att.push(res.response.data)
 
-    // 文件上传成功
-    handleUploadSuccess (response, file, fileList) {
-      if (response.code === 20000 && response.data) {
-        this.uploadedFileUuids.push(response.data.uuid)
+      // 3. 保存附件URL（用于快速查找和删除）
+      this.doc_att_file.push(res.response.data.url)
 
-        // 如果所有文件都上传完成，触发运行
-        if (this.uploadedFileUuids.length === this.fileListLength) {
-          this.handleRun()
-        }
-      } else {
-        this.$message.error(`文件上传失败: ${response.msg || '未知错误'}`)
-      }
-    },
-
-    // 文件上传失败
-    handleUploadError (err, file) {
-      console.error('文件上传错误:', err)
-      this.$message.error(`文件上传失败: ${file.name}`)
-    },
-
-    // 触发文件上传
-    uploadBeforeRun () {
-      this.uploadedFileUuids = []
-      const uploadRef = this.$refs.uploadRef
-
-      if (uploadRef) {
-        if (Array.isArray(uploadRef)) {
-          uploadRef.forEach(ref => ref.submit())
-        } else {
-          uploadRef.submit()
-        }
-      }
-    },
-
-    // 验证用户输入
-    validateUserInputs () {
-      // 检查必填的文件参数
-      for (const input of this.userInputs) {
-        if (input.required && input.content.type === 4 && input.content.value === null && this.fileListLength === 0) {
-          this.$message.warning('请上传文件')
-          return false
-        }
-      }
-
-      // 如果有文件待上传，先触发上传
-      if (this.fileListLength > 0 && this.uploadedFileUuids.length !== this.fileListLength) {
-        this.uploadBeforeRun()
-        return false
-      }
-
-      // 将上传成功的文件UUID赋值给文件类型参数
-      const fileInput = this.userInputs.find(input => input.content.type === 4 && input.content.value === null)
+      // 4. 更新到userInput.content.value（运行时传递给后端）
+      const fileInput = this.userInputs.find(input => input.content.type === 4)
       if (fileInput) {
-        fileInput.content.value = this.uploadedFileUuids
+        fileInput.content.value = this.doc_att_file // ⭐ 保存URL数组
       }
 
-      // 检查所有必填参数
-      if (this.userInputs.some(input => input.required && input.content.value === null)) {
-        this.$message.warning('请输入所有必填参数')
-        return false
+      // 5. ⭐ 修复：上传附件后，footer高度变化，需要通知父组件重新计算布局
+      // 使用$nextTick确保DOM更新后再触发父组件的布局重算
+      this.$nextTick(() => {
+        if (this.$parent && this.$parent.calculateMainHeight) {
+          this.$parent.calculateMainHeight()
+        }
+      })
+    },
+
+    // ⭐ 上传失败处理
+    handleUploadFileError () {
+      this.$message.error('文件上传发生错误！')
+    },
+
+    // ⭐ 删除文件
+    handleRemoveFile (file) {
+      // 1. 根据URL查找索引
+      const _index = this.doc_att_file.lastIndexOf(file.url)
+
+      // 2. 从两个数组中同步删除
+      this.doc_att.splice(_index, 1)
+      this.doc_att_file.splice(_index, 1)
+
+      // 3. 同步到userInput.content.value
+      const fileInput = this.userInputs.find(input => input.content.type === 4)
+      if (fileInput) {
+        fileInput.content.value = this.doc_att_file
+      }
+
+      // 4. ⭐ 修复：删除附件后，footer高度变化，需要通知父组件重新计算布局
+      // 使用$nextTick确保DOM更新后再触发父组件的布局重算
+      this.$nextTick(() => {
+        // 触发父组件的updated生命周期（通过强制更新父组件）
+        if (this.$parent && this.$parent.calculateMainHeight) {
+          this.$parent.calculateMainHeight()
+        }
+      })
+    },
+
+    // ⭐ 格式化时间戳
+    formatTimestamp (timestamp) {
+      if (!timestamp) return ''
+      const date = new Date(timestamp)
+      return date.toLocaleString('zh-CN')
+    },
+
+    // ⭐ 验证用户输入（已适配SCM标准）
+    validateUserInputs () {
+      // 检查所有必填参数（包括附件）
+      for (const input of this.userInputs) {
+        if (input.required) {
+          // 附件类型：检查 doc_att_file 是否有内容
+          if (input.content.type === 4) {
+            if (this.doc_att_file.length === 0) {
+              this.$message.warning('请上传文件')
+              return false
+            }
+          } else {
+            // 其他类型：检查 value 是否为空
+            if (input.content.value === null || input.content.value === '') {
+              this.$message.warning('请输入所有必填参数')
+              return false
+            }
+          }
+        }
       }
 
       return true
@@ -318,15 +340,17 @@ export default {
         return
       }
 
-      // 构造输入数据
+      // ⭐ 构造输入数据（添加附件支持）
       const inputs = this.userInputs.map(input => ({
         name: input.name,
         content: {
           type: input.content.type,
-          value: input.content.value,
+          value: input.content.value, // ⭐ 对于FILES类型，这是URL数组
           title: input.content.title
         },
-        required: input.required
+        required: input.required,
+        // ⭐ 新增：如果是附件类型，附加完整附件对象（用于展示）
+        attachments: input.content.type === 4 ? this.doc_att : undefined
       }))
 
       try {
@@ -338,20 +362,11 @@ export default {
       }
     },
 
-    // 重置输入
+    // ⭐ 重置输入（已适配SCM标准）
     resetInputs () {
-      // 清空文件上传
-      const uploadRef = this.$refs.uploadRef
-      if (uploadRef) {
-        if (Array.isArray(uploadRef)) {
-          uploadRef.forEach(ref => ref.clearFiles())
-        } else {
-          uploadRef.clearFiles()
-        }
-      }
-
-      this.uploadedFileUuids = []
-      this.fileListLength = 0
+      // 清空附件
+      this.doc_att = []
+      this.doc_att_file = []
 
       // 清空用户输入
       this.userInputs.forEach(input => {
@@ -598,6 +613,17 @@ export default {
     font-size: 13px;
     line-height: 1.6;
     color: #606266;
+  }
+}
+
+// ⭐ 附件删除链接样式（参考 51_preview_description）
+.clickable {
+  cursor: pointer;
+  color: #409EFF;
+  text-decoration: underline;
+
+  &:hover {
+    color: #66b1ff;
   }
 }
 

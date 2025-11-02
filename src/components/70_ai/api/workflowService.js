@@ -385,15 +385,15 @@ export function clearWorkflowRuntimeHistory (workflowId) {
 
 /**
  * 删除工作流运行时记录
- * 对应AIDeepin: deleteWorkflowRuntime(runtimeId: number)
- * 对应后端: WorkflowController.deleteRuntime(@PathVariable Long runtimeId)
- * @param {number} runtimeId - 运行时ID
+ * 对应AIDeepin: deleteWorkflowRuntime(runtimeUuid: string)
+ * 对应后端: WorkflowController.deleteRuntime(@PathVariable String wfRuntimeUuid)
+ * @param {string} wfRuntimeUuid - 运行时UUID
  * @returns {Promise} - 删除结果
  */
-export function deleteWorkflowRuntime (runtimeId) {
+export function deleteWorkflowRuntime (wfRuntimeUuid) {
   return request({
-    url: `${API_BASE}/runtime/${runtimeId}`,
-    method: 'delete'
+    url: `${API_BASE}/runtime/del/${wfRuntimeUuid}`,
+    method: 'post'
   })
 }
 
