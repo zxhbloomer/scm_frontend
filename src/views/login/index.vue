@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="VideoBg">
     <video
       v-if="!env.indexOf('grainscm') !== -1"
@@ -317,7 +317,7 @@ export default {
   methods: {
     // 获取验证码
     getImageCode () {
-      this.codeImg = `${process.env.VUE_APP_BASE_API}/api/v1/imagecode?=${Math.random()}`
+      this.codeImg = `${import.meta.env.VITE_BASE_API}/api/v1/imagecode?=${Math.random()}`
     },
     setdncode () {
       // this.$store.dispatch('user/setdnnode', this.loginForm)

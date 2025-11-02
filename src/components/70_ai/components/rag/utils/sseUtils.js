@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SSE流式数据处理工具
  */
 
@@ -165,7 +165,7 @@ export function sseProcess (url, callbacks = {}, signal = null) {
  * @param {AbortSignal} signal - 中止信号
  */
 export function createKbQaStream (qaRecordUuid, callbacks, signal) {
-  const baseURL = process.env.VUE_APP_BASE_API || ''
+  const baseURL = import.meta.env.VITE_BASE_API || ''
   const url = `${baseURL}/api/v1/ai/knowledge-base/qa/process/${qaRecordUuid}`
 
   return sseProcess(url, callbacks, signal)

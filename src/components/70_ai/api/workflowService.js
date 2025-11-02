@@ -1,4 +1,4 @@
-// AI工作流API服务
+﻿// AI工作流API服务
 // 严格参照 AIDeepin index.ts 中的 Workflow API 实现 (lines 638-749)
 import request from '@/utils/request'
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source'
@@ -160,7 +160,7 @@ export function workflowRun (params) {
 
   // 构造请求URL（包含路径参数，参考 aideepin line 686）
   // 注意：fetchEventSource 不会自动添加 baseURL，需要手动拼接
-  const url = `${process.env.VUE_APP_BASE_API}${API_BASE}/run/${wfUuid}`
+  const url = `${import.meta.env.VITE_BASE_API}${API_BASE}/run/${wfUuid}`
 
   // 使用 fetchEventSource 处理 SSE（参考 aideepin line 109-165）
   fetchEventSource(url, {
@@ -410,8 +410,8 @@ export function resumeWorkflowRun (params) {
   return request({
     url: `${API_BASE}/runtime/resume/${params.runtimeId}`,
     method: 'post',
-    data: {
-      user_input: params.userInput
+    params: {
+      userInput: params.userInput
     }
   })
 }

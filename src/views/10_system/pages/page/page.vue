@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="app-container">
     <el-form
       ref="minusForm"
@@ -364,7 +364,7 @@ export default {
         // 弹出窗口会否显示
         dialogFormVisible: false,
         // 模版文件地址
-        templateFilePath: process.env.VUE_APP_BASE_API + '/api/v1/template.html?id=P00000030',
+        templateFilePath: import.meta.env.VITE_BASE_API + '/api/v1/template.html?id=P00000030',
         // 错误数据文件
         errorFileUrl: ''
       },

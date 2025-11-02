@@ -1,4 +1,4 @@
-<!--card-->
+﻿<!--card-->
 <template>
   <el-card
     :body-style="{ padding: '0px' }"
@@ -250,10 +250,10 @@ export default {
       // console.log(base64_encode)
       // console.log(this.data.url)
       // console.log('---------------------------')
-      this.dataJson.preview_online_url = process.env.VUE_APP_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
-      this.dataJson.preview_pic_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL +
-        '?width=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_WIDTH +
-        '&height=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_HEIGHT +
+      this.dataJson.preview_online_url = import.meta.env.VITE_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
+      this.dataJson.preview_pic_url = import.meta.env.VITE_FILE_PIC_PREVIEW_URL +
+        '?width=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_WIDTH +
+        '&height=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_HEIGHT +
         '&url=' + base64_encode
     },
     handleDelete () {
@@ -261,7 +261,7 @@ export default {
     },
     handlePreview () {
       const base64_encode = encodeURIComponent(Base64.encode(this.data.url))
-      this.dataJson.preview_online_url = process.env.VUE_APP_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
+      this.dataJson.preview_online_url = import.meta.env.VITE_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
       window.open(this.dataJson.preview_online_url + '&width=' + this.width + '&height=' + this.height)
     },
     async handleDownload () {
@@ -295,8 +295,8 @@ export default {
     uploadRequest (f) {
       this.settings.loading = true
       const param = new FormData() // 创建form对象
-      param.append('app_key', process.env.VUE_APP_FILE_SYSTEM_APP_KEY)
-      param.append('secret_key', process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY)
+      param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
+      param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
       param.append('file', f.file)// 通过append向form对象添加数据
 
       // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)
@@ -326,9 +326,9 @@ export default {
     },
     handleUploadFileSuccess (_response, _file, _fileList) {
       const base64_encode = encodeURIComponent(Base64.encode(_response.data.url))
-      this.dataJson.preview_pic_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL +
-        '?width=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_WIDTH +
-        '&height=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_HEIGHT +
+      this.dataJson.preview_pic_url = import.meta.env.VITE_FILE_PIC_PREVIEW_URL +
+        '?width=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_WIDTH +
+        '&height=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_HEIGHT +
         '&url=' + base64_encode
       this.settings.loadingStatus = false
       this.settings.uploadOK = true

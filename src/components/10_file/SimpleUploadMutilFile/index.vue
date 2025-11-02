@@ -1,4 +1,4 @@
-<template>
+﻿<template>
 
   <el-upload
 
@@ -72,8 +72,8 @@ export default {
       this.settings.loading = true
       const param = new FormData() // 创建form对象
 
-      // param.append('app_key', process.env.VUE_APP_FILE_SYSTEM_APP_KEY)
-      // param.append('secret_key', process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY)
+      // param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
+      // param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
       param.append('file', f.file)// 通过append向form对象添加数据
       // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)
 
@@ -82,7 +82,7 @@ export default {
       } // 添加请求头
       console.log(this.getActionUrl())
       // 开始执行提交
-      fsRequest.post(this.getActionUrl() + '?app_key=' + process.env.VUE_APP_FILE_SYSTEM_APP_KEY + '&secret_key=' + process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY, param, config).then((_data) => {
+      fsRequest.post(this.getActionUrl() + '?app_key=' + import.meta.env.VITE_FILE_SYSTEM_APP_KEY + '&secret_key=' + import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY, param, config).then((_data) => {
         // 成功
         f.onSuccess(_data)
         // this.$notify({

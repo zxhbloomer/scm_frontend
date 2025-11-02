@@ -1,4 +1,4 @@
-<!--card-->
+﻿<!--card-->
 <template>
   <div v-if="data">
     <el-card
@@ -285,14 +285,14 @@ export default {
       // console.log(this.data.url)
       // console.log('---------------------------')
       if (this.previewUrls === null || this.previewUrls === undefined || this.previewUrls === '') {
-        this.dataJson.preview_online_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL + '?url=' + base64_encode
+        this.dataJson.preview_online_url = import.meta.env.VITE_FILE_PIC_PREVIEW_URL + '?url=' + base64_encode
       } else {
-        this.dataJson.preview_online_url = process.env.VUE_APP_FILE_PICS_PREVIEW_URL + '?urls=' + base64_encode_urls
+        this.dataJson.preview_online_url = import.meta.env.VITE_FILE_PICS_PREVIEW_URL + '?urls=' + base64_encode_urls
       }
 
-      this.dataJson.preview_pic_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL +
-        '?width=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_WIDTH +
-        '&height=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_HEIGHT +
+      this.dataJson.preview_pic_url = import.meta.env.VITE_FILE_PIC_PREVIEW_URL +
+        '?width=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_WIDTH +
+        '&height=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_HEIGHT +
         '&url=' + base64_encode
     },
     handleDelete () {
@@ -337,8 +337,8 @@ export default {
     uploadRequest (f) {
       this.settings.loading = true
       const param = new FormData() // 创建form对象
-      param.append('app_key', process.env.VUE_APP_FILE_SYSTEM_APP_KEY)
-      param.append('secret_key', process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY)
+      param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
+      param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
       param.append('file', f.file)// 通过append向form对象添加数据
 
       // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)

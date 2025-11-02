@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-upload
     class="el-button-group"
     :action="getActionUrl()"
@@ -63,8 +63,8 @@ export default {
     uploadRequest (f) {
       this.settings.loading = true
       const param = new FormData() // 创建form对象
-      param.append('app_key', process.env.VUE_APP_FILE_SYSTEM_APP_KEY)
-      param.append('secret_key', process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY)
+      param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
+      param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
       param.append('file', f.file)// 通过append向form对象添加数据
 
       // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)

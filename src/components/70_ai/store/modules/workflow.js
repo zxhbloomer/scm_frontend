@@ -11,6 +11,7 @@
 
 import Vue from 'vue'
 import { emptyWorkflowInfo } from '../../components/workflow/utils/workflowUtil'
+import { COMPONENT_UUID_START } from '../../constants/workflowComponentUuid'
 
 const EMPTY_WORKFLOW_INFO = emptyWorkflowInfo
 
@@ -71,15 +72,15 @@ const getters = {
 
   /**
    * 获取Start节点
+   * 使用UUID判断，更加稳定可靠
    */
   getStartNode: (state, getters) => (wfUuid) => {
     const wf = getters.getWorkflowInfo(wfUuid)
     if (!wf || !wf.nodes) return undefined
-    // 查找 Start 节点
+    // 查找 Start 节点：使用 component_uuid 判断
     return wf.nodes.find(item => {
       if (!item.wfComponent) return false
-      const name = item.wfComponent.name
-      return name === 'Start' || name === 'start'
+      return item.wfComponent.componentUuid === COMPONENT_UUID_START
     })
   },
 

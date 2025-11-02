@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="login-container">
 
     <div class="header">
@@ -270,8 +270,8 @@ export default {
       showDialog: false,
       redirect: undefined,
       otherQuery: {},
-      password_reset_href: process.env.VUE_APP_BASE_API + '/password_reset',
-      signup_href: process.env.VUE_APP_BASE_API + '/signup',
+      password_reset_href: import.meta.env.VITE_BASE_API + '/password_reset',
+      signup_href: import.meta.env.VITE_BASE_API + '/signup',
       timeout: null,
       signUpOk_CountDown: 5,
       signUpOk_CountDown_timeout: null

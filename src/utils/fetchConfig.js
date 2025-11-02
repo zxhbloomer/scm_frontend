@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Fetch 请求配置工具
  * 用于 SSE (Server-Sent Events) 流式请求等 axios 不支持的场景
  * 保持与 request.js (axios) 相同的配置逻辑
@@ -86,6 +86,6 @@ export function buildFetchConfig (options = {}) {
  * @returns {string} 完整URL
  */
 export function buildFullUrl (path) {
-  const baseURL = process.env.VUE_APP_BASE_API || ''
+  const baseURL = import.meta.env.VITE_BASE_API || ''
   return `${baseURL}${path}`
 }

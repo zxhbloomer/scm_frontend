@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="file-preview">
     <div v-if="loading" class="loading-container">
       <i class="el-icon-loading" />
@@ -89,7 +89,7 @@ export default {
         return ''
       }
 
-      const fileUploadUrl = process.env.VUE_APP_FILE_UPLOAD_URL || ''
+      const fileUploadUrl = import.meta.env.VITE_FILE_UPLOAD_URL || ''
       return `${fileUploadUrl}${this.itemData.filePath}`
     },
 

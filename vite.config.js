@@ -3,7 +3,6 @@ import vue from '@vitejs/plugin-vue2'
 import vue2Jsx from '@vitejs/plugin-vue2-jsx'
 import legacy from '@vitejs/plugin-legacy'
 import requireContext from '@originjs/vite-plugin-require-context'
-import EnvironmentPlugin from 'vite-plugin-environment'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 import { resolve } from 'path'
 // 可选：自定义ESLint插件（在开发模式下检查代码质量）
@@ -17,8 +16,7 @@ export default defineConfig(() => {
     base: './',
     // 定义全局变量，解决 Node.js 库在浏览器环境中的兼容性问题
     define: {
-      global: 'globalThis',
-      'process.env': {}
+      global: 'globalThis'
     },
     plugins: [
       // Vue 2 SFC
@@ -29,18 +27,6 @@ export default defineConfig(() => {
       }),
       // 兼容 webpack 的 require.context
       requireContext(),
-      // 将关键环境变量暴露为 process.env（兼容现有代码，避免Windows系统变量干扰）
-      EnvironmentPlugin({
-        NODE_ENV: 'production',
-        VUE_APP_BASE_API: '/scm',
-        VUE_APP_Tenant: 'false',
-        VUE_APP_FILE_UPLOAD_URL: 'http://file.xinyirunscm.com/',
-        VUE_APP_FILE_SYSTEM_UPLOAD_URL: '/fs',
-        VUE_APP_FILE_SYSTEM_APP_KEY: '8a90e44e-2a14-5c02-b3a5-95a1ce3a9eb6',
-        VUE_APP_FILE_SYSTEM_SECRET_KEY: '1d7ee618-2fcb-5ec3-b0b2-d6df9115301d',
-        VUE_APP_Version: '1.0.0',
-        VUE_APP_WEBSOCKET_NOTICE: '/scm/notice'
-      }),
       // SVG 图标处理插件
       createSvgIconsPlugin({
         iconDirs: [resolve(__dirname, 'src/icons/svg')],

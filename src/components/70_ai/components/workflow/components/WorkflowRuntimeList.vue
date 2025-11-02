@@ -16,7 +16,6 @@
               <div class="message-wrapper user-message">
                 <div class="message-header">
                   <div class="message-info">
-                    <span class="message-label">用户输入</span>
                     <span class="message-time">{{ formatTime(runtime.cTime || runtime.CTime) }}</span>
                   </div>
                   <el-button
@@ -32,7 +31,6 @@
                 <div class="message-content">
                   <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
                     <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
-                      <span class="input-label">{{ key }}:</span>
                       <span class="input-value">{{ formatValue(value) }}</span>
                     </div>
                   </div>
@@ -131,6 +129,7 @@
         ref="runDetailRef"
         :workflow="workflow"
         @run="handleRunWorkflow"
+        @resume="handleResumeWorkflow"
       />
     </footer>
 
@@ -251,7 +250,7 @@
 </template>
 
 <script>
-import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete, getRuntimeNodeDetails } from '@/components/70_ai/api/workflowService'
+import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete, getRuntimeNodeDetails, resumeWorkflowRun } from '@/components/70_ai/api/workflowService'
 import WorkflowRunDetail from './WorkflowRunDetail.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 
@@ -561,8 +560,28 @@ export default {
           })
         },
 
-        // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx
+        // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx, NODE_WAIT_FEEDBACK_BY_xxx
         messageReceived: (chunk, eventName) => {
+          // 处理人机交互提示事件（参考aideepin: RunDetail.vue lines 185-189）
+          if (eventName && eventName.includes('[NODE_WAIT_FEEDBACK_BY_') && currentRuntimeUuid) {
+            const tip = chunk || '请输入您的反馈'
+            // 调用WorkflowRunDetail组件的setHumanFeedback方法
+            if (this.$refs.runDetailRef) {
+              this.$refs.runDetailRef.setHumanFeedback(currentRuntimeUuid, tip)
+            }
+            // 更新runtime状态为等待输入(status=2)
+            const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+            if (index !== -1) {
+              const oldRuntime = this.localRuntimeList[index]
+              const newRuntime = {
+                ...oldRuntime,
+                status: 2, // 2-等待输入 (后端WORKFLOW_PROCESS_STATUS_WAITING_INPUT)
+                loading: false
+              }
+              this.localRuntimeList.splice(index, 1, newRuntime)
+            }
+          }
+
           // 处理NODE_CHUNK事件：累积LLM流式输出
           if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
             accumulatedOutput += chunk
@@ -687,6 +706,49 @@ export default {
       }).catch(() => {
         // 取消删除
       })
+    },
+
+    /**
+     * 处理恢复工作流执行（响应WorkflowRunDetail的resume事件）
+     * 参考aideepin: RunDetail.vue resume() (lines 220-235)
+     */
+    async handleResumeWorkflow (data) {
+      const { runtimeUuid, feedbackContent } = data
+
+      try {
+        // 通过runtimeUuid查找runtime.id
+        const runtime = this.localRuntimeList.find(r => r.runtimeUuid === runtimeUuid)
+        if (!runtime) {
+          this.$message.error('运行时实例不存在')
+          return
+        }
+
+        await resumeWorkflowRun({
+          runtimeId: runtime.id,
+          userInput: feedbackContent
+        })
+
+        this.$message.success('工作流已恢复执行')
+
+        // 更新状态为运行中
+        const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === runtimeUuid)
+        if (index !== -1) {
+          const oldRuntime = this.localRuntimeList[index]
+          const newRuntime = {
+            ...oldRuntime,
+            status: 1, // 1-运行中 (后端WORKFLOW_PROCESS_STATUS_RUNNING)
+            loading: true
+          }
+          this.localRuntimeList.splice(index, 1, newRuntime)
+        }
+      } catch (error) {
+        console.error('恢复工作流失败:', error)
+        this.$message.error(error.message || '恢复工作流失败')
+        // 通知子组件恢复失败，让它重新显示人机交互UI
+        if (this.$refs.runDetailRef) {
+          this.$refs.runDetailRef.submitting = false
+        }
+      }
     },
 
     async showExecutionDetail (runtime) {

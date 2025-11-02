@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+﻿import request from '@/utils/request'
 import { fetchEventSource } from '@microsoft/fetch-event-source'
 import store from '@/store'
 
@@ -41,7 +41,7 @@ export function sseAsk (params) {
   } = params
 
   // 构建URL参数
-  let url = `${process.env.VUE_APP_BASE_API}/api/v1/ai/knowledge-base/qa/process/${qaRecordUuid}`
+  let url = `${import.meta.env.VITE_BASE_API}/api/v1/ai/knowledge-base/qa/process/${qaRecordUuid}`
   const urlParams = []
   if (maxResults !== undefined && maxResults !== null) {
     urlParams.push(`maxResults=${maxResults}`)

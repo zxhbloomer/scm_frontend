@@ -1,8 +1,8 @@
-import SockJS from 'sockjs-client'
+﻿import SockJS from 'sockjs-client'
 import Stomp from 'stompjs'
 
 const state = {
-  socketUrl: process.env.VUE_APP_WEBSOCKET_NOTICE,
+  socketUrl: import.meta.env.VITE_WEBSOCKET_NOTICE,
   reconnecting: false,
   connected: false,
   socket: null,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SCM AI知识库RAG服务
  * 提供知识库问答和RAG检索接口
  */
@@ -57,7 +57,7 @@ class RAGService {
 
     try {
       // 构建URL参数
-      let url = `${process.env.VUE_APP_BASE_API}/api/v1/ai/knowledge-base/qa/process/${qaRecordUuid}`
+      let url = `${import.meta.env.VITE_BASE_API}/api/v1/ai/knowledge-base/qa/process/${qaRecordUuid}`
       const urlParams = []
       if (maxResults !== undefined && maxResults !== null) {
         urlParams.push(`maxResults=${maxResults}`)

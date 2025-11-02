@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <div
       class="user-info-head"
@@ -206,8 +206,8 @@ export default {
       this.$refs.cropper.getCropBlob(data => {
         var f = new File([data], this.fileName)
         const param = new FormData() // 创建form对象
-        param.append('app_key', process.env.VUE_APP_FILE_SYSTEM_APP_KEY)
-        param.append('secret_key', process.env.VUE_APP_FILE_SYSTEM_SECRET_KEY)
+        param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
+        param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
         param.append('file', f)// 通过append向form对象添加数据
 
         // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)
@@ -232,7 +232,7 @@ export default {
         // formData.append('avatarfile', data)
         // uploadAvatar(formData).then(response => {
         //   this.open = false;
-        //   this.options.img = process.env.VUE_APP_BASE_API + response.imgUrl;
+        //   this.options.img = import.meta.env.VITE_BASE_API + response.imgUrl;
         //   store.commit('SET_AVATAR', this.options.img);
         //   this.$modal.msgSuccess("修改成功");
         //   this.visible = false;

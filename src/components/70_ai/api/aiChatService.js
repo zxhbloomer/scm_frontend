@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SCM AI聊天服务
  * 提供与AI助手的交互接口
  */
@@ -40,7 +40,7 @@ class AIChatService {
     const connectSSE = async () => {
       try {
         // 使用fetch进行SSE请求（axios不支持真正的流式处理）
-        const baseURL = process.env.VUE_APP_BASE_API
+        const baseURL = import.meta.env.VITE_BASE_API
         const url = `${baseURL}/api/v1/ai/conversation/chat/stream`
 
         // 构建请求头
@@ -190,7 +190,7 @@ class AIChatService {
     const connectSSE = async () => {
       try {
         // 使用旧的SSE接口
-        const baseURL = process.env.VUE_APP_BASE_API
+        const baseURL = import.meta.env.VITE_BASE_API
         const url = `${baseURL}/api/v1/ai/conversation/chat/stream/sse`
 
         const headers = {

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <el-dialog
     v-if="listenVisible"
     v-el-drag-dialog
@@ -591,7 +591,7 @@ export default {
         return ''
       }
       // 根据项目配置生成完整的图片URL
-      const baseUrl = process.env.VUE_APP_FILE_UPLOAD_URL || 'http://file.xinyirunscm.com'
+      const baseUrl = import.meta.env.VITE_FILE_UPLOAD_URL || 'http://file.xinyirunscm.com'
       return `${baseUrl}/${relativePath}`
     },
     // 格式化日期 - 只显示日期部分

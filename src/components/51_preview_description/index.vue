@@ -1,4 +1,4 @@
-<!--card-->
+﻿<!--card-->
 <template>
   <div>
     <el-descriptions
@@ -150,10 +150,10 @@ export default {
     init (url = '') {
       if (!url) return
       const base64_encode = encodeURIComponent(Base64.encode(url))
-      this.dataJson.preview_online_url = process.env.VUE_APP_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
-      this.dataJson.preview_pic_url = process.env.VUE_APP_FILE_PIC_PREVIEW_URL +
-        '?width=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_WIDTH +
-        '&height=' + process.env.VUE_APP_FILE_ONLINE_PREVIEW_HEIGHT +
+      this.dataJson.preview_online_url = import.meta.env.VITE_FILE_ONLINE_PREVIEW_URL + '?url=' + base64_encode
+      this.dataJson.preview_pic_url = import.meta.env.VITE_FILE_PIC_PREVIEW_URL +
+        '?width=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_WIDTH +
+        '&height=' + import.meta.env.VITE_FILE_ONLINE_PREVIEW_HEIGHT +
         '&url=' + base64_encode
     },
     handleDelete (file) {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Workflow API 服务
  * 基于 aideepin 原始实现,适配 SCM 前端
  */
@@ -164,7 +164,7 @@ export function workflowRun (params) {
     errorCallback
   } = params
 
-  const url = `${process.env.VUE_APP_BASE_API}/api/v1/ai/workflow/run/${uuid}`
+  const url = `${import.meta.env.VITE_BASE_API}/api/v1/ai/workflow/run/${uuid}`
 
   class RetriableError extends Error {}
   class FatalError extends Error {}

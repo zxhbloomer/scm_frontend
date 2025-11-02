@@ -2,90 +2,124 @@
   <div class="workflow-run-detail">
     <!-- 用户输入表单区域 -->
     <div class="user-inputs-section">
-      <!-- 无参数提示 -->
-      <div v-if="!userInputDefinitions || userInputDefinitions.length === 0" class="no-params-tip">
-        <i class="el-icon-info" />
-        <span>此工作流无需输入参数</span>
-      </div>
+      <!-- 常规用户输入（参考aideepin: RunDetail.vue lines 315-353）-->
+      <template v-if="!humanFeedback">
+        <!-- 无参数提示 -->
+        <div v-if="!userInputDefinitions || userInputDefinitions.length === 0" class="no-params-tip">
+          <i class="el-icon-info" />
+          <span>此工作流无需输入参数</span>
+        </div>
 
-      <!-- 动态表单：根据startNode.inputConfig.userInputs渲染 -->
-      <div v-else class="user-inputs-form">
-        <div
-          v-for="(userInput, idx) in userInputs"
-          :key="`${idx}_${userInput.name}`"
-          class="input-row"
-        >
-          <!-- 参数标题 -->
-          <div class="input-label">
-            <span>{{ userInput.content.title }}</span>
-            <span v-if="userInput.required" class="required-mark">*</span>
-          </div>
-
-          <!-- 输入控件容器 -->
-          <div class="input-control">
-            <!-- 类型1: TEXT - 文本输入 -->
-            <el-input
-              v-if="userInput.content.type === 1"
-              v-model="userInput.content.value"
-              type="textarea"
-              :rows="3"
-              :placeholder="`请输入${userInput.content.title}`"
-              :disabled="submitting"
-            />
-
-            <!-- 类型2: NUMBER - 数字输入 -->
-            <el-input-number
-              v-if="userInput.content.type === 2"
-              v-model="userInput.content.value"
-              :placeholder="`请输入${userInput.content.title}`"
-              :disabled="submitting"
-              controls-position="right"
-              style="width: 100%;"
-            />
-
-            <!-- 类型3: OPTIONS - 下拉选择 -->
-            <div v-if="userInput.content.type === 3">
-              <!-- TODO: 后续实现,需要options数据 -->
-              <span class="placeholder-text">下拉选择(待实现)</span>
+        <!-- 动态表单：根据startNode.inputConfig.userInputs渲染 -->
+        <div v-else class="user-inputs-form">
+          <div
+            v-for="(userInput, idx) in userInputs"
+            :key="`${idx}_${userInput.name}`"
+            class="input-row"
+          >
+            <!-- 参数标题 -->
+            <div class="input-label">
+              <span>{{ userInput.content.title }}</span>
+              <span v-if="userInput.required" class="required-mark">*</span>
             </div>
 
-            <!-- 类型4: FILES - 文件上传 -->
-            <el-upload
-              v-if="userInput.content.type === 4"
-              ref="uploadRef"
-              class="upload-area"
-              drag
-              action="/scm/api/v1/ai/file/upload"
-              :multiple="true"
-              :limit="getFileLimit(userInput.uuid)"
-              :on-change="handleFileListChange"
-              :on-success="handleUploadSuccess"
-              :on-error="handleUploadError"
-              :disabled="submitting"
-              :auto-upload="false"
-            >
-              <i class="el-icon-upload" />
-              <div class="el-upload__text">
-                将文件拖到此处，或<em>点击上传</em>
-              </div>
-              <div slot="tip" class="el-upload__tip">
-                支持格式: TXT、PDF、DOC、DOCX、XLS、XLSX、PPT、PPTX；文件大小: 不超过10M
-              </div>
-            </el-upload>
+            <!-- 输入控件容器 -->
+            <div class="input-control">
+              <!-- 类型1: TEXT - 文本输入 -->
+              <el-input
+                v-if="userInput.content.type === 1"
+                v-model="userInput.content.value"
+                type="textarea"
+                :rows="3"
+                :placeholder="`请输入${userInput.content.title}`"
+                :disabled="submitting"
+              />
 
-            <!-- 类型5: BOOL - 开关 -->
-            <el-switch
-              v-if="userInput.content.type === 5"
-              v-model="userInput.content.value"
-              :disabled="submitting"
-            />
+              <!-- 类型2: NUMBER - 数字输入 -->
+              <el-input-number
+                v-if="userInput.content.type === 2"
+                v-model="userInput.content.value"
+                :placeholder="`请输入${userInput.content.title}`"
+                :disabled="submitting"
+                controls-position="right"
+                style="width: 100%;"
+              />
+
+              <!-- 类型3: OPTIONS - 下拉选择 -->
+              <div v-if="userInput.content.type === 3">
+                <!-- TODO: 后续实现,需要options数据 -->
+                <span class="placeholder-text">下拉选择(待实现)</span>
+              </div>
+
+              <!-- 类型4: FILES - 文件上传 -->
+              <el-upload
+                v-if="userInput.content.type === 4"
+                ref="uploadRef"
+                class="upload-area"
+                drag
+                action="/scm/api/v1/ai/file/upload"
+                :multiple="true"
+                :limit="getFileLimit(userInput.uuid)"
+                :on-change="handleFileListChange"
+                :on-success="handleUploadSuccess"
+                :on-error="handleUploadError"
+                :disabled="submitting"
+                :auto-upload="false"
+              >
+                <i class="el-icon-upload" />
+                <div class="el-upload__text">
+                  将文件拖到此处，或<em>点击上传</em>
+                </div>
+                <div slot="tip" class="el-upload__tip">
+                  支持格式: TXT、PDF、DOC、DOCX、XLS、XLSX、PPT、PPTX；文件大小: 不超过10M
+                </div>
+              </el-upload>
+
+              <!-- 类型5: BOOL - 开关 -->
+              <el-switch
+                v-if="userInput.content.type === 5"
+                v-model="userInput.content.value"
+                :disabled="submitting"
+              />
+            </div>
           </div>
         </div>
-      </div>
+      </template>
+
+      <!-- 人机交互输入区域（参考aideepin: RunDetail.vue lines 356-375）-->
+      <template v-if="humanFeedback">
+        <div class="human-feedback-section">
+          <!-- 红色警告提示 -->
+          <div class="feedback-alert">
+            <i class="el-icon-warning" />
+            <span class="alert-text">流程已暂停，等待用户输入中...</span>
+          </div>
+
+          <!-- 输入区域 -->
+          <div class="feedback-input-area">
+            <div v-if="humanFeedbackTip" class="feedback-tip">
+              提示：{{ humanFeedbackTip }}
+            </div>
+            <el-input
+              v-model="humanFeedbackContent"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入您的反馈内容"
+            />
+          </div>
+
+          <!-- 提交按钮 -->
+          <div class="feedback-actions">
+            <el-button type="primary" @click="handleResume">
+              提交
+            </el-button>
+          </div>
+        </div>
+      </template>
     </div>
 
-    <!-- 运行按钮 -->
-    <div class="run-actions">
+    <!-- 运行按钮（仅在非人机交互模式显示）-->
+    <div v-if="!humanFeedback" class="run-actions">
       <el-button
         type="primary"
         icon="el-icon-video-play"
@@ -117,7 +151,12 @@ export default {
       userInputs: [],
       uploadedFileUuids: [],
       fileListLength: 0,
-      submitting: false
+      submitting: false,
+      // 人机交互相关状态（参考aideepin: RunDetail.vue lines 55-57）
+      humanFeedback: false,
+      humanFeedbackTip: '',
+      humanFeedbackContent: '',
+      currentRuntimeUuid: '' // 保存当前运行的runtimeUuid，用于resume
     }
   },
 
@@ -330,6 +369,47 @@ export default {
     runError () {
       this.submitting = false
       this.resetInputs()
+    },
+
+    /**
+     * 设置人机交互模式（由父组件调用）
+     * 参考aideepin: RunDetail.vue lines 185-189
+     */
+    setHumanFeedback (runtimeUuid, tip) {
+      this.humanFeedback = true
+      this.humanFeedbackTip = tip || '请输入您的反馈'
+      this.humanFeedbackContent = ''
+      this.currentRuntimeUuid = runtimeUuid
+      this.$message.info(this.humanFeedbackTip)
+    },
+
+    /**
+     * 恢复工作流执行（人机交互）
+     * 参考aideepin: RunDetail.vue lines 220-235
+     */
+    async handleResume () {
+      if (!this.humanFeedbackContent || this.humanFeedbackContent.trim() === '') {
+        this.$message.warning('请输入反馈内容')
+        return
+      }
+
+      this.submitting = true
+      try {
+        // 需要通过runtime.id获取，所以需要父组件传递
+        this.$emit('resume', {
+          runtimeUuid: this.currentRuntimeUuid,
+          feedbackContent: this.humanFeedbackContent
+        })
+      } catch (error) {
+        console.error('恢复工作流失败:', error)
+        this.$message.error(error.message || '恢复工作流失败')
+      } finally {
+        // 重置人机交互状态
+        this.humanFeedback = false
+        this.humanFeedbackTip = ''
+        this.humanFeedbackContent = ''
+        this.currentRuntimeUuid = ''
+      }
     }
   }
 }
@@ -475,6 +555,63 @@ export default {
     &:hover {
       background-color: #85ce61;
       border-color: #85ce61;
+    }
+  }
+}
+
+/* 人机交互输入区域样式（参考aideepin: RunDetail.vue lines 356-375）*/
+.human-feedback-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  width: 100%;
+}
+
+.feedback-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+
+  i {
+    font-size: 18px;
+    color: #f56c6c;
+  }
+
+  .alert-text {
+    font-size: 14px;
+    color: #f56c6c;
+    font-weight: 500;
+  }
+}
+
+.feedback-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+
+  .feedback-tip {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #606266;
+  }
+}
+
+.feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  ::v-deep .el-button--primary {
+    background-color: #409eff;
+    border-color: #409eff;
+
+    &:hover {
+      background-color: #66b1ff;
+      border-color: #66b1ff;
     }
   }
 }

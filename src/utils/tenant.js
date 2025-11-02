@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 租户管理工具
  * 集中管理多租户相关的配置和方法
  */
@@ -12,7 +12,7 @@
  *   - 动态多租户模式（VUE_APP_Tenant='true'）：返回 null（暂未实现，后续从session获取）
  */
 export function getTenantId () {
-  const tenantMode = process.env.VUE_APP_Tenant || 'false'
+  const tenantMode = import.meta.env.VITE_Tenant || 'false'
 
   if (tenantMode === 'true') {
     // 多租户模式：从用户session动态获取（暂未实现）
@@ -23,7 +23,7 @@ export function getTenantId () {
   }
 
   // 固定租户模式：从环境变量读取
-  return process.env.VUE_APP_TENANT_ID || 'scm_tenant_20250519_001'
+  return import.meta.env.VITE_TENANT_ID || 'scm_tenant_20250519_001'
 }
 
 /**
@@ -31,7 +31,7 @@ export function getTenantId () {
  * @returns {boolean} true-多租户模式，false-固定租户模式
  */
 export function isMultiTenantMode () {
-  return process.env.VUE_APP_Tenant === 'true'
+  return import.meta.env.VITE_Tenant === 'true'
 }
 
 /**
@@ -42,7 +42,7 @@ export function getTenantConfig () {
   return {
     mode: isMultiTenantMode() ? 'multi' : 'single',
     tenantId: getTenantId(),
-    enabled: process.env.VUE_APP_Tenant
+    enabled: import.meta.env.VITE_Tenant
   }
 }
 

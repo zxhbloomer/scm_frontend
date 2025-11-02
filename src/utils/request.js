@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 // upd by zxh
 // import { MessageBox, Message } from 'element-ui'
 import { MessageBox } from 'element-ui'
@@ -10,7 +10,7 @@ import { getTenantId } from './tenant'
 
 // create an axios instance
 const service = axios.create({
-  baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
+  baseURL: import.meta.env.VITE_BASE_API, // url = base url + request url
   withCredentials: true, // send cookies when cross-domain requests
   timeout: 600000 // request timeout
 })
