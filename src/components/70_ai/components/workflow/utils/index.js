@@ -1,6 +1,5 @@
 /**
  * Workflow 工具函数统一导出
- * 基于 aideepin 原始实现
  */
 
 // API 服务

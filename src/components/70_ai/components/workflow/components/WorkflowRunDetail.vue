@@ -2,7 +2,7 @@
   <div class="workflow-run-detail">
     <!-- 用户输入表单区域 -->
     <div class="user-inputs-section">
-      <!-- 常规用户输入（参考aideepin: RunDetail.vue lines 315-353）-->
+      <!-- 常规用户输入 -->
       <template v-if="!humanFeedback">
         <!-- 无参数提示 -->
         <div v-if="!userInputDefinitions || userInputDefinitions.length === 0" class="no-params-tip">
@@ -94,7 +94,7 @@
         </div>
       </template>
 
-      <!-- 人机交互输入区域（参考aideepin: RunDetail.vue lines 356-375）-->
+      <!-- 人机交互输入区域 -->
       <template v-if="humanFeedback">
         <div class="human-feedback-section">
           <!-- 红色警告提示 -->
@@ -161,11 +161,11 @@ export default {
   data () {
     return {
       userInputs: [],
-      // ⭐ SCM标准附件数据结构（参考项目管理页面）
+      // SCM标准附件数据结构
       doc_att: [], // 完整附件对象数组
       doc_att_file: [], // URL数组
       submitting: false,
-      // 人机交互相关状态（参考aideepin: RunDetail.vue lines 55-57）
+      // 人机交互相关状态
       humanFeedback: false,
       humanFeedbackTip: '',
       humanFeedbackContent: '',
@@ -192,7 +192,7 @@ export default {
         return []
       }
 
-      // SCM使用user_inputs字段名（下划线），aideepin使用userInputs（驼峰）
+      // SCM使用user_inputs字段名（下划线）
       const userInputs = this.startNode.inputConfig.user_inputs ||
                       this.startNode.inputConfig.userInputs
 
@@ -230,7 +230,7 @@ export default {
             required: input.required || false
           }))
 
-          // ⭐ 重置附件数据
+          // 重置附件数据
           this.doc_att = []
           this.doc_att_file = []
         })
@@ -239,7 +239,7 @@ export default {
   },
 
   methods: {
-    // ⭐ 上传成功处理（参考项目管理页面）
+    // 上传成功处理
     handleUploadFileSuccess (res) {
       // res.response 结构: {code: 0, data: {url, fileName}, timestamp}
 
@@ -255,10 +255,10 @@ export default {
       // 4. 更新到userInput.content.value（运行时传递给后端）
       const fileInput = this.userInputs.find(input => input.content.type === 4)
       if (fileInput) {
-        fileInput.content.value = this.doc_att_file // ⭐ 保存URL数组
+        fileInput.content.value = this.doc_att_file // 保存URL数组
       }
 
-      // 5. ⭐ 修复：上传附件后，footer高度变化，需要通知父组件重新计算布局
+      // 5. 上传附件后，footer高度变化，需要通知父组件重新计算布局
       // 使用$nextTick确保DOM更新后再触发父组件的布局重算
       this.$nextTick(() => {
         if (this.$parent && this.$parent.calculateMainHeight) {
@@ -267,12 +267,12 @@ export default {
       })
     },
 
-    // ⭐ 上传失败处理
+    // 上传失败处理
     handleUploadFileError () {
       this.$message.error('文件上传发生错误！')
     },
 
-    // ⭐ 删除文件
+    // 删除文件
     handleRemoveFile (file) {
       // 1. 根据URL查找索引
       const _index = this.doc_att_file.lastIndexOf(file.url)
@@ -287,7 +287,7 @@ export default {
         fileInput.content.value = this.doc_att_file
       }
 
-      // 4. ⭐ 修复：删除附件后，footer高度变化，需要通知父组件重新计算布局
+      // 4. 删除附件后，footer高度变化，需要通知父组件重新计算布局
       // 使用$nextTick确保DOM更新后再触发父组件的布局重算
       this.$nextTick(() => {
         // 触发父组件的updated生命周期（通过强制更新父组件）
@@ -297,14 +297,14 @@ export default {
       })
     },
 
-    // ⭐ 格式化时间戳
+    // 格式化时间戳
     formatTimestamp (timestamp) {
       if (!timestamp) return ''
       const date = new Date(timestamp)
       return date.toLocaleString('zh-CN')
     },
 
-    // ⭐ 验证用户输入（已适配SCM标准）
+    // 验证用户输入
     validateUserInputs () {
       // 检查所有必填参数（包括附件）
       for (const input of this.userInputs) {
@@ -340,16 +340,16 @@ export default {
         return
       }
 
-      // ⭐ 构造输入数据（添加附件支持）
+      // 构造输入数据（添加附件支持）
       const inputs = this.userInputs.map(input => ({
         name: input.name,
         content: {
           type: input.content.type,
-          value: input.content.value, // ⭐ 对于FILES类型，这是URL数组
+          value: input.content.value, // 对于FILES类型，这是URL数组
           title: input.content.title
         },
         required: input.required,
-        // ⭐ 新增：如果是附件类型，附加完整附件对象（用于展示）
+        // 新增：如果是附件类型，附加完整附件对象（用于展示）
         attachments: input.content.type === 4 ? this.doc_att : undefined
       }))
 
@@ -362,7 +362,7 @@ export default {
       }
     },
 
-    // ⭐ 重置输入（已适配SCM标准）
+    // 重置输入
     resetInputs () {
       // 清空附件
       this.doc_att = []
@@ -388,7 +388,6 @@ export default {
 
     /**
      * 设置人机交互模式（由父组件调用）
-     * 参考aideepin: RunDetail.vue lines 185-189
      */
     setHumanFeedback (runtimeUuid, tip) {
       this.humanFeedback = true
@@ -400,7 +399,6 @@ export default {
 
     /**
      * 恢复工作流执行（人机交互）
-     * 参考aideepin: RunDetail.vue lines 220-235
      */
     async handleResume () {
       if (!this.humanFeedbackContent || this.humanFeedbackContent.trim() === '') {
@@ -574,7 +572,7 @@ export default {
   }
 }
 
-/* 人机交互输入区域样式（参考aideepin: RunDetail.vue lines 356-375）*/
+/* 人机交互输入区域样式 */
 .human-feedback-section {
   display: flex;
   flex-direction: column;
@@ -616,7 +614,7 @@ export default {
   }
 }
 
-// ⭐ 附件删除链接样式（参考 51_preview_description）
+// 附件删除链接样式
 .clickable {
   cursor: pointer;
   color: #409EFF;

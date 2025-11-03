@@ -53,6 +53,7 @@ export default {
     nodeOptions () {
       const nodes = this.workflow.nodes || []
       const options = []
+      const seenUuids = new Set() // 用于去重
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i]
@@ -60,6 +61,12 @@ export default {
         if (node.uuid === this.wfNode.uuid || node.wfComponent.name === 'Start') {
           continue
         }
+
+        // 去重：如果UUID已存在，跳过
+        if (seenUuids.has(node.uuid)) {
+          continue
+        }
+        seenUuids.add(node.uuid)
 
         options.push({
           label: node.title,

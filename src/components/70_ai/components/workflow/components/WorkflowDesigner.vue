@@ -94,7 +94,7 @@ export default {
   computed: {
     ...mapState({
       wfComponents: state => state.ai.workflow.wfComponents,
-      currentUserId: state => state.user.userId, // 修正：使用userId而不是不存在的uuid
+      currentUserId: state => state.user.userId,
       activeUuid: state => state.ai.workflow.activeUuid
     }),
 
@@ -104,7 +104,6 @@ export default {
     }),
 
     canSave () {
-      // 修正：比较userId (Long类型)
       return this.workflow.userId === this.currentUserId
     },
 
@@ -125,42 +124,33 @@ export default {
   },
 
   watch: {
-    // 🔥 监听 workflow.nodes 的深度变化，同步更新 X6 节点数据
     'workflow.nodes': {
       handler (newNodes) {
         if (!this.graph || !newNodes) {
           return
         }
 
-        // 遍历所有节点，同步数据到 X6
         newNodes.forEach(wfNode => {
           const x6Node = this.graph.getCellById(wfNode.uuid)
           if (x6Node && x6Node.isNode()) {
-            // 获取 X6 节点的当前数据
             const currentData = x6Node.getData()
-
-            // 比较数据是否有变化（特别是 nodeConfig）
             const hasChanged = JSON.stringify(currentData) !== JSON.stringify(wfNode)
 
             if (hasChanged) {
-              // 更新 X6 节点数据，触发 vue-shape 重新渲染
               x6Node.setData(wfNode)
             }
           }
         })
       },
-      deep: true // 深度监听
+      deep: true
     },
 
-    // 监听整个 workflow 对象的变化
     workflow: {
       handler (newWorkflow, oldWorkflow) {
-        // 只有在图已初始化后才处理工作流切换
         if (!this.graph) {
           return
         }
 
-        // 比较 UUID 判断是否是不同的工作流
         const newUuid = newWorkflow?.uuid || newWorkflow?.workflowUuid
         const oldUuid = oldWorkflow?.uuid || oldWorkflow?.workflowUuid
 
@@ -168,18 +158,18 @@ export default {
           this.clearAndRerenderGraph()
         }
       },
-      deep: false // 不需要深度监听,只监听对象引用变化
+      deep: false
     }
   },
 
   mounted () {
-    // 在 $nextTick 中初始化 Graph，确保容器已经渲染并有正确的尺寸
+    // 等待容器渲染完成后初始化图形编辑器
     this.$nextTick(() => {
       this.initGraph()
       this.renderGraphWhenReady()
     })
 
-    // 监听节点配置变化事件，手动更新 X6 节点
+    // 监听节点配置变化事件
     this.$root.$on('workflow:update-node', ({ nodeUuid, nodeData }) => {
       if (!this.graph) {
         return
@@ -188,11 +178,10 @@ export default {
       const x6Node = this.graph.getCellById(nodeUuid)
 
       if (x6Node && x6Node.isNode()) {
-        // 🔥 方案A：注入开始节点信息
+        // 注入开始节点的文件输入信息
         const enhancedNodeData = this.injectStartNodeFileInputs(nodeData)
 
-        // 🔥 关键修复：创建新对象，触发 vue-shape 重新渲染
-        // X6-vue-shape 通过 provide/inject 传递数据，需要触发 provide 更新
+        // 创建新对象以触发视图更新
         const newData = {
           ...enhancedNodeData,
           nodeConfig: { ...enhancedNodeData.nodeConfig },
@@ -203,22 +192,20 @@ export default {
           }
         }
 
-        // 使用 prop 方法更新，这会正确触发 change:data 事件
         x6Node.prop('data', newData)
       }
 
-      // 🔥 关键：如果更新的是开始节点，需要更新所有其他节点的 startNodeFileInputs
+      // 如果更新的是开始节点，需要同步更新所有节点的文件输入引用
       if (nodeData.wfComponent && nodeData.wfComponent.name === 'Start') {
         this.updateAllNodesStartFileInputs()
       }
     })
 
-    // 监听窗口 resize 事件，调整 graph 尺寸
+    // 监听容器尺寸变化
     this.resizeObserver = new ResizeObserver(() => {
       this.handleResize()
     })
 
-    // 延迟观察，确保容器已挂载
     this.$nextTick(() => {
       const container = this.$refs.graphContainer
       if (container) {
@@ -228,8 +215,7 @@ export default {
   },
 
   activated () {
-    // 当组件被 keep-alive 激活或 tab 切换显示时，重新调整尺寸
-    // 使用多次 $nextTick 确保 DOM 完全渲染（Element UI tab 切换需要时间）
+    // 组件激活时调整画布尺寸
     this.$nextTick(() => {
       this.$nextTick(() => {
         setTimeout(() => {
@@ -240,7 +226,6 @@ export default {
   },
 
   beforeDestroy () {
-    // 移除事件监听
     this.$root.$off('workflow:update-node')
 
     if (this.resizeObserver) {
@@ -257,17 +242,14 @@ export default {
     }),
 
     /**
-     * 等待 wfComponents 加载完成后再渲染图形
-     * 解决数据加载时序问题
+     * 等待工作流组件加载完成后渲染图形
      */
     async renderGraphWhenReady () {
-      // 如果 wfComponents 已加载，直接渲染
       if (this.wfComponents.length > 0) {
         this.renderGraph()
         return
       }
 
-      // 等待 wfComponents 加载完成（最多等待 10 秒）
       const maxWaitTime = 10000
       const checkInterval = 200
       let waitedTime = 0
@@ -279,7 +261,7 @@ export default {
           waitedTime += checkInterval
           setTimeout(checkComponents, checkInterval)
         } else {
-          console.error('wfComponents 加载超时，无法渲染工作流图形')
+          console.error('工作流组件加载超时')
           this.$message.error('工作流组件加载失败，请刷新页面重试')
         }
       }
@@ -288,13 +270,9 @@ export default {
     },
 
     initGraph () {
-      // 注册所有自定义节点形状（必须在 Graph 实例化之前）
-      // 参考 aideepin 的 Vue Flow 节点注册机制
       registerAllWorkflowNodes()
 
       const container = this.$refs.graphContainer
-
-      // 如果容器本身尺寸为 0，使用父元素的尺寸
       const parentElement = container.parentElement
       let width = container.clientWidth
       let height = container.clientHeight
@@ -308,7 +286,7 @@ export default {
         container,
         width,
         height,
-        autoResize: true, // 自动调整画布大小以适应容器
+        autoResize: true,
         background: {
           color: '#f5f5f5'
         },
@@ -322,8 +300,7 @@ export default {
           }
         },
         panning: {
-          enabled: true,
-          modifiers: 'shift'
+          enabled: true
         },
         mousewheel: {
           enabled: true,
@@ -337,9 +314,11 @@ export default {
           connector: 'rounded',
           connectionPoint: 'boundary',
           router: {
-            name: 'er',
+            name: 'manhattan',
             args: {
-              offset: 25
+              padding: 20,
+              startDirections: ['right'],
+              endDirections: ['left']
             }
           },
           createEdge () {
@@ -375,14 +354,13 @@ export default {
         }
       })
 
-      // 使用 Selection 插件
       this.graph.use(
         new Selection({
           enabled: true,
           multiple: false,
           rubberband: false,
           movable: true,
-          showNodeSelectionBox: false // 不使用X6默认选中框，使用自定义CSS样式
+          showNodeSelectionBox: false
         })
       )
 
@@ -390,12 +368,9 @@ export default {
     },
 
     bindEvents () {
-      // 获取Selection插件
       const selection = this.graph.getPlugin('selection')
 
-      // 节点点击事件
       this.graph.on('node:click', ({ node }) => {
-        // 移除所有边的删除按钮
         this.graph.getEdges().forEach(edge => {
           edge.removeTools()
         })
@@ -405,7 +380,6 @@ export default {
         }
       })
 
-      // 监听Selection插件的选中事件
       if (selection) {
         selection.on('node:selected', ({ node }) => {
           const wfNode = this.workflow.nodes.find(n => n.uuid === node.id)
@@ -421,7 +395,6 @@ export default {
         })
       }
 
-      // 节点拖拽结束事件
       this.graph.on('node:moved', ({ node, e }) => {
         const wfNode = this.workflow.nodes.find(n => n.uuid === node.id)
         if (wfNode) {
@@ -431,28 +404,24 @@ export default {
         }
       })
 
-      // 边连接事件
       this.graph.on('edge:connected', ({ isNew, edge }) => {
         if (isNew) {
           this.createNewEdge(edge)
         }
       })
 
-      // 边点击事件 - 显示删除按钮
       this.graph.on('edge:click', ({ edge }) => {
-        // 先移除其他边上的所有工具
         this.graph.getEdges().forEach(e => {
           if (e.id !== edge.id) {
             e.removeTools()
           }
         })
 
-        // 给当前点击的边添加删除按钮
         edge.addTools([
           {
             name: 'button-remove',
             args: {
-              distance: '50%', // 按钮位置：边的中点
+              distance: '50%',
               offset: { x: 0, y: 0 },
               attrs: {
                 circle: {
@@ -477,9 +446,7 @@ export default {
         ])
       })
 
-      // 画布空白区域点击事件
       this.graph.on('blank:click', () => {
-        // 移除所有边的删除按钮
         this.graph.getEdges().forEach(edge => {
           edge.removeTools()
         })
@@ -491,9 +458,6 @@ export default {
         this.selectedWfNode = null
       })
 
-      // 删除事件（使用 X6 内置的键盘删除功能）
-      // 注意：keyboard: { enabled: true } 配置已启用键盘删除（Backspace/Delete 键）
-      // 监听 cell:removed 事件来同步 Vuex 状态
       this.graph.on('cell:removed', ({ cell }) => {
         if (cell.isNode()) {
           this.deleteNode(cell.id)
@@ -505,21 +469,16 @@ export default {
 
     /**
      * 清空并重新渲染图形
-     * 当工作流切换时调用
      */
     clearAndRerenderGraph () {
       if (!this.graph) {
         return
       }
 
-      // 清空当前图形
       this.graph.clearCells()
-
-      // 重置选中状态
       this.selectedWfNode = null
       this.hidePropertyPanel = true
 
-      // 重新渲染新的工作流
       this.$nextTick(() => {
         this.renderGraphWhenReady()
       })
@@ -540,7 +499,6 @@ export default {
           return
         }
 
-        // 参考 aideepin WorkflowDefine.vue:50-51 的实现
         // 使用 ? 运算符检查是否有真实坐标值
         // 原因：新建节点的初始坐标为 0，但 0 作为有效坐标会导致紧贴画布左上角
         // 应该使用默认的分布式位置 (10 + 230*i, 50)
@@ -558,7 +516,6 @@ export default {
       }
 
       // 不使用自动居中，保持节点在指定位置 (10, 50)
-      // 参考 aideepin: 节点应该显示在其设置的位置，不需要自动居中
       // this.$nextTick(() => {
       //   this.graph.centerContent()
       // })
@@ -567,7 +524,6 @@ export default {
     addNodeToGraph (wfNode, x, y) {
       /**
        * 使用自定义 Vue 组件节点
-       * 参考 aideepin WorkflowDefine.vue:52-58
        *
        * 关键点：
        * 1. shape: 使用节点类型名（小写）
@@ -582,7 +538,7 @@ export default {
 
       const shapeName = wfNode.wfComponent.name.toLowerCase()
 
-      // 🔥 方案A：注入开始节点的文件输入信息
+      // 注入开始节点的文件输入信息
       // 让节点组件可以直接访问开始节点的文件列表
       const enhancedWfNode = this.injectStartNodeFileInputs(wfNode)
 
@@ -602,24 +558,24 @@ export default {
     },
 
     addEdgeToGraph (wfEdge) {
-      // 获取目标节点以确定正确的端口
-      const targetNode = this.workflow.nodes.find(n => n.uuid === wfEdge.targetNodeUuid)
-      let targetPort = 'top' // 默认端口
-
-      if (targetNode && targetNode.wfComponent) {
-        const targetComponentName = targetNode.wfComponent.name
-        // 根据目标节点类型确定端口
-        // End 节点使用 'left'，其他大多数节点使用 'top'
-        if (targetComponentName === 'End') {
-          targetPort = 'left'
-        }
-        // 其他节点的处理可以在这里添加
-      }
+      // 端口配置：
+      // - 所有节点的输出端口ID = 'right' (在 registerX6Nodes.js 中定义)
+      // - 所有节点的输入端口ID = 'left' (在 registerX6Nodes.js 中定义)
+      // - 不再需要根据节点类型判断，统一使用注册时的端口ID
 
       this.graph.addEdge({
         id: wfEdge.uuid,
-        source: { cell: wfEdge.sourceNodeUuid, port: wfEdge.sourceHandle || 'bottom' },
-        target: { cell: wfEdge.targetNodeUuid, port: targetPort },
+        source: { cell: wfEdge.sourceNodeUuid, port: 'right' }, // 使用注册的输出端口ID
+        target: { cell: wfEdge.targetNodeUuid, port: 'left' }, // 使用注册的输入端口ID
+        router: {
+          name: 'manhattan', // 使用与连接配置相同的路由
+          args: {
+            padding: 20,
+            startDirections: ['right'],
+            endDirections: ['left']
+          }
+        },
+        connector: 'rounded', // 圆角连接器
         attrs: {
           line: {
             stroke: '#8f8f8f',
@@ -683,7 +639,7 @@ export default {
 
       const newNode = this.workflow.nodes[this.workflow.nodes.length - 1]
 
-      // ✅ 关键修复：新节点也需要同步到 Vuex store，确保 NodePropertyInput 能找到它
+      // 关键修复：新节点也需要同步到 Vuex store，确保 NodePropertyInput 能找到它
       // 直接修改本地 workflow 对象的 nodes 数组不会自动同步到 Vuex store
       // 因此需要通过 mutation 来更新 store 中的工作流对象
       this.$store.commit('ai/workflow/ADD_NODE_TO_WORKFLOW', {
@@ -825,7 +781,6 @@ export default {
       if (width > 0 && height > 0) {
         this.graph.resize(width, height)
         // 不使用自动居中，保持节点在其原始位置
-        // 参考 aideepin: 节点应该显示在设置的位置 (10, 50)，不需要在 resize 时居中
         // this.graph.centerContent()
       }
     },
@@ -861,9 +816,8 @@ export default {
     },
 
     /**
-     * 🔥 方案A：注入开始节点的文件输入信息
+     * 注入开始节点的文件输入信息
      * 让所有节点都能访问到开始节点的文件列表
-     * 模仿 aideepin 的实现逻辑
      */
     injectStartNodeFileInputs (wfNode) {
       if (!this.workflow || !this.workflow.nodes) {
@@ -887,7 +841,7 @@ export default {
     },
 
     /**
-     * 🔥 当开始节点的文件输入变化时，更新所有节点的 startNodeFileInputs
+     * 当开始节点的文件输入变化时，更新所有节点的 startNodeFileInputs
      * 确保所有节点都能看到最新的文件列表
      */
     updateAllNodesStartFileInputs () {

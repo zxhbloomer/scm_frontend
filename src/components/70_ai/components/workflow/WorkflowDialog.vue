@@ -70,16 +70,7 @@ export default {
 
   methods: {
     /**
-     * 切换最大化/恢复
-     *
-     * 最大化需求：
-     * - 工作流管理弹窗是 ai-chat 弹窗的子组件
-     * - 最大化时布局要求：
-     *   1. 左边缘：对齐浏览器最左边 (left: 0)
-     *   2. 右边缘：对齐 ai-chat 的左边框 (ai-chat 宽度 480px，所以 width: calc(100vw - 480px))
-     *   3. 顶部边缘：对齐浏览器最顶部 (top: 0)
-     *   4. 底部边缘：对齐浏览器最底部 (height: 100vh)
-     * - 总结：除了右边要避开 ai-chat (480px)，其他三边都撑满屏幕
+     * 切换最大化/恢复状态
      */
     toggleFullscreen () {
       this.isFullscreen = !this.isFullscreen
@@ -87,7 +78,6 @@ export default {
 
     /**
      * 关闭弹窗
-     * 在关闭前调用 closeWorkflow 清空工作流数据，确保下次打开时显示最新数据
      */
     async handleClose () {
       // 调用 closeWorkflow action 清空 activeUuid 和重新加载列表
@@ -99,8 +89,6 @@ export default {
         console.error('closeWorkflow failed:', error)
       }
 
-      // 关闭弹窗
-      // 注意：由于有 destroy-on-close，组件会被销毁，不需要重置 isFullscreen
       this.$emit('update:visible', false)
     }
   }
@@ -140,8 +128,7 @@ export default {
 </style>
 
 <style>
-/* 最大化样式 - 避开 ai-chat 弹窗 (480px) */
-/* 注意：这个 style 标签没有 scoped，以确保样式能够正确应用到 Element UI 的对话框 */
+/* 最大化样式 */
 .workflow-dialog--fullscreen .el-dialog {
   position: fixed !important;
   left: 0 !important;

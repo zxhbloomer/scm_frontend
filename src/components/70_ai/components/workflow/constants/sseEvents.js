@@ -1,7 +1,6 @@
 /**
  * Workflow SSE (Server-Sent Events) 事件类型常量
  * 用于工作流实时运行反馈
- * 基于 aideepin 原始实现
  */
 
 // SSE 事件类型枚举

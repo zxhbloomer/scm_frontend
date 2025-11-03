@@ -102,11 +102,8 @@ export default {
 
   /**
    * 组件挂载时加载AI模型列表
-   * 严格参考 aideepin App.vue onMounted 方法
-   * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\App.vue (Line 183-185)
    */
   mounted () {
-    // 加载所有类型的AI模型列表
     this.$store.dispatch('ai/app/loadAllModels')
       .catch(error => {
         // eslint-disable-next-line no-console
@@ -152,7 +149,6 @@ export default {
     /**
      * 处理从设计器发起的运行请求
      * 切换到流程执行tab，直接触发WorkflowRuntimeList的运行
-     * 参考 aideepin: WorkflowDefine.vue onRun() 显示运行模态框
      */
     handleRunFromDesigner () {
       // 切换到流程执行tab

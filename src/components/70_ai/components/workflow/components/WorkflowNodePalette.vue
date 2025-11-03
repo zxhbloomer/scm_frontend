@@ -1,10 +1,14 @@
 <template>
   <div class="workflow-node-palette">
-    <div class="palette-header">
+    <div ref="paletteHeader" class="palette-header">
       <span class="palette-title">节点面板</span>
     </div>
 
-    <div class="palette-content">
+    <div
+      ref="paletteContent"
+      class="palette-content"
+      :style="{ height: contentHeight }"
+    >
       <div
         v-for="component in enabledComponents"
         :key="component.uuid"
@@ -24,6 +28,12 @@ import { mapState } from 'vuex'
 
 export default {
   name: 'WorkflowNodePalette',
+
+  data () {
+    return {
+      contentHeight: 'calc(100% - 165px)'
+    }
+  },
 
   computed: {
     ...mapState({
@@ -105,7 +115,7 @@ export default {
 }
 
 .palette-content {
-  flex: 1;
+  /* 高度通过 :style 动态计算，不在CSS中固定 */
   overflow-y: auto;
   padding: 8px;
 }

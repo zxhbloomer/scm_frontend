@@ -16,8 +16,6 @@
 /**
  * HumanFeedbackNode 组件
  * 人工反馈节点
- * 严格参考 aideepin HumanFeedbackNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\HumanFeedbackNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 

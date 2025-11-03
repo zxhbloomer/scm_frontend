@@ -16,8 +16,6 @@
 /**
  * TemplateNode 组件
  * 模板节点
- * 严格参考 aideepin TemplateNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\TemplateNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 

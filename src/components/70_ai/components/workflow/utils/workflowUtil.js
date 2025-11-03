@@ -1,6 +1,5 @@
 /**
  * Workflow 工具函数
- * 基于 aideepin 原始实现,适配 Vue 2.7.16 + AntV X6
  */
 
 import { nanoid } from 'nanoid'
@@ -191,10 +190,10 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
   // 根据节点类型创建默认配置
   const componentName = component.name
   if (componentName === 'Start') {
-    // Start 节点需要默认的 user_inputs（参考后端 AiWorkflowNodeService.createStartNode）
+    // Start 节点需要默认的 user_inputs
     createStartNode(newWfNode)
   } else if (componentName === 'End') {
-    // End 节点需要默认的 nodeConfig（参考 aideepin EndNodeProperty.vue）
+    // End 节点需要默认的 nodeConfig
     createEndNode(newWfNode)
   } else if (componentName === 'Classifier') {
     createClassifierNode(newWfNode, defaultModelName)
@@ -215,7 +214,7 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
   } else if (componentName === 'HttpRequest') {
     createHttpRequest(newWfNode)
   } else if (componentName === 'DocumentExtractor') {
-    // 🔥 新增：DocumentExtractor 节点自动创建 ref_input
+    // DocumentExtractor 节点自动创建 ref_input
     createDocumentExtractor(workflow, newWfNode)
   }
 
@@ -399,7 +398,6 @@ export function deleteEdgesBySourceHandle (workflow, uiWorkflow, source, sourceH
 
 /**
  * 创建开始节点的默认 user_inputs
- * 参考后端 AiWorkflowNodeService.createStartNode 方法
  * @param {object} node WorkflowNode
  */
 function createStartNode (node) {
@@ -422,7 +420,6 @@ function createStartNode (node) {
 
 /**
  * 创建结束节点配置
- * 参考 aideepin EndNodeProperty.vue: nodeConfig.result = '任务执行完成'
  * @param {object} node WorkflowNode
  */
 function createEndNode (node) {
@@ -698,7 +695,7 @@ export function getColorClassByComponentName (name) {
 
 /**
  * 创建文档提取节点配置
- * 🔥 自动创建一个 ref_input 关联到 Start 节点的第一个文件输入
+ * 自动创建一个 ref_input 关联到 Start 节点的第一个文件输入
  * @param {object} workflow WorkflowInfo
  * @param {object} node WorkflowNode
  */

@@ -25,8 +25,6 @@
 /**
  * MailSendNode 组件
  * 邮件发送节点
- * 严格参考 aideepin MailSendNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\MailSendNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 

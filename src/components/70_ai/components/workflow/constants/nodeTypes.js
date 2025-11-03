@@ -1,15 +1,14 @@
 /**
  * Workflow 节点类型常量
- * 基于 aideepin 原始定义
  */
 
 // 节点类型枚举
 export const NODE_TYPES = {
   START: 'start',
   END: 'end',
-  LLM: 'answer', // aideepin中为answer,对应LLM节点
+  LLM: 'answer', // 对应LLM节点
   CLASSIFIER: 'classifier',
-  BRANCH: 'switcher', // aideepin中为switcher,对应分支节点
+  BRANCH: 'switcher', // 对应分支节点
   TEMPLATE: 'template',
   DOCUMENT_EXTRACT: 'documentextractor',
   KEYWORD_EXTRACT: 'keywordextractor',

@@ -32,8 +32,6 @@
 /**
  * StartNode 组件
  * 工作流开始节点
- * 严格参考 aideepin StartNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\StartNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 
@@ -65,7 +63,7 @@ export default {
     const node = this.getNode()
     this.localUserInputs = [...(node.data.inputConfig?.user_inputs || [])]
 
-    // 🔥 关键：监听 X6 节点数据变化事件
+    // 监听 X6 节点数据变化事件
     node.on('change:data', ({ current }) => {
       // 更新本地状态，触发视图更新
       this.localUserInputs = [...(current.inputConfig?.user_inputs || [])]

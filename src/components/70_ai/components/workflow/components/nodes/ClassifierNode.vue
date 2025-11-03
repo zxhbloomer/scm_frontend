@@ -28,13 +28,6 @@
 /**
  * ClassifierNode 组件
  * 内容分类节点（动态端口）
- * 严格参考 aideepin ClassifierNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\ClassifierNode.vue
- *
- * 关键技术点：
- * 1. 每个 category 对应一个独立的输出端口（端口ID = category.category_uuid）
- * 2. 端口在 mounted 时动态添加到 X6 节点
- * 3. 显示模型名称和所有分类
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 
@@ -61,7 +54,6 @@ export default {
   methods: {
     /**
      * 计算分类端口Y坐标
-     * 参考 aideepin ClassifierNode.vue:29
      */
     getCategoryPortYPosition (categoryIndex) {
       const baseY = 60 // 头部高度
@@ -73,7 +65,6 @@ export default {
 
     /**
      * 更新节点端口
-     * 参考 X6 文档：dynamic ports API
      */
     updatePorts () {
       const x6Node = this.getNode()

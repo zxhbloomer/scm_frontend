@@ -1,6 +1,5 @@
 ﻿/**
  * Workflow API 服务
- * 基于 aideepin 原始实现,适配 SCM 前端
  */
 
 import request from '@/utils/request'
@@ -30,7 +29,7 @@ function cleanWorkflowData (workflow) {
       uuid: node.uuid || node.nodeUuid || node.node_uuid,
       workflowId: node.workflowId || node.workflow_id,
       workflowComponentId: node.workflowComponentId || node.workflow_component_id,
-      // 对齐 aideepin：只有 title，没有 name
+      // 只有 title，没有 name
       title: node.title,
       remark: node.remark,
       inputConfig: node.inputConfig || node.input_config,

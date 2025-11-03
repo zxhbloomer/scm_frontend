@@ -1,10 +1,6 @@
 /**
  * X6 节点形状注册
  * 注册所有 Workflow 自定义节点
- * 严格参考 aideepin 的节点类型和逻辑
- *
- * 技术栈：Vue 2.7 + @antv/x6-vue-shape
- * 参考文档：https://x6.antv.vision/zh/docs/tutorial/intermediate/vue
  */
 
 import { register } from '@antv/x6-vue-shape'
@@ -27,15 +23,10 @@ import HttpRequestNode from '../components/nodes/HttpRequestNode.vue'
  * 必须在 Graph 实例化之前调用
  */
 export function registerAllWorkflowNodes () {
-  // ==========================================================================
-  // 阶段1：基础节点（Start, End, Answer）
-  // ==========================================================================
-
   /**
    * Start 节点
    * - 只有右侧输出端口
    * - 显示所有用户输入字段
-   * 参考：aideepin StartNode.vue:11-31
    */
   register({
     shape: 'start',
@@ -67,7 +58,6 @@ export function registerAllWorkflowNodes () {
    * End 节点
    * - 只有左侧输入端口
    * - 显示结果配置
-   * 参考：aideepin EndNode.vue:14-22
    */
   register({
     shape: 'end',
@@ -99,7 +89,6 @@ export function registerAllWorkflowNodes () {
    * Answer 节点（LLM 回答）
    * - 左侧输入端口 + 右侧输出端口
    * - 显示模型名称
-   * 参考：aideepin AnswerNode.vue:17-27
    */
   register({
     shape: 'answer',
@@ -140,19 +129,12 @@ export function registerAllWorkflowNodes () {
     }
   })
 
-  // ==========================================================================
-  // 阶段2：复杂节点（Switcher, Classifier）
-  // ==========================================================================
-
   /**
    * Switcher 节点（条件分支）
    * - 左侧输入端口
    * - 右侧多个输出端口（动态，根据 cases 数量）
    * - 每个 case 对应一个输出端口（端口ID = case.uuid）
    * - 保底情况对应一个固定端口（端口ID = 'default_handle'）
-   *
-   * 参考：aideepin SwitcherNode.vue:26-64
-   * 端口动态添加参考：X6 文档 node.addPort() API
    */
   register({
     shape: 'switcher',
@@ -203,9 +185,6 @@ export function registerAllWorkflowNodes () {
    * - 左侧输入端口
    * - 右侧多个输出端口（动态，根据 categories 数量）
    * - 每个 category 对应一个输出端口（端口ID = category.category_uuid）
-   *
-   * 参考：aideepin ClassifierNode.vue:17-33
-   * 端口动态添加参考：X6 文档 node.addPort() API
    */
   register({
     shape: 'classifier',
@@ -251,13 +230,8 @@ export function registerAllWorkflowNodes () {
     }
   })
 
-  // ==========================================================================
-  // 阶段3：其他节点
-  // ==========================================================================
-
   /**
    * Template 节点（模板）
-   * 参考：aideepin TemplateNode.vue:14-23
    */
   register({
     shape: 'template',
@@ -300,7 +274,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * KnowledgeRetrieval 节点（知识库检索）
-   * 参考：aideepin KnowledgeRetrievalNode.vue:12-24
    */
   register({
     shape: 'knowledgeretrieval',
@@ -343,7 +316,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * DocumentExtractor 节点（文档提取）
-   * 参考：aideepin DocumentExtractorNode.vue:26-41
    */
   register({
     shape: 'documentextractor',
@@ -386,7 +358,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * KeywordExtractor 节点（关键词提取）
-   * 参考：aideepin KeywordExtractorNode.vue:17-27
    */
   register({
     shape: 'keywordextractor',
@@ -429,7 +400,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * FaqExtractor 节点（FAQ提取）
-   * 参考：aideepin FaqExtractorNode.vue
    */
   register({
     shape: 'faqextractor',
@@ -472,7 +442,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * HumanFeedback 节点（人工反馈）
-   * 参考：aideepin HumanFeedbackNode.vue:10-20
    */
   register({
     shape: 'humanfeedback',
@@ -515,7 +484,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * MailSend 节点（邮件发送）
-   * 参考：aideepin MailSendNode.vue:10-28
    */
   register({
     shape: 'mailsend',
@@ -558,7 +526,6 @@ export function registerAllWorkflowNodes () {
 
   /**
    * HttpRequest 节点（HTTP 请求）
-   * 参考：aideepin HttpRequestNode.vue:10-33
    */
   register({
     shape: 'httprequest',

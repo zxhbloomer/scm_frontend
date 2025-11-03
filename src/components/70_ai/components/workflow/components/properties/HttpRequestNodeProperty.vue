@@ -9,7 +9,7 @@
     <!-- URL -->
     <div class="property-section">
       <div class="section-title">URL</div>
-      <el-input v-model="nodeConfig.url" placeholder="请输入请求URL" />
+      <el-input :value="toStringValue(nodeConfig.url)" placeholder="请输入请求URL" @input="nodeConfig.url = $event" />
     </div>
 
     <!-- Method -->
@@ -52,12 +52,12 @@
           <el-table :data="nodeConfig.headers" size="small" border style="margin-bottom: 8px;">
             <el-table-column prop="name" label="Key" width="150">
               <template slot-scope="scope">
-                <el-input v-model="scope.row.name" size="small" />
+                <el-input :value="toStringValue(scope.row.name)" size="small" @input="scope.row.name = $event" />
               </template>
             </el-table-column>
             <el-table-column prop="value" label="Value">
               <template slot-scope="scope">
-                <el-input v-model="scope.row.value" size="small" />
+                <el-input :value="toStringValue(scope.row.value)" size="small" @input="scope.row.value = $event" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="80" align="center">
@@ -83,12 +83,12 @@
           <el-table :data="nodeConfig.params" size="small" border style="margin-bottom: 8px;">
             <el-table-column prop="name" label="Key" width="150">
               <template slot-scope="scope">
-                <el-input v-model="scope.row.name" size="small" />
+                <el-input :value="toStringValue(scope.row.name)" size="small" @input="scope.row.name = $event" />
               </template>
             </el-table-column>
             <el-table-column prop="value" label="Value">
               <template slot-scope="scope">
-                <el-input v-model="scope.row.value" size="small" />
+                <el-input :value="toStringValue(scope.row.value)" size="small" @input="scope.row.value = $event" />
               </template>
             </el-table-column>
             <el-table-column label="操作" width="80" align="center">
@@ -120,21 +120,23 @@
       <!-- JSON Body -->
       <div v-show="nodeConfig.content_type === 'application/json'" style="margin-top: 12px;">
         <el-input
-          v-model="nodeConfig.json_body"
+          :value="toStringValue(nodeConfig.json_body)"
           type="textarea"
           :autosize="{ minRows: 5, maxRows: 10 }"
           placeholder="请输入JSON格式数据"
+          @input="nodeConfig.json_body = $event"
         />
       </div>
 
       <!-- Text Body -->
       <div v-show="nodeConfig.content_type === 'text/plain'" style="margin-top: 12px;">
         <el-input
-          v-model="nodeConfig.text_body"
+          :value="toStringValue(nodeConfig.text_body)"
           type="textarea"
           :autosize="{ minRows: 5, maxRows: 10 }"
           placeholder="请输入文本内容"
           show-word-limit
+          @input="nodeConfig.text_body = $event"
         />
       </div>
 
@@ -143,12 +145,12 @@
         <el-table :data="nodeConfig.form_urlencoded_body" size="small" border style="margin-bottom: 8px;">
           <el-table-column prop="name" label="Key" width="150">
             <template slot-scope="scope">
-              <el-input v-model="scope.row.name" size="small" />
+              <el-input :value="toStringValue(scope.row.name)" size="small" @input="scope.row.name = $event" />
             </template>
           </el-table-column>
           <el-table-column prop="value" label="Value">
             <template slot-scope="scope">
-              <el-input v-model="scope.row.value" size="small" />
+              <el-input :value="toStringValue(scope.row.value)" size="small" @input="scope.row.value = $event" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="80" align="center">
@@ -170,12 +172,12 @@
         <el-table :data="nodeConfig.form_data_body" size="small" border style="margin-bottom: 8px;">
           <el-table-column prop="name" label="Key" width="150">
             <template slot-scope="scope">
-              <el-input v-model="scope.row.name" size="small" />
+              <el-input :value="toStringValue(scope.row.name)" size="small" @input="scope.row.name = $event" />
             </template>
           </el-table-column>
           <el-table-column prop="value" label="Value">
             <template slot-scope="scope">
-              <el-input v-model="scope.row.value" size="small" />
+              <el-input :value="toStringValue(scope.row.value)" size="small" @input="scope.row.value = $event" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="80" align="center">
@@ -254,7 +256,6 @@ export default {
 
   computed: {
     nodeConfig () {
-      // 初始化默认值
       if (!this.wfNode.nodeConfig.url) {
         this.$set(this.wfNode.nodeConfig, 'url', '')
       }
@@ -296,6 +297,26 @@ export default {
   },
 
   methods: {
+    toStringValue (val) {
+      if (val === null || val === undefined) {
+        return ''
+      }
+      if (typeof val === 'string') {
+        return val
+      }
+      if (typeof val === 'number' || typeof val === 'boolean') {
+        return String(val)
+      }
+      if (typeof val === 'object') {
+        try {
+          return JSON.stringify(val)
+        } catch (e) {
+          return ''
+        }
+      }
+      return String(val)
+    },
+
     handleAddHeader () {
       this.nodeConfig.headers.push({ name: '', value: '' })
     },

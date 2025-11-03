@@ -31,7 +31,7 @@
                 <div class="message-content">
                   <div v-if="runtime.input && Object.keys(runtime.input).length" class="input-content">
                     <div v-for="(value, key) in runtime.input" :key="key" class="input-item">
-                      <!-- ⭐ 判断是否为附件数组（支持新旧两种格式） -->
+                      <!-- 判断是否为附件数组（支持新旧两种格式） -->
                       <template v-if="isAttachmentArray(value)">
                         <!-- 使用SCM标准附件展示组件，normalizeAttachments转换旧格式 -->
                         <PreviewDescription :attachment-files="normalizeAttachments(value)" />
@@ -200,7 +200,7 @@
                 输入
               </div>
               <div v-for="(value, key) in node.inputData" :key="`input_${key}`" class="param-item">
-                <!-- ⭐ 特殊处理：附件类型使用SCM标准组件显示 -->
+                <!-- 特殊处理：附件类型使用SCM标准组件显示 -->
                 <template v-if="isAttachmentArray(value)">
                   <div class="param-label">
                     {{ key }}:
@@ -221,7 +221,7 @@
                 输出
               </div>
               <div v-for="(value, key) in node.outputData" :key="`output_${key}`" class="param-item">
-                <!-- ⭐ 特殊处理：type=4显示附件（使用SCM标准组件） -->
+                <!-- 特殊处理：type=4显示附件（使用SCM标准组件） -->
                 <template v-if="isAttachmentArray(value)">
                   <div class="param-label">
                     {{ key }}:
@@ -500,7 +500,6 @@ export default {
 
     /**
      * 运行工作流
-     * 参考aideepin: RunDetail.vue handleSubmit() (lines 122-202)
      * 对应后端: WorkflowController.run() 返回SSE流
      */
     handleRunWorkflow (inputs) {
@@ -525,7 +524,7 @@ export default {
       // 用于累积工作流输出
       let accumulatedOutput = ''
       let currentRuntimeUuid = null
-      let lastOutputData = null // ⭐ 保存最后一次NODE_OUTPUT的数据（用于兜底恢复）
+      let lastOutputData = null // 保存最后一次NODE_OUTPUT的数据（用于兜底恢复）
 
       // 使用回调函数处理SSE事件流
       workflowRun({
@@ -547,10 +546,10 @@ export default {
           // 保存runtime UUID用于后续更新
           currentRuntimeUuid = runtime.runtimeUuid
 
-          // ⭐ 将用户输入保存到runtime.input（用于聊天显示）
+          // 将用户输入保存到runtime.input（用于聊天显示）
           runtime.input = {}
           inputs.forEach(item => {
-            // ⭐ 如果是附件类型，保存完整附件对象数组；否则保存content
+            // 如果是附件类型，保存完整附件对象数组；否则保存content
             if (item.attachments) {
               runtime.input[item.name] = item.attachments
             } else {
@@ -579,7 +578,7 @@ export default {
 
         // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx, NODE_WAIT_FEEDBACK_BY_xxx
         messageReceived: (chunk, eventName) => {
-          // 处理人机交互提示事件（参考aideepin: RunDetail.vue lines 185-189）
+          // 处理人机交互提示事件
           if (eventName && eventName.includes('[NODE_WAIT_FEEDBACK_BY_') && currentRuntimeUuid) {
             const tip = chunk || '请输入您的反馈'
             // 调用WorkflowRunDetail组件的setHumanFeedback方法
@@ -601,11 +600,11 @@ export default {
 
           // 处理NODE_CHUNK事件：累积LLM流式输出
           if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
-            // ⭐ 修复：检查chunk是否有效，避免拼接null/undefined导致显示"null"/"undefined"
+            // 修复：检查chunk是否有效，避免拼接null/undefined导致显示"null"/"undefined"
             if (chunk !== null && chunk !== undefined) {
               accumulatedOutput += chunk
 
-              // 🔧 完全参考RAG实现:使用splice替换对象（不使用$nextTick，避免批量合并）
+              // 使用splice替换对象（不使用$nextTick，避免批量合并）
               if (currentRuntimeUuid) {
                 const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
                 if (index !== -1) {
@@ -622,18 +621,18 @@ export default {
             if (chunk && currentRuntimeUuid) {
               try {
                 const outputData = JSON.parse(chunk)
-                lastOutputData = outputData // ⭐ 保存最后一次NODE_OUTPUT数据（用于doneCallback兜底恢复）
+                lastOutputData = outputData // 保存最后一次NODE_OUTPUT数据（用于doneCallback兜底恢复）
                 const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
                 if (index !== -1) {
                   // 检查输出数据格式：{name:"output", content:{value:"xxx"}}
-                  // ⭐ 关键修复：只处理name="output"的NODE_OUTPUT事件，忽略其他name（如var_files、attachments等）
+                  // 关键修复：只处理name="output"的NODE_OUTPUT事件，忽略其他name（如var_files、attachments等）
                   if (outputData.name === 'output' && outputData.content && outputData.content.value !== undefined && outputData.content.value !== null) {
                     const nodeOutput = outputData.content.value
 
-                    // ⭐ 修复：只有当nodeOutput不是字符串"null"且不为空时才处理
+                    // 修复：只有当nodeOutput不是字符串"null"且不为空时才处理
                     // 关键问题：某些节点可能输出字符串"null"，需要过滤掉并允许后续真正内容覆盖
                     if (nodeOutput !== 'null' && nodeOutput !== '') {
-                      // 🔧 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
+                      // 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
                       // 特别处理：如果accumulatedOutput是字符串"null"，也要覆盖它
                       if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
                         accumulatedOutput = nodeOutput
@@ -647,7 +646,7 @@ export default {
                     console.log('[DEBUG] NODE_OUTPUT: name=' + outputData.name + '，非output输出，忽略')
                   } else if (outputData.name === 'output' && outputData.output !== undefined && outputData.output !== null) {
                     // 兼容旧格式：{name:"output", output: "xxx"}
-                    // ⭐ 修复：只有当name="output"且output不是字符串"null"且不为空时才处理
+                    // 修复：只有当name="output"且output不是字符串"null"且不为空时才处理
                     if (outputData.output !== 'null' && outputData.output !== '') {
                       if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
                         accumulatedOutput = outputData.output
@@ -684,10 +683,10 @@ export default {
             if (index !== -1) {
               const oldRuntime = this.localRuntimeList[index]
 
-              // ⭐ 增强的output处理逻辑：多重fallback确保output不为空
+              // 增强的output处理逻辑：多重fallback确保output不为空
               let finalOutput = oldRuntime.output || accumulatedOutput
 
-              // 🛡️ 兜底1：如果finalOutput仍然为空，尝试从lastOutputData恢复
+              // 兜底1：如果finalOutput仍然为空，尝试从lastOutputData恢复
               if (!finalOutput && lastOutputData) {
                 if (lastOutputData.content && lastOutputData.content.value) {
                   finalOutput = lastOutputData.content.value
@@ -696,7 +695,7 @@ export default {
                 }
               }
 
-              // 🛡️ 兜底2：如果仍然为空，设置为空字符串（避免null）
+              // 兜底2：如果仍然为空，设置为空字符串（避免null）
               if (finalOutput === null || finalOutput === undefined) {
                 finalOutput = ''
               }
@@ -764,7 +763,6 @@ export default {
 
     /**
      * 处理恢复工作流执行（响应WorkflowRunDetail的resume事件）
-     * 参考aideepin: RunDetail.vue resume() (lines 220-235)
      */
     async handleResumeWorkflow (data) {
       const { runtimeUuid, feedbackContent } = data
@@ -852,9 +850,9 @@ export default {
       return String(value)
     },
 
-    // ⭐ 新增：判断是否为附件数组（支持新旧两种格式）
+    // 新增：判断是否为附件数组（支持新旧两种格式）
     isAttachmentArray (value) {
-      // ⭐ 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
+      // 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
       let actualValue = value
       if (typeof value === 'object' && !Array.isArray(value) && value.value !== undefined) {
         actualValue = value.value
@@ -877,9 +875,9 @@ export default {
       return false
     },
 
-    // ⭐ 新增：将附件数组标准化为新格式（兼容旧格式）
+    // 新增：将附件数组标准化为新格式（兼容旧格式）
     normalizeAttachments (value) {
-      // ⭐ 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
+      // 先提取嵌套的value字段（旧数据格式：{type:4, value:["url"], title:"附件"}）
       let actualValue = value
       if (typeof value === 'object' && !Array.isArray(value) && value.value !== undefined) {
         actualValue = value.value
@@ -912,22 +910,29 @@ export default {
 
     /**
      * 获取节点显示名称
-     * 通过 nodeId 关联 workflow.nodes 获取节点标题
+     * 优先使用后端返回的 nodeTitle 字段（避免通过nodeId匹配workflow.nodes的复杂逻辑）
+     * 降级方案：如果nodeTitle为空，通过 nodeId 关联 workflow.nodes 获取节点标题
      */
     getNodeDisplayName (node) {
-      if (!node || !node.nodeId) {
+      if (!node) {
         return '未命名节点'
       }
 
-      // 通过 nodeId 查找 workflow.nodes
-      const workflowNode = this.workflow.nodes?.find(n => n.id === node.nodeId)
+      // 优先使用后端返回的 nodeTitle 字段（后端在 AiWorkflowRuntimeNodeService.listByWfRuntimeId 中填充）
+      if (node.nodeTitle) {
+        return node.nodeTitle
+      }
 
-      if (workflowNode) {
-        // 优先级：title > wfComponent.title > wfComponent.name
-        return workflowNode.title ||
-               workflowNode.wfComponent?.title ||
-               workflowNode.wfComponent?.name ||
-               '未命名节点'
+      // 降级方案：通过 nodeId 匹配 workflow.nodes（兼容旧数据）
+      if (node.nodeId) {
+        const workflowNode = this.workflow.nodes?.find(n => n.id === node.nodeId)
+        if (workflowNode) {
+          // 优先级：title > wfComponent.title > wfComponent.name
+          return workflowNode.title ||
+                 workflowNode.wfComponent?.title ||
+                 workflowNode.wfComponent?.name ||
+                 '未命名节点'
+        }
       }
 
       return '未命名节点'

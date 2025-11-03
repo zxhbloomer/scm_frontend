@@ -17,8 +17,6 @@
 /**
  * DocumentExtractorNode 组件
  * 文档提取节点
- * 严格参考 aideepin DocumentExtractorNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\DocumentExtractorNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 
@@ -57,7 +55,6 @@ export default {
     },
 
     /**
-     * 🔥 方案A：模仿 aideepin 实现
      * 始终显示开始节点第一个文件输入的 title
      * 不管 ref_input 关联的是哪个文件
      */

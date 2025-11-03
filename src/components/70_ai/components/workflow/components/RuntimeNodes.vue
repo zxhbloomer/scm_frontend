@@ -97,8 +97,6 @@
 /**
  * RuntimeNodes 组件
  * 用于显示工作流运行时节点的输入输出
- * 严格参考 aideepin: RuntimeNodes.vue
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\RuntimeNodes.vue
  */
 export default {
   name: 'RuntimeNodes',
@@ -126,7 +124,6 @@ export default {
   methods: {
     /**
      * 获取节点图标类名
-     * 参考 aideepin: getIconByComponentName
      */
     getNodeIcon (node) {
       const component = node.wf_component || node.wfComponent
@@ -175,7 +172,6 @@ export default {
 
     /**
      * 格式化输入输出值
-     * 参考 aideepin: content.value 显示逻辑
      */
     formatIOValue (content) {
       if (!content) return '无内容'

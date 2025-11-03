@@ -23,8 +23,6 @@
 /**
  * WfLLMSelector 组件
  * AI模型选择器组件，用于workflow节点中选择LLM模型
- * 严格参考 aideepin 的 WfLLMSelector.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\WfLLMSelector.vue
  *
  * 技术迁移：
  * - Naive UI NSelect → Element UI el-select
@@ -110,14 +108,13 @@ export default {
 
     /**
      * 处理模型选择
-     * 严格参考 aideepin 的 handleSelect 方法
      * @param {Number} modelId 选中的模型ID
      */
     handleSelect (modelId) {
       // 根据ID查找模型对象
       const model = this.getLlmById(modelId)
 
-      // 触发事件，传递模型名称给父组件（与 aideepin 保持一致）
+      // 触发事件，传递模型名称给父组件
       if (model) {
         this.$emit('llm-selected', model.name)
       } else {

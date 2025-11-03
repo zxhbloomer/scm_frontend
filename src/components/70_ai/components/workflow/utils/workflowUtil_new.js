@@ -1,6 +1,6 @@
 /**
  * Workflow 工具函数
- * 基于 aideepin 原始实现,适配 Vue 2.7.16 + AntV X6
+ * 适配 Vue 2.7.16 + AntV X6
  */
 
 import { nanoid } from 'nanoid'

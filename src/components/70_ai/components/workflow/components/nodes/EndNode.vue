@@ -16,8 +16,6 @@
 /**
  * EndNode 组件
  * 工作流结束节点
- * 严格参考 aideepin EndNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\EndNode.vue
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 

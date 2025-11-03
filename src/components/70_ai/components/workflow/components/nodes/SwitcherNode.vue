@@ -64,8 +64,6 @@
 /**
  * SwitcherNode 组件
  * 条件分支节点（动态端口）
- * 严格参考 aideepin SwitcherNode.vue 实现
- * 引用：D:\2025_project\20_project_in_github\99_tools\aideepin\langchain4j-aideepin-web\src\views\workflow\components\nodes\SwitcherNode.vue
  *
  * 关键技术点：
  * 1. 每个 case 对应一个独立的输出端口（端口ID = case.uuid）
@@ -75,7 +73,7 @@
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 
-// 运算符描述映射（硬编码，参考 aideepin 后端返回的数据）
+// 运算符描述映射
 const OPERATOR_DESC_MAP = {
   'contains': '包含',
   'not contains': '不包含',
@@ -108,17 +106,14 @@ export default {
 
   mounted () {
     // 动态添加端口
-    // 参考 X6 文档：node.addPort() API
     this.updatePorts()
   },
 
   methods: {
     /**
      * 获取输入标签
-     * 参考 aideepin getInputLabelFromParamName
-     *
-     * 简化实现：直接从 node.data 中查找
-     * 因为 X6 Vue Shape 组件无法访问外部 Vuex store
+     * 从 node.data 中查找
+     * X6 Vue Shape 组件无法访问外部 Vuex store
      */
     getInputLabel (nodeUuid, paramName) {
       // 1. 从当前画布的 X6 Graph 中查找对应节点
@@ -159,7 +154,6 @@ export default {
 
     /**
      * 计算端口Y坐标
-     * 参考 aideepin SwitcherNode.vue 的 yposition 逻辑
      */
     getPortYPosition (caseIndex) {
       const baseY = 60 // 头部高度
@@ -205,7 +199,6 @@ export default {
 
     /**
      * 更新节点端口
-     * 参考 X6 文档：dynamic ports
      */
     updatePorts () {
       const x6Node = this.getNode()

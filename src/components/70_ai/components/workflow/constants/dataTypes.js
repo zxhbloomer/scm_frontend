@@ -1,6 +1,5 @@
 /**
  * Workflow 节点数据类型常量
- * NodeIOData 类型定义,基于 aideepin 原始实现
  */
 
 // 节点输入输出数据类型枚举
