@@ -126,6 +126,20 @@ export default {
     handleKnowledgeSelected (uuid, name) {
       this.nodeConfig.knowledge_base_uuid = uuid
       this.nodeConfig.knowledge_base_name = name
+
+      // 手动触发 X6 节点重新渲染
+      // 使用 Vue.set 确保响应式更新
+      this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', uuid)
+      this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', name)
+
+      // 强制更新父组件
+      this.$nextTick(() => {
+        // 通过事件总线通知 WorkflowDesigner 更新 X6
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     }
   }
 }

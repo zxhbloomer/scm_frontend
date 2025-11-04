@@ -181,10 +181,18 @@ export default {
         // 注入开始节点的文件输入信息
         const enhancedNodeData = this.injectStartNodeFileInputs(nodeData)
 
+        // 深拷贝 nodeConfig 以确保 X6 能检测到数据变化
+        const nodeConfig = { ...enhancedNodeData.nodeConfig }
+
+        // 如果存在 categories，深拷贝它（内容归类节点）
+        if (nodeConfig.categories) {
+          nodeConfig.categories = nodeConfig.categories.map(cat => ({ ...cat }))
+        }
+
         // 创建新对象以触发视图更新
         const newData = {
           ...enhancedNodeData,
-          nodeConfig: { ...enhancedNodeData.nodeConfig },
+          nodeConfig: nodeConfig,
           inputConfig: {
             ...enhancedNodeData.inputConfig,
             ref_inputs: [...(enhancedNodeData.inputConfig.ref_inputs || [])],
@@ -300,11 +308,14 @@ export default {
           }
         },
         panning: {
-          enabled: true
+          enabled: true,
+          eventTypes: ['leftMouseDown'] // 只允许鼠标左键拖拽平移
         },
         mousewheel: {
           enabled: true,
-          modifiers: ['ctrl', 'meta']
+          modifiers: [], // 直接滚轮缩放，不需要按Ctrl
+          minScale: 0.2, // 最小缩放到20%
+          maxScale: 4 // 最大放大到400%
         },
         connecting: {
           snap: true,
@@ -508,12 +519,17 @@ export default {
         this.addNodeToGraph(node, px, py)
       })
 
-      // 渲染边
-      if (this.workflow.edges) {
-        this.workflow.edges.forEach(edge => {
-          this.addEdgeToGraph(edge)
-        })
-      }
+      // 等待所有节点的Vue组件mounted完成后再渲染边
+      // 这对于动态端口节点（内容归类、条件分支）特别重要
+      // 因为它们的端口是在mounted中创建的
+      // 使用setTimeout确保所有组件的mounted和端口创建都已完成
+      setTimeout(() => {
+        if (this.workflow.edges) {
+          this.workflow.edges.forEach(edge => {
+            this.addEdgeToGraph(edge)
+          })
+        }
+      }, 100)
 
       // 不使用自动居中，保持节点在指定位置 (10, 50)
       // this.$nextTick(() => {
@@ -559,14 +575,20 @@ export default {
 
     addEdgeToGraph (wfEdge) {
       // 端口配置：
-      // - 所有节点的输出端口ID = 'right' (在 registerX6Nodes.js 中定义)
-      // - 所有节点的输入端口ID = 'left' (在 registerX6Nodes.js 中定义)
-      // - 不再需要根据节点类型判断，统一使用注册时的端口ID
+      // - 普通节点：输出端口='right'，输入端口='left'
+      // - 动态端口节点（内容归类、条件分支）：使用 sourceHandle/targetHandle
+      // - 优先使用 wfEdge 中的 handle，如果没有则使用默认值
 
       this.graph.addEdge({
         id: wfEdge.uuid,
-        source: { cell: wfEdge.sourceNodeUuid, port: 'right' }, // 使用注册的输出端口ID
-        target: { cell: wfEdge.targetNodeUuid, port: 'left' }, // 使用注册的输入端口ID
+        source: {
+          cell: wfEdge.sourceNodeUuid,
+          port: wfEdge.sourceHandle || 'right' // 动态端口或默认端口
+        },
+        target: {
+          cell: wfEdge.targetNodeUuid,
+          port: wfEdge.targetHandle || 'left' // 动态端口或默认端口
+        },
         router: {
           name: 'manhattan', // 使用与连接配置相同的路由
           args: {

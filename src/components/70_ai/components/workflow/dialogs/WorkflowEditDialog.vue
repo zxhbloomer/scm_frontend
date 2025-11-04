@@ -235,7 +235,7 @@ export default {
 
       this.saving = true
       const params = {
-        uuid: this.formData.uuid,
+        workflowUuid: this.formData.uuid,
         title: this.formData.title,
         remark: this.formData.remark,
         isPublic: this.formData.isPublic,

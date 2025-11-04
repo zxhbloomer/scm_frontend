@@ -19,6 +19,7 @@
         type="textarea"
         :autosize="{ minRows: 3, maxRows: 10 }"
         placeholder="请输入任务完成后的内容"
+        @input="handleResultChange"
       />
     </div>
   </div>
@@ -54,6 +55,19 @@ export default {
         this.$set(this.wfNode.nodeConfig, 'result', '任务执行完成')
       }
       return this.wfNode.nodeConfig
+    }
+  },
+
+  methods: {
+    handleResultChange () {
+      // 手动触发 X6 节点重新渲染
+      this.$nextTick(() => {
+        // 通过事件总线通知 WorkflowDesigner 更新 X6
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     }
   }
 }

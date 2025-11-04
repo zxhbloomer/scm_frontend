@@ -9,7 +9,12 @@
       />
     </div>
 
-    <div v-if="selectedNode" class="panel-content">
+    <div
+      v-if="selectedNode"
+      ref="panelContent"
+      class="panel-content"
+      :style="{ height: contentHeight }"
+    >
       <!-- 节点基本信息 -->
       <div class="node-info-section">
         <div class="node-info-header">
@@ -149,7 +154,11 @@
       </div>
     </div>
 
-    <div v-else class="panel-empty">
+    <div
+      v-else
+      class="panel-empty"
+      :style="{ height: contentHeight }"
+    >
       <i class="el-icon-info" />
       <p>请选择一个节点</p>
     </div>
@@ -207,7 +216,8 @@ export default {
 
   data () {
     return {
-      nodeTitle: ''
+      nodeTitle: '',
+      contentHeight: 'calc(100% - 157px)' // 减去头部高度（padding: 16px * 2 + border: 1px + 内容高度）
     }
   },
 
@@ -280,13 +290,13 @@ export default {
 }
 
 .panel-content {
-  flex: 1;
+  /* 高度通过 :style 动态计算，不在CSS中固定 */
   overflow-y: auto;
   padding: 16px;
 }
 
 .panel-empty {
-  flex: 1;
+  /* 高度通过 :style 动态计算，不在CSS中固定 */
   display: flex;
   flex-direction: column;
   align-items: center;

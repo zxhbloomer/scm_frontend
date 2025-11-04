@@ -99,7 +99,7 @@ export default {
         this.mineGroup.children = []
         if (response.data && response.data.records) {
           this.mineGroup.children = response.data.records.map(item => ({
-            value: item.uuid,
+            value: item.kbUuid,
             label: item.title,
             is_public: item.isPublic
           }))
@@ -117,7 +117,7 @@ export default {
         this.publicGroup.children = []
         if (response.data && response.data.records) {
           this.publicGroup.children = response.data.records.map(item => ({
-            value: item.uuid,
+            value: item.kbUuid,
             label: item.title,
             is_public: item.isPublic
           }))
@@ -156,7 +156,7 @@ export default {
 
           if (response.data) {
             const item = {
-              value: response.data.uuid,
+              value: response.data.kbUuid, // 修复：使用 kbUuid 而不是 uuid
               label: response.data.title,
               is_public: response.data.isPublic
             }

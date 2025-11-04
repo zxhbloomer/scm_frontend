@@ -6,7 +6,7 @@
     <!-- 结果显示 -->
     <div class="node-content">
       <div class="result-line">
-        {{ node.nodeConfig.result || '无' }}
+        {{ localResult || '无' }}
       </div>
     </div>
   </div>
@@ -28,10 +28,29 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态，用于显示
+      localResult: ''
+    }
+  },
+
   computed: {
     node () {
       return this.getNode().data
     }
+  },
+
+  mounted () {
+    // 初始化本地状态
+    const node = this.getNode()
+    this.localResult = node.data.nodeConfig?.result || '任务执行完成'
+
+    // 监听 X6 节点数据变化事件
+    node.on('change:data', ({ current }) => {
+      // 更新本地状态，触发视图更新
+      this.localResult = current.nodeConfig?.result || '任务执行完成'
+    })
   }
 }
 </script>

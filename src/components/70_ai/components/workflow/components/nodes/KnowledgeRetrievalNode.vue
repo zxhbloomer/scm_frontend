@@ -6,8 +6,8 @@
     <!-- 节点内容 -->
     <div class="node-content">
       <div class="kb-line">
-        <i :class="node.nodeConfig.is_strict ? 'el-icon-lock' : 'el-icon-unlock'" class="kb-icon" />
-        <span class="kb-name">{{ node.nodeConfig.knowledge_base_name || '未选择知识库' }}</span>
+        <i :class="localIsStrict ? 'el-icon-lock' : 'el-icon-unlock'" class="kb-icon" />
+        <span class="kb-name">{{ localKnowledgeBaseName || '未选择知识库' }}</span>
       </div>
     </div>
   </div>
@@ -29,10 +29,32 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态，用于显示
+      localKnowledgeBaseName: '',
+      localIsStrict: true
+    }
+  },
+
   computed: {
     node () {
       return this.getNode().data
     }
+  },
+
+  mounted () {
+    // 初始化本地状态
+    const node = this.getNode()
+    this.localKnowledgeBaseName = node.data.nodeConfig?.knowledge_base_name || '未选择知识库'
+    this.localIsStrict = node.data.nodeConfig?.is_strict !== false
+
+    // 监听 X6 节点数据变化事件
+    node.on('change:data', ({ current }) => {
+      // 更新本地状态，触发视图更新
+      this.localKnowledgeBaseName = current.nodeConfig?.knowledge_base_name || '未选择知识库'
+      this.localIsStrict = current.nodeConfig?.is_strict !== false
+    })
   }
 }
 </script>

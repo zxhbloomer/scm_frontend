@@ -39,6 +39,7 @@
                 type="textarea"
                 :autosize="{ minRows: 1, maxRows: 3 }"
                 placeholder="请输入类别名称"
+                @input="handleCategoryNameChange"
               />
             </div>
             <div class="category-field">
@@ -129,6 +130,19 @@ export default {
      */
     handleLLMSelected (modelName) {
       this.nodeConfig.model_name = modelName
+
+      // 手动触发 X6 节点重新渲染
+      // 使用 Vue.set 确保响应式更新
+      this.$set(this.wfNode.nodeConfig, 'model_name', modelName)
+
+      // 强制更新父组件
+      this.$nextTick(() => {
+        // 通过事件总线通知 WorkflowDesigner 更新 X6
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     },
 
     /**
@@ -174,6 +188,14 @@ export default {
 
       // 展开新增的类别
       this.activeCategories.push((this.nodeConfig.categories.length - 1).toString())
+
+      // 触发节点更新
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     },
 
     /**
@@ -192,7 +214,28 @@ export default {
 
         // 删除类别
         this.nodeConfig.categories.splice(idx, 1)
+
+        // 触发节点更新
+        this.$nextTick(() => {
+          this.$root.$emit('workflow:update-node', {
+            nodeUuid: this.wfNode.uuid,
+            nodeData: this.wfNode
+          })
+        })
       }
+    },
+
+    /**
+     * 处理分类名称变化
+     */
+    handleCategoryNameChange () {
+      // 触发节点更新
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
     }
   }
 }

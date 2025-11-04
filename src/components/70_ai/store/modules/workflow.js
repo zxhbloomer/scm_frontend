@@ -207,12 +207,38 @@ const mutations = {
   UPDATE_BASE_INFO (state, { uuid, workflow }) {
     const wf = state.myWorkflows.find(item => item.workflowUuid === uuid)
     if (wf) {
+      const oldIsPublic = wf.isPublic
+
       Object.assign(wf, {
         title: workflow.title,
         remark: workflow.remark,
         isPublic: workflow.isPublic,
         dbversion: workflow.dbversion
       })
+
+      // 如果公开状态发生变化，同步更新 publicWorkflows 列表
+      if (oldIsPublic !== workflow.isPublic) {
+        if (workflow.isPublic) {
+          // 改为公开：添加到公开列表（如果不存在）
+          const existsInPublic = state.publicWorkflows.find(item => item.workflowUuid === uuid)
+          if (!existsInPublic) {
+            state.publicWorkflows.push(wf)
+          }
+        } else {
+          // 改为私有：从公开列表移除
+          state.publicWorkflows = state.publicWorkflows.filter(item => item.workflowUuid !== uuid)
+        }
+      } else if (workflow.isPublic) {
+        // 公开状态未变但仍是公开：更新公开列表中的数据
+        const publicWf = state.publicWorkflows.find(item => item.workflowUuid === uuid)
+        if (publicWf) {
+          Object.assign(publicWf, {
+            title: workflow.title,
+            remark: workflow.remark,
+            dbversion: workflow.dbversion
+          })
+        }
+      }
 
       // 如果当前激活的工作流被更新，也更新 activeWorkflowInfo
       if (state.activeUuid === uuid) {
@@ -629,7 +655,11 @@ const actions = {
       // 关键：清空列表，确保下面的重新加载会替换而不是追加
       commit('CLEAR_WORKFLOWS')
 
-      await dispatch('loadMyWorkflows', { page: 1, pageSize: 20 })
+      // 同时刷新"我的工作流"和"公开工作流"列表
+      await Promise.all([
+        dispatch('loadMyWorkflows', { page: 1, pageSize: 20 }),
+        dispatch('loadPublicWorkflows', { page: 1, pageSize: 20 })
+      ])
     } catch (error) {
       // 不抛出错误，防止关闭流程被中断
     }
