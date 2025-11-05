@@ -52,6 +52,23 @@
       @close-feedback="closeFeedback"
       @feedback="handleFeedback"
     />
+
+    <!-- 全屏拖放引导层 -->
+    <transition name="fade">
+      <div
+        v-if="showGlobalDropZone"
+        class="global-drop-zone"
+        @drop.prevent="handleGlobalDrop"
+        @dragover.prevent
+        @dragleave="handleGlobalDragLeave"
+      >
+        <div class="drop-hint">
+          <i class="el-icon-upload" style="font-size: 48px; color: #409eff;" />
+          <p class="hint-text">拖拽文件到这里上传</p>
+          <p class="hint-subtext">支持图片、文档、音频等文件</p>
+        </div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -116,13 +133,31 @@ export default {
   data () {
     return {
       showFeedback: false,
-      feedbackMessage: null
+      feedbackMessage: null,
+      // 全局拖放引导层
+      showGlobalDropZone: false,
+      dragLeaveTimer: null
     }
   },
 
   computed: {
     isTyping () {
       return this.isLoading || this.$store.getters['chat/chatIsTyping']
+    }
+  },
+
+  mounted () {
+    // 监听全局拖动事件
+    window.addEventListener('dragenter', this.handleWindowDragEnter)
+    window.addEventListener('dragover', this.handleWindowDragOver)
+  },
+
+  beforeDestroy () {
+    // 移除全局事件监听
+    window.removeEventListener('dragenter', this.handleWindowDragEnter)
+    window.removeEventListener('dragover', this.handleWindowDragOver)
+    if (this.dragLeaveTimer) {
+      clearTimeout(this.dragLeaveTimer)
     }
   },
 
@@ -206,6 +241,68 @@ export default {
         .catch(error => {
           this.$message.error('创建新对话失败：' + error.message)
         })
+    },
+
+    // 全局拖放事件处理
+    handleWindowDragEnter (e) {
+      // 检测是否拖动文件（而非页面元素）
+      if (e.dataTransfer && e.dataTransfer.types) {
+        const hasFiles = Array.from(e.dataTransfer.types).includes('Files')
+        if (hasFiles) {
+          console.log('🌍 全局检测到文件拖动')
+          this.showGlobalDropZone = true
+        }
+      }
+    },
+
+    handleWindowDragOver (e) {
+      // 持续检测拖动，保持overlay显示
+      if (this.showGlobalDropZone) {
+        e.preventDefault()
+      }
+    },
+
+    handleGlobalDragLeave (e) {
+      // 使用延迟确保真正离开（避免子元素触发）
+      if (this.dragLeaveTimer) {
+        clearTimeout(this.dragLeaveTimer)
+      }
+
+      this.dragLeaveTimer = setTimeout(() => {
+        console.log('👋 离开拖放区域')
+        this.showGlobalDropZone = false
+      }, 100)
+    },
+
+    handleGlobalDrop (e) {
+      console.log('🎯 全局drop触发')
+      // 隐藏overlay
+      this.showGlobalDropZone = false
+
+      // 获取文件
+      const files = e.dataTransfer?.files
+      if (!files || files.length === 0) {
+        console.warn('⚠️ 没有检测到文件')
+        return
+      }
+
+      // 转发到ChatFooter的ChatInputWrap处理
+      // 通过ref访问ChatFooter，再访问其子组件ChatInputWrap
+      const chatFooter = this.$children.find(child => child.$options.name === 'ChatFooter')
+      if (chatFooter) {
+        const chatInputWrap = chatFooter.$children.find(child => child.$options.name === 'ChatInputWrap')
+        if (chatInputWrap) {
+          // 模拟调用processFile方法
+          Array.from(files).forEach(file => {
+            console.log('📤 转发文件到ChatInputWrap:', file.name)
+            chatInputWrap.processFile(file)
+          })
+        } else {
+          console.error('❌ 找不到ChatInputWrap组件')
+        }
+      } else {
+        console.error('❌ 找不到ChatFooter组件')
+      }
     }
   }
 }
@@ -276,6 +373,89 @@ export default {
 @media (max-height: 600px) {
   .chat-panel {
     min-height: 400px;
+  }
+}
+
+/* 全局拖放引导层样式 */
+.global-drop-zone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.drop-hint {
+  background: white;
+  padding: 60px 80px;
+  border-radius: 16px;
+  border: 3px dashed #409eff;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.hint-text {
+  font-size: 24px;
+  color: #409eff;
+  margin: 20px 0 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.hint-subtext {
+  font-size: 14px;
+  color: #909399;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* 脉冲动画 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 8px 32px rgba(64, 158, 255, 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 12px 40px rgba(64, 158, 255, 0.5);
+  }
+}
+
+/* 渐入渐出动画 */
+.fade-enter-active {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.fade-leave-active {
+  animation: fadeOut 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
   }
 }
 </style>

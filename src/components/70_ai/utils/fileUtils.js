@@ -3,6 +3,18 @@
  * 适配SCM Vue2.7.16
  */
 
+// 导入SVG图标
+import csvIcon from '@/assets/fileType/csv-icon.svg'
+import docIcon from '@/assets/fileType/doc-icon.svg'
+import fileIcon from '@/assets/fileType/file-icon.svg'
+import htmlIcon from '@/assets/fileType/html-icon.svg'
+import mdIcon from '@/assets/fileType/md-icon.svg'
+import pdfIcon from '@/assets/fileType/pdf-icon.svg'
+import txtIcon from '@/assets/fileType/txt-icon.svg'
+import unknownIcon from '@/assets/fileType/unknown-icon.svg'
+import xlsxIcon from '@/assets/fileType/xlsx-icon.svg'
+import zipIcon from '@/assets/fileType/zip-icon.svg'
+
 // 文件类型扩展名定义
 export const FILE_EXTENSIONS = {
   image: ['JPG', 'JPEG', 'PNG', 'GIF', 'BMP'],
@@ -30,22 +42,35 @@ const FILE_ICON_MAP = {
   zip: 'zip', rar: 'zip'
 }
 
+// SVG图标映射
+const FILE_ICONS = {
+  image: fileIcon,
+  pdf: pdfIcon,
+  word: docIcon,
+  excel: xlsxIcon,
+  ppt: fileIcon,
+  txt: txtIcon,
+  markdown: mdIcon,
+  html: htmlIcon,
+  csv: csvIcon,
+  audio: fileIcon,
+  video: fileIcon,
+  zip: zipIcon,
+  default: unknownIcon
+}
+
 /**
  * 获取文件图标URL
  * @param {string} fileName - 文件名
- * @returns {string} 图标URL
+ * @returns {string} SVG图标路径
  */
 export function getFileIconUrl (fileName) {
-  if (!fileName) return require('@/assets/icons/file-default.png')
+  if (!fileName) return FILE_ICONS.default
 
   const extension = fileName.split('.').pop()?.toLowerCase()
   const iconType = FILE_ICON_MAP[extension] || 'default'
 
-  try {
-    return require(`@/assets/icons/file-${iconType}.png`)
-  } catch (e) {
-    return require('@/assets/icons/file-default.png')
-  }
+  return FILE_ICONS[iconType] || FILE_ICONS.default
 }
 
 /**
