@@ -55,6 +55,25 @@
       </el-radio-group>
     </div>
 
+    <!-- 图谱检索 -->
+    <div class="property-section">
+      <div class="section-title">
+        图谱检索
+        <el-tooltip placement="top">
+          <div slot="content">
+            <div>启用后将同时执行向量检索和图谱检索，合并实体和关系信息</div>
+            <div>需要知识库完成图谱化索引</div>
+          </div>
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.enable_graph_retrieval"
+        active-text="启用"
+        inactive-text="关闭"
+      />
+    </div>
+
     <!-- 默认回复内容 -->
     <div class="property-section">
       <div class="section-title">
@@ -111,6 +130,9 @@ export default {
       }
       if (this.wfNode.nodeConfig.is_strict === undefined) {
         this.$set(this.wfNode.nodeConfig, 'is_strict', true)
+      }
+      if (this.wfNode.nodeConfig.enable_graph_retrieval === undefined) {
+        this.$set(this.wfNode.nodeConfig, 'enable_graph_retrieval', false)
       }
       if (!this.wfNode.nodeConfig.default_response) {
         this.$set(this.wfNode.nodeConfig, 'default_response', '很抱歉，我无法找到相关答案。')

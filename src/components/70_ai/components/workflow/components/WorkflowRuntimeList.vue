@@ -327,12 +327,19 @@ export default {
   },
 
   watch: {
-    // 只需要一个 watch，监听 workflow 是否就绪
-    workflowReady: {
+    // 监听 workflow.workflowUuid 变化，切换工作流时自动刷新
+    'workflow.workflowUuid': {
       immediate: true,
-      handler (isReady) {
-        if (isReady) {
+      handler (newUuid, oldUuid) {
+        // 当uuid存在时加载数据（首次加载或切换工作流）
+        if (newUuid) {
+          // 重置分页状态
+          this.currentPage = 1
+          this.loadedAll = false
           this.loadRuntimeList()
+        } else {
+          // 如果uuid为空，清空列表
+          this.localRuntimeList = []
         }
       }
     },
