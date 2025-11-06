@@ -74,6 +74,24 @@
       />
     </div>
 
+    <!-- 图谱检索模型选择（仅当启用图谱检索时显示） -->
+    <div v-if="nodeConfig.enable_graph_retrieval" class="property-section">
+      <div class="section-title">
+        图谱检索模型
+        <el-tooltip placement="top">
+          <div slot="content">
+            <div>用于从问题中提取实体的LLM模型</div>
+            <div>建议使用较快的模型（如GPT-3.5）以降低成本</div>
+          </div>
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <wf-llm-selector
+        :model-name="nodeConfig.graph_model_name"
+        @llm-selected="handleGraphModelSelected"
+      />
+    </div>
+
     <!-- 默认回复内容 -->
     <div class="property-section">
       <div class="section-title">
@@ -94,12 +112,14 @@
 
 <script>
 import WfKnowledgeSelector from '../WfKnowledgeSelector.vue'
+import WfLlmSelector from '../WfLLMSelector.vue'
 
 export default {
   name: 'KnowledgeRetrievalNodeProperty',
 
   components: {
-    WfKnowledgeSelector
+    WfKnowledgeSelector,
+    WfLlmSelector
   },
 
   props: {
@@ -137,6 +157,9 @@ export default {
       if (!this.wfNode.nodeConfig.default_response) {
         this.$set(this.wfNode.nodeConfig, 'default_response', '很抱歉，我无法找到相关答案。')
       }
+      if (!this.wfNode.nodeConfig.graph_model_name) {
+        this.$set(this.wfNode.nodeConfig, 'graph_model_name', '')
+      }
       return this.wfNode.nodeConfig
     }
   },
@@ -153,6 +176,26 @@ export default {
       // 使用 Vue.set 确保响应式更新
       this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', uuid)
       this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', name)
+
+      // 强制更新父组件
+      this.$nextTick(() => {
+        // 通过事件总线通知 WorkflowDesigner 更新 X6
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
+    },
+
+    /**
+     * 处理图谱检索模型选择
+     */
+    handleGraphModelSelected (modelName) {
+      this.nodeConfig.graph_model_name = modelName
+
+      // 手动触发 X6 节点重新渲染
+      // 使用 Vue.set 确保响应式更新
+      this.$set(this.wfNode.nodeConfig, 'graph_model_name', modelName)
 
       // 强制更新父组件
       this.$nextTick(() => {

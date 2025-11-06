@@ -37,7 +37,7 @@ export default {
   name: 'WfLLMSelector',
 
   props: {
-    // 当前选中的模型名称(对应model_name字段，只接受字符串)
+    // 当前选中的模型显示名称(对应name字段，如"gj-deepseek")
     modelName: {
       type: String,
       default: ''
@@ -82,7 +82,7 @@ export default {
   methods: {
     /**
      * 根据模型名称更新选中的模型ID
-     * @param {String} modelName 模型名称（只接受字符串）
+     * @param {String} modelName 模型显示名称（name字段值，如"gj-deepseek"）
      */
     updateSelectedModelId (modelName) {
       if (!modelName) {
@@ -96,7 +96,7 @@ export default {
         return
       }
 
-      // 按模型名称查找对应的ID
+      // 按显示名称（label就是name）查找对应的ID
       const model = this.llmOptions.find(opt => opt.label === modelName)
 
       if (model) {
@@ -114,7 +114,7 @@ export default {
       // 根据ID查找模型对象
       const model = this.getLlmById(modelId)
 
-      // 触发事件，传递模型名称给父组件
+      // 触发事件，传递模型显示名称（name字段）给父组件
       if (model) {
         this.$emit('llm-selected', model.name)
       } else {
