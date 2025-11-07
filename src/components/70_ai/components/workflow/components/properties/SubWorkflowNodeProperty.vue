@@ -41,6 +41,57 @@
         </el-option-group>
       </el-select>
     </div>
+
+    <!-- 参数映射配置 -->
+    <div v-if="nodeConfig.workflow_uuid" class="property-section">
+      <div class="section-title">
+        <span>参数映射</span>
+        <el-tooltip placement="top">
+          <div slot="content">将父工作流的参数映射到子工作流的输入参数</div>
+          <i class="el-icon-question" />
+        </el-tooltip>
+      </div>
+
+      <el-table
+        :data="nodeConfig.input_mapping"
+        border
+        size="small"
+        style="margin-bottom: 8px;"
+      >
+        <el-table-column label="父流程参数" width="180">
+          <template slot-scope="scope">
+            <el-input
+              v-model="scope.row.source_key"
+              placeholder="请输入参数名"
+              size="small"
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="子流程参数" width="180">
+          <template slot-scope="scope">
+            <el-input
+              v-model="scope.row.target_key"
+              placeholder="请输入参数名"
+              size="small"
+            />
+          </template>
+        </el-table-column>
+
+        <el-table-column label="操作" width="80" align="center">
+          <template slot-scope="scope">
+            <el-button
+              type="text"
+              icon="el-icon-delete"
+              size="small"
+              @click="handleDeleteMapping(scope.$index)"
+            />
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <el-button size="small" @click="handleAddMapping">+ 添加映射</el-button>
+    </div>
   </div>
 </template>
 
@@ -64,6 +115,10 @@ export default {
     nodeConfig () {
       if (!this.wfNode.nodeConfig) {
         this.$set(this.wfNode, 'nodeConfig', {})
+      }
+      // 确保 input_mapping 字段存在
+      if (!this.wfNode.nodeConfig.input_mapping) {
+        this.$set(this.wfNode.nodeConfig, 'input_mapping', [])
       }
       return this.wfNode.nodeConfig
     }
@@ -120,6 +175,23 @@ export default {
         nodeUuid: this.wfNode.uuid,
         nodeData: this.wfNode
       })
+    },
+
+    handleAddMapping () {
+      const newMapping = {
+        source_key: '',
+        target_key: ''
+      }
+      // 使用$set确保新对象是响应式的
+      const currentMappings = this.nodeConfig.input_mapping
+      this.$set(this.nodeConfig, 'input_mapping', [
+        ...currentMappings,
+        newMapping
+      ])
+    },
+
+    handleDeleteMapping (index) {
+      this.nodeConfig.input_mapping.splice(index, 1)
     }
   }
 }
