@@ -431,6 +431,19 @@ export const workflowRuntimeSearch = getWorkflowRuntimeList
  */
 export const workflowRuntimeDelete = deleteWorkflowRuntime
 
+/**
+ * 查询可用的工作流列表（用于子工作流选择器）
+ * 返回所有公开的工作流 + 当前用户自己的工作流
+ * 对应后端: WorkflowController.getAvailableWorkflows()
+ * @returns {Promise} - 工作流选项列表
+ */
+export function getAvailableWorkflows () {
+  return request({
+    url: `${API_BASE}/available`,
+    method: 'get'
+  })
+}
+
 // 导出所有API函数
 export default {
   // 工作流基础操作
@@ -445,6 +458,7 @@ export default {
   getWorkflowComponents,
   copyWorkflow,
   toggleWorkflowPublic,
+  getAvailableWorkflows,
   // 工作流运行时
   getWorkflowRuntimeList,
   getRuntimeNodeDetails,

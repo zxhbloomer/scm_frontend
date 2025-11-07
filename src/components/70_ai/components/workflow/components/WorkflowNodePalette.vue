@@ -66,7 +66,8 @@ export default {
         'Template': 'el-icon-tickets',
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
-        'HttpRequest': 'el-icon-link'
+        'HttpRequest': 'el-icon-link',
+        'SubWorkflow': 'el-icon-connection'
       }
 
       return iconMap[name] || 'el-icon-s-operation'
@@ -86,7 +87,8 @@ export default {
         'Template': '#87CEEB',
         'HumanFeedback': '#696969',
         'MailSend': '#FFA500',
-        'HttpRequest': '#708090'
+        'HttpRequest': '#708090',
+        'SubWorkflow': '#409EFF'
       }
 
       return colorMap[name] || '#606266'
@@ -171,4 +173,5 @@ export default {
 .node-item:nth-child(11) .node-icon { color: #696969; } // HumanFeedback
 .node-item:nth-child(12) .node-icon { color: #FFA500; } // MailSend
 .node-item:nth-child(13) .node-icon { color: #708090; } // HttpRequest
+.node-item:nth-child(14) .node-icon { color: #409EFF; } // SubWorkflow
 </style>

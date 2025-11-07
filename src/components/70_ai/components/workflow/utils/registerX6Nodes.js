@@ -17,6 +17,7 @@ import FaqExtractorNode from '../components/nodes/FaqExtractorNode.vue'
 import HumanFeedbackNode from '../components/nodes/HumanFeedbackNode.vue'
 import MailSendNode from '../components/nodes/MailSendNode.vue'
 import HttpRequestNode from '../components/nodes/HttpRequestNode.vue'
+import SubWorkflowNode from '../components/nodes/SubWorkflowNode.vue'
 
 /**
  * 注册所有工作流节点形状
@@ -532,6 +533,50 @@ export function registerAllWorkflowNodes () {
     width: 220,
     height: 160,
     component: HttpRequestNode,
+    ports: {
+      groups: {
+        target: {
+          position: 'left',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        },
+        source: {
+          position: 'right',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        }
+      },
+      items: [
+        { group: 'target', id: 'left' },
+        { group: 'source', id: 'right' }
+      ]
+    }
+  })
+
+  /**
+   * SubWorkflow 节点（子工作流）
+   * - 左侧输入端口 + 右侧输出端口
+   * - 显示工作流名称
+   */
+  register({
+    shape: 'subworkflow',
+    width: 220,
+    height: 80,
+    component: SubWorkflowNode,
     ports: {
       groups: {
         target: {

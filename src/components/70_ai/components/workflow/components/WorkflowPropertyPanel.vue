@@ -130,6 +130,13 @@
           :wf-node="selectedNode"
         />
 
+        <!-- SubWorkflow 子工作流节点 -->
+        <sub-workflow-node-property
+          v-else-if="selectedNode.wfComponent.name === 'SubWorkflow'"
+          :workflow="workflow"
+          :wf-node="selectedNode"
+        />
+
         <!-- 默认属性显示（未匹配的节点类型） -->
         <div v-else class="default-properties">
           <el-alert
@@ -179,6 +186,7 @@ import SwitcherNodeProperty from './properties/SwitcherNodeProperty.vue'
 import HttpRequestNodeProperty from './properties/HttpRequestNodeProperty.vue'
 import MailSendNodeProperty from './properties/MailSendNodeProperty.vue'
 import HumanFeedbackNodeProperty from './properties/HumanFeedbackNodeProperty.vue'
+import SubWorkflowNodeProperty from './properties/SubWorkflowNodeProperty.vue'
 
 export default {
   name: 'WorkflowPropertyPanel',
@@ -196,7 +204,8 @@ export default {
     SwitcherNodeProperty,
     HttpRequestNodeProperty,
     MailSendNodeProperty,
-    HumanFeedbackNodeProperty
+    HumanFeedbackNodeProperty,
+    SubWorkflowNodeProperty
   },
 
   props: {
@@ -258,7 +267,8 @@ export default {
         'Template': 'el-icon-tickets',
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
-        'HttpRequest': 'el-icon-link'
+        'HttpRequest': 'el-icon-link',
+        'SubWorkflow': 'el-icon-connection'
       }
 
       return iconMap[name] || 'el-icon-s-operation'
