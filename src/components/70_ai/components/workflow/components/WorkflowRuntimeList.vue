@@ -851,6 +851,13 @@ export default {
       if (typeof value === 'object' && value.value !== undefined) {
         return this.formatValue(value.value) // 递归提取value字段
       }
+      // 过滤空数组和空对象，不显示 "[]" 或 "{}"
+      if (Array.isArray(value) && value.length === 0) {
+        return ''
+      }
+      if (typeof value === 'object' && Object.keys(value).length === 0) {
+        return ''
+      }
       if (typeof value === 'object') {
         return JSON.stringify(value, null, 2)
       }
