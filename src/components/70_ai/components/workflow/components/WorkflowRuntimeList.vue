@@ -650,7 +650,6 @@ export default {
                     }
                   } else if (outputData.name && outputData.name !== 'output') {
                     // 忽略非output的NODE_OUTPUT事件（如var_files、attachments等）
-                    console.log('[DEBUG] NODE_OUTPUT: name=' + outputData.name + '，非output输出，忽略')
                   } else if (outputData.name === 'output' && outputData.output !== undefined && outputData.output !== null) {
                     // 兼容旧格式：{name:"output", output: "xxx"}
                     // 修复：只有当name="output"且output不是字符串"null"且不为空时才处理
@@ -664,7 +663,6 @@ export default {
                     }
                   } else if (outputData.name && outputData.name !== 'output' && outputData.output !== undefined) {
                     // 忽略非output的NODE_OUTPUT事件（旧格式）
-                    console.log('[DEBUG] NODE_OUTPUT: 旧格式，name=' + outputData.name + '，非output输出，忽略')
                   }
                 }
               } catch (e) {

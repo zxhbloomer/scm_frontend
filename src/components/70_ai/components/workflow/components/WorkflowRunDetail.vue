@@ -129,6 +129,7 @@
     <!-- 运行按钮（仅在非人机交互模式显示）-->
     <div v-if="!humanFeedback" class="run-actions">
       <el-button
+        ref="runButton"
         type="primary"
         icon="el-icon-video-play"
         :loading="submitting"
@@ -356,6 +357,13 @@ export default {
       try {
         // 触发父组件的运行事件
         this.$emit('run', inputs)
+
+        // 移除运行按钮的焦点，防止切换窗口后回车键误触发
+        this.$nextTick(() => {
+          if (this.$refs.runButton && this.$refs.runButton.$el) {
+            this.$refs.runButton.$el.blur()
+          }
+        })
       } catch (error) {
         this.$message.error(`运行失败: ${error.message || '未知错误'}`)
         this.submitting = false

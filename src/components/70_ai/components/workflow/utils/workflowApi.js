@@ -177,9 +177,10 @@ export function workflowRun (params) {
     body: JSON.stringify({ inputs }),
     credentials: 'include',
     signal,
+    openWhenHidden: true, // 防止页面切换时自动重连导致重复触发回调
     async onopen (response) {
       if (response.ok) {
-        if (startCallback) startCallback()
+        // SSE连接建立成功，等待后端发送start事件
         return
       } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         const errorText = await response.text()
@@ -190,12 +191,16 @@ export function workflowRun (params) {
       }
     },
     onmessage (msg) {
-      // SSE 事件格式: event: [EVENT_TYPE] 或 data: {...}
+      // 特殊处理START事件
+      if (msg.event === 'start') {
+        if (startCallback) startCallback(msg.data)
+        return
+      }
+
+      // 处理其他事件（NODE_RUN, NODE_CHUNK, NODE_OUTPUT等）
       if (msg.event) {
-        // 有 event 字段，直接传递事件名和数据
         if (messageReceived) messageReceived(msg.data || '', msg.event)
       } else if (msg.data) {
-        // 只有 data 字段
         if (messageReceived) messageReceived(msg.data, '')
       }
     },
@@ -203,11 +208,10 @@ export function workflowRun (params) {
       if (doneCallback) doneCallback()
     },
     onerror (err) {
-      if (err instanceof FatalError) {
-        throw err
-      } else {
-        if (errorCallback) errorCallback(err.message || '工作流运行失败')
-      }
+      // 对于工作流场景，不应该自动重试（每次重试都会创建新runtime）
+      // 必须抛出所有错误，阻止fetch-event-source的自动重试机制
+      if (errorCallback) errorCallback(err.message || '工作流运行失败')
+      throw err
     }
   })
 }

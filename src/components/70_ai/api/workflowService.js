@@ -171,6 +171,7 @@ export function workflowRun (params) {
       'X-Tenant-ID': localStorage.getItem('X-Tenant-ID') || 'scm_tenant_20250519_001'
     },
     signal,
+    openWhenHidden: true, // 防止页面切换时断开SSE连接并自动重连
     body: JSON.stringify(inputs),
 
     // 连接打开回调（参考 aideepin line 119-133）
