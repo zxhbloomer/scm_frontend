@@ -27,34 +27,14 @@ export function saveWorkflow (data) {
 }
 
 /**
- * 测试运行工作流
- * @param {String} workflowUuid 工作流UUID
- * @param {String} testInput 测试输入内容
- * @returns {Promise}
- */
-export function testWorkflow (workflowUuid, testInput) {
-  return request({
-    url: `${API_PREFIX}/workflow/test`,
-    method: 'post',
-    params: {
-      workflowUuid,
-      testInput
-    }
-  })
-}
-
-/**
  * 发布工作流
  * @param {String} workflowUuid 工作流UUID
  * @returns {Promise}
  */
 export function publishWorkflow (workflowUuid) {
   return request({
-    url: `${API_PREFIX}/workflow/publish`,
-    method: 'post',
-    params: {
-      workflowUuid
-    }
+    url: `${API_PREFIX}/workflow/publish/${workflowUuid}`,
+    method: 'post'
   })
 }
 
@@ -65,11 +45,8 @@ export function publishWorkflow (workflowUuid) {
  */
 export function unpublishWorkflow (workflowUuid) {
   return request({
-    url: `${API_PREFIX}/workflow/unpublish`,
-    method: 'post',
-    params: {
-      workflowUuid
-    }
+    url: `${API_PREFIX}/workflow/unpublish/${workflowUuid}`,
+    method: 'post'
   })
 }
 

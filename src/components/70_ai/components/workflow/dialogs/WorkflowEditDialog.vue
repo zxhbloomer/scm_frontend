@@ -67,6 +67,62 @@
             inactive-text="否"
           />
         </el-form-item>
+
+        <!-- 新增字段 - 工作流分类 -->
+        <el-form-item label="工作流分类" prop="category">
+          <select-dict
+            v-model="formData.category"
+            :para="CONSTANTS.DICT_AI_WORKFLOW_CATEGORY"
+            init-placeholder="请选择分类"
+          />
+        </el-form-item>
+
+        <!-- 新增字段 - 优先级 -->
+        <el-form-item label="优先级" prop="priority">
+          <div style="display: flex; align-items: center; width: 100%;">
+            <el-slider
+              v-model="formData.priority"
+              :min="0"
+              :max="100"
+              :step="5"
+              :show-tooltip="true"
+              style="flex: 1; margin-right: 12px;"
+            />
+            <el-input-number
+              v-model="formData.priority"
+              :min="0"
+              :max="100"
+              :step="5"
+              controls-position="right"
+              style="width: 120px;"
+            />
+          </div>
+          <div style="color: #909399; font-size: 12px; margin-top: 4px;">数值越高,路由匹配时越优先(默认50)</div>
+        </el-form-item>
+
+        <!-- 新增字段 - 关键词 -->
+        <el-form-item label="关键词" prop="keywords">
+          <el-input
+            v-model="formData.keywords"
+            placeholder="多个关键词用逗号分隔,如:订单,采购,库存"
+            maxlength="200"
+            show-word-limit
+          />
+          <div style="color: #909399; font-size: 12px; margin-top: 4px;">用于智能路由快速匹配</div>
+        </el-form-item>
+
+        <!-- 新增字段 - 详细描述 -->
+        <el-form-item label="详细描述" prop="desc">
+          <el-input
+            v-model="formData.desc"
+            type="textarea"
+            :rows="4"
+            placeholder="描述工作流的适用场景,供AI理解使用。例如:专门处理供应链管理相关问题,包括订单查询、库存管理等"
+            maxlength="1000"
+            show-word-limit
+          />
+          <div style="color: #909399; font-size: 12px; margin-top: 4px;">供LLM理解工作流适用场景</div>
+        </el-form-item>
       </template>
 
       <!-- 查看模式：只读信息 -->
@@ -82,6 +138,22 @@
         <div class="info-item">
           <span class="label">是否公开：</span>
           <span class="value">{{ formData.isPublic ? '是' : '否' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">工作流分类：</span>
+          <span class="value">{{ formData.categoryName || '未设置' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">优先级：</span>
+          <span class="value">{{ formData.priority || 50 }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">关键词：</span>
+          <span class="value">{{ formData.keywords || '无' }}</span>
+        </div>
+        <div class="info-item">
+          <span class="label">详细描述：</span>
+          <span class="value">{{ formData.desc || '无' }}</span>
         </div>
       </div>
     </el-form>
@@ -116,11 +188,14 @@
 import { mapState, mapMutations } from 'vuex'
 import { workflowAdd, workflowBaseInfoUpdate, workflowDel } from '@/components/70_ai/components/workflow/utils'
 import { emptyWorkflowInfo } from '@/components/70_ai/components/workflow/utils'
+import SelectDict from '@/components/00_dict/select/SelectDict'
 
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
   name: 'WorkflowEditDialog',
+
+  components: { SelectDict },
 
   directives: { elDragDialog },
 
@@ -194,7 +269,13 @@ export default {
               userId: workflow.userId, // 修正：使用userId而不是userUuid
               userName: workflow.userName,
               nodes: workflow.nodes || [],
-              dbversion: workflow.dbversion
+              dbversion: workflow.dbversion,
+              // 新增字段
+              category: workflow.category,
+              categoryName: workflow.categoryName,
+              priority: workflow.priority !== undefined ? workflow.priority : 50,
+              keywords: workflow.keywords,
+              desc: workflow.desc
             }
           }
         } else {
@@ -239,7 +320,12 @@ export default {
         title: this.formData.title,
         remark: this.formData.remark,
         isPublic: this.formData.isPublic,
-        dbversion: this.formData.dbversion
+        dbversion: this.formData.dbversion,
+        // 新增字段
+        category: this.formData.category,
+        priority: this.formData.priority !== undefined ? this.formData.priority : 50,
+        keywords: this.formData.keywords,
+        desc: this.formData.desc
       }
 
       try {

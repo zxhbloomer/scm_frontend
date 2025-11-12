@@ -15,26 +15,66 @@
             </el-button>
           </div>
 
+          <!-- 筛选条件 -->
+          <div class="filter-bar">
+            <el-form :inline="true" size="small" :model="filters" style="display:flex">
+              <el-form-item label="" prop="category">
+                <select-dict
+                  v-model="filters.category"
+                  :para="CONSTANTS.DICT_AI_WORKFLOW_CATEGORY"
+                  init-placeholder="全部分类"
+                  style="width: 150px;"
+                  @change="handleFilterChange"
+                />
+              </el-form-item>
+              <el-form-item label="" prop="isEnable">
+                <el-select
+                  v-model="filters.isEnable"
+                  placeholder="全部状态"
+                  clearable
+                  style="width: 120px;"
+                  @change="handleFilterChange"
+                >
+                  <el-option label="已发布" :value="true" />
+                  <el-option label="未发布" :value="false" />
+                </el-select>
+              </el-form-item>
+            </el-form>
+          </div>
+
           <div v-loading="loadingMine" class="list-container">
-            <div v-if="!myWorkflows.length && !loadingMine" class="empty-state">
+            <div v-if="!filteredMyWorkflows.length && !loadingMine" class="empty-state">
               <i class="el-icon-folder-opened" />
               <p>暂无工作流</p>
             </div>
 
             <div v-else class="workflow-items">
               <div
-                v-for="item in myWorkflows"
+                v-for="item in filteredMyWorkflows"
                 :key="item.workflowUuid"
                 class="workflow-item"
                 :class="{ active: item.workflowUuid === activeUuid }"
                 @click="handleSelect(item)"
               >
                 <div class="item-content">
-                  <i
-                    class="status-icon"
-                    :class="item.isPublic ? 'el-icon-share' : 'el-icon-lock'"
-                  />
-                  <span class="item-title">{{ item.title }}</span>
+                  <div class="item-header">
+                    <i
+                      class="status-icon"
+                      :class="item.isPublic ? 'el-icon-share' : 'el-icon-lock'"
+                    />
+                    <span class="item-title">{{ item.title }}</span>
+                  </div>
+                  <div class="item-meta">
+                    <el-tag v-if="item.categoryName" size="mini" type="info">{{ item.categoryName }}</el-tag>
+                    <el-tag
+                      v-if="item.isEnable !== undefined"
+                      size="mini"
+                      :type="item.isEnable ? 'success' : 'warning'"
+                    >
+                      {{ item.isEnable ? '已发布' : '未发布' }}
+                    </el-tag>
+                    <span v-if="item.priority !== undefined" class="priority-badge">优先级: {{ item.priority }}</span>
+                  </div>
                 </div>
                 <div
                   v-if="showActions === item.workflowUuid"
@@ -77,8 +117,14 @@
               @click="handleSelect(item)"
             >
               <div class="item-content">
-                <i class="status-icon el-icon-share" />
-                <span class="item-title">{{ item.title }}</span>
+                <div class="item-header">
+                  <i class="status-icon el-icon-share" />
+                  <span class="item-title">{{ item.title }}</span>
+                </div>
+                <div class="item-meta">
+                  <el-tag v-if="item.categoryName" size="mini" type="info">{{ item.categoryName }}</el-tag>
+                  <span v-if="item.priority !== undefined" class="priority-badge">优先级: {{ item.priority }}</span>
+                </div>
               </div>
               <div
                 v-if="showActions === item.workflowUuid"
@@ -108,16 +154,26 @@
 
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
+import SelectDict from '@/components/00_dict/select/SelectDict'
 
 export default {
   name: 'WorkflowList',
+
+  components: {
+    SelectDict
+  },
 
   data () {
     return {
       activeTab: 'mine',
       showActions: '',
       currentPage: 1,
-      pageSize: 20
+      pageSize: 20,
+      // 筛选条件
+      filters: {
+        category: '', // 单选,使用字符串
+        isEnable: ''
+      }
     }
   },
 
@@ -129,7 +185,21 @@ export default {
       loadingPublic: state => state.ai.workflow.loadingPublicWorkflows,
       activeUuid: state => state.ai.workflow.activeUuid,
       wfComponents: state => state.ai.workflow.wfComponents
-    })
+    }),
+
+    // 筛选后的我的工作流列表
+    filteredMyWorkflows () {
+      let list = this.myWorkflows
+      // 按分类筛选
+      if (this.filters.category) {
+        list = list.filter(item => item.category === this.filters.category)
+      }
+      // 按发布状态筛选
+      if (this.filters.isEnable !== '') {
+        list = list.filter(item => item.isEnable === this.filters.isEnable)
+      }
+      return list
+    }
   },
 
   mounted () {
@@ -187,6 +257,10 @@ export default {
     handleView (workflow) {
       this.setCreateOrEditWfUuid(workflow.workflowUuid)
       this.setShowCreateView(true)
+    },
+
+    handleFilterChange () {
+      // 筛选条件变化时触发,computed会自动重新计算filteredMyWorkflows
     }
   }
 }
@@ -223,6 +297,21 @@ export default {
 .action-bar {
   padding: 12px;
   border-bottom: 1px solid #ebeef5;
+}
+
+.filter-bar {
+  padding: 12px;
+  border-bottom: 1px solid #ebeef5;
+  background-color: #fafafa;
+
+  ::v-deep .el-form {
+    margin-bottom: 0;
+  }
+
+  ::v-deep .el-form-item {
+    margin-bottom: 0;
+    margin-right: 12px;
+  }
 }
 
 .list-container {
@@ -284,9 +373,15 @@ export default {
   .item-content {
     flex: 1;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 8px;
     overflow: hidden;
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     .status-icon {
       font-size: 16px;
@@ -298,6 +393,21 @@ export default {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .priority-badge {
+        font-size: 12px;
+        color: #909399;
+        padding: 2px 8px;
+        background-color: #f4f4f5;
+        border-radius: 3px;
+      }
     }
   }
 

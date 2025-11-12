@@ -34,7 +34,13 @@ export function emptyWorkflowInfo () {
     edges: [],
     deleteNodes: [],
     deleteEdges: [],
-    dbversion: 0
+    dbversion: 0,
+    // 新增路由字段 - 默认值
+    category: '',
+    categoryName: '',
+    priority: 50, // 默认优先级50
+    keywords: '',
+    desc: ''
   }
 }
 
