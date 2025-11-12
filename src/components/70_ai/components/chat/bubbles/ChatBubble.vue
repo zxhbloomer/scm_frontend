@@ -203,7 +203,7 @@ export default {
     startAutoConversation () {
       // 聊天面板展开时初始化聊天并加载历史消息
       this.initializeChat().catch(_error => {
-        // 聊天初始化失败
+        // 聊天初始化失败处理
       })
     }
   }

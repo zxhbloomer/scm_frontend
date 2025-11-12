@@ -184,6 +184,12 @@ const DICT_B_IN_PLAN_TYPE_SC = '5'
 const DICT_B_IN_PLAN_TYPE_JG = '9'
 const DICT_B_IN_PLAN_TYPE_PT = '10'
 
+/** AI工作流分类：0-业务处理, 1-知识问答, 2-通用对话 */
+const DICT_AI_WORKFLOW_CATEGORY = 'ai_workflow_category'
+const DICT_AI_WORKFLOW_CATEGORY_ZERO = '0'
+const DICT_AI_WORKFLOW_CATEGORY_ONE = '1'
+const DICT_AI_WORKFLOW_CATEGORY_TWO = '2'
+
 /** 入库计划状态：状态：0-待审批 1-审批中 2-执行中 3-驳回 4-作废审批中 5-已作废 6-已完成 */
 const DICT_B_IN_PLAN_STATUS = 'b_in_plan_status'
 const DICT_B_IN_PLAN_STATUS_ZERO = '0'
@@ -2172,6 +2178,12 @@ export default {
   DICT_B_IN_PLAN_TYPE_TH,
   DICT_B_IN_PLAN_TYPE_SC,
   DICT_B_IN_PLAN_TYPE_JG,
-  DICT_B_IN_PLAN_TYPE_PT
+  DICT_B_IN_PLAN_TYPE_PT,
+
+  /** AI工作流分类 0-业务处理, 1-知识问答, 2-通用对话 */
+  DICT_AI_WORKFLOW_CATEGORY,
+  DICT_AI_WORKFLOW_CATEGORY_ZERO,
+  DICT_AI_WORKFLOW_CATEGORY_ONE,
+  DICT_AI_WORKFLOW_CATEGORY_TWO
 
 }

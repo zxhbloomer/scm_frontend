@@ -116,7 +116,17 @@ class AIChatService {
 
                 if (chatResponse.results && chatResponse.results.length > 0) {
                   const generation = chatResponse.results[0]
-                  const content = generation.output?.content || ''
+                  let content = generation.output?.content || ''
+
+                  // 尝试解析content，因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
+                  try {
+                    const contentObj = JSON.parse(content)
+                    if (contentObj.output && contentObj.output.value) {
+                      content = contentObj.output.value
+                    }
+                  } catch (e) {
+                    // 如果content不是JSON，直接使用原始内容
+                  }
 
                   // 第一次收到数据时触发start事件
                   if (!hasStarted) {
@@ -124,10 +134,11 @@ class AIChatService {
                     onStart()
                   }
 
-                  // 检查是否为完成事件（有finishReason）
-                  if (generation.metadata && generation.metadata.finishReason === 'stop') {
+                  // 检查是否为完成事件（有finishReason或isComplete标志）
+                  if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
                     // 完成事件 - content是完整的最终内容
-                    onComplete(content)
+                    // 传递完整的chatResponse对象,包含workflowRuntime等信息
+                    onComplete(content, chatResponse)
                     return
                   } else {
                     // 流式进行中的内容块
@@ -141,6 +152,7 @@ class AIChatService {
                 }
               } catch (parseError) {
                 // 继续处理其他消息，不中断流
+                console.error('❌ 解析SSE消息失败:', parseError)
               }
             }
           }
@@ -571,6 +583,50 @@ class AIChatService {
       // analytics.track(action, data)
     } catch (error) {
       // 用户行为跟踪失败
+    }
+  }
+
+  /**
+   * 获取AI Chat工作流运行时详情
+   * @param {String} runtimeUuid - AI Chat工作流运行时UUID
+   * @returns {Promise<Object>} 运行时详情对象
+   */
+  async getConversationRuntimeDetail (runtimeUuid) {
+    try {
+      const response = await request({
+        url: `/api/v1/ai/conversation/workflow/runtime/${runtimeUuid}`,
+        method: 'get'
+      })
+
+      // 后端使用ResponseEntity.ok()直接返回对象,不包装在{code,data}中
+      // 所以response本身就是数据,不需要.data
+      const data = response.data !== undefined ? response.data : response
+      return data || {}
+    } catch (error) {
+      console.error('获取工作流运行时详情失败:', error)
+      throw new Error(error.message || '获取工作流运行时详情失败')
+    }
+  }
+
+  /**
+   * 获取AI Chat工作流运行时节点详情
+   * @param {String} runtimeUuid - AI Chat工作流运行时UUID
+   * @returns {Promise<Array>} 节点详情列表
+   */
+  async getConversationRuntimeNodeDetails (runtimeUuid) {
+    try {
+      const response = await request({
+        url: `/api/v1/ai/conversation/workflow/runtime/nodes/${runtimeUuid}`,
+        method: 'get'
+      })
+
+      // 后端使用ResponseEntity.ok()直接返回List,不包装在{code,data}中
+      // 所以response本身就是数组,不需要.data
+      const data = response.data !== undefined ? response.data : response
+      return Array.isArray(data) ? data : []
+    } catch (error) {
+      console.error('获取工作流执行详情失败:', error)
+      throw new Error(error.message || '获取工作流执行详情失败')
     }
   }
 }

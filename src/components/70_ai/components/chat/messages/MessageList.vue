@@ -245,6 +245,15 @@
                     @click="feedbackMessage(message, 'negative')"
                   />
                   <el-button
+                    v-if="message.workflowRuntime && message.workflowRuntime.uuid"
+                    type="text"
+                    size="mini"
+                    icon="el-icon-document"
+                    class="bubble-action-btn"
+                    title="执行详情"
+                    @click="showExecutionDetail(message)"
+                  />
+                  <el-button
                     v-if="message.isError"
                     type="text"
                     size="mini"
@@ -328,17 +337,28 @@
         </div>
       </div>
     </div>
+
+    <!-- 执行详情弹窗 -->
+    <execution-detail-dialog
+      :visible.sync="detailDialogVisible"
+      :runtime-detail="currentRuntimeDetail"
+      :nodes="currentNodes"
+      :loading="detailLoading"
+    />
   </div>
 </template>
 
 <script>
 import { MdRenderer } from '../markdown'
+import ExecutionDetailDialog from '../../common/ExecutionDetailDialog.vue'
+import aiChatService from '../../../api/aiChatService'
 
 export default {
   name: 'MessageList',
 
   components: {
-    MdRenderer
+    MdRenderer,
+    ExecutionDetailDialog
   },
 
   props: {
@@ -389,7 +409,12 @@ export default {
         '报表': 'el-icon-data-analysis',
         '审批': 'el-icon-document-checked',
         '流程': 'el-icon-share'
-      }
+      },
+      // 执行详情相关
+      detailDialogVisible: false,
+      detailLoading: false,
+      currentRuntimeDetail: null,
+      currentNodes: []
     }
   },
 
@@ -580,6 +605,48 @@ export default {
       document.body.style.userSelect = 'none'
       document.addEventListener('mousemove', handleMouseMove)
       document.addEventListener('mouseup', handleMouseUp)
+    },
+
+    /**
+     * 显示工作流执行详情
+     * @param {Object} message - AI消息对象
+     */
+    async showExecutionDetail (message) {
+      if (!message.workflowRuntime) {
+        this.$message.warning('该消息没有关联的工作流执行记录')
+        return
+      }
+
+      if (!message.workflowRuntime.uuid) {
+        this.$message.warning('该消息没有关联的工作流执行记录(缺少UUID)')
+        return
+      }
+
+      try {
+        this.detailLoading = true
+        this.detailDialogVisible = true
+
+        // 使用UUID字符串作为参数,而不是数字ID
+        const runtimeUuid = message.workflowRuntime.uuid
+
+        // 获取完整的runtime详情(包括workflow_name、status、时间等)
+        const runtimeDetail = await aiChatService.getConversationRuntimeDetail(runtimeUuid)
+        this.currentRuntimeDetail = runtimeDetail || message.workflowRuntime
+
+        // 调用API获取节点详情
+        const nodes = await aiChatService.getConversationRuntimeNodeDetails(runtimeUuid)
+        this.currentNodes = nodes || []
+
+        if (this.currentNodes.length === 0) {
+          this.$message.info('该工作流暂无节点执行记录')
+        }
+      } catch (error) {
+        this.$message.error('获取执行详情失败: ' + (error.message || '未知错误'))
+        console.error('获取执行详情失败:', error)
+        this.detailDialogVisible = false
+      } finally {
+        this.detailLoading = false
+      }
     }
   }
 }

@@ -151,7 +151,7 @@ const actions = {
 
       if (conversationId) {
         commit('SET_CONVERSATION_ID', conversationId)
-        await dispatch('loadMessages')
+        await dispatch('loadMessages', { page: 1 })
       } else {
         commit('SET_ERROR', '用户会话信息不完整，无法加载历史消息')
       }
@@ -265,7 +265,7 @@ const actions = {
             })
           }
         },
-        onComplete: (fullContent) => {
+        onComplete: (fullContent, chatResponse) => {
           // 确保思考状态结束
           commit('SET_TYPING', false)
 
@@ -278,6 +278,23 @@ const actions = {
             const hasEnoughContent = trimmedFinalContent.length > 5 &&
                                    trimmedFinalContent.replace(/\s+/g, ' ').length > 3
 
+            // 构建工作流运行时信息
+            let workflowRuntime = null
+            if (chatResponse) {
+              // 优先使用runtimeId(数字ID),如果没有则使用runtimeUuid
+              const runtimeId = chatResponse.runtimeId || chatResponse.runtimeUuid
+
+              if (runtimeId) {
+                workflowRuntime = {
+                  id: runtimeId,
+                  uuid: chatResponse.runtimeUuid,
+                  workflowUuid: chatResponse.workflowUuid,
+                  isWaitingInput: chatResponse.isWaitingInput,
+                  isComplete: chatResponse.isComplete
+                }
+              }
+            }
+
             commit('UPDATE_MESSAGE', {
               messageId: aiMessageId,
               updates: {
@@ -286,7 +303,8 @@ const actions = {
                 isStreaming: false,
                 isHidden: !hasEnoughContent, // 只有有足够内容才显示
                 streamFormat: 'flux-chat-response',
-                completedAt: new Date().toISOString()
+                completedAt: new Date().toISOString(),
+                workflowRuntime: workflowRuntime // 保存工作流运行时信息
               }
             })
           }
@@ -343,29 +361,52 @@ const actions = {
       const formattedMessages = messages.map(msg => {
         // 将API返回的type转换为前端期望的格式
         let messageType = msg.type || 'agent'
-        if (messageType === 'assistant') {
-          messageType = 'agent'
+        if (messageType === 'ASSISTANT' || messageType === 'assistant') {
+          messageType = 'ai'
+        } else if (messageType === 'USER' || messageType === 'user') {
+          messageType = 'user'
         }
 
         // 时间戳格式化
-        let formattedTimestamp = msg.createTime || msg.timestamp || new Date().toISOString()
+        let formattedTimestamp = msg.c_time || msg.createTime || msg.timestamp || new Date().toISOString()
         if (typeof formattedTimestamp === 'number') {
           formattedTimestamp = new Date(formattedTimestamp).toISOString()
         }
 
+        // 构建工作流运行时信息（如果存在）
+        const runtimeUuid = msg.runtime_uuid || msg.runtimeUuid
+        const workflowRuntime = runtimeUuid ? {
+          id: runtimeUuid,
+          uuid: runtimeUuid
+        } : null
+
         return {
-          id: msg.id || Date.now(),
+          id: msg.message_id || msg.id || Date.now(),
           content: msg.content,
           type: messageType,
           timestamp: formattedTimestamp,
           avatar: msg.avatar,
-          status: 'delivered'
+          status: 'delivered',
+          workflowRuntime: workflowRuntime // 工作流运行时信息对象
         }
       })
 
-      if (params.page === 1) {
-        commit('SET_MESSAGES', formattedMessages)
+      // 智能合并：保留本地未保存到数据库的消息（临时消息）
+      if (params.page === 1 || state.messages.length === 0) {
+        // 筛选出本地临时消息（ID以'ai_'或'user_'开头的是前端临时生成的）
+        const localTempMessages = state.messages.filter(msg => {
+          const isTemp = String(msg.id).startsWith('ai_') || String(msg.id).startsWith('user_')
+          // 检查该消息是否已存在于服务器返回的消息中
+          const existsInServer = formattedMessages.some(serverMsg =>
+            serverMsg.content === msg.content && serverMsg.type === msg.type
+          )
+          return isTemp && !existsInServer
+        })
+
+        // 合并：服务器消息 + 本地临时消息
+        commit('SET_MESSAGES', [...formattedMessages, ...localTempMessages])
       } else {
+        // 分页加载（历史消息），追加到前面
         commit('SET_MESSAGES', [...formattedMessages, ...state.messages])
       }
     } catch (error) {
