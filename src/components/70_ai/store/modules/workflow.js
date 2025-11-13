@@ -213,7 +213,13 @@ const mutations = {
         title: workflow.title,
         remark: workflow.remark,
         isPublic: workflow.isPublic,
-        dbversion: workflow.dbversion
+        dbversion: workflow.dbversion,
+        // 智能路由新增字段
+        desc: workflow.desc,
+        keywords: workflow.keywords,
+        category: workflow.category,
+        categoryName: workflow.categoryName,
+        priority: workflow.priority
       })
 
       // 如果公开状态发生变化，同步更新 publicWorkflows 列表
@@ -235,7 +241,13 @@ const mutations = {
           Object.assign(publicWf, {
             title: workflow.title,
             remark: workflow.remark,
-            dbversion: workflow.dbversion
+            dbversion: workflow.dbversion,
+            // 智能路由新增字段
+            desc: workflow.desc,
+            keywords: workflow.keywords,
+            category: workflow.category,
+            categoryName: workflow.categoryName,
+            priority: workflow.priority
           })
         }
       }
