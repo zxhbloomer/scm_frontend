@@ -715,7 +715,7 @@ export default {
         if (!this.workflow.deleteNodes) {
           this.workflow.deleteNodes = []
         }
-        // 修复：只推入UUID字符串，而不是整个node对象
+        // 只推入UUID字符串，而不是整个node对象
         // 后端期望 deleteNodes 是 List<String>，不是 List<Node>
         this.workflow.deleteNodes.push(deletedNode.uuid)
 

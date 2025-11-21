@@ -12,6 +12,10 @@ import store from '@/store'
  * @returns {object} - 清理后的数据
  */
 function cleanWorkflowData (workflow) {
+  // 获取要删除的节点和边的UUID列表
+  const deleteNodeUuids = workflow.deleteNodes || workflow.delete_nodes || []
+  const deleteEdgeUuids = workflow.deleteEdges || workflow.delete_edges || []
+
   const cleaned = {
     id: workflow.id,
     workflowUuid: workflow.workflowUuid || workflow.wf_uuid || workflow.uuid,
@@ -24,36 +28,48 @@ function cleanWorkflowData (workflow) {
     userName: workflow.userName || workflow.user_name,
     cTime: workflow.cTime || workflow.c_time || workflow.CTime,
     uTime: workflow.uTime || workflow.u_time || workflow.UTime,
-    nodes: (workflow.nodes || []).map(node => ({
-      id: node.id,
-      uuid: node.uuid || node.nodeUuid || node.node_uuid,
-      workflowId: node.workflowId || node.workflow_id,
-      workflowComponentId: node.workflowComponentId || node.workflow_component_id,
-      // 只有 title，没有 name
-      title: node.title,
-      remark: node.remark,
-      inputConfig: node.inputConfig || node.input_config,
-      nodeConfig: node.nodeConfig || node.node_config,
-      // 修复：使用 !== undefined 检查，避免 0 被当作 falsy 值
-      positionX: node.positionX !== undefined ? node.positionX : (node.position_x !== undefined ? node.position_x : 0),
-      positionY: node.positionY !== undefined ? node.positionY : (node.position_y !== undefined ? node.position_y : 0)
-    })),
-    edges: (workflow.edges || []).map(edge => ({
-      id: edge.id,
-      uuid: edge.uuid || edge.edgeUuid || edge.edge_uuid,
-      workflowId: edge.workflowId || edge.workflow_id,
-      sourceNodeUuid: edge.sourceNodeUuid || edge.source_node_uuid,
-      targetNodeUuid: edge.targetNodeUuid || edge.target_node_uuid,
-      sourceHandle: edge.sourceHandle || edge.source_handle
-    }))
+    // 过滤掉已删除的节点
+    nodes: (workflow.nodes || [])
+      .filter(node => {
+        const nodeUuid = node.uuid || node.nodeUuid || node.node_uuid
+        return !deleteNodeUuids.includes(nodeUuid)
+      })
+      .map(node => ({
+        id: node.id,
+        uuid: node.uuid || node.nodeUuid || node.node_uuid,
+        workflowId: node.workflowId || node.workflow_id,
+        workflowComponentId: node.workflowComponentId || node.workflow_component_id,
+        // 只有 title，没有 name
+        title: node.title,
+        remark: node.remark,
+        inputConfig: node.inputConfig || node.input_config,
+        nodeConfig: node.nodeConfig || node.node_config,
+        // 修复：使用 !== undefined 检查，避免 0 被当作 falsy 值
+        positionX: node.positionX !== undefined ? node.positionX : (node.position_x !== undefined ? node.position_x : 0),
+        positionY: node.positionY !== undefined ? node.positionY : (node.position_y !== undefined ? node.position_y : 0)
+      })),
+    // 过滤掉已删除的边
+    edges: (workflow.edges || [])
+      .filter(edge => {
+        const edgeUuid = edge.uuid || edge.edgeUuid || edge.edge_uuid
+        return !deleteEdgeUuids.includes(edgeUuid)
+      })
+      .map(edge => ({
+        id: edge.id,
+        uuid: edge.uuid || edge.edgeUuid || edge.edge_uuid,
+        workflowId: edge.workflowId || edge.workflow_id,
+        sourceNodeUuid: edge.sourceNodeUuid || edge.source_node_uuid,
+        targetNodeUuid: edge.targetNodeUuid || edge.target_node_uuid,
+        sourceHandle: edge.sourceHandle || edge.source_handle
+      }))
   }
 
   // 添加删除列表（如果存在）
-  if (workflow.deleteNodes || workflow.delete_nodes) {
-    cleaned.deleteNodes = workflow.deleteNodes || workflow.delete_nodes
+  if (deleteNodeUuids.length > 0) {
+    cleaned.deleteNodes = deleteNodeUuids
   }
-  if (workflow.deleteEdges || workflow.delete_edges) {
-    cleaned.deleteEdges = workflow.deleteEdges || workflow.delete_edges
+  if (deleteEdgeUuids.length > 0) {
+    cleaned.deleteEdges = deleteEdgeUuids
   }
 
   return cleaned
