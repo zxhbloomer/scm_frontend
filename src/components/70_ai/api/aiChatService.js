@@ -36,6 +36,7 @@ class AIChatService {
     let cancelled = false
     const controller = new AbortController()
     let hasStarted = false
+    let accumulatedContent = '' // 本地累积buffer，用于在onComplete时传递完整内容
 
     const connectSSE = async () => {
       try {
@@ -134,11 +135,11 @@ class AIChatService {
                     onStart()
                   }
 
-                  // 检查是否为完成事件（有finishReason或isComplete标志）
+                  // 检查是否为完成事件（有finishReason或isComplete标志)
                   if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
-                    // 完成事件 - content是完整的最终内容
+                    // 完成事件 - 使用累积的完整内容,而不是done事件的content
                     // 传递完整的chatResponse对象,包含workflowRuntime等信息
-                    onComplete(content, chatResponse)
+                    onComplete(accumulatedContent, chatResponse)
                     return
                   } else {
                     // 流式进行中的内容块
@@ -146,6 +147,7 @@ class AIChatService {
                     // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
                     // 只有当内容不为空且包含有效字符时才触发回调
                     if (content !== undefined && content !== null && content.trim().length > 0) {
+                      accumulatedContent += content // 累积到本地buffer
                       onContent(content)
                     }
                   }
@@ -161,7 +163,7 @@ class AIChatService {
         // 流结束处理
         if (!cancelled) {
           if (!hasStarted) {
-            onComplete('')
+            onComplete(accumulatedContent)
           }
         }
       } catch (error) {

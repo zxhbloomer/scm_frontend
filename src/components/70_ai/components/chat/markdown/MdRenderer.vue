@@ -117,12 +117,14 @@ export default {
   },
   computed: {
     mdViewList () {
-      const tempSource = this.source
+      // 1. 先清理掉JSON前缀（如果存在）
+      const cleanedSource = this.removeJsonPrefix(this.source)
 
+      // 2. 然后执行现有的分割逻辑
       const result = this.splitFormRander(
         this.splitEchartsRander(
           this.splitHtmlRander(
-            this.splitQuickQuestion([tempSource])
+            this.splitQuickQuestion([cleanedSource])
           )
         )
       )
@@ -148,6 +150,34 @@ export default {
     }
   },
   methods: {
+    /**
+     * 移除JSON前缀
+     *
+     * 当LLM通过Function Calling调用MCP工具时，Spring AI会将工具输入参数混入响应中
+     * JSON格式: {"title":"用户输入","type":1,"value":"查询所有仓库信息"}
+     *
+     * 此方法检测并移除这种JSON前缀，保留后面的实际LLM响应内容
+     *
+     * @param {string} text - 原始文本内容
+     * @returns {string} 清理后的文本内容
+     */
+    removeJsonPrefix (text) {
+      if (!text || typeof text !== 'string') {
+        return text
+      }
+
+      // 正则匹配JSON前缀模式: {"title":"xxx","type":数字,"value":"xxx"}
+      // 使用 [\s\S]*? 非贪婪匹配，支持value中包含换行符和特殊字符
+      const jsonPrefixPattern = /^\{"title":"[^"]*","type":\d+,"value":"[\s\S]*?"\}/
+
+      if (jsonPrefixPattern.test(text)) {
+        // 移除JSON前缀，保留后面的内容并清理前导空白
+        return text.replace(jsonPrefixPattern, '').trim()
+      }
+
+      return text
+    },
+
     handleQuestionClick (content) {
       if (this.canSendMessage) {
         this.sendMessage(content, 'new')
