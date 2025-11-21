@@ -67,7 +67,8 @@ export default {
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link',
-        'SubWorkflow': 'el-icon-connection'
+        'SubWorkflow': 'el-icon-connection',
+        'McpTool': 'el-icon-cpu'
       }
 
       return iconMap[name] || 'el-icon-s-operation'
@@ -88,7 +89,8 @@ export default {
         'HumanFeedback': '#696969',
         'MailSend': '#FFA500',
         'HttpRequest': '#708090',
-        'SubWorkflow': '#409EFF'
+        'SubWorkflow': '#409EFF',
+        'McpTool': '#E6A23C'
       }
 
       return colorMap[name] || '#606266'
@@ -174,4 +176,5 @@ export default {
 .node-item:nth-child(12) .node-icon { color: #FFA500; } // MailSend
 .node-item:nth-child(13) .node-icon { color: #708090; } // HttpRequest
 .node-item:nth-child(14) .node-icon { color: #409EFF; } // SubWorkflow
+.node-item:nth-child(15) .node-icon { color: #E6A23C; } // McpTool
 </style>

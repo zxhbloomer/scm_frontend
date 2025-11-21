@@ -137,6 +137,13 @@
           :wf-node="selectedNode"
         />
 
+        <!-- McpTool MCP工具节点 -->
+        <mcp-node-property
+          v-else-if="selectedNode.wfComponent.name === 'McpTool'"
+          :workflow="workflow"
+          :wf-node="selectedNode"
+        />
+
         <!-- 默认属性显示（未匹配的节点类型） -->
         <div v-else class="default-properties">
           <el-alert
@@ -187,6 +194,7 @@ import HttpRequestNodeProperty from './properties/HttpRequestNodeProperty.vue'
 import MailSendNodeProperty from './properties/MailSendNodeProperty.vue'
 import HumanFeedbackNodeProperty from './properties/HumanFeedbackNodeProperty.vue'
 import SubWorkflowNodeProperty from './properties/SubWorkflowNodeProperty.vue'
+import McpNodeProperty from './properties/McpNodeProperty.vue'
 
 export default {
   name: 'WorkflowPropertyPanel',
@@ -205,7 +213,8 @@ export default {
     HttpRequestNodeProperty,
     MailSendNodeProperty,
     HumanFeedbackNodeProperty,
-    SubWorkflowNodeProperty
+    SubWorkflowNodeProperty,
+    McpNodeProperty
   },
 
   props: {
@@ -268,7 +277,8 @@ export default {
         'HumanFeedback': 'el-icon-user',
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link',
-        'SubWorkflow': 'el-icon-connection'
+        'SubWorkflow': 'el-icon-connection',
+        'McpTool': 'el-icon-cpu'
       }
 
       return iconMap[name] || 'el-icon-s-operation'

@@ -256,6 +256,19 @@ export function testUserMcpConnection (id) {
   })
 }
 
+/**
+ * 获取已启用的用户MCP列表(用于workflow节点选择)
+ * @param {string} userId - 用户ID
+ * @returns {Promise} - 已启用的用户MCP列表
+ */
+export function getEnabledUserMcps (userId) {
+  return request({
+    url: `${API_BASE}/user/list-enabled`,
+    method: 'get',
+    params: { userId }
+  })
+}
+
 // 导出所有API函数
 export default {
   // 模板MCP
