@@ -137,9 +137,12 @@ class AIChatService {
 
                   // 检查是否为完成事件（有finishReason或isComplete标志)
                   if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
-                    // 完成事件 - 使用累积的完整内容,而不是done事件的content
+                    // 完成事件 - 优先使用done事件的content(后端确定的完整内容),
+                    // 如果done事件没有content则使用前端累积的内容
+                    const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
+
                     // 传递完整的chatResponse对象,包含workflowRuntime等信息
-                    onComplete(accumulatedContent, chatResponse)
+                    onComplete(finalContent, chatResponse)
                     return
                   } else {
                     // 流式进行中的内容块

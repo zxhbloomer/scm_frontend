@@ -43,11 +43,6 @@ const mutations = {
 
   SET_CONVERSATION_ID (state, conversationId) {
     state.conversationId = conversationId
-    if (conversationId) {
-      localStorage.setItem('chat_conversation_id', conversationId)
-    } else {
-      localStorage.removeItem('chat_conversation_id')
-    }
   },
 
   SET_CONVERSATION_INFO (state, info) {
@@ -121,19 +116,13 @@ const mutations = {
     state.isConnecting = false
     state.lastError = null
     state.retryCount = 0
-    localStorage.removeItem('chat_conversation_id')
   },
 
-  // 初始化状态（从localStorage恢复）
+  // 初始化状态（从localStorage恢复UI状态）
   INIT_CHAT_STATE (state) {
     const savedPanelState = localStorage.getItem('chat_panel_expanded')
     if (savedPanelState !== null) {
       state.isPanelExpanded = savedPanelState === 'true'
-    }
-
-    const savedConversationId = localStorage.getItem('chat_conversation_id')
-    if (savedConversationId) {
-      state.conversationId = savedConversationId
     }
   }
 }
@@ -391,24 +380,8 @@ const actions = {
         }
       })
 
-      // 智能合并：保留本地未保存到数据库的消息（临时消息）
-      if (params.page === 1 || state.messages.length === 0) {
-        // 筛选出本地临时消息（ID以'ai_'或'user_'开头的是前端临时生成的）
-        const localTempMessages = state.messages.filter(msg => {
-          const isTemp = String(msg.id).startsWith('ai_') || String(msg.id).startsWith('user_')
-          // 检查该消息是否已存在于服务器返回的消息中
-          const existsInServer = formattedMessages.some(serverMsg =>
-            serverMsg.content === msg.content && serverMsg.type === msg.type
-          )
-          return isTemp && !existsInServer
-        })
-
-        // 合并：服务器消息 + 本地临时消息
-        commit('SET_MESSAGES', [...formattedMessages, ...localTempMessages])
-      } else {
-        // 分页加载（历史消息），追加到前面
-        commit('SET_MESSAGES', [...formattedMessages, ...state.messages])
-      }
+      // 直接使用服务器数据,数据库是唯一数据源
+      commit('SET_MESSAGES', formattedMessages)
     } catch (error) {
       commit('SET_ERROR', error.message)
     }
