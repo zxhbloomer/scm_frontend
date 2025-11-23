@@ -344,28 +344,6 @@ export default {
   color: #303133;
 }
 
-/* Dialog样式优化 */
-::v-deep .el-dialog__header {
-  background-color: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
-  padding: 16px 20px;
-}
-
-::v-deep .el-dialog__title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #303133;
-}
-
-::v-deep .el-dialog__body {
-  padding: 20px;
-}
-
-::v-deep .el-dialog__footer {
-  border-top: 1px solid #e4e7ed;
-  padding: 12px 20px;
-}
-
 /* 响应式优化 */
 @media (max-width: 768px) {
   .execution-detail-container {
