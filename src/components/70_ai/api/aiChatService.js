@@ -634,6 +634,25 @@ class AIChatService {
       throw new Error(error.message || '获取工作流执行详情失败')
     }
   }
+
+  /**
+   * 删除AI Chat聊天消息记录
+   * @param {String} messageId - 消息ID
+   * @returns {Promise} 删除结果
+   */
+  async deleteConversationRuntime (messageId) {
+    try {
+      const response = await request({
+        url: `/api/v1/ai/conversation/message/${messageId}`,
+        method: 'delete'
+      })
+
+      return response.data !== undefined ? response.data : response
+    } catch (error) {
+      console.error('删除聊天消息失败:', error)
+      throw new Error(error.message || '删除聊天消息失败')
+    }
+  }
 }
 
 // 创建单例实例

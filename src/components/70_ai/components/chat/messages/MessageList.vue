@@ -229,20 +229,13 @@
                     @click="copyMessage(message)"
                   />
                   <el-button
+                    v-if="message.type === 'ai' || message.type === 'assistant'"
                     type="text"
                     size="mini"
-                    icon="el-icon-thumb"
-                    class="bubble-action-btn"
-                    title="有用"
-                    @click="feedbackMessage(message, 'positive')"
-                  />
-                  <el-button
-                    type="text"
-                    size="mini"
-                    icon="el-icon-close"
-                    class="bubble-action-btn"
-                    title="无用"
-                    @click="feedbackMessage(message, 'negative')"
+                    icon="el-icon-delete"
+                    class="bubble-action-btn delete-btn"
+                    title="删除消息"
+                    @click="deleteWorkflowRuntime(message)"
                   />
                   <el-button
                     v-if="message.workflowRuntime && message.workflowRuntime.uuid"
@@ -646,6 +639,45 @@ export default {
         this.detailDialogVisible = false
       } finally {
         this.detailLoading = false
+      }
+    },
+
+    /**
+     * 删除工作流运行时记录
+     * @param {Object} message - AI消息对象
+     */
+    async deleteWorkflowRuntime (message) {
+      if (!message.id) {
+        this.$message.warning('该消息缺少ID信息')
+        return
+      }
+
+      try {
+        await this.$confirm('确定要删除这条聊天消息吗?', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        const messageId = message.id
+
+        // 调用删除API (传递message_id)
+        await aiChatService.deleteConversationRuntime(messageId)
+
+        // 从消息列表中移除该消息
+        const index = this.messages.findIndex(msg => msg.id === messageId)
+        if (index !== -1) {
+          this.messages.splice(index, 1)
+        }
+
+        this.$message.success('删除成功')
+      } catch (error) {
+        if (error === 'cancel') {
+          // 用户取消删除,不显示错误
+          return
+        }
+        this.$message.error('删除失败: ' + (error.message || '未知错误'))
+        console.error('删除聊天消息失败:', error)
       }
     }
   }
@@ -1203,6 +1235,14 @@ export default {
 .bubble-action-btn:hover {
   color: #667eea;
   background: rgba(102, 126, 234, 0.1);
+}
+
+.delete-btn {
+  color: #f56c6c !important;
+}
+
+.delete-btn:hover {
+  color: #f78989 !important;
 }
 
 .agent-info {
