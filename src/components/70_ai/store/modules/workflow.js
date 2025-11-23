@@ -545,8 +545,15 @@ const actions = {
       if (response.data && response.data.records) {
         // ✅ 必须对返回的数据进行清理和规范化，确保节点uuid字段正确
         const cleanedWorkflows = response.data.records.map(workflow => {
-          // 规范化节点中的uuid字段
+          // 规范化节点中的uuid字段，并过滤已删除节点
           if (workflow.nodes && Array.isArray(workflow.nodes)) {
+            // 先过滤掉 is_deleted = 1 的节点
+            workflow.nodes = workflow.nodes.filter(node => {
+              const isDeleted = node.isDeleted !== undefined ? node.isDeleted : node.is_deleted
+              return !isDeleted
+            })
+
+            // 然后规范化保留节点的uuid字段
             workflow.nodes.forEach(node => {
               // 确保节点有 uuid 字段（用于Vuex store查找）
               if (!node.uuid && (node.nodeUuid || node.node_uuid)) {
@@ -586,8 +593,15 @@ const actions = {
       if (response.data && response.data.records) {
         // ✅ 必须对返回的数据进行清理和规范化（与loadMyWorkflows保持一致）
         const cleanedWorkflows = response.data.records.map(workflow => {
-          // 规范化节点中的uuid字段
+          // 规范化节点中的uuid字段，并过滤已删除节点
           if (workflow.nodes && Array.isArray(workflow.nodes)) {
+            // 先过滤掉 is_deleted = 1 的节点
+            workflow.nodes = workflow.nodes.filter(node => {
+              const isDeleted = node.isDeleted !== undefined ? node.isDeleted : node.is_deleted
+              return !isDeleted
+            })
+
+            // 然后规范化保留节点的uuid字段
             workflow.nodes.forEach(node => {
               // 确保节点有 uuid 字段（用于Vuex store查找）
               if (!node.uuid && (node.nodeUuid || node.node_uuid)) {
