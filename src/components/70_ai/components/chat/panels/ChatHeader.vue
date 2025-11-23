@@ -59,33 +59,13 @@
           />
         </el-tooltip>
 
-        <!-- 模型管理 -->
-        <el-tooltip content="模型管理" placement="bottom">
+        <!-- 管理中心 -->
+        <el-tooltip content="管理中心" placement="bottom">
           <el-button
             type="text"
             icon="el-icon-setting"
-            class="action-btn model-manage-btn"
-            @click="openModelSettings"
-          />
-        </el-tooltip>
-
-        <!-- 知识库管理 -->
-        <el-tooltip content="知识库管理" placement="bottom">
-          <el-button
-            type="text"
-            icon="el-icon-files"
-            class="action-btn kb-manage-btn"
-            @click="openKnowledgeBaseManage"
-          />
-        </el-tooltip>
-
-        <!-- 工作流管理 -->
-        <el-tooltip content="工作流管理" placement="bottom">
-          <el-button
-            type="text"
-            icon="el-icon-s-operation"
-            class="action-btn workflow-manage-btn"
-            @click="openWorkflowManage"
+            class="action-btn management-center-btn"
+            @click="openManagementCenter"
           />
         </el-tooltip>
 
@@ -101,6 +81,13 @@
 
     <!-- 底部装饰线 -->
     <div class="header-border" />
+
+    <!-- 管理中心弹窗 -->
+    <ManagementCenterDialog
+      :visible="showManagementCenter"
+      @select="handleManagementOption"
+      @update:visible="showManagementCenter = $event"
+    />
 
     <!-- 模型设置弹窗 -->
     <ModelSettingsDialog
@@ -126,6 +113,7 @@
 </template>
 
 <script>
+import ManagementCenterDialog from '../dialogs/ManagementCenterDialog.vue'
 import ModelSettingsDialog from '../../model/ModelSettingsDialog.vue'
 import { KnowledgeBaseManageDialog } from '../../rag'
 import WorkflowDialog from '../../workflow/WorkflowDialog.vue'
@@ -135,6 +123,7 @@ export default {
   name: 'ChatHeader',
 
   components: {
+    ManagementCenterDialog,
     ModelSettingsDialog,
     KnowledgeBaseManageDialog,
     WorkflowDialog
@@ -163,6 +152,7 @@ export default {
 
   data () {
     return {
+      showManagementCenter: false,
       showModelSettings: false,
       showKnowledgeBase: false,
       showWorkflow: false,
@@ -211,6 +201,33 @@ export default {
     },
 
     /**
+     * 打开管理中心弹窗
+     */
+    openManagementCenter () {
+      this.showManagementCenter = true
+    },
+
+    /**
+     * 处理管理选项选择
+     */
+    handleManagementOption (optionKey) {
+      this.showManagementCenter = false // 先关闭管理中心
+
+      // 根据选项打开对应的Dialog
+      switch (optionKey) {
+        case 'model':
+          this.openModelSettings()
+          break
+        case 'knowledge':
+          this.openKnowledgeBaseManage()
+          break
+        case 'workflow':
+          this.openWorkflowManage()
+          break
+      }
+    },
+
+    /**
      * 打开模型设置弹窗
      */
     openModelSettings () {
@@ -228,6 +245,7 @@ export default {
      * 打开知识库管理弹窗
      */
     openKnowledgeBaseManage () {
+      this.loadModelList() // 先加载模型列表
       this.showKnowledgeBase = true
     },
 
@@ -418,19 +436,9 @@ export default {
   );
 }
 
-/* 模型管理按钮样式 */
-.model-manage-btn:hover {
+/* 管理中心按钮样式 */
+.management-center-btn:hover {
   background: rgba(64, 158, 255, 0.3);
-}
-
-/* 知识库管理按钮样式 */
-.kb-manage-btn:hover {
-  background: rgba(230, 162, 60, 0.3);
-}
-
-/* 工作流管理按钮样式 */
-.workflow-manage-btn:hover {
-  background: rgba(133, 199, 58, 0.3);
 }
 
 /* 响应式调整 */
