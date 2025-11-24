@@ -124,6 +124,12 @@ class AIChatService {
 
                     // 检查是否是openPage工具
                     if (toolName === 'PermissionMcpTools.openPage' && result) {
+                      console.log('✅ 【MCP-openPage】检测到页面跳转指令:', {
+                        url: result.url,
+                        target: result.target,
+                        action: result.action
+                      })
+
                       // 解析openPage指令
                       if (result.action === 'openPage' && result.success === true) {
                         const url = result.url
@@ -132,10 +138,10 @@ class AIChatService {
                         // 通过回调通知上层组件执行路由跳转
                         if (onOpenPage && typeof onOpenPage === 'function') {
                           onOpenPage({ url, target })
+                          console.log('🎉 【页面跳转成功】已触发页面跳转到:', url)
+                        } else {
+                          console.error('❌ 【页面跳转失败】onOpenPage回调不存在或不是函数')
                         }
-
-                        // 显示友好提示(可选,也可以不显示,因为LLM会生成文本说明)
-                        // 这里跳过,避免重复信息
                       }
                     }
                   }
@@ -145,13 +151,14 @@ class AIChatService {
                   const generation = chatResponse.results[0]
                   let content = generation.output?.content || ''
 
-                  // 尝试解析content，因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
+                  // 尝试解析content,因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
                   // 或者MCP工具返回的页面跳转指令 {"action":"openPage","url":"/path","target":"_self"}
                   try {
                     const contentObj = JSON.parse(content)
 
-                    // 检测页面跳转指令
+                    // 检测页面跳转指令(旧逻辑,应该已被mcpToolResults取代)
                     if (contentObj.action === 'openPage') {
+                      console.warn('⚠️ 【MCP-openPage】在content中检测到openPage指令(旧逻辑,应该被mcpToolResults取代)')
                       const url = contentObj.url
                       const target = contentObj.target || '_self'
 
@@ -167,7 +174,7 @@ class AIChatService {
                       content = contentObj.output.value
                     }
                   } catch (e) {
-                    // 如果content不是JSON，直接使用原始内容
+                    // 如果content不是JSON,直接使用原始内容
                   }
 
                   // 第一次收到数据时触发start事件
