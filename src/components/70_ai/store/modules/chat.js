@@ -178,7 +178,7 @@ const actions = {
     }
   },
 
-  async sendMessage ({ commit, state, dispatch }, content) {
+  async sendMessage ({ commit, state, dispatch, rootState }, content) {
     if (!content.trim()) return
 
     // eslint-disable-next-line no-unused-vars
@@ -225,6 +225,25 @@ const actions = {
             messageId: userMessage.id,
             updates: { status: 'sent' }
           })
+        },
+        // 【新增】MCP页面跳转回调 - 当后端返回openPage指令时触发
+        onOpenPage: ({ url, target }) => {
+          // 使用Vue Router进行页面跳转
+          // 注意: Vuex store中无法直接访问this.$router, 需要通过rootState或者全局router实例
+          // 这里我们使用import导入的router实例
+          if (rootState && rootState.router) {
+            rootState.router.push(url).catch(err => {
+              console.error('页面跳转失败:', err)
+            })
+          } else {
+            // 降级方案: 使用window.location
+            if (target === '_blank') {
+              window.open(url, '_blank')
+            } else {
+              // 对于 Vue Router 的路由,使用hash模式跳转
+              window.location.hash = '#' + url
+            }
+          }
         },
         onContent: (contentChunk) => {
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
@@ -287,6 +306,9 @@ const actions = {
             commit('UPDATE_MESSAGE', {
               messageId: aiMessageId,
               updates: {
+                // 关键修复: 使用后端返回的真实messageId替换临时ID
+                // 解决删除消息时因ID不匹配导致删除失败的问题
+                id: chatResponse?.messageId || aiMessageId,
                 content: finalContent,
                 status: 'delivered',
                 isStreaming: false,

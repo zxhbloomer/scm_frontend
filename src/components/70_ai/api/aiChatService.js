@@ -23,6 +23,7 @@ class AIChatService {
    * @param {Function} callbacks.onContent - 内容片段回调
    * @param {Function} callbacks.onComplete - 完成回调
    * @param {Function} callbacks.onError - 错误回调
+   * @param {Function} callbacks.onOpenPage - 打开页面回调(可选),接收参数: {url, target}
    * @returns {Function} 取消函数
    */
   sendMessageStream ({ conversationId, prompt, chatModelId = 'default' }, callbacks = {}) {
@@ -30,7 +31,8 @@ class AIChatService {
       onStart = () => {},
       onContent = () => {},
       onComplete = () => {},
-      onError = () => {}
+      onError = () => {},
+      onOpenPage = null // 新增：页面跳转回调
     } = callbacks
 
     let cancelled = false
@@ -115,14 +117,53 @@ class AIChatService {
                 // 解析ChatResponse JSON对象
                 const chatResponse = JSON.parse(jsonData)
 
+                // 【优先检查】MCP工具返回结果(后端新增字段,用于页面跳转等特殊指令)
+                if (chatResponse.mcpToolResults && Array.isArray(chatResponse.mcpToolResults)) {
+                  for (const toolResult of chatResponse.mcpToolResults) {
+                    const { toolName, result } = toolResult
+
+                    // 检查是否是openPage工具
+                    if (toolName === 'PermissionMcpTools.openPage' && result) {
+                      // 解析openPage指令
+                      if (result.action === 'openPage' && result.success === true) {
+                        const url = result.url
+                        const target = result.target || '_self'
+
+                        // 通过回调通知上层组件执行路由跳转
+                        if (onOpenPage && typeof onOpenPage === 'function') {
+                          onOpenPage({ url, target })
+                        }
+
+                        // 显示友好提示(可选,也可以不显示,因为LLM会生成文本说明)
+                        // 这里跳过,避免重复信息
+                      }
+                    }
+                  }
+                }
+
                 if (chatResponse.results && chatResponse.results.length > 0) {
                   const generation = chatResponse.results[0]
                   let content = generation.output?.content || ''
 
                   // 尝试解析content，因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
+                  // 或者MCP工具返回的页面跳转指令 {"action":"openPage","url":"/path","target":"_self"}
                   try {
                     const contentObj = JSON.parse(content)
-                    if (contentObj.output && contentObj.output.value) {
+
+                    // 检测页面跳转指令
+                    if (contentObj.action === 'openPage') {
+                      const url = contentObj.url
+                      const target = contentObj.target || '_self'
+
+                      // 通过回调通知上层组件执行路由跳转
+                      if (onOpenPage && typeof onOpenPage === 'function') {
+                        onOpenPage({ url, target })
+                      }
+
+                      // 替换为友好提示文本,显示在聊天窗口
+                      content = `✅ 正在为您打开页面: ${url}`
+                    } else if (contentObj.output && contentObj.output.value) {
+                      // 工作流输出格式
                       content = contentObj.output.value
                     }
                   } catch (e) {
