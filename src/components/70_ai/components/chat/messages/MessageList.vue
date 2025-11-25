@@ -653,10 +653,28 @@ export default {
       }
 
       try {
+        // 延迟设置 z-index，确保弹窗渲染完成后修改
+        setTimeout(() => {
+          const messageBoxWrapper = document.querySelector('.ai-chat-confirm-dialog')
+          if (messageBoxWrapper) {
+            messageBoxWrapper.style.zIndex = '10100'
+            // 同时设置遮罩层（遮罩层是 wrapper 的兄弟元素）
+            const wrapperParent = messageBoxWrapper.closest('.el-message-box__wrapper')
+            if (wrapperParent) {
+              wrapperParent.style.zIndex = '10100'
+              const modal = wrapperParent.previousElementSibling
+              if (modal && modal.classList.contains('v-modal')) {
+                modal.style.zIndex = '10099'
+              }
+            }
+          }
+        }, 0)
+
         await this.$confirm('确定要删除这条聊天消息吗?', '删除确认', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
-          type: 'warning'
+          type: 'warning',
+          customClass: 'ai-chat-confirm-dialog'
         })
 
         const messageId = message.id
@@ -1401,5 +1419,24 @@ export default {
     width: 100%;
     justify-content: center;
   }
+}
+</style>
+
+<!-- 全局样式：确保确认框显示在 AI Chat 窗口之上 -->
+<style>
+/* MessageBox wrapper 容器 */
+.el-message-box__wrapper.ai-chat-confirm-dialog,
+div.el-message-box__wrapper[aria-label="删除确认"] {
+  z-index: 10100 !important;
+}
+
+/* MessageBox 本身 */
+.ai-chat-confirm-dialog .el-message-box {
+  z-index: 10100 !important;
+}
+
+/* 遮罩层 */
+.v-modal {
+  /* 默认不改变，只在 JS 中动态设置 */
 }
 </style>
