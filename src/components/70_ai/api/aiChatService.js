@@ -18,6 +18,7 @@ class AIChatService {
    * @param {string} params.conversationId - 对话ID
    * @param {string} params.prompt - 用户消息
    * @param {string} params.chatModelId - AI模型ID
+   * @param {Object} params.pageContext - 页面上下文(可选),用于AI回答"我在哪个页面"等问题
    * @param {Object} callbacks - 回调函数
    * @param {Function} callbacks.onStart - 开始回调
    * @param {Function} callbacks.onContent - 内容片段回调
@@ -26,7 +27,7 @@ class AIChatService {
    * @param {Function} callbacks.onOpenPage - 打开页面回调(可选),接收参数: {url, target}
    * @returns {Function} 取消函数
    */
-  sendMessageStream ({ conversationId, prompt, chatModelId = 'default' }, callbacks = {}) {
+  sendMessageStream ({ conversationId, prompt, chatModelId = 'default', pageContext = null }, callbacks = {}) {
     const {
       onStart = () => {},
       onContent = () => {},
@@ -73,7 +74,8 @@ class AIChatService {
           body: JSON.stringify({
             conversationId,
             prompt,
-            chatModelId
+            chatModelId,
+            pageContext
           }),
           signal: controller.signal
         })
@@ -729,6 +731,7 @@ class AIChatService {
    * @param {string} params.workflowUuid - 工作流UUID
    * @param {string} params.userInput - 用户输入文本
    * @param {Array<string>} params.fileUrls - 文件URL列表
+   * @param {Object} params.pageContext - 页面上下文(可选),用于AI回答"我在哪个页面"等问题
    * @param {Object} callbacks - 回调函数
    * @param {Function} callbacks.onStart - 开始回调
    * @param {Function} callbacks.onContent - 内容片段回调
@@ -736,7 +739,7 @@ class AIChatService {
    * @param {Function} callbacks.onError - 错误回调
    * @returns {Function} 取消函数
    */
-  executeWorkflowCommand ({ conversationId, workflowUuid, userInput = '', fileUrls = [] }, callbacks = {}) {
+  executeWorkflowCommand ({ conversationId, workflowUuid, userInput = '', fileUrls = [], pageContext = null }, callbacks = {}) {
     const {
       onStart = () => {},
       onContent = () => {},
@@ -782,7 +785,8 @@ class AIChatService {
             conversationId,
             workflowUuid,
             userInput,
-            fileUrls
+            fileUrls,
+            pageContext
           }),
           signal: controller.signal
         })

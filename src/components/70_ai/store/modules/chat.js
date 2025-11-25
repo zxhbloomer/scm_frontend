@@ -1,4 +1,5 @@
 import aiChatService from '@/components/70_ai/api/aiChatService'
+import router from '@/router'
 // import SockJS from 'sockjs-client'
 // import Stomp from 'stompjs'
 
@@ -215,6 +216,14 @@ const actions = {
         await dispatch('createConversation', content)
       }
 
+      // 获取当前页面上下文(用于MCP工具回答"我在哪个页面"等问题)
+      const currentRoute = router.currentRoute
+      const pageContext = currentRoute ? {
+        page_code: currentRoute.meta?.page_code || currentRoute.name || '',
+        title: currentRoute.meta?.title || '',
+        path: currentRoute.path || ''
+      } : null
+
       const userMessage = {
         id: 'temp_' + Date.now(),
         content: content.trim(),
@@ -242,7 +251,8 @@ const actions = {
       _cancelFunction = aiChatService.sendMessageStream({
         conversationId: state.conversationId,
         prompt: content.trim(),
-        chatModelId: 'default'
+        chatModelId: 'default',
+        pageContext
       }, {
         onStart: () => {
           commit('UPDATE_MESSAGE', {
@@ -524,6 +534,14 @@ const actions = {
     try {
       commit('SET_LOADING', true)
 
+      // 获取当前页面上下文(用于MCP工具回答"我在哪个页面"等问题)
+      const currentRoute = router.currentRoute
+      const pageContext = currentRoute ? {
+        page_code: currentRoute.meta?.page_code || currentRoute.name || '',
+        title: currentRoute.meta?.title || '',
+        path: currentRoute.path || ''
+      } : null
+
       // 创建用户消息（显示完整的命令输入）
       const userMessage = {
         id: 'temp_' + Date.now(),
@@ -553,7 +571,8 @@ const actions = {
         conversationId: state.conversationId,
         workflowUuid: state.selectedWorkflow.workflowUuid,
         userInput,
-        fileUrls
+        fileUrls,
+        pageContext
       }, {
         onStart: () => {
           commit('UPDATE_MESSAGE', {
