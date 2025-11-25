@@ -124,13 +124,62 @@
         'focused': isFocused
       }"
     >
+      <!-- Workflow 浮动命令菜单 (GitHub Copilot风格) -->
+      <div
+        v-if="showWorkflowMenu"
+        class="workflow-command-menu"
+        :style="menuPositionStyle"
+        @click.stop
+      >
+        <!-- 菜单头部 - 搜索框 -->
+        <div class="menu-header">
+          <input
+            ref="menuSearch"
+            v-model="searchQuery"
+            type="text"
+            placeholder="搜索工作流..."
+            class="menu-search"
+            @input="handleMenuSearch"
+            @click.stop
+          >
+        </div>
+
+        <!-- 菜单项列表 -->
+        <div ref="menuItems" class="menu-items">
+          <div
+            v-for="(wf, index) in filteredWorkflows"
+            :key="wf.workflowUuid"
+            :class="['menu-item', { 'is-active': index === activeMenuIndex }]"
+            @click="handleSelectWorkflow(wf)"
+            @mouseenter="activeMenuIndex = index"
+          >
+            <!-- 左侧图标 -->
+            <div class="item-icon">
+              <i class="el-icon-s-operation" />
+            </div>
+
+            <!-- 右侧内容 -->
+            <div class="item-content">
+              <div class="item-title">{{ wf.title }}</div>
+              <div v-if="wf.desc" class="item-desc">{{ wf.desc }}</div>
+            </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div v-if="filteredWorkflows.length === 0" class="menu-empty">
+            <i class="el-icon-search" />
+            <p>未找到匹配的工作流</p>
+          </div>
+        </div>
+      </div>
+
       <!-- 输入框 -->
       <el-input
         ref="chatInput"
         v-model="userInput"
         type="textarea"
         :rows="1"
-        :placeholder="placeholder"
+        :placeholder="currentPlaceholder"
         :disabled="isLoading"
         resize="none"
         class="user-message-input"
@@ -198,6 +247,7 @@
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'
 import {
   FILE_EXTENSIONS,
   getFileIconUrl,
@@ -257,11 +307,35 @@ export default {
       dragCounter: 0, // 拖拽计数器，解决子元素触发dragleave的问题
       // 容器宽度监听
       containerWidth: 0, // 容器实际宽度
-      resizeObserver: null // ResizeObserver实例
+      resizeObserver: null, // ResizeObserver实例
+      // ==================== Workflow Slash Command (2025-11-24) ====================
+      showWorkflowMenu: false, // 是否显示workflow浮动菜单
+      searchQuery: '', // 菜单搜索关键词
+      activeMenuIndex: 0, // 当前高亮的菜单项索引
+      menuPosition: { // 菜单位置
+        top: '0px',
+        left: '0px',
+        width: '0px'
+      }
     }
   },
 
   computed: {
+    // Vuex Store映射 - Workflow状态
+    ...mapState('chat', {
+      availableWorkflows: state => state.availableWorkflows,
+      selectedWorkflow: state => state.selectedWorkflow,
+      isWorkflowMode: state => state.isWorkflowMode
+    }),
+
+    // 动态placeholder
+    currentPlaceholder () {
+      if (this.isWorkflowMode && this.selectedWorkflow) {
+        return `@${this.selectedWorkflow.title} - 输入参数并发送 (清空或 / 切换)`
+      }
+      return this.placeholder
+    },
+
     // 根据容器宽度动态计算列的span值
     dynamicColSpan () {
       if (this.containerWidth === 0) {
@@ -323,6 +397,29 @@ export default {
       if (this.fileUploadSetting.video) exts.push(...FILE_EXTENSIONS.video)
       if (this.fileUploadSetting.other) exts.push(...(this.fileUploadSetting.otherExtensions || []))
       return exts
+    },
+    // ==================== Workflow Slash Command Computed (2025-11-24) ====================
+    // 过滤后的workflow列表
+    filteredWorkflows () {
+      if (!this.searchQuery) {
+        return this.availableWorkflows
+      }
+      const query = this.searchQuery.toLowerCase()
+      return this.availableWorkflows.filter(wf => {
+        return wf.title.toLowerCase().includes(query) ||
+               (wf.desc && wf.desc.toLowerCase().includes(query))
+      })
+    },
+    // 菜单位置样式
+    menuPositionStyle () {
+      return {
+        position: 'fixed',
+        top: this.menuPosition.top,
+        bottom: this.menuPosition.bottom, // 添加bottom属性
+        left: this.menuPosition.left,
+        width: this.menuPosition.width,
+        zIndex: 9999
+      }
     }
   },
 
@@ -340,6 +437,14 @@ export default {
   },
 
   methods: {
+    // Vuex Actions映射
+    ...mapActions('chat', [
+      'loadAvailableWorkflows',
+      'selectWorkflow',
+      'executeWorkflowCommand',
+      'clearWorkflowSelection'
+    ]),
+
     // 初始化ResizeObserver监听容器宽度变化
     initResizeObserver () {
       const container = this.$refs.chatInputContainer
@@ -370,6 +475,50 @@ export default {
     },
 
     handleKeyDown (e) {
+      // ==================== Workflow Menu 键盘导航 (2025-11-24) ====================
+      if (this.showWorkflowMenu) {
+        switch (e.keyCode) {
+          case 38: // ↑ 上箭头
+            e.preventDefault()
+            this.activeMenuIndex = Math.max(0, this.activeMenuIndex - 1)
+            this.scrollToActive()
+            break
+
+          case 40: // ↓ 下箭头
+            e.preventDefault()
+            this.activeMenuIndex = Math.min(
+              this.filteredWorkflows.length - 1,
+              this.activeMenuIndex + 1
+            )
+            this.scrollToActive()
+            break
+
+          case 13: // Enter 确认选择
+            e.preventDefault()
+            if (this.filteredWorkflows[this.activeMenuIndex]) {
+              this.handleSelectWorkflow(this.filteredWorkflows[this.activeMenuIndex])
+            }
+            break
+
+          case 27: // Esc 关闭菜单
+            e.preventDefault()
+            this.closeWorkflowMenu()
+            break
+        }
+        return
+      }
+
+      // ==================== Workflow Mode Esc 取消 (2025-11-24) ====================
+      // 如果处于workflow模式，按Esc取消
+      if (this.isWorkflowMode && e.keyCode === 27) {
+        e.preventDefault()
+        this.clearWorkflowSelection()
+        this.userInput = ''
+        this.$message.info('已取消工作流选择')
+        return
+      }
+
+      // 原有的Enter发送消息逻辑
       if (e.keyCode === 13 && !e.shiftKey) {
         e.preventDefault()
         this.handleSendMessage()
@@ -377,10 +526,67 @@ export default {
     },
 
     handleInput () {
-      // 处理输入变化
+      // ==================== Workflow Slash Command 检测 (2025-11-24) ====================
+
+      // 检测清空输入 - 取消workflow模式
+      if (this.userInput === '' && this.isWorkflowMode) {
+        // 清空输入时自动退出workflow模式
+        this.clearWorkflowSelection()
+        this.closeWorkflowMenu()
+        return
+      }
+
+      // 检测是否输入斜杠 "/"
+      if (this.userInput === '/') {
+        // 如果已经在workflow模式，先退出
+        if (this.isWorkflowMode) {
+          this.clearWorkflowSelection()
+        }
+
+        // 显示workflow浮动菜单
+        this.showWorkflowMenu = true
+        this.searchQuery = ''
+        this.activeMenuIndex = 0
+        // 计算菜单位置
+        this.calculateMenuPosition()
+        // 加载workflow列表（每次都获取最新数据）
+        this.loadAvailableWorkflows().catch(error => {
+          console.error('加载workflow列表失败:', error)
+          this.$message.error('加载工作流列表失败')
+          this.showWorkflowMenu = false
+        })
+      } else if (!this.userInput.startsWith('/')) {
+        // 用户输入了其他内容（不是斜杠开头），关闭菜单
+        if (this.showWorkflowMenu && !this.isWorkflowMode) {
+          this.closeWorkflowMenu()
+        }
+      }
     },
 
     handleSendMessage () {
+      // ==================== Workflow Slash Command 执行 (2025-11-24) ====================
+      // 如果处于workflow模式，执行workflow命令
+      if (this.isWorkflowMode && this.selectedWorkflow) {
+        const userInput = this.userInput.trim()
+        const fileUrls = this.getAllFileUrls()
+
+        // 执行workflow命令
+        this.executeWorkflowCommand({
+          userInput,
+          fileUrls
+        }).then(() => {
+          // 清空输入和文件
+          this.userInput = ''
+          this.fileAllList = []
+          this.focusInput()
+        }).catch(error => {
+          console.error('执行workflow失败:', error)
+          this.$message.error('执行工作流失败')
+        })
+        return
+      }
+
+      // 原有的常规消息发送逻辑
       const message = this.userInput?.trim() || (this.hasUploadedFiles ? '发送文件' : '')
 
       if (message || this.hasUploadedFiles) {
@@ -609,6 +815,123 @@ export default {
       if (this.$refs.chatInput) {
         this.$refs.chatInput.focus()
       }
+    },
+
+    // ==================== Workflow Slash Command 方法 (2025-11-24) ====================
+
+    /**
+     * 计算菜单位置 - 智能定位(视口边界检测)
+     */
+    calculateMenuPosition () {
+      this.$nextTick(() => {
+        // 使用整个输入框容器来计算位置,而不是内部的textarea
+        const container = this.$refs.chatInputContainer
+        if (!container) return
+
+        // 获取容器位置(包含整个输入框区域)
+        const containerRect = container.getBoundingClientRect()
+
+        // 菜单最大高度(与CSS中max-height保持一致)
+        const menuMaxHeight = 400
+
+        // 视口高度
+        const viewportHeight = window.innerHeight
+
+        // 计算下方剩余空间
+        const spaceBelow = viewportHeight - containerRect.bottom
+        // 计算上方剩余空间
+        const spaceAbove = containerRect.top
+
+        // 判断菜单应该显示在上方还是下方
+        // 优先下方,但如果下方空间不足且上方空间更充足,则显示在上方
+        const showAbove = spaceBelow < menuMaxHeight + 16 && spaceAbove > spaceBelow
+
+        if (showAbove) {
+          // 显示在输入框上方
+          // 菜单底部应该在容器顶部上方8px处
+          // CSS的bottom = 从视口底部到菜单底部的距离
+          // 计算: 视口高度 - (容器顶部位置 - 8px间距)
+          const menuBottom = viewportHeight - (containerRect.top - 8)
+          this.menuPosition = {
+            top: 'auto',
+            bottom: `${menuBottom}px`,
+            left: `${containerRect.left + 20}px`,
+            width: `400px`
+          }
+        } else {
+          // 显示在输入框下方(默认)
+          this.menuPosition = {
+            top: `${containerRect.bottom + 8}px`,
+            bottom: 'auto',
+            left: `${containerRect.left}px`,
+            width: `${containerRect.width}px`
+          }
+        }
+      })
+    },
+
+    /**
+     * 关闭workflow菜单
+     */
+    closeWorkflowMenu () {
+      this.showWorkflowMenu = false
+      this.searchQuery = ''
+      this.activeMenuIndex = 0
+    },
+
+    /**
+     * 处理选择workflow（完整流程）
+     */
+    handleSelectWorkflow (workflow) {
+      // 1. 调用Vuex action选择workflow
+      this.selectWorkflow(workflow)
+
+      // 2. 关闭浮动菜单
+      this.closeWorkflowMenu()
+
+      // 3. 清空输入框的 "/"
+      this.userInput = ''
+
+      // 4. 聚焦输入框，准备输入workflow参数
+      this.$nextTick(() => {
+        this.focusInput()
+      })
+    },
+
+    /**
+     * 处理菜单搜索
+     */
+    handleMenuSearch () {
+      // 重置高亮索引到第一项
+      this.activeMenuIndex = 0
+    },
+
+    /**
+     * 滚动到当前高亮项
+     */
+    scrollToActive () {
+      this.$nextTick(() => {
+        const activeItem = this.$el.querySelector('.menu-item.is-active')
+        if (activeItem) {
+          activeItem.scrollIntoView({
+            block: 'nearest',
+            behavior: 'smooth'
+          })
+        }
+      })
+    },
+
+    /**
+     * 获取所有文件的URL列表（用于workflow执行）
+     */
+    getAllFileUrls () {
+      const urls = []
+      this.fileAllList.forEach(file => {
+        if (file.url) {
+          urls.push(file.url)
+        }
+      })
+      return urls
     }
   }
 }
@@ -957,4 +1280,293 @@ export default {
 .send-icon-active {
   color: #3b82f6;
 }
+
+/* ==================== Workflow Slash Command 样式 (GitHub Copilot风格) ==================== */
+
+/* 选择器主容器 */
+.workflow-selector {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  z-index: 1000;
+}
+
+/* 下拉面板全局样式 */
+.workflow-selector-dropdown {
+  background: #ffffff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+}
+
+/* 选项项容器 - 移除Element UI默认样式 */
+.workflow-option-item {
+  padding: 0 !important;
+  height: auto !important;
+  line-height: normal !important;
+}
+
+.workflow-option-item:hover {
+  background-color: #f5f7fa !important;
+}
+
+.workflow-option-item.selected {
+  background-color: #ecf5ff !important;
+}
+
+/* 选项内容布局 - Flex横向布局 */
+.workflow-option {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px 12px;
+  gap: 12px;
+  min-height: 60px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 左侧图标 */
+.workflow-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+/* 中间内容区域 */
+.workflow-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workflow-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.workflow-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.workflow-desc {
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 选中状态样式优化 */
+.workflow-option-item.selected .workflow-icon {
+  background: linear-gradient(135deg, #409eff 0%, #53a8ff 100%);
+}
+
+.workflow-option-item.selected .workflow-title {
+  color: #409eff;
+}
+
+/* Hover状态优化 */
+.workflow-option-item:hover .workflow-icon {
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(102, 126, 234, 0.3);
+}
+
+/* 空状态样式 */
+.workflow-selector-dropdown .el-select-dropdown__empty {
+  padding: 20px 0;
+  color: #909399;
+  font-size: 13px;
+}
+
+/* ==================== Workflow 浮动命令菜单样式 (GitHub Copilot风格) (2025-11-24) ==================== */
+
+/* 浮动菜单容器 */
+.workflow-command-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #ffffff;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow: hidden;
+  animation: menuFadeIn 0.2s ease;
+}
+
+@keyframes menuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 菜单头部 - 搜索框 */
+.menu-header {
+  padding: 12px;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.menu-search {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.menu-search:focus {
+  border-color: #409eff;
+}
+
+.menu-search::placeholder {
+  color: #c0c4cc;
+}
+
+/* 菜单项容器 */
+.menu-items {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+/* 滚动条美化 */
+.menu-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menu-items::-webkit-scrollbar-thumb {
+  background-color: #dcdfe6;
+  border-radius: 3px;
+}
+
+.menu-items::-webkit-scrollbar-thumb:hover {
+  background-color: #c0c4cc;
+}
+
+/* 单个菜单项 */
+.menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 60px;
+}
+
+/* Hover状态 */
+.menu-item:hover {
+  background-color: #f5f7fa;
+}
+
+/* 激活状态(键盘导航) */
+.menu-item.is-active {
+  background-color: #ecf5ff;
+}
+
+.menu-item.is-active .item-icon {
+  background: linear-gradient(135deg, #409eff 0%, #53a8ff 100%);
+  transform: scale(1.05);
+  box-shadow: 0 3px 6px rgba(64, 158, 255, 0.3);
+}
+
+.menu-item.is-active .item-title {
+  color: #409eff;
+  font-weight: 500;
+}
+
+/* 左侧图标 */
+.item-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  color: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.item-icon i {
+  font-size: 16px;
+}
+
+/* 右侧内容 */
+.item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.item-title {
+  font-size: 14px;
+  font-weight: 400;
+  color: #303133;
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+
+.item-desc {
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* 空状态 */
+.menu-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #909399;
+}
+
+.menu-empty i {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.menu-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
 </style>

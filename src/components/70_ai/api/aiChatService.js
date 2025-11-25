@@ -701,6 +701,203 @@ class AIChatService {
       throw new Error(error.message || '删除聊天消息失败')
     }
   }
+
+  // ==================== Workflow Slash Command API (2025-11-24) ====================
+
+  /**
+   * 获取可用的workflow列表（用于斜杠命令下拉选择）
+   * @returns {Promise<Array>} 可用workflow列表 [{workflowUuid, title, desc}]
+   */
+  async getAvailableWorkflows () {
+    try {
+      const response = await request({
+        url: '/api/v1/ai/conversation/workflow/available',
+        method: 'get'
+      })
+
+      return response.data !== undefined ? response.data : response
+    } catch (error) {
+      console.error('获取可用workflow列表失败:', error)
+      throw new Error(error.message || '获取可用workflow列表失败')
+    }
+  }
+
+  /**
+   * 执行workflow命令（斜杠命令触发，SSE流式响应）
+   * @param {Object} params - 请求参数
+   * @param {string} params.conversationId - 对话ID
+   * @param {string} params.workflowUuid - 工作流UUID
+   * @param {string} params.userInput - 用户输入文本
+   * @param {Array<string>} params.fileUrls - 文件URL列表
+   * @param {Object} callbacks - 回调函数
+   * @param {Function} callbacks.onStart - 开始回调
+   * @param {Function} callbacks.onContent - 内容片段回调
+   * @param {Function} callbacks.onComplete - 完成回调
+   * @param {Function} callbacks.onError - 错误回调
+   * @returns {Function} 取消函数
+   */
+  executeWorkflowCommand ({ conversationId, workflowUuid, userInput = '', fileUrls = [] }, callbacks = {}) {
+    const {
+      onStart = () => {},
+      onContent = () => {},
+      onComplete = () => {},
+      onError = () => {}
+    } = callbacks
+
+    let cancelled = false
+    const controller = new AbortController()
+    let hasStarted = false
+    let accumulatedContent = ''
+
+    const connectSSE = async () => {
+      try {
+        const baseURL = import.meta.env.VITE_BASE_API
+        const url = `${baseURL}/api/v1/ai/conversation/workflow/execute`
+
+        // 构建请求头
+        const headers = {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache'
+        }
+
+        // 添加租户ID
+        const tenantId = getTenantId()
+        if (tenantId) {
+          headers['X-Tenant-ID'] = tenantId
+        }
+
+        // 添加 wms-Token
+        const wmsToken = document.cookie.split(';')
+          .find(row => row.trim().startsWith('wms-Token='))
+        if (wmsToken) {
+          headers['wms-Token'] = wmsToken.split('=')[1]
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers,
+          credentials: 'include',
+          body: JSON.stringify({
+            conversationId,
+            workflowUuid,
+            userInput,
+            fileUrls
+          }),
+          signal: controller.signal
+        })
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+
+        let done = false
+        // eslint-disable-next-line no-unmodified-loop-condition
+        while (!done && !cancelled) {
+          const result = await reader.read()
+          done = result.done
+          const value = result.value
+
+          if (done) {
+            break
+          }
+
+          const chunk = decoder.decode(value, { stream: true })
+          buffer += chunk
+
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          // SSE多行JSON累积缓冲区
+          let multiLineJsonBuffer = ''
+          let inDataBlock = false
+
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+
+            // 空行表示一个SSE事件结束
+            if (trimmedLine === '') {
+              if (inDataBlock && multiLineJsonBuffer) {
+                try {
+                  const jsonData = JSON.parse(multiLineJsonBuffer)
+
+                  if (!hasStarted) {
+                    hasStarted = true
+                    onStart(jsonData)
+                  }
+
+                  // 从嵌套结构提取content
+                  let content = ''
+                  if (jsonData.results && jsonData.results.length > 0) {
+                    const generation = jsonData.results[0]
+                    content = generation.output?.content || ''
+                  }
+
+                  if (content) {
+                    accumulatedContent += content
+                    onContent(content, jsonData)
+                  }
+
+                  // 检查完成标志
+                  if (jsonData.isComplete) {
+                    const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
+                    onComplete(finalContent, jsonData)
+                    controller.abort()
+                    return
+                  }
+                } catch (e) {
+                  console.error('解析SSE数据失败:', e.message)
+                }
+
+                // 重置缓冲区
+                multiLineJsonBuffer = ''
+                inDataBlock = false
+              }
+              continue
+            }
+
+            // 跳过注释行
+            if (trimmedLine.startsWith(':')) {
+              continue
+            }
+
+            // 检查是否为data行
+            if (trimmedLine.startsWith('data:')) {
+              inDataBlock = true
+              // 移除"data:"前缀，开始累积JSON内容
+              multiLineJsonBuffer = trimmedLine.substring(5)
+              continue
+            }
+
+            // 如果在data块中，继续累积后续行
+            if (inDataBlock) {
+              multiLineJsonBuffer += trimmedLine
+              continue
+            }
+          }
+        }
+
+        if (!hasStarted) {
+          onError(new Error('连接已关闭，未收到任何数据'))
+        }
+      } catch (error) {
+        if (!cancelled && error.name !== 'AbortError') {
+          onError(error)
+        }
+      }
+    }
+
+    connectSSE()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }
 }
 
 // 创建单例实例

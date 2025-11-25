@@ -29,7 +29,12 @@ const state = {
   },
 
   lastError: null,
-  retryCount: 0
+  retryCount: 0,
+
+  // ==================== Workflow Slash Command 状态 (2025-11-24) ====================
+  availableWorkflows: [], // 可用workflow列表
+  selectedWorkflow: null, // 当前选中的workflow
+  isWorkflowMode: false // 是否处于workflow命令模式
 }
 
 const mutations = {
@@ -124,6 +129,25 @@ const mutations = {
     if (savedPanelState !== null) {
       state.isPanelExpanded = savedPanelState === 'true'
     }
+  },
+
+  // ==================== Workflow Slash Command Mutations (2025-11-24) ====================
+
+  SET_AVAILABLE_WORKFLOWS (state, workflows) {
+    state.availableWorkflows = workflows
+  },
+
+  SET_SELECTED_WORKFLOW (state, workflow) {
+    state.selectedWorkflow = workflow
+  },
+
+  SET_WORKFLOW_MODE (state, isWorkflowMode) {
+    state.isWorkflowMode = isWorkflowMode
+  },
+
+  CLEAR_WORKFLOW_STATE (state) {
+    state.selectedWorkflow = null
+    state.isWorkflowMode = false
   }
 }
 
@@ -459,6 +483,194 @@ const actions = {
 
   initChatPanel ({ commit }) {
     commit('INIT_CHAT_STATE')
+  },
+
+  // ==================== Workflow Slash Command Actions (2025-11-24) ====================
+
+  /**
+   * 加载可用的workflow列表（无缓存，每次获取最新数据）
+   */
+  async loadAvailableWorkflows ({ commit }) {
+    try {
+      const workflows = await aiChatService.getAvailableWorkflows()
+      commit('SET_AVAILABLE_WORKFLOWS', workflows)
+      return workflows
+    } catch (error) {
+      console.error('加载workflow列表失败:', error)
+      commit('SET_ERROR', error.message)
+      throw error
+    }
+  },
+
+  /**
+   * 选择workflow（进入workflow命令模式）
+   */
+  selectWorkflow ({ commit }, workflow) {
+    commit('SET_SELECTED_WORKFLOW', workflow)
+    commit('SET_WORKFLOW_MODE', true)
+  },
+
+  /**
+   * 执行workflow命令（SSE流式响应）
+   */
+  async executeWorkflowCommand ({ commit, state }, { userInput, fileUrls = [] }) {
+    if (!state.selectedWorkflow) {
+      throw new Error('未选择workflow')
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    let _cancelFunction = null
+
+    try {
+      commit('SET_LOADING', true)
+
+      // 创建用户消息（显示完整的命令输入）
+      const userMessage = {
+        id: 'temp_' + Date.now(),
+        content: `@${state.selectedWorkflow.title} ${userInput}`,
+        type: 'user',
+        timestamp: new Date().toISOString(),
+        status: 'sending'
+      }
+      commit('ADD_MESSAGE', userMessage)
+
+      // 创建AI响应消息（初始为隐藏状态）
+      const aiMessageId = 'ai_workflow_' + Date.now()
+      const aiMessage = {
+        id: aiMessageId,
+        content: '',
+        type: 'ai',
+        timestamp: new Date().toISOString(),
+        status: 'thinking',
+        isStreaming: true,
+        isHidden: true,
+        workflowUuid: state.selectedWorkflow.workflowUuid
+      }
+      commit('ADD_MESSAGE', aiMessage)
+      commit('SET_TYPING', true)
+
+      _cancelFunction = aiChatService.executeWorkflowCommand({
+        conversationId: state.conversationId,
+        workflowUuid: state.selectedWorkflow.workflowUuid,
+        userInput,
+        fileUrls
+      }, {
+        onStart: () => {
+          commit('UPDATE_MESSAGE', {
+            messageId: userMessage.id,
+            updates: { status: 'sent' }
+          })
+        },
+        onContent: (contentChunk) => {
+          const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
+
+          if (currentMessage) {
+            const accumulatedContent = (currentMessage.content || '') + (contentChunk || '')
+
+            // 内容足够时显示AI消息
+            const trimmedContent = accumulatedContent.trim()
+            const hasValidContent = trimmedContent.length > 15 &&
+                                  trimmedContent.replace(/\s+/g, ' ').length > 10
+
+            if (hasValidContent && state.isTyping) {
+              commit('SET_TYPING', false)
+            }
+
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: {
+                content: accumulatedContent,
+                status: hasValidContent ? 'streaming' : 'thinking',
+                isStreaming: !hasValidContent,
+                isHidden: !hasValidContent
+              }
+            })
+          }
+        },
+        onComplete: (fullContent, workflowResponse) => {
+          commit('SET_TYPING', false)
+
+          const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
+          const finalContent = fullContent || currentMessage?.content || ''
+
+          if (currentMessage) {
+            const trimmedFinalContent = finalContent.trim()
+            const hasEnoughContent = trimmedFinalContent.length > 5 &&
+                                   trimmedFinalContent.replace(/\s+/g, ' ').length > 3
+
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: {
+                id: workflowResponse?.messageId || aiMessageId,
+                content: finalContent,
+                status: 'delivered',
+                isStreaming: false,
+                isHidden: !hasEnoughContent,
+                completedAt: new Date().toISOString(),
+                workflowUuid: state.selectedWorkflow.workflowUuid,
+                // 设置workflowRuntime以显示执行详情icon
+                workflowRuntime: workflowResponse?.runtimeUuid ? {
+                  uuid: workflowResponse.runtimeUuid,
+                  id: workflowResponse.runtimeId,
+                  workflowUuid: workflowResponse.workflowUuid || state.selectedWorkflow.workflowUuid
+                } : undefined
+              }
+            })
+          }
+
+          // 【2025-11-25】方案A: 保持workflow选择状态,不自动清除
+          // 用户可以通过点击tag或重新输入/来切换workflow
+          // commit('CLEAR_WORKFLOW_STATE')
+        },
+        onError: (_error) => {
+          commit('SET_TYPING', false)
+
+          commit('UPDATE_MESSAGE', {
+            messageId: userMessage.id,
+            updates: {
+              status: 'failed',
+              content: `@${state.selectedWorkflow.title} ${userInput}`
+            }
+          })
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: {
+              content: '抱歉，workflow执行失败，请稍后重试。',
+              status: 'error',
+              isStreaming: false
+            }
+          })
+
+          // 【2025-11-25】方案A: 即使出错也保持workflow选择状态
+          // 用户下次可以继续使用同一workflow,或手动切换
+          // commit('CLEAR_WORKFLOW_STATE')
+        }
+      })
+    } catch (error) {
+      commit('SET_TYPING', false)
+      commit('SET_ERROR', error.message)
+      commit('CLEAR_WORKFLOW_STATE')
+
+      const failedMessage = state.messages.find(msg => msg.status === 'sending')
+      if (failedMessage) {
+        commit('UPDATE_MESSAGE', {
+          messageId: failedMessage.id,
+          updates: {
+            status: 'failed',
+            content: failedMessage.content
+          }
+        })
+      }
+    } finally {
+      commit('SET_LOADING', false)
+    }
+  },
+
+  /**
+   * 清除workflow选择状态
+   */
+  clearWorkflowSelection ({ commit }) {
+    commit('CLEAR_WORKFLOW_STATE')
   }
 }
 
