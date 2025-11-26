@@ -107,22 +107,30 @@ class AIChatService {
           for (const message of messages) {
             if (message.trim() === '') continue
 
+            console.log('🔵 【SSE原始消息】收到消息:', message.substring(0, 200)) // 只打印前200字符
+
             // 解析SSE格式的data行 - 修复多行JSON问题
             if (message.startsWith('data:')) {
               const jsonData = message.slice(5) // 移除 "data:" 前缀
 
+              console.log('🔵 【SSE-data字段】提取data:', jsonData.substring(0, 200)) // 只打印前200字符
+
               if (jsonData.trim() === '') {
+                console.log('⚠️ 【SSE-data字段】data为空,跳过')
                 continue
               }
 
               try {
                 // 解析ChatResponse JSON对象
                 const chatResponse = JSON.parse(jsonData)
+                console.log('✅ 【SSE-JSON解析】解析成功, keys:', Object.keys(chatResponse))
 
                 // 【优先检查】MCP工具返回结果(后端新增字段,用于页面跳转等特殊指令)
                 if (chatResponse.mcpToolResults && Array.isArray(chatResponse.mcpToolResults)) {
+                  console.log('🔧 【MCP工具结果】检测到MCP工具结果,数量:', chatResponse.mcpToolResults.length)
                   for (const toolResult of chatResponse.mcpToolResults) {
                     const { toolName, result } = toolResult
+                    console.log('🔧 【MCP工具结果】工具名:', toolName, '结果keys:', Object.keys(result || {}))
 
                     // 检查是否是openPage工具
                     if (toolName === 'PermissionMcpTools.openPage' && result) {
@@ -150,8 +158,10 @@ class AIChatService {
                 }
 
                 if (chatResponse.results && chatResponse.results.length > 0) {
+                  console.log('📝 【SSE-results】检测到results字段,数量:', chatResponse.results.length)
                   const generation = chatResponse.results[0]
                   let content = generation.output?.content || ''
+                  console.log('📝 【SSE-content】原始content长度:', content.length, '前100字符:', content.substring(0, 100))
 
                   // 尝试解析content,因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
                   // 或者MCP工具返回的页面跳转指令 {"action":"openPage","url":"/path","target":"_self"}
@@ -187,23 +197,31 @@ class AIChatService {
 
                   // 检查是否为完成事件（有finishReason或isComplete标志)
                   if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
+                    console.log('🏁 【SSE-完成】检测到完成标志, finishReason:', generation.metadata?.finishReason, 'isComplete:', chatResponse.isComplete)
                     // 完成事件 - 优先使用done事件的content(后端确定的完整内容),
                     // 如果done事件没有content则使用前端累积的内容
                     const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
+                    console.log('🏁 【SSE-完成】最终内容长度:', finalContent.length, '前100字符:', finalContent.substring(0, 100))
 
                     // 传递完整的chatResponse对象,包含workflowRuntime等信息
                     onComplete(finalContent, chatResponse)
                     return
                   } else {
+                    console.log('⏩【SSE-流式】流式内容块')
                     // 流式进行中的内容块
 
                     // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
                     // 只有当内容不为空且包含有效字符时才触发回调
                     if (content !== undefined && content !== null && content.trim().length > 0) {
+                      console.log('⏩【SSE-流式】触发onContent回调,内容长度:', content.length)
                       accumulatedContent += content // 累积到本地buffer
                       onContent(content)
+                    } else {
+                      console.log('⚠️ 【SSE-流式】content为空,不触发回调')
                     }
                   }
+                } else {
+                  console.log('⚠️ 【SSE-results】无results字段或为空')
                 }
               } catch (parseError) {
                 // 继续处理其他消息，不中断流
