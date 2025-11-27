@@ -337,6 +337,7 @@
       :runtime-detail="currentRuntimeDetail"
       :nodes="currentNodes"
       :loading="detailLoading"
+      :message-id="currentMessageId"
     />
   </div>
 </template>
@@ -407,7 +408,8 @@ export default {
       detailDialogVisible: false,
       detailLoading: false,
       currentRuntimeDetail: null,
-      currentNodes: []
+      currentNodes: [],
+      currentMessageId: null // 当前查看的消息ID(ai_conversation_content.id)
     }
   },
 
@@ -618,6 +620,9 @@ export default {
       try {
         this.detailLoading = true
         this.detailDialogVisible = true
+
+        // 存储当前消息ID(用于ExecutionDetailDialog显示)
+        this.currentMessageId = message.id
 
         // 使用UUID字符串作为参数,而不是数字ID
         const runtimeUuid = message.workflowRuntime.uuid

@@ -12,23 +12,23 @@
     <div v-loading="loading" class="execution-detail-container">
       <!-- 工作流基本信息 -->
       <div v-if="runtimeDetail" class="runtime-basic-info">
-        <el-descriptions :column="3" border>
-          <el-descriptions-item label="工作流名称">
-            {{ runtimeDetail.workflow_name || '未命名工作流' }}
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="消息ID">
+            {{ messageId || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="执行状态">
             <el-tag :type="getStatusType(runtimeDetail.status)">
               {{ getStatusText(runtimeDetail.status) }}
             </el-tag>
           </el-descriptions-item>
+          <el-descriptions-item label="执行时间">
+            {{ formatTimeRange(runtimeDetail.start_time, runtimeDetail.end_time) }}
+          </el-descriptions-item>
           <el-descriptions-item label="执行时长">
             {{ formatDuration(runtimeDetail.elapsed_time) }}
           </el-descriptions-item>
-          <el-descriptions-item label="开始时间">
-            {{ formatDateTime(runtimeDetail.start_time) }}
-          </el-descriptions-item>
-          <el-descriptions-item label="结束时间">
-            {{ formatDateTime(runtimeDetail.end_time) }}
+          <el-descriptions-item label="总Token消耗">
+            {{ formatTokens(runtimeDetail.totalTokens) }}
           </el-descriptions-item>
           <el-descriptions-item label="创建人">
             {{ runtimeDetail.c_name || runtimeDetail.c_id }}
@@ -54,9 +54,12 @@
                 </el-tag>
               </div>
 
-              <!-- 节点执行时间 -->
+              <!-- 节点执行时间和Token消耗 -->
               <div v-if="node.c_time" class="node-time">
-                执行时间: {{ formatDateTime(node.c_time) }}
+                <span>执行时间: {{ formatDateTime(node.c_time) }}</span>
+                <span v-if="node.totalTokens != null" class="token-info">
+                  消耗tokens: {{ formatTokens(node.totalTokens) }}
+                </span>
               </div>
 
               <!-- 输入数据 -->
@@ -119,6 +122,10 @@ export default {
     loading: {
       type: Boolean,
       default: false
+    },
+    messageId: {
+      type: [Number, String],
+      default: null
     }
   },
   computed: {
@@ -135,6 +142,20 @@ export default {
         return `执行详情 - ${this.runtimeDetail.workflow_name}`
       }
       return '执行详情'
+    }
+  },
+  watch: {
+    runtimeDetail: {
+      handler (newVal) {
+        // 数据接收监听
+      },
+      immediate: true
+    },
+    nodes: {
+      handler (newVal) {
+        // 节点数据接收监听
+      },
+      immediate: true
     }
   },
   methods: {
@@ -246,6 +267,27 @@ export default {
       } else {
         return `${seconds}秒`
       }
+    },
+
+    /**
+     * 格式化Token数量(带千分符)
+     */
+    formatTokens (tokens) {
+      if (tokens == null) return '-'
+      // 使用全局formatNumber方法(来自commonFunction.js)
+      return this.formatNumber(tokens, false) || '-'
+    },
+
+    /**
+     * 格式化时间范围(合并开始和结束时间)
+     */
+    formatTimeRange (startTime, endTime) {
+      const start = this.formatDateTime(startTime)
+      const end = this.formatDateTime(endTime)
+      if (start === '-' && end === '-') return '-'
+      if (start === '-') return `结束: ${end}`
+      if (end === '-') return `开始: ${start}`
+      return `${start} ~ ${end}`
     }
   }
 }
@@ -291,6 +333,14 @@ export default {
     font-size: 13px;
     color: #909399;
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .token-info {
+      color: #409EFF;
+      font-weight: 500;
+    }
   }
 
   .node-data-section {
