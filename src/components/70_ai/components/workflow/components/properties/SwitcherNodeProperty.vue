@@ -9,15 +9,17 @@
         class="case-item"
       >
         <template slot="title">
-          <span style="padding-left: 8px;">分支情况{{ idx + 1 }}</span>
-        </template>
-        <template v-if="nodeConfig.cases.length > 1" slot="extra">
-          <el-button
-            type="text"
-            icon="el-icon-delete"
-            size="small"
-            @click.stop="handleDeleteCase(wfCase)"
-          />
+          <div class="case-title-wrapper">
+            <span class="case-title-text">分支情况{{ idx + 1 }}</span>
+            <el-button
+              v-if="nodeConfig.cases.length > 1"
+              type="text"
+              icon="el-icon-delete"
+              size="small"
+              class="case-delete-btn"
+              @click.stop="handleDeleteCase(wfCase)"
+            />
+          </div>
         </template>
 
         <div class="case-content">
@@ -367,6 +369,14 @@ export default {
 
         // 删除case
         this.nodeConfig.cases.splice(idx, 1)
+
+        // 触发画布节点更新
+        this.$nextTick(() => {
+          this.$root.$emit('workflow:update-node', {
+            nodeUuid: this.wfNode.uuid,
+            nodeData: this.wfNode
+          })
+        })
       }
     }
   }
@@ -390,6 +400,29 @@ export default {
 
     ::v-deep .el-collapse-item__content {
       padding: 16px;
+    }
+  }
+
+  .case-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding-left: 8px;
+    padding-right: 24px;
+
+    .case-title-text {
+      flex: 1;
+    }
+
+    .case-delete-btn {
+      color: #f56c6c;
+      padding: 4px 8px;
+
+      &:hover {
+        color: #f78989;
+        background-color: #fef0f0;
+      }
     }
   }
 

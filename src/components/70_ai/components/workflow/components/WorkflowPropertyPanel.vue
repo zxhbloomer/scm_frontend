@@ -251,13 +251,39 @@ export default {
   },
 
   methods: {
+    /**
+     * 检查节点名称是否重复
+     * @param {string} newTitle 新名称
+     * @param {string} currentUuid 当前节点UUID（排除自身）
+     * @returns {boolean} 是否重复
+     */
+    checkDuplicateTitle (newTitle, currentUuid) {
+      const nodes = this.workflow.nodes || []
+      return nodes.some(n =>
+        n.uuid !== currentUuid && n.title === newTitle
+      )
+    },
+
     handleTitleChange () {
       if (this.selectedNode && this.nodeTitle) {
+        // 检查重名
+        if (this.checkDuplicateTitle(this.nodeTitle, this.selectedNode.uuid)) {
+          this.$message.warning('已存在同名节点，建议修改以便区分')
+        }
+
         this.selectedNode.title = this.nodeTitle
         this.$store.commit('ai/workflow/UPDATE_NODE_TITLE', {
           wfUuid: this.workflow.workflowUuid,
           nodeUuid: this.selectedNode.uuid,
           newTitle: this.nodeTitle
+        })
+
+        // 触发画布更新
+        this.$nextTick(() => {
+          this.$root.$emit('workflow:update-node', {
+            nodeUuid: this.selectedNode.uuid,
+            nodeData: this.selectedNode
+          })
         })
       }
     },
@@ -350,12 +376,18 @@ export default {
       ::v-deep .el-input__inner {
         font-size: 18px;
         font-weight: 600;
-        border: 1px solid transparent;
+        border: 1px solid #dcdfe6;
+        border-radius: 4px;
         padding: 4px 8px;
+        background-color: #f5f7fa;
 
-        &:hover,
+        &:hover {
+          border-color: #c0c4cc;
+        }
+
         &:focus {
-          border-color: #dcdfe6;
+          border-color: #409eff;
+          background-color: #fff;
         }
       }
     }

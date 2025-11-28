@@ -7,7 +7,7 @@
     <div class="node-content">
       <!-- 每个分支情况 -->
       <div
-        v-for="(wfCase, idx) in node.nodeConfig.cases"
+        v-for="(wfCase, idx) in localCases"
         :key="wfCase.uuid"
         class="case-section"
       >
@@ -98,6 +98,13 @@ export default {
 
   inject: ['getNode'],
 
+  data () {
+    return {
+      // 本地响应式状态，用于强制更新视图
+      localCases: []
+    }
+  },
+
   computed: {
     node () {
       return this.getNode().data
@@ -105,8 +112,23 @@ export default {
   },
 
   mounted () {
+    // 初始化本地状态
+    this.localCases = this.node.nodeConfig?.cases || []
+
     // 动态添加端口
     this.updatePorts()
+
+    // 监听 X6 节点数据变化事件，实现分支同步
+    const x6Node = this.getNode()
+    x6Node.on('change:data', ({ current }) => {
+      if (current && current.nodeConfig) {
+        this.localCases = current.nodeConfig.cases || []
+        // 更新端口
+        this.$nextTick(() => {
+          this.updatePorts()
+        })
+      }
+    })
   },
 
   methods: {
@@ -164,9 +186,11 @@ export default {
 
       // 累计前面所有 case 的高度
       for (let i = 0; i < caseIndex; i++) {
-        const prevCase = this.node.nodeConfig.cases[i]
-        yOffset += caseHeaderHeight
-        yOffset += prevCase.conditions.length * conditionHeight
+        const prevCase = this.localCases[i]
+        if (prevCase) {
+          yOffset += caseHeaderHeight
+          yOffset += prevCase.conditions.length * conditionHeight
+        }
       }
 
       // 当前 case 的头部
@@ -186,7 +210,7 @@ export default {
       let yOffset = baseY
 
       // 累计所有 case 的高度
-      this.node.nodeConfig.cases.forEach(wfCase => {
+      this.localCases.forEach(wfCase => {
         yOffset += caseHeaderHeight
         yOffset += wfCase.conditions.length * conditionHeight
       })
@@ -212,8 +236,8 @@ export default {
       })
 
       // 为每个 case 添加一个输出端口
-      if (this.node.nodeConfig.cases) {
-        this.node.nodeConfig.cases.forEach((wfCase, idx) => {
+      if (this.localCases && this.localCases.length > 0) {
+        this.localCases.forEach((wfCase, idx) => {
           x6Node.addPort({
             id: wfCase.uuid,
             group: 'source',

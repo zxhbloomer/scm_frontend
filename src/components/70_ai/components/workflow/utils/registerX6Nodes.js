@@ -144,9 +144,12 @@ export function registerAllWorkflowNodes () {
     component: SwitcherNode,
     ports: {
       groups: {
-        // 输入端口组（左侧）
+        // 输入端口组（左侧）- 使用绝对定位，与头部对齐
         target: {
-          position: 'left',
+          position: {
+            name: 'absolute',
+            args: { x: 0, y: 40 } // 左侧边缘，y=30 对齐节点头部中心位置
+          },
           attrs: {
             circle: {
               r: 4,
@@ -194,9 +197,12 @@ export function registerAllWorkflowNodes () {
     component: ClassifierNode,
     ports: {
       groups: {
-        // 输入端口组（左侧）
+        // 输入端口组（左侧）- 使用绝对定位，与头部对齐
         target: {
-          position: 'left',
+          position: {
+            name: 'absolute',
+            args: { x: 0, y: 40 } // 左侧边缘，y=30 对齐节点头部中心位置
+          },
           attrs: {
             circle: {
               r: 4,

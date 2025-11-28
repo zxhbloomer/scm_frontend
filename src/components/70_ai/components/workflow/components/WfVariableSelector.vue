@@ -65,6 +65,22 @@ export default {
   },
 
   computed: {
+    /**
+     * 获取上游节点UUID列表
+     * 通过edges找到所有连接到当前节点的源节点
+     */
+    upstreamNodeUuids () {
+      const edges = this.workflow.edges || []
+      const currentNodeUuid = this.wfNode.uuid || this.wfNode.nodeUuid
+
+      // 找到所有目标是当前节点的边，获取源节点UUID
+      const upstreamUuids = edges
+        .filter(edge => edge.targetNodeUuid === currentNodeUuid)
+        .map(edge => edge.sourceNodeUuid)
+
+      return new Set(upstreamUuids)
+    },
+
     optionGroups () {
       const userInputGroup = {
         key: 'userInput',
@@ -108,7 +124,7 @@ export default {
         const inputConfig = node.inputConfig || { user_inputs: [] }
 
         if (node.wfComponent.name === 'Start') {
-          // Start节点：添加用户输入
+          // Start节点的用户输入始终可选（全局入口）
           for (let j = 0; j < inputConfig.user_inputs.length; j++) {
             const userInput = inputConfig.user_inputs[j]
 
@@ -123,7 +139,12 @@ export default {
             })
           }
         } else {
-          // 其他节点：添加输出
+          // 其他节点：只显示上游连接的节点输出
+          // 如果不是上游节点，跳过
+          if (!this.upstreamNodeUuids.has(node.uuid)) {
+            continue
+          }
+
           // 使用 node.title，如果为空则使用 wfComponent.title 作为备用
           const nodeLabel = node.title || node.wfComponent.title || node.wfComponent.name
           componentOutputGroup.children.push({

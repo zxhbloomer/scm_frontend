@@ -6,6 +6,38 @@ import { nanoid } from 'nanoid'
 import { generate } from 'random-words'
 
 /**
+ * 生成节点默认名称（带自动编号）
+ * @param {Array} nodes 现有节点列表
+ * @param {string} componentName 组件名称
+ * @param {string} componentTitle 组件标题
+ * @returns {string} 带编号的节点名称
+ */
+function generateNodeTitle (nodes, componentName, componentTitle) {
+  // 找出同类型节点
+  const sameTypeNodes = nodes.filter(n =>
+    n.wfComponent && n.wfComponent.name === componentName
+  )
+
+  // 首个节点不加编号
+  if (sameTypeNodes.length === 0) {
+    return componentTitle
+  }
+
+  // 找出最大编号
+  let maxNum = 0
+  const regex = new RegExp(`^${componentTitle}(\\d*)$`)
+  sameTypeNodes.forEach(node => {
+    const match = node.title.match(regex)
+    if (match) {
+      const num = match[1] ? parseInt(match[1], 10) : 0
+      if (num > maxNum) maxNum = num
+    }
+  })
+
+  return `${componentTitle}${maxNum + 1}`
+}
+
+/**
  * 生成工作流UUID (32位不带横线)
  * @returns {string}
  */
@@ -182,7 +214,8 @@ export function createNewNode (workflow, uiWorkflow, component, position, defaul
   // 使用 nodeUuid 字段，与后端保持一致
   newWfNode.nodeUuid = generateUuid()
   newWfNode.uuid = newWfNode.nodeUuid // 保留 uuid 作为兼容字段
-  newWfNode.title = component.title
+  // 自动编号：检查同类型节点数量并生成带编号的名称
+  newWfNode.title = generateNodeTitle(workflow.nodes, component.name, component.title)
   newWfNode.workflowId = workflow.id
   newWfNode.workflowUuid = workflow.workflowUuid
   newWfNode.wfComponent = component

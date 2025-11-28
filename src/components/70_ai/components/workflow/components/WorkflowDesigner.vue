@@ -189,6 +189,14 @@ export default {
           nodeConfig.categories = nodeConfig.categories.map(cat => ({ ...cat }))
         }
 
+        // 如果存在 cases，深拷贝它（条件分支节点）
+        if (nodeConfig.cases) {
+          nodeConfig.cases = nodeConfig.cases.map(c => ({
+            ...c,
+            conditions: c.conditions ? c.conditions.map(cond => ({ ...cond })) : []
+          }))
+        }
+
         // 创建新对象以触发视图更新
         const newData = {
           ...enhancedNodeData,
@@ -956,7 +964,7 @@ export default {
 /*
   支持的节点类型：
   - start-node (开始)
-  - answer-node (生成回答)
+  - answer-node (大模型)
   - end-node (结束)
   - classifier-node (分类器)
   - document-extractor-node (文档提取)
