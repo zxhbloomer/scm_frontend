@@ -89,6 +89,7 @@
       <div
         slot="footer"
         class="dialog-footer"
+        style="text-align: center;"
       >
         <el-divider />
         <el-button
