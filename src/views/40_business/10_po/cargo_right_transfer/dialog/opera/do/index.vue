@@ -135,14 +135,14 @@
     >
       <el-divider />
       <el-button
+        plain
+        @click="handleCancel"
+      >取消</el-button>
+      <el-button
         type="primary"
         :disabled="settings.loading"
         @click="handleConfirm"
       >确定</el-button>
-      <el-button
-        plain
-        @click="handleCancel"
-      >取消</el-button>
     </div>
   </el-dialog>
 </template>

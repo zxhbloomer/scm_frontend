@@ -109,7 +109,8 @@ export default {
       // 查询逻辑
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
-        this.dataJson.treeData = response.data
+        // 过滤掉岗位节点下的员工子节点,只保留到岗位层级
+        this.dataJson.treeData = this.filterEmployeeNodes(response.data)
         this.getListAfterProcess()
         this.settings.loading = false
         this.$nextTick(() => {
@@ -127,6 +128,26 @@ export default {
         })
       }).finally(() => {
         this.settings.loading = false
+      })
+    },
+    // 递归过滤掉员工节点,只保留到岗位层级
+    filterEmployeeNodes (nodes) {
+      if (!nodes || !Array.isArray(nodes)) {
+        return nodes
+      }
+
+      return nodes.map(node => {
+        const filteredNode = { ...node }
+
+        // 如果是岗位节点,清空其children(即不显示员工)
+        if (filteredNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_POSITION) {
+          filteredNode.children = []
+        } else if (filteredNode.children && filteredNode.children.length > 0) {
+          // 其他节点递归处理其子节点
+          filteredNode.children = this.filterEmployeeNodes(filteredNode.children)
+        }
+
+        return filteredNode
       })
     },
     // 查询后处理

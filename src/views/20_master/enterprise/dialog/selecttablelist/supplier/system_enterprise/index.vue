@@ -28,6 +28,7 @@
         @click="handleDoCancel()"
       >取消</el-button>
       <el-button
+        type="primary"
         :disabled="dataJson.settings.btnDisabledStatus.disabledOk"
         @click="handleDoOk()"
       >确定</el-button>

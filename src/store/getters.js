@@ -23,6 +23,7 @@ const getters = {
   /** add by zxh */
   program: state => state.popUpSearchDialog.program,
   selectedDataJson: state => state.popUpSearchDialog.selectedDataJson,
+  selectedMultipleDataJson: state => state.popUpSearchMultipleDialog.selectedMultipleDataJson,
   formatRouter: state => state.formatRouter.isdo,
   /** user session bean */
   userSessionBean: state => state.user.session_bean,

@@ -1589,8 +1589,8 @@ export default {
       const tempData = {}
 
       tempData.spec = val.spec
-      tempData.spec_code = val.code
-      tempData.sku_code = val.code
+      tempData.spec_code = val.sku_code
+      tempData.sku_code = val.sku_code
       tempData.sku_name = val.goods_name
       tempData.pm = val.pm
       tempData.goods_name = val.name

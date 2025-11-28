@@ -343,7 +343,8 @@ export default {
         type: 'APPROVAL',
         approval_mode: process.props.mode,
         users: [],
-        desc: ''
+        desc: '',
+        props: process.props // 保留props字段用于验证逻辑判断节点类型
       }
       // 判断审批人类型
       switch (process.props.assignedType) {
@@ -398,7 +399,8 @@ export default {
         type: 'TASK',
         approval_mode: process.props.mode,
         users: [],
-        desc: ''
+        desc: '',
+        props: process.props // 保留props字段用于验证逻辑判断节点类型
       }
       // 判断审批人类型
       switch (process.props.assignedType) {
@@ -632,30 +634,52 @@ export default {
      * 检查是否只有一个有效的用户节点，如果是则自动执行handleOk
      */
     checkAndAutoExecute () {
-      // 统计有users且users.length > 0的节点数量
+      // 修复SELF_SELECT节点识别逻辑
+      // 统计需要用户交互的节点:
+      // 1. SELF_SELECT节点(isEdit=true) - 需要用户选择审批人
+      // 2. 已有用户的节点 - 不需要用户选择,但也算有效节点
       const validUserNodes = this.processData.filter(task => {
+        // SELF_SELECT节点通过isEdit标识,即使users为空也需要用户交互
+        if (task.isEdit) {
+          return true
+        }
+        // 其他类型节点,检查是否已有用户
         return task.users && task.users.length > 0
       })
 
-      console.log('有效用户节点数量:', validUserNodes.length)
-      console.log('有效用户节点:', validUserNodes)
-
       // 如果只有一个有效的用户节点，则自动执行handleOk
       if (validUserNodes.length === 1) {
-        console.log('检测到只有一个有效用户节点，将在1秒后自动执行确定操作')
         setTimeout(() => {
           this.handleOk()
         }, 1000) // 1秒后自动执行
       } else {
         // 多个用户节点时显示弹窗让用户选择
-        console.log('检测到多个有效用户节点，显示弹窗供用户选择')
         this.internalVisible = true
       }
     },
     handleOk () {
-      const ifEnd = this.processData.some((task) => task.type !== 'END' && task.users.length === 0)
+      // 修复SELF_SELECT节点验证逻辑
+      // 区分节点类型:SELF_SELECT节点检查process_users,其他节点检查users
+      const ifEnd = this.processData.some((task) => {
+        // END节点跳过检查
+        if (task.type === 'END') {
+          return false
+        }
+
+        // SELF_SELECT节点:检查process_users[task.id]是否有值
+        if (task.props && task.props.assignedType === 'SELF_SELECT') {
+          const hasUsers = this.process_users[task.id] && this.process_users[task.id].length > 0
+          return !hasUsers
+        }
+
+        // 其他节点:检查users字段(预定义的审批人配置)
+        return task.users.length === 0
+      })
+
       if (ifEnd) {
         this.$message.warning('请完善表单/流程选项😥')
+        // 关闭父组件loading状态
+        this.$emit('closeMeCancel')
       } else {
         this.internalVisible = false // 重置内部显示状态
         this.$emit('closeMeOk', { processData: this.processData, process_users: this.process_users })

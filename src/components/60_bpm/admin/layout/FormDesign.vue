@@ -70,7 +70,7 @@
                     @click.stop="selectItem(cp)"
                   >
                     <div class="form-header">
-                      <p><span v-if="cp.props.required">*</span>{{ cp.title }}</p>
+                      <p><span v-if="cp.props && cp.props.required">*</span>{{ cp.title }}</p>
                       <div class="option">
                         <!--<i class="el-icon-copy-document" @click="copy"></i>-->
                         <i class="el-icon-close" @click="del(id)" />

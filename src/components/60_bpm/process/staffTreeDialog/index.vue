@@ -35,25 +35,17 @@
     </el-footer>
     <div class="button">
       <el-button
+        icon="el-icon-close"
+        :loading="settings.loading"
+        @click="handleClose"
+      >取消</el-button>
+      <el-button
         type="primary"
-        icon="el-icon-circle-plus-outline"
+        icon="el-icon-check"
         :disabled="!settings.btnShowStatus.showInsert"
         :loading="settings.loading"
         @click="handleSelect"
       >确定</el-button>
-      <!--      <el-button-->
-      <!--        type="primary"-->
-      <!--        icon="el-icon-edit-outline"-->
-      <!--        :disabled="!settings.btnShowStatus.showInsert"-->
-      <!--        :loading="settings.loading"-->
-      <!--        @click="handleClear"-->
-      <!--      >清空</el-button>-->
-      <el-button
-        type="primary"
-        icon="el-icon-camera-solid"
-        :loading="settings.loading"
-        @click="handleClose"
-      >关闭</el-button>
     </div>
   </el-dialog>
 </template>

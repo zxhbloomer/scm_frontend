@@ -61,7 +61,7 @@
       fit
       tooltip-effect="light"
       :default-sort="{prop: 'u_time', order: 'descending'}"
-      row-key="login_name"
+      row-key="id"
       style="width: 100%"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"

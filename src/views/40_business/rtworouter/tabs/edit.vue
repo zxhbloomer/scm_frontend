@@ -1067,14 +1067,14 @@ export default {
       this.dataJson.tempJson.goods_id = val.goods_id
       this.dataJson.tempJson.spec = val.spec
       this.dataJson.tempJson.pm = val.pm
-      this.dataJson.tempJson.sku_code = val.code
+      this.dataJson.tempJson.sku_code = val.sku_code
       this.dataJson.tempJson.sku_id = val.id
       this.popSettingsData.specDialog.visible = false
       this.dataJson.tempJson.unit = '吨'
       this.dataJson.tempJson.sku_id = val.id
       this.dataJson.tempJson.product_list = []
       this.dataJson.tempJson.qty = 1
-      product.sku_code = val.code
+      product.sku_code = val.sku_code
       product.sku_id = val.id
       product.goods_prop = val.prop_name
       product.goods_name = val.name

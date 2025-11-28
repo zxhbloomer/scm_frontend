@@ -85,15 +85,15 @@
       >
         <el-divider />
         <el-button
-          type="primary"
-          :disabled="settings.btnDisabledStatus.disabledUpdate"
-          @click="doSave()"
-        >确定</el-button>
-        <el-button
           plain
           :disabled="settings.btnDisabledStatus.disabledCancel"
           @click="handleCancel()"
         >取消</el-button>
+        <el-button
+          type="primary"
+          :disabled="settings.btnDisabledStatus.disabledUpdate"
+          @click="doSave()"
+        >确定</el-button>
       </div>
     </el-dialog>
   </div>

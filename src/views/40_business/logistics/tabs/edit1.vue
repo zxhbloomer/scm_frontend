@@ -1584,8 +1584,8 @@ export default {
       this.popSettingsData.searchDialogDataFive.visible = false
       this.settings.btnDisabledStatus.disabledUpdate = false
       this.dataJson.tempJson.spec = val.spec
-      this.dataJson.tempJson.spec_code = val.code
-      this.dataJson.tempJson.sku_code = val.code
+      this.dataJson.tempJson.spec_code = val.sku_code
+      this.dataJson.tempJson.sku_code = val.sku_code
 
       this.dataJson.tempJson.pm = val.pm
       this.dataJson.tempJson.goods_name = val.name

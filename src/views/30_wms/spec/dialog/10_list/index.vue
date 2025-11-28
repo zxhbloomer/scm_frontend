@@ -42,6 +42,7 @@
           v-model="dataJson.searchForm.enable"
           clearable
           placeholder="启用状态"
+          disabled
         >
           <el-option label="启用" :value="true" />
           <el-option label="停用" :value="false" />
@@ -72,26 +73,51 @@
       :canvas-auto-height="true"
       border
       highlight-current-row
-      @selection-change="handleSelectionChange"
       @row-click="handleRowClick"
       @row-dblclick="handleRowDbClick"
+      @sort-change="handleSortChange"
     >
       <el-table-column
-        type="selection"
-        width="55"
-      />
-
-      <el-table-column
-        prop="sku_code"
-        label="规格编号"
-        min-width="120"
+        type="index"
+        label="No"
+        width="60"
         align="center"
       />
 
       <el-table-column
+        prop="category_name"
+        :auto-fit="true"
+        label="商品类别"
+        min-width="120"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+      />
+
+      <el-table-column
+        prop="goods_name"
+        :auto-fit="true"
+        label="物料名称"
+        min-width="150"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+      />
+
+      <el-table-column
         prop="spec"
+        :auto-fit="true"
         label="规格名称"
         min-width="150"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
+      />
+
+      <el-table-column
+        prop="sku_code"
+        :auto-fit="true"
+        label="规格编号"
+        min-width="120"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
       />
 
       <el-table-column
@@ -112,14 +138,20 @@
 
       <el-table-column
         prop="c_name"
+        :auto-fit="true"
         label="创建人"
         min-width="100"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
       />
 
       <el-table-column
         prop="c_time"
+        :auto-fit="true"
         label="创建时间"
         min-width="180"
+        sortable="custom"
+        :sort-orders="settings.sortOrders"
       >
         <template v-slot="scope">
           {{ formatDateTime(scope.row.c_time) }}
@@ -142,26 +174,19 @@
       class="dialog-footer"
     >
       <el-divider />
-      <div class="floatLeft">
-        <span class="dialog-footer-text">
-          已选择 {{ dataJson.multipleSelection.length }} 条数据
-        </span>
-      </div>
-      <div class="floatRight">
-        <el-button
-          plain
-          @click="handleDoCancel()"
-        >
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          :disabled="dataJson.multipleSelection.length === 0"
-          @click="handleDoOk()"
-        >
-          确定
-        </el-button>
-      </div>
+      <el-button
+        plain
+        @click="handleDoCancel()"
+      >
+        取消
+      </el-button>
+      <el-button
+        type="primary"
+        :disabled="dataJson.selectedRow === null"
+        @click="handleDoOk()"
+      >
+        确定
+      </el-button>
     </div>
   </el-dialog>
 </template>
@@ -170,24 +195,16 @@
 import { getListApi } from '@/api/30_wms/spec/spec'
 import Pagination from '@/components/Pagination'
 import deepCopy from 'deep-copy'
+import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
   name: 'SpecListDialog',
   components: { Pagination },
+  directives: { elDragDialog },
   props: {
     visible: {
       type: Boolean,
       default: false
-    },
-    // 是否允许多选
-    multiple: {
-      type: Boolean,
-      default: false
-    },
-    // 已选择的数据
-    selectedData: {
-      type: Array,
-      default: () => []
     }
   },
   data () {
@@ -201,18 +218,20 @@ export default {
           // 查询条件
           spec: '',
           sku_code: '',
-          enable: ''
+          enable: true // 默认启用
         },
         // 分页数据
         paging: deepCopy(this.PARAMETERS.PAGE_JSON),
         // 表格数据
         listData: [],
-        // 当前选中数据
-        multipleSelection: []
+        // 当前选中行
+        selectedRow: null
       },
 
       // 页面设置
       settings: {
+        // 表格排序规则
+        sortOrders: deepCopy(this.PARAMETERS.SORT_PARA),
         loading: false,
         duration: 4000
       }
@@ -253,45 +272,45 @@ export default {
       this.getDataList()
     },
 
+    // 排序变化处理
+    handleSortChange (column) {
+      // 服务器端排序
+      if (column.order === 'ascending') {
+        this.dataJson.searchForm.pageCondition.sort = column.prop
+      } else if (column.order === 'descending') {
+        this.dataJson.searchForm.pageCondition.sort = '-' + column.prop
+      }
+      this.getDataList()
+    },
+
     // 重置搜索
     doResetSearch () {
-      this.dataJson.searchForm = {
-        pageCondition: deepCopy(this.PARAMETERS.PAGE_CONDITION),
-        spec: '',
-        sku_code: '',
-        enable: ''
-      }
+      this.dataJson.searchForm.spec = ''
+      this.dataJson.searchForm.sku_code = ''
+      // 启用状态保持为true,不重置
       this.dataJson.paging.current = 1
       this.getDataList()
     },
 
-    // 选择变化
-    handleSelectionChange (selection) {
-      this.dataJson.multipleSelection = selection
-    },
-
     // 单击行
     handleRowClick (row) {
-      if (!this.multiple) {
-        this.dataJson.multipleSelection = [row]
-        this.$refs.minusTable.clearSelection()
-        this.$refs.minusTable.toggleRowSelection(row, true)
-      }
+      this.dataJson.selectedRow = row
+      this.$refs.minusTable.setCurrentRow(row)
     },
 
     // 双击行
     handleRowDbClick (row) {
-      if (!this.multiple) {
-        this.dataJson.multipleSelection = [row]
-        this.handleDoOk()
-      }
+      this.dataJson.selectedRow = row
+      this.handleDoOk()
     },
 
     // 确定
     handleDoOk () {
-      this.$emit('closeMeOk', {
-        selection: this.dataJson.multipleSelection
-      })
+      if (this.dataJson.selectedRow === null) {
+        this.$message.warning('请选择一条数据')
+        return
+      }
+      this.$emit('closeMeOk', this.dataJson.selectedRow)
     },
 
     // 取消
@@ -309,11 +328,5 @@ export default {
 .dialog-footer-text {
   color: #606266;
   font-size: 14px;
-}
-.floatLeft {
-  float: left;
-}
-.floatRight {
-  float: right;
 }
 </style>

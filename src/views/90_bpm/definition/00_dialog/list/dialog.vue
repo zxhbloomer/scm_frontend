@@ -100,9 +100,12 @@ export default {
       handler (newVal, oldVal) {
         if (newVal) {
           // dialog打开后初始化
+          // my-page组件通过props自动接收me-dialog-status变化,不需要手动调用初始化方法
           this.$nextTick(() => {
-            this.$refs.dialogRef.initDialogStatus()
-            // this.$refs.dialogRef.initShow()
+            // 确保DOM更新完成后触发my-page组件的UI调整
+            if (this.$refs.dialogRef && typeof this.$refs.dialogRef.setUIheight === 'function') {
+              this.$refs.dialogRef.setUIheight()
+            }
           })
         }
       },

@@ -139,7 +139,7 @@
 import {
   getListApi
 } from '@/api/40_business/bpmprocess/bpmprocess'
-import mixin from './mixin.js'
+// import mixin from './mixin.js'
 import Pagination from '@/components/Pagination/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import deepCopy from 'deep-copy'
@@ -150,7 +150,7 @@ import bpm_dialog from '@/components/60_bpm/designBpmDialog.vue'
 export default {
   components: { bpm_dialog, Pagination },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
+  // mixins: [mixin],
   props: {
     data: {
       type: Object,
@@ -217,7 +217,7 @@ export default {
         skeletonLoading: true,
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
+        // tableHeight: this.setUIheight(),
         duration: 4000
       },
       popSettings: {

@@ -78,10 +78,18 @@
       </el-button-group>
     </div>
     <div
-      :style="{height: height + 'px'}"
+      :style="{height: typeof height === 'number' ? height + 'px' : height}"
       style="overflow-y:auto;overflow-x:auto;"
       class="mytree"
     >
+      <!-- 组织机构统计头部 - 独立div，不属于treeData -->
+      <div class="org-summary-header">
+        <span class="header-title">组织机构管理</span>
+        <span v-if="dataJson.rootStats.loading" class="stats-text">（加载中...）</span>
+        <span v-else class="stats-text">
+          （集团数：{{ dataJson.rootStats.group_count }}、主体企业数：{{ dataJson.rootStats.company_count }}、岗位数：{{ dataJson.rootStats.position_count }}、员工数：{{ dataJson.rootStats.staff_count }}）
+        </span>
+      </div>
       <el-tree
         ref="treeObject"
         :data="dataJson.treeData"
@@ -144,11 +152,6 @@
             />
             <span v-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT">
               组织机构根节点
-              <!-- 显示根节点统计信息 -->
-              <span v-if="data.countLoading" style="font-size: 12px; color: #606266; margin-left: 8px;">（加载中...）</span>
-              <span v-else-if="data.root_stats" style="font-size: 12px; color: #606266; margin-left: 8px;">
-                {{ data.root_stats }}
-              </span>
             </span>
             <!-- 员工节点显示 -->
             <span v-else-if="data.type === CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF">
@@ -261,7 +264,7 @@
           </span>
           <!-- <span>[{{ data.type_text }}]</span> -->
           <el-tag
-            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT && data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF"
+            v-if="data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT && data.type !== CONSTANTS.DICT_ORG_SETTING_TYPE_STAFF && getOrgTagText(data.type)"
             :type="getOrgTagType(data.type)"
             size="mini"
             effect="dark"
@@ -281,14 +284,14 @@
           </el-tag>
         </span>
       </el-tree>
+    </div>
 
-      <!-- 🎯 红线提示文字 (参考Element UI红线实现方式) -->
-      <div
-        ref="dropIndicatorTip"
-        class="el-tree__drop-indicator-tip"
-      >
-        在此节点上方插入
-      </div>
+    <!-- 🎯 红线提示文字 - 独立于滚动容器外层 -->
+    <div
+      ref="dropIndicatorTip"
+      class="el-tree__drop-indicator-tip"
+    >
+      在此节点上方插入
     </div>
 
     <!-- 右键菜单 -->
@@ -604,6 +607,31 @@
 </style>
 
 <style lang="scss" scoped>
+/* 组织机构统计头部样式 - 蓝底白字 */
+.org-summary-header {
+  padding: 8px 12px;
+  background: #409EFF;
+  border-bottom: 1px solid #337ecc;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .header-title {
+    font-weight: 600;
+  }
+
+  .stats-text {
+    color: #ffffff;
+    margin-left: 4px;
+    font-weight: normal;
+  }
+}
+
 .mytree ::v-deep {
   .el-tree > .el-tree-node:after {
     border-top: none;
@@ -928,7 +956,7 @@ export default {
   directives: { elDragDialog, permission },
   props: {
     height: {
-      type: Number,
+      type: [Number, String],
       default: 200
     }
   },
@@ -943,6 +971,14 @@ export default {
         selectOptions: [],
         filterText: '',
         treeData: [],
+        // 根节点统计信息（独立存储，不污染treeData）
+        rootStats: {
+          loading: false,
+          group_count: 0,
+          company_count: 0,
+          position_count: 0,
+          staff_count: 0
+        },
         // 单条数据 json
         currentJson: null,
         // 树组件配置
@@ -1263,7 +1299,16 @@ export default {
       // 查询逻辑
       this.settings.loading = true
       getTreeListApi(this.dataJson.searchForm).then(response => {
-        this.dataJson.treeData = response.data
+        // 过滤掉根节点（type=TENANT），直接使用其children作为树数据
+        // 因为统计头部已独立展示，根节点"组织机构根节点"不再需要在树中显示
+        const rawData = response.data
+        if (rawData && rawData.length > 0 && rawData[0].type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT) {
+          // 根节点存在，使用其children作为树数据
+          this.dataJson.treeData = rawData[0].children || []
+        } else {
+          // 没有根节点或结构不符合预期，使用原始数据
+          this.dataJson.treeData = rawData
+        }
         // 为集团类型节点异步加载子节点数量
         this.loadSubCount(this.dataJson.treeData)
         // 加载根节点统计信息
@@ -2521,12 +2566,13 @@ export default {
         return
       }
 
-      const { treeRect, expandIcon } = position
+      const { expandIcon } = position
       const iconRect = expandIcon.getBoundingClientRect()
 
       // before类型：红线在图标顶部，提示框在红线上方
-      const indicatorTop = iconRect.top - treeRect.top
-      const indicatorLeft = iconRect.right - treeRect.left
+      // fixed定位：直接使用viewport坐标，无需减treeRect
+      const indicatorTop = iconRect.top
+      const indicatorLeft = iconRect.right
 
       // 显示并定位提示框
       dropIndicatorTip.style.display = 'block'
@@ -2545,12 +2591,13 @@ export default {
         return
       }
 
-      const { treeRect, expandIcon } = position
+      const { expandIcon } = position
       const iconRect = expandIcon.getBoundingClientRect()
 
       // after类型：红线在图标底部，提示框在红线下方（箭头朝上）
-      const indicatorTop = iconRect.bottom - treeRect.top
-      const indicatorLeft = iconRect.right - treeRect.left
+      // fixed定位：直接使用viewport坐标，无需减treeRect
+      const indicatorTop = iconRect.bottom
+      const indicatorLeft = iconRect.right
 
       // 显示并定位提示框
       dropIndicatorTip.style.display = 'block'
@@ -2611,12 +2658,13 @@ export default {
         return
       }
 
-      const { treeRect, nodeEl } = position
+      const { nodeEl } = position
       const nodeRect = nodeEl.getBoundingClientRect()
 
       // inner类型：提示框在节点中央，无箭头（因为整个节点都会有背景高亮）
-      const centerTop = nodeRect.top - treeRect.top + (nodeRect.height / 2)
-      const centerLeft = nodeRect.left - treeRect.left + (nodeRect.width / 2)
+      // fixed定位：直接使用viewport坐标，无需减treeRect
+      const centerTop = nodeRect.top + (nodeRect.height / 2)
+      const centerLeft = nodeRect.left + (nodeRect.width / 2)
 
       // 显示并定位提示框到节点中央
       dropIndicatorTip.style.display = 'block'
@@ -2932,60 +2980,20 @@ export default {
         }
       })
     },
-    // 加载根节点统计信息
+    // 加载根节点统计信息（独立存储到dataJson.rootStats）
     loadRootStatistics () {
-      // 查找根节点（通常是第一个节点，且没有parent_id）
-      const rootNode = this.dataJson.treeData.find(node => !node.parent_id)
-      if (rootNode) {
-        this.$set(rootNode, 'countLoading', true)
-      }
+      this.dataJson.rootStats.loading = true
 
       getRootStatisticsApi().then(response => {
         const stats = response.data
-
-        if (rootNode) {
-          // 添加统计信息到根节点标签
-          const statsText = `（集团数：${stats.group_count}、主体企业数：${stats.company_count}、岗位数：${stats.position_count}、员工数：${stats.staff_count}）`
-
-          // 根据根节点类型选择正确的更新字段
-          if (rootNode.type === this.CONSTANTS.DICT_ORG_SETTING_TYPE_TENANT) {
-            // 租户类型节点：模板显示固定的"组织机构根节点"，无法直接修改
-            // 我们可以在模板中添加条件来显示统计信息
-            this.$set(rootNode, 'root_stats', statsText)
-          } else {
-            // 非租户类型节点：使用simple_name字段
-            const originalName = rootNode.simple_name || rootNode.name || '组织机构管理'
-
-            // 生成新的名称
-            let newName
-            if (originalName.includes('（')) {
-              // 替换现有统计信息
-              newName = originalName.replace(/（.*）/, statsText)
-            } else {
-              // 添加统计信息
-              newName = originalName + statsText
-            }
-
-            // 使用Vue.set确保响应式更新
-            this.$set(rootNode, 'simple_name', newName)
-          }
-
-          // 强制触发视图更新
-          this.$forceUpdate()
-        } else {
-          // 备用方案：使用第一个节点
-          if (this.dataJson.treeData && this.dataJson.treeData.length > 0) {
-            const firstNode = this.dataJson.treeData[0]
-            const statsText = `（集团数：${stats.group_count}、主体企业数：${stats.company_count}、岗位数：${stats.position_count}、员工数：${stats.staff_count}）`
-            this.$set(firstNode, 'label', (firstNode.label || '组织机构管理') + statsText)
-          }
-        }
+        this.dataJson.rootStats.group_count = stats.group_count || 0
+        this.dataJson.rootStats.company_count = stats.company_count || 0
+        this.dataJson.rootStats.position_count = stats.position_count || 0
+        this.dataJson.rootStats.staff_count = stats.staff_count || 0
       }).catch(error => {
         console.error('获取根节点统计信息失败:', error)
       }).finally(() => {
-        if (rootNode) {
-          this.$set(rootNode, 'countLoading', false)
-        }
+        this.dataJson.rootStats.loading = false
       })
     },
     // 更新指定岗位节点的员工数量显示
@@ -4431,9 +4439,9 @@ export default {
   display: none !important; /* 隐藏"插入到此位置"文字提示 */
 }
 
-/* 🎯 自定义红线提示文字容器 (参考Element UI红线实现) */
+/* 🎯 自定义红线提示文字容器 - 固定定位,不受滚动影响 */
 .el-tree__drop-indicator-tip {
-  position: absolute;
+  position: fixed;
   display: none; /* 初始隐藏，类似Element UI红线 */
   background: rgba(64, 158, 255, 0.3); /* Element UI蓝色，70%透明 */
   border: 1px solid #409EFF;

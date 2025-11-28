@@ -222,7 +222,7 @@ export default {
   mixins: [],
   props: {
     height: {
-      type: Number,
+      type: [Number, String],
       default: 200
     }
   },

@@ -50,6 +50,17 @@
   color: #606266 !important;
   cursor: pointer;
 }
+/* 强制按钮显示为主要按钮样式 */
+::v-deep .el-input-group__append .el-button--primary {
+  color: #FFF !important;
+  background-color: #409EFF !important;
+  border-color: #409EFF !important;
+}
+::v-deep .el-input-group__append .el-button--primary:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+  color: #FFF !important;
+}
 </style>
 
 <script>

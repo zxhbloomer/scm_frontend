@@ -67,8 +67,8 @@
       columns_index_key="false"
       :data="dataJson.listData"
       :element-loading-text="'正在拼命加载中...'"
+      :canvas-auto-height="true"
       element-loading-background="rgba(255, 255, 255, 0.5)"
-      :height="settings.tableHeight"
       stripe
       border
       fit
@@ -276,12 +276,10 @@ import { getPageApi } from '@/api/10_system/pages/page'
 import constants_dict from '@/common/constants/constants_dict'
 import { isEmpty } from '@/components/30_table/ExTable/util'
 import { MessageBox } from 'element-ui'
-import mixin from './mixin'
 
 export default {
   components: { Pagination, SelectDicts, SelectDict },
   directives: { elDragDialog, permission },
-  mixins: [mixin],
   props: {
   },
   data () {
@@ -383,7 +381,6 @@ export default {
         sumLoading: false,
         // loading 状态
         loading: true,
-        tableHeight: this.setUIheight(),
         duration: 4000
       }
     }

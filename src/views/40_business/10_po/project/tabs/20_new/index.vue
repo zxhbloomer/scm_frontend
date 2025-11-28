@@ -395,16 +395,16 @@
       <el-divider />
 
       <el-button
+        :disabled="settings.loading"
+        size="medium"
+        @click="handleCancel()"
+      >返回</el-button>
+      <el-button
         type="primary"
         :disabled="settings.loading"
         size="medium"
         @click="startProcess()"
       >提交审批并保存</el-button>
-      <el-button
-        :disabled="settings.loading"
-        size="medium"
-        @click="handleCancel()"
-      >返回</el-button>
     </div>
 
     <!--供应商-->
