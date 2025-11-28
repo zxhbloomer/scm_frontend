@@ -6,7 +6,7 @@
     >
       <el-tab-pane
         name="org"
-        :style="{height: height + 'px'}"
+        :style="{height: typeof height === 'number' ? height + 'px' : height}"
         style="overflow-y:auto;overflow-x:hidden;"
       >
         <template slot="label">组织机构
@@ -20,7 +20,7 @@
       </el-tab-pane>
       <el-tab-pane
         name="group"
-        :style="{height: height + 'px'}"
+        :style="{height: typeof height === 'number' ? height + 'px' : height}"
         style="overflow-y:auto;overflow-x:hidden;"
       >
         <template slot="label">集团信息
@@ -30,7 +30,7 @@
             type="danger"
           />
         </template>
-        <group-template :height="height - 42" />
+        <group-template :height="tableHeight" />
       </el-tab-pane>
       <el-tab-pane>
         <template slot="label">主体企业信息
@@ -55,7 +55,7 @@
             ）
           </span>
         </div>
-        <company-template :height="height - 42" />
+        <company-template :height="tableHeight" />
       </el-tab-pane>
       <el-tab-pane>
         <template slot="label">部门信息
@@ -65,7 +65,7 @@
             type="danger"
           />
         </template>
-        <dept-template :height="height - 42" />
+        <dept-template :height="tableHeight" />
       </el-tab-pane>
       <el-tab-pane>
         <template slot="label">岗位信息
@@ -75,7 +75,7 @@
             type="danger"
           />
         </template>
-        <position-template :height="height - 42" />
+        <position-template :height="tableHeight" />
       </el-tab-pane>
       <el-tab-pane>
         <template slot="label">员工信息
@@ -85,7 +85,7 @@
             type="danger"
           />
         </template>
-        <staff-template :height="height - 57" />
+        <staff-template :height="staffTableHeight" />
       </el-tab-pane>
     </el-tabs>
 
@@ -150,7 +150,7 @@ export default {
   directives: { elDragDialog },
   props: {
     height: {
-      type: Number,
+      type: [Number, String],
       default: 200
     }
   },
@@ -290,6 +290,15 @@ export default {
       }
     }
   },
+  computed: {
+    // 处理height减法操作（当height是calc字符串时直接返回，是数字时才减）
+    tableHeight () {
+      return typeof this.height === 'number' ? this.height - 42 : this.height
+    },
+    staffTableHeight () {
+      return typeof this.height === 'number' ? this.height - 57 : this.height
+    }
+  },
   // 监听器
   watch: {
     // // 日期范围
@@ -380,7 +389,6 @@ export default {
     })
     // 监听企业部门统计事件
     EventBus.$on('company-dept-stats', _data => {
-      console.log('[DEBUG] 右侧组件接收到企业部门统计数据:', _data)
       this.dataJson.companyDeptStats = _data
     })
   },
@@ -515,19 +523,9 @@ export default {
     },
     // 部门管理点击事件
     handleDeptManageClick () {
-      console.log('[DEBUG] 点击部门数量链接，准备跳转到部门管理页面')
-      console.log('[DEBUG] 企业统计数据:', this.dataJson.companyDeptStats)
-
       if (this.dataJson.companyDeptStats && this.dataJson.companyDeptStats.companyId) {
         // 跳转到部门管理页面，传递企业ID作为查询条件
         this.$router.push({
-          path: '/dept/dept',
-          query: {
-            company_id: this.dataJson.companyDeptStats.companyId,
-            company_name: this.dataJson.companyDeptStats.companyData ? this.dataJson.companyDeptStats.companyData.name : ''
-          }
-        })
-        console.log('[DEBUG] 跳转参数:', {
           path: '/dept/dept',
           query: {
             company_id: this.dataJson.companyDeptStats.companyId,
