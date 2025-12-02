@@ -78,6 +78,14 @@
                   <el-button
                     type="text"
                     size="mini"
+                    icon="el-icon-share"
+                    @click="handleShowGraph(record)"
+                  >
+                    图谱
+                  </el-button>
+                  <el-button
+                    type="text"
+                    size="mini"
                     icon="el-icon-delete"
                     style="color: #f56c6c"
                     @click="handleDeleteRecord(record)"
@@ -144,6 +152,11 @@
       :references="currentReferences"
     />
 
+    <rag-chat-graph-dialog
+      :visible.sync="graphDialogVisible"
+      :qa-record-uuid="currentRecordUuid"
+    />
+
     <rag-qa-history-dialog
       :visible.sync="historyDialogVisible"
       :kb-uuid="kbUuid"
@@ -156,6 +169,7 @@
 import ragService from '../../../api/ragService'
 import elDragDialog from '@/directive/el-drag-dialog'
 import RagChatRefDialog from './RagChatRefDialog.vue'
+import RagChatGraphDialog from './RagChatGraphDialog.vue'
 import RagQaHistoryDialog from './RagQaHistoryDialog.vue'
 import { MdRenderer } from '../../chat/markdown'
 
@@ -166,6 +180,7 @@ export default {
 
   components: {
     RagChatRefDialog,
+    RagChatGraphDialog,
     RagQaHistoryDialog,
     MdRenderer
   },
@@ -196,6 +211,7 @@ export default {
       pageSize: 20,
       prevScrollTop: 0,
       refDialogVisible: false,
+      graphDialogVisible: false,
       historyDialogVisible: false,
       currentRecordUuid: '',
       currentReferences: [],
@@ -462,6 +478,14 @@ export default {
       } catch (error) {
         this.$message.error('加载引用失败: ' + (error.message || '未知错误'))
       }
+    },
+
+    /**
+     * 显示图谱
+     */
+    handleShowGraph (record) {
+      this.currentRecordUuid = record.uuid
+      this.graphDialogVisible = true
     },
 
     /**

@@ -183,7 +183,7 @@ class KnowledgeBaseService {
     })
   }
 
-  // ==================== 向量嵌入 ====================
+  // ==================== 嵌入和图谱 ====================
 
   /**
    * 获取嵌入列表
@@ -198,6 +198,25 @@ class KnowledgeBaseService {
       params: {
         currentPage,
         pageSize
+      }
+    })
+  }
+
+  /**
+   * 获取图谱数据
+   * @param {string} kbItemUuid - 知识项UUID
+   * @param {number} maxVertextId - 最大顶点ID
+   * @param {number} maxEdgeId - 最大边ID
+   * @param {number} limit - 限制数量
+   */
+  graphList (kbItemUuid, maxVertextId, maxEdgeId, limit) {
+    return request({
+      url: `/api/v1/ai/knowledge-base-graph/list/${kbItemUuid}`,
+      method: 'get',
+      params: {
+        limit,
+        maxEdgeId,
+        maxVertexId: maxVertextId
       }
     })
   }

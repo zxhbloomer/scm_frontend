@@ -83,6 +83,38 @@
           </div>
         </el-collapse-item>
 
+        <!-- 文档索引设置（图谱） -->
+        <el-collapse-item title="文档索引设置（图谱）" name="graph">
+          <div class="form-section">
+            <div class="form-item">
+              <div class="form-label">
+                模型名称
+                <el-tooltip placement="top">
+                  <div slot="content">
+                    抽取图数据时使用的模型，为空则使用第一个可用的模型
+                  </div>
+                  <i class="el-icon-question" />
+                </el-tooltip>
+              </div>
+              <el-select
+                v-model="formData.ingestModelId"
+                style="width: 100%"
+                placeholder="请选择模型"
+                collapse-tags
+                loading-text="拼命加载..."
+                :popper-append-to-body="false"
+              >
+                <el-option
+                  v-for="item in llmList"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
+                />
+              </el-select>
+            </div>
+          </div>
+        </el-collapse-item>
+
         <!-- 文档召回设置 -->
         <el-collapse-item title="文档召回设置" name="retrieve">
           <div class="form-section">

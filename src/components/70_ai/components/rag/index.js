@@ -10,11 +10,14 @@ import KnowledgeItemEditDialog from './dialogs/KnowledgeItemEditDialog.vue'
 import KnowledgeItemUploadDialog from './dialogs/KnowledgeItemUploadDialog.vue'
 import KnowledgeIndexDialog from './dialogs/KnowledgeIndexDialog.vue'
 import ItemEmbeddingDialog from './dialogs/ItemEmbeddingDialog.vue'
+import ItemGraphDialog from './dialogs/ItemGraphDialog.vue'
 import RagChatDialog from './dialogs/RagChatDialog.vue'
+import RagChatGraphDialog from './dialogs/RagChatGraphDialog.vue'
 import RagChatRefDialog from './dialogs/RagChatRefDialog.vue'
 import RagQaHistoryDialog from './dialogs/RagQaHistoryDialog.vue'
 
 import ItemEmbeddingList from './components/ItemEmbeddingList.vue'
+import ItemGraphViewer from './components/ItemGraphViewer.vue'
 import FilePreview from './components/FilePreview.vue'
 import QaMessageList from './components/QaMessageList.vue'
 
@@ -25,6 +28,7 @@ import * as indexTypes from './constants/indexTypes'
 
 import * as knowledgeBaseUtils from './utils/knowledgeBaseUtils'
 import * as sseUtils from './utils/sseUtils'
+import * as graphUtils from './utils/graphUtils'
 
 export {
   KnowledgeBaseManageDialog,
@@ -34,17 +38,21 @@ export {
   KnowledgeItemUploadDialog,
   KnowledgeIndexDialog,
   ItemEmbeddingDialog,
+  ItemGraphDialog,
   RagChatDialog,
+  RagChatGraphDialog,
   RagChatRefDialog,
   RagQaHistoryDialog,
   ItemEmbeddingList,
+  ItemGraphViewer,
   FilePreview,
   QaMessageList,
   knowledgeBaseService,
   knowledgeBaseConstants,
   indexTypes,
   knowledgeBaseUtils,
-  sseUtils
+  sseUtils,
+  graphUtils
 }
 
 export default {
@@ -56,10 +64,13 @@ export default {
     Vue.component('KnowledgeItemUploadDialog', KnowledgeItemUploadDialog)
     Vue.component('KnowledgeIndexDialog', KnowledgeIndexDialog)
     Vue.component('ItemEmbeddingDialog', ItemEmbeddingDialog)
+    Vue.component('ItemGraphDialog', ItemGraphDialog)
     Vue.component('RagChatDialog', RagChatDialog)
+    Vue.component('RagChatGraphDialog', RagChatGraphDialog)
     Vue.component('RagChatRefDialog', RagChatRefDialog)
     Vue.component('RagQaHistoryDialog', RagQaHistoryDialog)
     Vue.component('ItemEmbeddingList', ItemEmbeddingList)
+    Vue.component('ItemGraphViewer', ItemGraphViewer)
     Vue.component('FilePreview', FilePreview)
     Vue.component('QaMessageList', QaMessageList)
   }

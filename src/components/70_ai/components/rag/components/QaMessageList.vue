@@ -77,6 +77,14 @@
                 <el-button
                   type="text"
                   size="small"
+                  @click="handleViewGraphRef(message)"
+                >
+                  <i class="el-icon-share" />
+                  查看引用图谱
+                </el-button>
+                <el-button
+                  type="text"
+                  size="small"
                   @click="handleDelete(message)"
                 >
                   <i class="el-icon-delete" />
@@ -158,6 +166,13 @@ export default {
      */
     handleViewReference (message) {
       this.$emit('view-reference', message)
+    },
+
+    /**
+     * 查看引用图谱
+     */
+    handleViewGraphRef (message) {
+      this.$emit('view-graph-ref', message)
     },
 
     /**
