@@ -53,7 +53,7 @@
             active-text="是"
             inactive-text="否"
           />
-          <span class="form-tip">（开启后将自动创建向量索引和知识图谱）</span>
+          <span class="form-tip">（开启后将自动创建向量索引）</span>
         </el-form-item>
       </el-form>
     </div>

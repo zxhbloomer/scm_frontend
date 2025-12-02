@@ -9,12 +9,6 @@
         <i :class="localIsStrict ? 'el-icon-lock' : 'el-icon-unlock'" class="kb-icon" />
         <span class="kb-name">{{ localKnowledgeBaseName || '未选择知识库' }}</span>
       </div>
-
-      <!-- 图谱检索模型显示（仅当启用图谱检索时显示） -->
-      <div v-if="localEnableGraphRetrieval" class="model-line">
-        <i class="el-icon-cpu model-icon" />
-        <span class="model-name">{{ localGraphModelName || '未选择模型' }}</span>
-      </div>
     </div>
   </div>
 </template>
@@ -39,9 +33,7 @@ export default {
     return {
       // 本地响应式状态，用于显示
       localKnowledgeBaseName: '',
-      localIsStrict: true,
-      localEnableGraphRetrieval: false,
-      localGraphModelName: ''
+      localIsStrict: true
     }
   },
 
@@ -56,16 +48,12 @@ export default {
     const node = this.getNode()
     this.localKnowledgeBaseName = node.data.nodeConfig?.knowledge_base_name || '未选择知识库'
     this.localIsStrict = node.data.nodeConfig?.is_strict !== false
-    this.localEnableGraphRetrieval = node.data.nodeConfig?.enable_graph_retrieval || false
-    this.localGraphModelName = node.data.nodeConfig?.graph_model_name || ''
 
     // 监听 X6 节点数据变化事件
     node.on('change:data', ({ current }) => {
       // 更新本地状态，触发视图更新
       this.localKnowledgeBaseName = current.nodeConfig?.knowledge_base_name || '未选择知识库'
       this.localIsStrict = current.nodeConfig?.is_strict !== false
-      this.localEnableGraphRetrieval = current.nodeConfig?.enable_graph_retrieval || false
-      this.localGraphModelName = current.nodeConfig?.graph_model_name || ''
     })
   }
 }

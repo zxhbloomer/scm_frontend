@@ -157,49 +157,6 @@
             </el-table-column>
 
             <el-table-column
-              label="图谱化状态"
-              width="120"
-            >
-              <template slot-scope="scope">
-                <el-tag
-                  v-if="scope.row.graphicalStatus === 3"
-                  type="success"
-                  size="small"
-                >
-                  已完成
-                </el-tag>
-                <el-tag
-                  v-else-if="scope.row.graphicalStatus === 2"
-                  type="warning"
-                  size="small"
-                >
-                  处理中
-                </el-tag>
-                <el-tag
-                  v-else-if="scope.row.graphicalStatus === 4"
-                  type="danger"
-                  size="small"
-                >
-                  失败
-                </el-tag>
-                <el-tag
-                  v-else-if="scope.row.graphicalStatus === 1"
-                  type="info"
-                  size="small"
-                >
-                  待处理
-                </el-tag>
-                <el-tag
-                  v-else
-                  type="info"
-                  size="small"
-                >
-                  未索引
-                </el-tag>
-              </template>
-            </el-table-column>
-
-            <el-table-column
               prop="c_time"
               label="创建时间"
               width="160"
@@ -224,13 +181,6 @@
                   @click="handleViewEmbedding(scope.row)"
                 >
                   嵌入
-                </el-button>
-                <el-button
-                  type="text"
-                  size="small"
-                  @click="handleViewGraph(scope.row)"
-                >
-                  图谱
                 </el-button>
                 <el-button
                   v-if="scope.row.fileName"
@@ -293,12 +243,6 @@
         :item-title="currentItem.title"
       />
 
-      <item-graph-dialog
-        :visible.sync="graphDialogVisible"
-        :kb-item-uuid="currentItem.itemUuid"
-        :item-title="currentItem.title"
-      />
-
       <el-dialog
         v-el-drag-dialog
         :visible.sync="previewDialogVisible"
@@ -324,7 +268,6 @@ import KnowledgeItemEditDialog from './KnowledgeItemEditDialog.vue'
 import KnowledgeItemUploadDialog from './KnowledgeItemUploadDialog.vue'
 import KnowledgeIndexDialog from './KnowledgeIndexDialog.vue'
 import ItemEmbeddingDialog from './ItemEmbeddingDialog.vue'
-import ItemGraphDialog from './ItemGraphDialog.vue'
 import FilePreview from '../components/FilePreview.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
 import Pagination from '@/components/Pagination_for_dialog'
@@ -339,7 +282,6 @@ export default {
     KnowledgeItemUploadDialog,
     KnowledgeIndexDialog,
     ItemEmbeddingDialog,
-    ItemGraphDialog,
     FilePreview,
     Pagination
   },
@@ -374,7 +316,6 @@ export default {
       uploadDialogVisible: false,
       indexDialogVisible: false,
       embeddingDialogVisible: false,
-      graphDialogVisible: false,
       previewDialogVisible: false,
       currentItem: createEmptyKbItem(),
       indexStatusTimer: null,
@@ -432,7 +373,7 @@ export default {
         )
 
         const data = response.data || response
-        // 直接使用embeddingStatus和graphicalStatus字段
+        // 直接使用embeddingStatus字段
         const records = data.records || data || []
         this.tableData = records
         this.pagination.total = data.total || this.tableData.length
@@ -561,10 +502,10 @@ export default {
         const data = response.data || response
 
         if (data && data.length > 0) {
-          // 检查向量化或图谱化是否有处理中的项
-          // embeddingStatus: 2-处理中, graphicalStatus: 2-处理中
+          // 检查向量化是否有处理中的项
+          // embeddingStatus: 2-处理中
           const processingItems = data.filter(item =>
-            item.embeddingStatus === 2 || item.graphicalStatus === 2
+            item.embeddingStatus === 2
           )
 
           if (processingItems.length === 0) {
@@ -593,14 +534,6 @@ export default {
     handleViewEmbedding (row) {
       this.currentItem = { ...row }
       this.embeddingDialogVisible = true
-    },
-
-    /**
-     * 查看图谱
-     */
-    handleViewGraph (row) {
-      this.currentItem = { ...row }
-      this.graphDialogVisible = true
     },
 
     /**

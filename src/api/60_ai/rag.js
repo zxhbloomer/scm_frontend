@@ -140,18 +140,6 @@ export function getEmbeddingRef (uuid) {
 }
 
 /**
- * 查询问答的图谱引用
- * @param {string} uuid 问答记录UUID
- * @returns {Promise}
- */
-export function getGraphRef (uuid) {
-  return request({
-    url: `/api/v1/ai/knowledge-base/qa/graph-ref/${uuid}`,
-    method: 'get'
-  })
-}
-
-/**
  * 清空当前用户的所有问答记录
  * @returns {Promise}
  */

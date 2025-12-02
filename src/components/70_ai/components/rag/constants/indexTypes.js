@@ -4,14 +4,12 @@
 
 // 索引类型
 export const INDEX_TYPE = {
-  EMBEDDING: 'embedding', // 向量化
-  GRAPHICAL: 'graphical' // 图谱化
+  EMBEDDING: 'embedding' // 向量化
 }
 
 // 索引类型选项
 export const INDEX_TYPE_OPTIONS = [
-  { label: '向量化', value: INDEX_TYPE.EMBEDDING },
-  { label: '图谱化', value: INDEX_TYPE.GRAPHICAL }
+  { label: '向量化', value: INDEX_TYPE.EMBEDDING }
 ]
 
 // 默认索引类型

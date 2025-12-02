@@ -15,22 +15,11 @@
     @close="handleClose"
   >
     <div class="index-container">
-      <el-alert
-        type="info"
-        :closable="false"
-        style="margin-bottom: 20px"
-      >
-        <div slot="title">
-          对文档进行<strong>图谱化</strong>时会使用到大语言模型，需要消耗一定量的Token
-        </div>
-      </el-alert>
-
       <!-- 索引类型选择 -->
       <div class="index-types">
         <div class="form-label">索引类型</div>
         <el-checkbox-group v-model="selectedIndexTypes">
           <el-checkbox label="embedding">向量化</el-checkbox>
-          <el-checkbox label="graphical">图谱化</el-checkbox>
         </el-checkbox-group>
       </div>
 

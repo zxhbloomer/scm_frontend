@@ -424,6 +424,15 @@ export default {
       })
 
       this.graph.on('edge:connected', ({ isNew, edge }) => {
+        console.log('[WorkflowDesigner] edge:connected事件', {
+          isNew,
+          edgeId: edge.id,
+          sourceId: edge.getSourceCellId(),
+          targetId: edge.getTargetCellId(),
+          sourcePort: edge.getSourcePortId(),
+          targetPort: edge.getTargetPortId(),
+          currentEdgesCount: this.graph.getEdges().length
+        })
         if (isNew) {
           this.createNewEdge(edge)
         }
@@ -478,6 +487,12 @@ export default {
       })
 
       this.graph.on('cell:removed', ({ cell }) => {
+        console.log('[WorkflowDesigner] cell:removed事件', {
+          cellId: cell.id,
+          cellType: cell.isNode() ? 'node' : 'edge',
+          currentNodesCount: this.graph.getNodes().length,
+          currentEdgesCount: this.graph.getEdges().length
+        })
         if (cell.isNode()) {
           this.deleteNode(cell.id)
         } else if (cell.isEdge()) {
@@ -685,6 +700,16 @@ export default {
     },
 
     async createNewEdge (edge) {
+      console.log('[WorkflowDesigner] createNewEdge 开始', {
+        oldEdgeId: edge.id,
+        sourceNodeId: edge.getSourceCellId(),
+        targetNodeId: edge.getTargetCellId(),
+        sourcePort: edge.getSourcePortId(),
+        targetPort: edge.getTargetPortId(),
+        edgesBeforeCreate: this.workflow.edges?.length || 0,
+        graphEdgesCount: this.graph.getEdges().length
+      })
+
       const { createNewEdgeData } = await import('@/components/70_ai/components/workflow/utils')
 
       const sourceNodeId = edge.getSourceCellId()
@@ -699,7 +724,7 @@ export default {
       const targetNode = findNode(targetNodeId)
 
       if (!sourceNode || !targetNode) {
-        console.error('Source or target node not found', { sourceNodeId, targetNodeId })
+        console.error('[WorkflowDesigner] Source or target node not found', { sourceNodeId, targetNodeId })
         return
       }
 
@@ -711,9 +736,25 @@ export default {
         edge.getTargetCellId()
       )
 
+      console.log('[WorkflowDesigner] createNewEdge 创建新边数据', {
+        newEdgeUuid: newEdge.uuid,
+        edgesAfterCreate: this.workflow.edges?.length || 0
+      })
+
       // 更新 edge ID - 使用 graph.updateCellId() 而不是 edge.setId()
       // 参考 X6 文档: updateCellId(cell: Cell, newId: string): Cell
+      console.log('[WorkflowDesigner] updateCellId 前', {
+        oldId: edge.id,
+        newId: newEdge.uuid,
+        graphEdgesCount: this.graph.getEdges().length
+      })
+
       this.graph.updateCellId(edge, newEdge.uuid)
+
+      console.log('[WorkflowDesigner] updateCellId 后', {
+        graphEdgesCount: this.graph.getEdges().length,
+        allEdgeIds: this.graph.getEdges().map(e => e.id)
+      })
     },
 
     deleteNode (nodeId) {
@@ -746,6 +787,13 @@ export default {
     },
 
     deleteEdge (edgeId) {
+      console.log('[WorkflowDesigner] deleteEdge 调用', {
+        edgeId,
+        edgesBeforeDelete: this.workflow.edges?.length || 0,
+        graphEdgesCount: this.graph.getEdges().length,
+        stackTrace: new Error().stack // 打印调用栈，追踪谁调用了deleteEdge
+      })
+
       if (!this.workflow.edges) {
         return
       }
@@ -753,12 +801,21 @@ export default {
       const index = this.workflow.edges.findIndex(e => e.uuid === edgeId)
       if (index !== -1) {
         const deletedEdge = this.workflow.edges.splice(index, 1)[0]
+        console.log('[WorkflowDesigner] 删除边', {
+          deletedEdgeUuid: deletedEdge.uuid,
+          sourceNodeUuid: deletedEdge.sourceNodeUuid,
+          targetNodeUuid: deletedEdge.targetNodeUuid,
+          edgesAfterDelete: this.workflow.edges.length
+        })
+
         if (!this.workflow.deleteEdges) {
           this.workflow.deleteEdges = []
         }
         // 修复：只推入UUID字符串，而不是整个edge对象
         // 后端期望 deleteEdges 是 List<String>，不是 List<Edge>
         this.workflow.deleteEdges.push(deletedEdge.uuid)
+      } else {
+        console.warn('[WorkflowDesigner] 未找到要删除的边', { edgeId })
       }
     },
 
