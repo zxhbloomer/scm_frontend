@@ -324,6 +324,7 @@ export default {
         return
       }
 
+      // 先设置 isEmpty 为 false，确保容器可见
       this.isEmpty = false
 
       // 添加节点
@@ -350,17 +351,23 @@ export default {
         }
       }))
 
-      // 添加到图中
-      if (nodes.length > 0) {
-        this.cy.add(nodes)
-      }
-      if (edgesData.length > 0) {
-        this.cy.add(edgesData)
-      }
-
-      // 自动布局
+      // 等待容器显示后再添加元素
       this.$nextTick(() => {
-        this.relayout()
+        // 强制 cytoscape 重新计算容器尺寸
+        this.cy.resize()
+
+        // 添加到图中
+        if (nodes.length > 0) {
+          this.cy.add(nodes)
+        }
+        if (edgesData.length > 0) {
+          this.cy.add(edgesData)
+        }
+
+        // 自动布局
+        this.$nextTick(() => {
+          this.relayout()
+        })
       })
     },
 
@@ -399,9 +406,10 @@ export default {
       this.entitiesFromQuestion = []
       this.isEmpty = true
 
-      // 清除图谱
+      // 销毁 cytoscape 实例，确保下次打开重新初始化
       if (this.cy) {
-        this.cy.elements().remove()
+        this.cy.destroy()
+        this.cy = null
       }
     }
   }

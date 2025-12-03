@@ -133,13 +133,15 @@ class KnowledgeBaseService {
    * 创建或更新知识项
    * @param {Object} data - 知识项数据
    * @param {boolean} indexAfterCreate - 新增时是否立即索引（默认false）
+   * @param {boolean} indexAfterEdit - 编辑时是否立即重建索引（默认false）
    */
-  itemSaveOrUpdate (data, indexAfterCreate = false) {
+  itemSaveOrUpdate (data, indexAfterCreate = false, indexAfterEdit = false) {
     return request({
       url: '/api/v1/ai/knowledge-base-item/saveOrUpdate',
       method: 'post',
       params: {
-        indexAfterCreate: indexAfterCreate
+        indexAfterCreate: indexAfterCreate,
+        indexAfterEdit: indexAfterEdit
       },
       data
     })

@@ -13,20 +13,20 @@
       <i class="el-icon-loading" /> 加载中...
     </div>
 
-    <div v-else-if="references.length === 0" class="empty-container">
+    <div v-else-if="displayReferences.length === 0" class="empty-container">
       无引用资料
     </div>
 
     <el-collapse v-else v-model="activeNames" class="reference-collapse">
       <el-collapse-item
-        v-for="(reference, idx) in references"
-        :key="reference.id"
+        v-for="(reference, idx) in displayReferences"
+        :key="reference.id || idx"
         :title="`引用${idx + 1}（相似度: ${(reference.score * 100).toFixed(2)}%）`"
         :name="`refer_${idx}`"
       >
         <div class="reference-content">
           <div class="reference-meta">
-            <el-tag size="mini" type="info">排名: {{ reference.rank }}</el-tag>
+            <el-tag size="mini" type="info">排名: {{ idx + 1 }}</el-tag>
             <el-tag size="mini" type="success">分数: {{ reference.score.toFixed(4) }}</el-tag>
             <el-tag v-if="reference.kbItemUuid" size="mini">
               条目: {{ reference.kbItemUuid }}
@@ -60,14 +60,24 @@ export default {
     qaRecordUuid: {
       type: String,
       default: ''
+    },
+    references: {
+      type: Array,
+      default: () => []
     }
   },
   data () {
     return {
       dialogVisible: false,
       loading: false,
-      references: [],
+      localReferences: [],
       activeNames: ['refer_0'] // 默认展开第一个引用
+    }
+  },
+  computed: {
+    displayReferences () {
+      // 优先使用父组件传递的references，如果没有则使用本地加载的
+      return this.references.length > 0 ? this.references : this.localReferences
     }
   },
   watch: {
@@ -75,10 +85,17 @@ export default {
       handler (val) {
         this.dialogVisible = val
         if (val && this.qaRecordUuid) {
-          this.loadReferences()
+          // 如果父组件没有传递references，才自己加载
+          if (this.references.length === 0) {
+            this.loadReferences()
+          } else {
+            // 使用父组件传递的数据，默认展开第一个
+            if (this.references.length > 0) {
+              this.activeNames = ['refer_0']
+            }
+          }
         }
-      },
-      immediate: true
+      }
     }
   },
   methods: {
@@ -93,19 +110,19 @@ export default {
         const response = await ragService.getEmbeddingRef(this.qaRecordUuid)
 
         if (response.system_code === 0 && response.data) {
-          this.references = response.data || []
+          this.localReferences = response.data || []
 
           // 如果有引用，默认展开第一个
-          if (this.references.length > 0) {
+          if (this.localReferences.length > 0) {
             this.activeNames = ['refer_0']
           }
         } else {
           this.$message.error(response.message || '加载引用资料失败')
-          this.references = []
+          this.localReferences = []
         }
       } catch (error) {
         this.$message.error('加载引用资料失败: ' + (error.message || '未知错误'))
-        this.references = []
+        this.localReferences = []
       } finally {
         this.loading = false
       }
@@ -117,7 +134,7 @@ export default {
       this.$emit('close')
 
       // 重置数据
-      this.references = []
+      this.localReferences = []
       this.activeNames = ['refer_0']
     }
   }

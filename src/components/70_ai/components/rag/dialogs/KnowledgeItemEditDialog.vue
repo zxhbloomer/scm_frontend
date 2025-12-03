@@ -46,7 +46,7 @@
           />
         </el-form-item>
 
-        <!-- 立即索引开关（仅新增时显示） -->
+        <!-- 新增时的立即索引开关 -->
         <el-form-item v-if="!isEdit" label="立即索引">
           <el-switch
             v-model="indexAfterCreate"
@@ -54,6 +54,16 @@
             inactive-text="否"
           />
           <span class="form-tip">（开启后将自动创建向量索引和知识图谱）</span>
+        </el-form-item>
+
+        <!-- 编辑时的立即索引开关 -->
+        <el-form-item v-if="isEdit" label="立即索引">
+          <el-switch
+            v-model="indexAfterEdit"
+            active-text="是"
+            inactive-text="否"
+          />
+          <span class="form-tip">（开启后将删除旧索引并重建向量和图谱数据）</span>
         </el-form-item>
       </el-form>
     </div>
@@ -101,7 +111,8 @@ export default {
     return {
       submitting: false,
       formData: createEmptyKbItem(),
-      indexAfterCreate: true // 立即索引开关，默认开启
+      indexAfterCreate: true, // 新增时立即索引开关，默认开启
+      indexAfterEdit: true // 编辑时立即索引开关，默认开启
     }
   },
 
@@ -158,10 +169,11 @@ export default {
 
       this.submitting = true
       try {
-        // 调用API时传递 indexAfterCreate 参数
+        // 调用API时根据是新增还是编辑传递对应的索引参数
         const response = await knowledgeBaseService.itemSaveOrUpdate(
           this.formData,
-          this.indexAfterCreate
+          this.indexAfterCreate,
+          this.indexAfterEdit
         )
         const data = response.data || response
 
@@ -190,6 +202,7 @@ export default {
       this.$emit('close')
       this.formData = createEmptyKbItem()
       this.indexAfterCreate = true // 重置为默认值
+      this.indexAfterEdit = true // 重置为默认值
     }
   }
 }
