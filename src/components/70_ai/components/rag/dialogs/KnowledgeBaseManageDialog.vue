@@ -104,6 +104,16 @@
             </el-table-column>
 
             <el-table-column
+              prop="isTemp"
+              label="是否临时"
+              width="100"
+            >
+              <template slot-scope="scope">
+                {{ scope.row.isTemp ? '是' : '否' }}
+              </template>
+            </el-table-column>
+
+            <el-table-column
               label="操作"
               width="320"
               align="center"
@@ -126,6 +136,7 @@
                 <el-button
                   type="text"
                   size="small"
+                  :disabled="scope.row.isTemp === 1"
                   @click="handleEdit(scope.row)"
                 >
                   编辑

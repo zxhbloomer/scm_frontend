@@ -19,6 +19,7 @@ import MailSendNode from '../components/nodes/MailSendNode.vue'
 import HttpRequestNode from '../components/nodes/HttpRequestNode.vue'
 import SubWorkflowNode from '../components/nodes/SubWorkflowNode.vue'
 import McpNode from '../components/nodes/McpNode.vue'
+import TempKnowledgeBaseNode from '../components/nodes/TempKnowledgeBaseNode.vue'
 
 /**
  * 注册所有工作流节点形状
@@ -628,6 +629,50 @@ export function registerAllWorkflowNodes () {
     width: 220,
     height: 80,
     component: McpNode,
+    ports: {
+      groups: {
+        target: {
+          position: 'left',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        },
+        source: {
+          position: 'right',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        }
+      },
+      items: [
+        { group: 'target', id: 'left' },
+        { group: 'source', id: 'right' }
+      ]
+    }
+  })
+
+  /**
+   * TempKnowledgeBase 节点（临时知识库）
+   * - 左侧输入端口 + 右侧输出端口
+   * - 创建2小时自动过期的临时知识库，同步完成向量索引
+   */
+  register({
+    shape: 'tempknowledgebase',
+    width: 220,
+    height: 80,
+    component: TempKnowledgeBaseNode,
     ports: {
       groups: {
         target: {

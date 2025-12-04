@@ -373,6 +373,9 @@ export default {
         }
       })
 
+      // 将graph引用添加到uiWorkflow中,供子组件使用
+      this.uiWorkflow.graph = this.graph
+
       this.graph.use(
         new Selection({
           enabled: true,
@@ -528,16 +531,15 @@ export default {
       })
 
       // 等待所有节点的Vue组件mounted完成后再渲染边
-      // 这对于动态端口节点（内容归类、条件分支）特别重要
-      // 因为它们的端口是在mounted中创建的
-      // 使用setTimeout确保所有组件的mounted和端口创建都已完成
+      // 问题：X6 Vue Shape 组件的 mounted 是异步的
+      // 使用 setTimeout 300ms 确保所有 Vue 组件完成 mounted
       setTimeout(() => {
         if (this.workflow.edges) {
           this.workflow.edges.forEach(edge => {
             this.addEdgeToGraph(edge)
           })
         }
-      }, 100)
+      }, 300)
 
       // 不使用自动居中，保持节点在指定位置 (10, 50)
       // this.$nextTick(() => {
@@ -582,20 +584,18 @@ export default {
     },
 
     addEdgeToGraph (wfEdge) {
-      // 端口配置：
-      // - 普通节点：输出端口='right'，输入端口='left'
-      // - 动态端口节点（内容归类、条件分支）：使用 sourceHandle/targetHandle
-      // - 优先使用 wfEdge 中的 handle，如果没有则使用默认值
+      const sourcePort = wfEdge.sourceHandle || 'right'
+      const targetPort = wfEdge.targetHandle || 'left'
 
       this.graph.addEdge({
         id: wfEdge.uuid,
         source: {
           cell: wfEdge.sourceNodeUuid,
-          port: wfEdge.sourceHandle || 'right' // 动态端口或默认端口
+          port: sourcePort
         },
         target: {
           cell: wfEdge.targetNodeUuid,
-          port: wfEdge.targetHandle || 'left' // 动态端口或默认端口
+          port: targetPort
         },
         router: {
           name: 'manhattan', // 使用与连接配置相同的路由
@@ -977,4 +977,19 @@ export default {
   - template-node (模板)
   - switcher-node (分支)
 */
+
+/* 边的流动动画效果 */
+@keyframes edge-flow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.x6-edge path {
+  stroke-dasharray: 8, 4;
+  animation: edge-flow 0.5s linear infinite;
+}
 </style>

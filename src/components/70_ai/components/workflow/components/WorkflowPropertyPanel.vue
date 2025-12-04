@@ -92,6 +92,7 @@
           v-else-if="selectedNode.wfComponent.name === 'KnowledgeRetrieval'"
           :workflow="workflow"
           :wf-node="selectedNode"
+          :ui-workflow="uiWorkflow"
         />
 
         <!-- DocumentExtractor 文档提取节点 -->
@@ -140,6 +141,13 @@
         <!-- McpTool MCP工具节点 -->
         <mcp-node-property
           v-else-if="selectedNode.wfComponent.name === 'McpTool'"
+          :workflow="workflow"
+          :wf-node="selectedNode"
+        />
+
+        <!-- TempKnowledgeBase 临时知识库节点 -->
+        <temp-knowledge-base-node-property
+          v-else-if="selectedNode.wfComponent.name === 'TempKnowledgeBase'"
           :workflow="workflow"
           :wf-node="selectedNode"
         />
@@ -195,6 +203,7 @@ import MailSendNodeProperty from './properties/MailSendNodeProperty.vue'
 import HumanFeedbackNodeProperty from './properties/HumanFeedbackNodeProperty.vue'
 import SubWorkflowNodeProperty from './properties/SubWorkflowNodeProperty.vue'
 import McpNodeProperty from './properties/McpNodeProperty.vue'
+import TempKnowledgeBaseNodeProperty from './properties/TempKnowledgeBaseNodeProperty.vue'
 
 export default {
   name: 'WorkflowPropertyPanel',
@@ -214,7 +223,8 @@ export default {
     MailSendNodeProperty,
     HumanFeedbackNodeProperty,
     SubWorkflowNodeProperty,
-    McpNodeProperty
+    McpNodeProperty,
+    TempKnowledgeBaseNodeProperty
   },
 
   props: {

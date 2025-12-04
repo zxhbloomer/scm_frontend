@@ -68,7 +68,8 @@ export default {
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link',
         'SubWorkflow': 'el-icon-connection',
-        'McpTool': 'el-icon-cpu'
+        'McpTool': 'el-icon-cpu',
+        'TempKnowledgeBase': 'el-icon-folder-add'
       }
 
       return iconMap[name] || 'el-icon-s-operation'
@@ -90,7 +91,8 @@ export default {
         'MailSend': '#FFA500',
         'HttpRequest': '#708090',
         'SubWorkflow': '#409EFF',
-        'McpTool': '#E6A23C'
+        'McpTool': '#E6A23C',
+        'TempKnowledgeBase': '#FF6B6B'
       }
 
       return colorMap[name] || '#606266'
@@ -177,4 +179,5 @@ export default {
 .node-item:nth-child(13) .node-icon { color: #708090; } // HttpRequest
 .node-item:nth-child(14) .node-icon { color: #409EFF; } // SubWorkflow
 .node-item:nth-child(15) .node-icon { color: #E6A23C; } // McpTool
+.node-item:nth-child(16) .node-icon { color: #FF6B6B; } // TempKnowledgeBase
 </style>

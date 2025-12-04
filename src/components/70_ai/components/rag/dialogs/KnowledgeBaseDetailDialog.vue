@@ -25,7 +25,7 @@
                 size="small"
                 type="primary"
                 icon="el-icon-plus"
-                :disabled="!kbUuid"
+                :disabled="!kbUuid || kbInfo.isTemp === 1"
                 @click="handleAdd"
               >
                 新建知识点
@@ -33,7 +33,7 @@
               <el-button
                 size="small"
                 icon="el-icon-upload"
-                :disabled="!kbUuid"
+                :disabled="!kbUuid || kbInfo.isTemp === 1"
                 @click="handleUpload"
               >
                 上传文件
@@ -41,7 +41,7 @@
               <el-button
                 size="small"
                 icon="el-icon-setting"
-                :disabled="selectedItems.length === 0"
+                :disabled="selectedItems.length === 0 || kbInfo.isTemp === 1"
                 @click="handleBatchIndex"
               >
                 批量索引 ({{ selectedItems.length }})
@@ -212,11 +212,20 @@
             >
               <template slot-scope="scope">
                 <el-button
+                  v-if="kbInfo.isTemp !== 1"
                   type="text"
                   size="small"
                   @click="handleEdit(scope.row)"
                 >
                   编辑
+                </el-button>
+                <el-button
+                  v-else
+                  type="text"
+                  size="small"
+                  @click="handleView(scope.row)"
+                >
+                  查看
                 </el-button>
                 <el-button
                   type="text"
@@ -273,6 +282,11 @@
         @success="handleEditSuccess"
       />
 
+      <knowledge-item-view-dialog
+        :visible.sync="viewDialogVisible"
+        :item-info="currentItem"
+      />
+
       <knowledge-item-upload-dialog
         :visible.sync="uploadDialogVisible"
         :kb-uuid="kbUuid"
@@ -321,6 +335,7 @@ import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import { INDEX_CHECK_INTERVAL } from '../constants/indexTypes'
 import { createEmptyKbItem } from '../utils/knowledgeBaseUtils'
 import KnowledgeItemEditDialog from './KnowledgeItemEditDialog.vue'
+import KnowledgeItemViewDialog from './KnowledgeItemViewDialog.vue'
 import KnowledgeItemUploadDialog from './KnowledgeItemUploadDialog.vue'
 import KnowledgeIndexDialog from './KnowledgeIndexDialog.vue'
 import ItemEmbeddingDialog from './ItemEmbeddingDialog.vue'
@@ -336,6 +351,7 @@ export default {
 
   components: {
     KnowledgeItemEditDialog,
+    KnowledgeItemViewDialog,
     KnowledgeItemUploadDialog,
     KnowledgeIndexDialog,
     ItemEmbeddingDialog,
@@ -365,12 +381,16 @@ export default {
       keyword: '',
       tableData: [],
       selectedItems: [],
+      kbInfo: {
+        isTemp: 0
+      },
       pagination: {
         page: 1,
         pageSize: 20,
         total: 0
       },
       editDialogVisible: false,
+      viewDialogVisible: false,
       uploadDialogVisible: false,
       indexDialogVisible: false,
       embeddingDialogVisible: false,
@@ -409,10 +429,22 @@ export default {
     /**
      * 初始化数据
      */
-    initData () {
+    async initData () {
       this.keyword = ''
       this.pagination.page = 1
       this.selectedItems = []
+
+      // 获取知识库信息（包含isTemp字段）
+      if (this.kbUuid) {
+        try {
+          const kbResponse = await knowledgeBaseService.getInfo(this.kbUuid)
+          this.kbInfo = kbResponse.data || { isTemp: 0 }
+        } catch (error) {
+          console.error('获取知识库信息失败:', error)
+          this.kbInfo = { isTemp: 0 }
+        }
+      }
+
       this.loadList()
     },
 
@@ -487,6 +519,14 @@ export default {
      */
     handleEditSuccess () {
       this.loadList()
+    },
+
+    /**
+     * 查看（临时知识库只读）
+     */
+    handleView (row) {
+      this.currentItem = { ...row }
+      this.viewDialogVisible = true
     },
 
     /**

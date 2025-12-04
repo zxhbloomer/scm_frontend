@@ -112,6 +112,8 @@ export default {
   },
 
   mounted () {
+    const x6Node = this.getNode()
+
     // 初始化本地状态
     this.localCases = this.node.nodeConfig?.cases || []
 
@@ -119,7 +121,6 @@ export default {
     this.updatePorts()
 
     // 监听 X6 节点数据变化事件，实现分支同步
-    const x6Node = this.getNode()
     x6Node.on('change:data', ({ current }) => {
       if (current && current.nodeConfig) {
         this.localCases = current.nodeConfig.cases || []
