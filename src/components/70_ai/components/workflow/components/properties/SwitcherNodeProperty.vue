@@ -146,6 +146,21 @@
         </el-collapse-item>
       </el-collapse>
     </div>
+
+    <!-- 执行过程输出开关 -->
+    <div class="property-section">
+      <div class="section-title">
+        执行过程输出
+        <el-tooltip content="关闭后，节点执行结果不会显示在对话中，但仍会传递给下游节点" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.show_process_output"
+        active-text="显示"
+        inactive-text="隐藏"
+      />
+    </div>
   </div>
 </template>
 
@@ -213,6 +228,10 @@ export default {
             ]
           }
         ])
+      }
+      // 执行过程输出开关，默认为true（显示）
+      if (this.wfNode.nodeConfig.show_process_output === undefined) {
+        this.$set(this.wfNode.nodeConfig, 'show_process_output', true)
       }
       return this.wfNode.nodeConfig
     }
@@ -498,6 +517,19 @@ export default {
 
   .default-case-section {
     margin-top: 16px;
+  }
+
+  .property-section {
+    margin-top: 24px;
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: #303133;
+      display: flex;
+      align-items: center;
+    }
   }
 }
 </style>

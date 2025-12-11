@@ -224,39 +224,63 @@ export default {
 
     /**
      * 更新节点端口
+     * 使用增量更新策略，避免删除所有端口导致X6的processRemovedPort()删除连接的边
      */
     updatePorts () {
       const x6Node = this.getNode()
 
-      // 清除所有现有的 source 端口
+      // 计算应该存在的端口ID集合
+      const targetPortIds = new Set()
+      if (this.localCases && this.localCases.length > 0) {
+        this.localCases.forEach(wfCase => {
+          targetPortIds.add(wfCase.uuid)
+        })
+      }
+      targetPortIds.add('default_handle')
+
+      // 获取当前X6节点上的source端口
       const currentPorts = x6Node.getPorts() || []
-      currentPorts.forEach(port => {
-        if (port.group === 'source') {
+      const currentSourcePorts = currentPorts.filter(port => port.group === 'source')
+      const currentPortIds = new Set(currentSourcePorts.map(port => port.id))
+
+      // 删除不再需要的端口（只删除确实不存在于目标列表中的）
+      currentSourcePorts.forEach(port => {
+        if (!targetPortIds.has(port.id)) {
           x6Node.removePort(port.id)
         }
       })
 
-      // 为每个 case 添加一个输出端口
+      // 添加新端口或更新位置
       if (this.localCases && this.localCases.length > 0) {
         this.localCases.forEach((wfCase, idx) => {
-          x6Node.addPort({
-            id: wfCase.uuid,
-            group: 'source',
-            args: {
-              y: this.getPortYPosition(idx)
-            }
-          })
+          const portId = wfCase.uuid
+          const yPosition = this.getPortYPosition(idx)
+
+          if (!currentPortIds.has(portId)) {
+            // 添加新端口
+            x6Node.addPort({
+              id: portId,
+              group: 'source',
+              args: { y: yPosition }
+            })
+          } else {
+            // 更新现有端口位置
+            x6Node.setPortProp(portId, 'args/y', yPosition)
+          }
         })
       }
 
-      // 添加保底端口
-      x6Node.addPort({
-        id: 'default_handle',
-        group: 'source',
-        args: {
-          y: this.getDefaultPortYPosition()
-        }
-      })
+      // 处理保底端口
+      const defaultY = this.getDefaultPortYPosition()
+      if (!currentPortIds.has('default_handle')) {
+        x6Node.addPort({
+          id: 'default_handle',
+          group: 'source',
+          args: { y: defaultY }
+        })
+      } else {
+        x6Node.setPortProp('default_handle', 'args/y', defaultY)
+      }
     }
   }
 }

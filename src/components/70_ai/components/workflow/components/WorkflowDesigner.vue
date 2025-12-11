@@ -87,7 +87,16 @@ export default {
       uiWorkflow: {
         nodes: [],
         edges: []
-      }
+      },
+      // 标志位：updateCellId 期间跳过 deleteEdge
+      // 原因：updateCellId 内部会先删除旧 cell 再添加新 cell，
+      // 触发 cell:removed 事件时 cell.id 已是新 ID，会误删刚添加的边
+      // 注意：Vue 2 中以 _ 开头的属性不会被代理，必须使用普通命名
+      isUpdatingEdgeId: false,
+      // 正在创建的边的 UUID，用于额外保护
+      pendingEdgeUuid: null,
+      // 受保护的边 UUID 集合，这些边不会被 cell:removed 删除
+      protectedEdgeUuids: new Set()
     }
   },
 
@@ -329,6 +338,7 @@ export default {
           snap: true,
           allowBlank: false,
           allowLoop: false,
+          allowMulti: true, // 允许同一端口连出多条边（条件分支需要）
           highlight: true,
           connector: 'rounded',
           connectionPoint: 'boundary',
@@ -336,8 +346,10 @@ export default {
             name: 'manhattan',
             args: {
               padding: 20,
-              startDirections: ['right'],
-              endDirections: ['left']
+              step: 16,
+              startDirections: ['right', 'bottom'],
+              endDirections: ['left', 'top'],
+              excludeTerminals: ['source', 'target']
             }
           },
           createEdge () {
@@ -357,6 +369,10 @@ export default {
           },
           validateConnection ({ sourceCell, targetCell }) {
             return sourceCell && targetCell && sourceCell !== targetCell
+          },
+          // 边拖拽结束后的验证
+          validateEdge () {
+            return true
           }
         },
         snapline: {
@@ -484,7 +500,12 @@ export default {
         if (cell.isNode()) {
           this.deleteNode(cell.id)
         } else if (cell.isEdge()) {
-          this.deleteEdge(cell.id)
+          // 检查是否应该跳过删除（边正在更新中或受保护）
+          const isProtected = this.protectedEdgeUuids.has(cell.id)
+          const shouldSkip = this.isUpdatingEdgeId || cell.id === this.pendingEdgeUuid || isProtected
+          if (!shouldSkip) {
+            this.deleteEdge(cell.id)
+          }
         }
       })
     },
@@ -685,6 +706,13 @@ export default {
     },
 
     async createNewEdge (edge) {
+      console.log('[DEBUG createNewEdge] 开始', {
+        edgeId: edge.id,
+        sourceCell: edge.getSourceCellId(),
+        sourcePort: edge.getSourcePortId(),
+        targetCell: edge.getTargetCellId()
+      })
+
       const { createNewEdgeData } = await import('@/components/70_ai/components/workflow/utils')
 
       const sourceNodeId = edge.getSourceCellId()
@@ -703,7 +731,13 @@ export default {
         return
       }
 
+      console.log('[DEBUG createNewEdge] 调用 createNewEdgeData 前', {
+        workflowEdgesCount: this.workflow.edges.length,
+        workflowEdges: this.workflow.edges.map(e => ({ uuid: e.uuid, source: e.sourceNodeUuid, target: e.targetNodeUuid }))
+      })
+
       const sourcePort = edge.getSourcePortId()
+      const targetPort = edge.getTargetPortId()
       const newEdge = createNewEdgeData(
         this.workflow,
         edge.getSourceCellId(),
@@ -711,9 +745,54 @@ export default {
         edge.getTargetCellId()
       )
 
-      // 更新 edge ID - 使用 graph.updateCellId() 而不是 edge.setId()
-      // 参考 X6 文档: updateCellId(cell: Cell, newId: string): Cell
-      this.graph.updateCellId(edge, newEdge.uuid)
+      // 关键修复：使用 setTimeout 延迟边的操作
+      // 原因：在 edge:connected 事件处理器中同步执行 removeCell + addEdge 会导致
+      // X6 内部状态不一致，新边被误删。延迟到下一个事件循环可以避免这个问题。
+      const oldEdgeId = edge.id
+
+      // 保护临时边和新边
+      this.protectedEdgeUuids.add(oldEdgeId)
+      this.protectedEdgeUuids.add(newEdge.uuid)
+      this.isUpdatingEdgeId = true
+
+      // 延迟到下一个事件循环执行删除/添加操作
+      setTimeout(() => {
+        // 删除 X6 中的临时边
+        const tempEdge = this.graph.getCellById(oldEdgeId)
+        if (tempEdge) {
+          this.graph.removeCell(tempEdge)
+        }
+
+        // 手动创建新边
+        this.graph.addEdge({
+          id: newEdge.uuid,
+          source: { cell: sourceNodeId, port: sourcePort },
+          target: { cell: targetNodeId, port: targetPort },
+          attrs: {
+            line: {
+              stroke: '#5F95FF',
+              strokeWidth: 2,
+              targetMarker: {
+                name: 'block',
+                width: 12,
+                height: 8
+              }
+            }
+          },
+          router: 'manhattan',
+          connector: 'rounded'
+        })
+
+        // 清理保护状态
+        // 关键修复：只移除临时边的保护，新边保持永久保护
+        // 原因：如果移除新边的保护，当用户快速连接第二条边时，
+        // X6 内部操作可能触发 cell:removed 事件，导致第一条边被意外删除
+        setTimeout(() => {
+          this.isUpdatingEdgeId = false
+          this.protectedEdgeUuids.delete(oldEdgeId) // 只移除临时边的保护
+          // 不移除 newEdge.uuid 的保护 - 它将在 deleteEdge 中由用户主动删除时移除
+        }, 100)
+      }, 0) // 延迟 0ms，等待当前事件循环完成
     },
 
     deleteNode (nodeId) {
@@ -746,11 +825,17 @@ export default {
     },
 
     deleteEdge (edgeId) {
+      // 从保护列表中移除（用户主动删除时需要清理保护状态）
+      if (this.protectedEdgeUuids.has(edgeId)) {
+        this.protectedEdgeUuids.delete(edgeId)
+      }
+
       if (!this.workflow.edges) {
         return
       }
 
       const index = this.workflow.edges.findIndex(e => e.uuid === edgeId)
+
       if (index !== -1) {
         const deletedEdge = this.workflow.edges.splice(index, 1)[0]
         if (!this.workflow.deleteEdges) {

@@ -8,28 +8,9 @@
     >
       <el-table-column
         prop="embeddingId"
-        label="ID"
-        width="200"
+        label="向量ID"
+        width="280"
       />
-
-      <el-table-column
-        label="嵌入"
-        prop="embedding"
-      >
-        <template slot-scope="scope">
-          <div
-            class="embedding-text"
-            @click="handleShowDetail(scope.row.embedding.join(','))"
-          >
-            <template v-if="scope.row.embedding && scope.row.embedding.length > 8">
-              {{ scope.row.embedding.slice(0, 8).join(',') }}...
-            </template>
-            <template v-else>
-              {{ scope.row.embedding.join(',') }}
-            </template>
-          </div>
-        </template>
-      </el-table-column>
 
       <el-table-column
         label="文档片段"
@@ -162,13 +143,11 @@ export default {
   padding: 10px;
 }
 
-.embedding-text,
 .text-content {
   cursor: pointer;
   color: #409EFF;
 }
 
-.embedding-text:hover,
 .text-content:hover {
   text-decoration: underline;
 }

@@ -167,6 +167,21 @@
         placeholder="请输入默认回复内容"
       />
     </div>
+
+    <!-- 执行过程输出开关 -->
+    <div class="property-section">
+      <div class="section-title">
+        执行过程输出
+        <el-tooltip content="关闭后，节点执行结果不会显示在对话中，但仍会传递给下游节点" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.show_process_output"
+        active-text="显示"
+        inactive-text="隐藏"
+      />
+    </div>
   </div>
 </template>
 
@@ -247,7 +262,31 @@ export default {
       if (!this.wfNode.nodeConfig.temp_kb_node_uuid) {
         this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', null)
       }
+      // 执行过程输出开关，默认为true（显示）
+      if (this.wfNode.nodeConfig.show_process_output === undefined) {
+        this.$set(this.wfNode.nodeConfig, 'show_process_output', true)
+      }
       return this.wfNode.nodeConfig
+    }
+  },
+
+  watch: {
+    // 监听节点切换,当wfNode.uuid变化时重新初始化
+    'wfNode.uuid': {
+      handler (newUuid, oldUuid) {
+        if (newUuid !== oldUuid) {
+          console.log('=== 节点切换 ===', oldUuid, '->', newUuid)
+          // 重置选择状态
+          this.selectedKbSource = ''
+          // 重新检测上游临时知识库节点
+          this.detectUpstreamTempKbNodes()
+          // 重新初始化选择(永久知识库列表已加载,无需重新加载)
+          this.$nextTick(() => {
+            this.initializeSelection()
+          })
+        }
+      },
+      immediate: false
     }
   },
 
@@ -257,11 +296,8 @@ export default {
     // 初始化:检测上游临时知识库节点
     this.detectUpstreamTempKbNodes()
 
-    // 加载永久知识库列表
+    // 加载永久知识库列表(加载完成后会自动初始化选择)
     this.loadPermanentKnowledgeBases()
-
-    // 初始化当前选择
-    this.initializeSelection()
 
     // 监听X6 graph事件
     this.watchGraphChanges()
@@ -408,6 +444,11 @@ export default {
         this.permanentKbs = this.permanentKbs.filter(
           (kb, index, self) => self.findIndex(k => k.value === kb.value) === index
         )
+
+        // 知识库加载完成后,初始化选择
+        this.$nextTick(() => {
+          this.initializeSelection()
+        })
       } catch (error) {
         console.error('加载永久知识库列表失败:', error)
       }
@@ -417,14 +458,41 @@ export default {
      * 初始化当前选择
      */
     initializeSelection () {
+      console.log('=== initializeSelection ===')
+      console.log('nodeConfig.knowledge_base_uuid:', this.nodeConfig.knowledge_base_uuid)
+      console.log('nodeConfig.is_temp_kb:', this.nodeConfig.is_temp_kb)
+      console.log('nodeConfig.temp_kb_node_uuid:', this.nodeConfig.temp_kb_node_uuid)
+      console.log('permanentKbs数量:', this.permanentKbs.length)
+
+      // 1. 如果是临时知识库
       if (this.nodeConfig.is_temp_kb && this.nodeConfig.temp_kb_node_uuid) {
         this.selectedKbSource = `temp_${this.nodeConfig.temp_kb_node_uuid}`
-      } else if (this.nodeConfig.knowledge_base_uuid) {
-        const uuidWithoutBraces = this.nodeConfig.knowledge_base_uuid
+        console.log('初始化为临时知识库:', this.selectedKbSource)
+        return
+      }
+
+      // 2. 如果是永久知识库
+      if (this.nodeConfig.knowledge_base_uuid) {
+        // 移除可能的大括号(变量引用格式)
+        const uuid = this.nodeConfig.knowledge_base_uuid
           .replace(/^{/, '')
           .replace(/}$/, '')
 
-        if (!uuidWithoutBraces.includes('_')) {
+        // 检查是否是变量引用格式(包含下划线,如 {xxx_kbUuid})
+        if (uuid.includes('_kbUuid')) {
+          // 这是临时知识库的变量引用,不处理
+          console.log('检测到临时知识库变量引用,跳过')
+          return
+        }
+
+        // 在永久知识库列表中查找匹配项
+        const matchedKb = this.permanentKbs.find(kb => kb.value === this.nodeConfig.knowledge_base_uuid)
+        if (matchedKb) {
+          this.selectedKbSource = `permanent_${matchedKb.value}`
+          console.log('初始化为永久知识库:', this.selectedKbSource)
+        } else {
+          console.warn('未找到匹配的永久知识库, uuid:', this.nodeConfig.knowledge_base_uuid)
+          // 即使列表中没有找到,也设置选择值(可能是历史数据)
           this.selectedKbSource = `permanent_${this.nodeConfig.knowledge_base_uuid}`
         }
       }
