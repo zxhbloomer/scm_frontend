@@ -69,6 +69,9 @@
         </div>
       </div>
     </transition>
+
+    <!-- AI业务弹窗：工作流输出JSON自动打开对应业务弹窗 -->
+    <AiBusinessDialogLoader ref="aiDialogLoader" />
   </div>
 </template>
 
@@ -80,6 +83,7 @@ import ChatHeader from './ChatHeader.vue'
 import ChatFooter from './ChatFooter.vue'
 import MessageList from '../messages/MessageList.vue'
 import FeedbackPanel from '../feedback/FeedbackPanel.vue'
+import AiBusinessDialogLoader from '@/components/70_ai/components/common/AiBusinessDialogLoader.vue'
 
 export default {
   name: 'ChatPanel',
@@ -88,7 +92,8 @@ export default {
     ChatHeader,
     ChatFooter,
     MessageList,
-    FeedbackPanel
+    FeedbackPanel,
+    AiBusinessDialogLoader
   },
 
   props: {
@@ -143,6 +148,20 @@ export default {
   computed: {
     isTyping () {
       return this.isLoading || this.$store.getters['chat/chatIsTyping']
+    },
+    pendingAiDialogOutput () {
+      return this.$store.state.chat.pendingAiDialogOutput
+    }
+  },
+
+  watch: {
+    pendingAiDialogOutput (val) {
+      if (val) {
+        this.$nextTick(() => {
+          this.$refs.aiDialogLoader.open(val)
+          this.$store.commit('chat/SET_PENDING_AI_DIALOG_OUTPUT', null)
+        })
+      }
     }
   },
 

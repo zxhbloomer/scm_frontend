@@ -131,38 +131,31 @@ export function workflowList (params) {
 
 /**
  * 运行工作流 - SSE 流式版本
- * 严格参考 aideepin: workflowRun + commonSseProcess (index.ts line 95-165, 677-687)
+ * 对齐Spring AI Alibaba：无event名，通过data.type区分消息类型
  * 对应后端: WorkflowController.run(@PathVariable String wfUuid, @RequestBody List<JSONObject> inputs)
  *
  * @param {Object} params - 运行参数
- * @param {string} params.wfUuid - 工作流UUID
+ * @param {string} params.uuid - 工作流UUID
  * @param {Array} params.inputs - 用户输入数组 [{name: string, content: {value: any, type: number}}]
  * @param {AbortSignal} params.signal - 取消信号（可选）
- * @param {Function} params.startCallback - START 事件回调
- * @param {Function} params.messageReceived - 消息接收回调 (chunk, eventName)
- * @param {Function} params.doneCallback - DONE 事件回调
- * @param {Function} params.errorCallback - ERROR 事件回调
+ * @param {Function} params.onMessage - 统一消息回调，接收解析后的JSON对象（通过data.type区分消息类型）
+ * @param {Function} params.onComplete - Flux完成回调
+ * @param {Function} params.onError - 错误回调
  * @returns {void} - 无返回值，通过回调处理事件
  */
 export function workflowRun (params) {
   const {
-    wfUuid,
+    uuid,
     inputs = [],
     signal,
-    startCallback,
-    messageReceived,
-    doneCallback,
-    errorCallback
+    onMessage,
+    onComplete,
+    onError
   } = params
 
-  // 获取认证 token（参考 aideepin line 113）
   const token = store.getters.token || ''
+  const url = `${import.meta.env.VITE_BASE_API}${API_BASE}/run/${uuid}`
 
-  // 构造请求URL（包含路径参数，参考 aideepin line 686）
-  // 注意：fetchEventSource 不会自动添加 baseURL，需要手动拼接
-  const url = `${import.meta.env.VITE_BASE_API}${API_BASE}/run/${wfUuid}`
-
-  // 使用 fetchEventSource 处理 SSE（参考 aideepin line 109-165）
   fetchEventSource(url, {
     method: 'POST',
     headers: {
@@ -171,13 +164,11 @@ export function workflowRun (params) {
       'X-Tenant-ID': localStorage.getItem('X-Tenant-ID') || 'scm_tenant_20250519_001'
     },
     signal,
-    openWhenHidden: true, // 防止页面切换时断开SSE连接并自动重连
+    openWhenHidden: true,
     body: JSON.stringify(inputs),
 
-    // 连接打开回调（参考 aideepin line 119-133）
     async onopen (response) {
       if (response.ok && response.headers.get('content-type') === EventStreamContentType) {
-        // SSE 连接成功
         return
       } else if (response.status === 401) {
         console.error('无登录权限')
@@ -188,39 +179,31 @@ export function workflowRun (params) {
       }
     },
 
-    // 消息接收回调（参考 aideepin line 134-156）
     onmessage (eventMessage) {
-      const eventName = eventMessage.event || ''
-      const data = eventMessage.data || ''
+      const rawData = eventMessage.data || ''
+      if (!rawData) return
 
-      // 处理特殊事件
-      if (eventName === '[START]' || eventName === 'start') {
-        if (startCallback) {
-          startCallback(data)
+      try {
+        const data = JSON.parse(rawData)
+        if (onMessage) {
+          onMessage(data)
         }
-      } else if (eventName === '[DONE]' || eventName === 'done') {
-        if (doneCallback) {
-          doneCallback(data)
-        }
-      } else if (eventName === '[ERROR]' || eventName === 'error') {
-        if (errorCallback) {
-          errorCallback(data)
-        }
-      } else {
-        // 其他事件（节点事件：NODE_RUN, NODE_INPUT, NODE_OUTPUT, NODE_CHUNK）
-        if (messageReceived) {
-          messageReceived(data, eventName)
-        }
+      } catch (e) {
+        console.warn('[workflowRun] 非JSON数据:', rawData)
       }
     },
 
-    // 错误回调（参考 aideepin line 157-164）
+    onclose () {
+      if (onComplete) {
+        onComplete()
+      }
+    },
+
     onerror (error) {
       console.error('[workflowRun] SSE error:', error)
-      if (errorCallback) {
-        errorCallback(error.message || '工作流执行失败')
+      if (onError) {
+        onError(error.message || '工作流执行失败')
       }
-      // 抛出错误以关闭连接
       throw error
     }
   })

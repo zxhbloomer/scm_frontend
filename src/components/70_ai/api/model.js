@@ -39,6 +39,7 @@ export function editModelConfig (data) {
     method: 'post',
     data: {
       id: data.id || undefined,
+      name: data.name, // 模型显示名称
       modelName: data.modelName, // 字段名从name改为modelName
       modelType: data.modelType, // 字段名从type改为modelType
       provider: data.provider, // 字段名从providerName改为provider

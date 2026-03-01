@@ -255,11 +255,15 @@
         </div>
       </div>
     </el-dialog>
+
+    <!-- AI业务弹窗：工作流输出JSON自动打开对应业务弹窗 -->
+    <AiBusinessDialogLoader ref="aiDialogLoader" />
   </div>
 </template>
 
 <script>
 import { workflowRun, workflowRuntimeSearch, workflowRuntimeDelete, getRuntimeNodeDetails, resumeWorkflowRun } from '@/components/70_ai/api/workflowService'
+import AiBusinessDialogLoader from '@/components/70_ai/components/common/AiBusinessDialogLoader.vue'
 import WorkflowRunDetail from './WorkflowRunDetail.vue'
 import PreviewDescription from '@/components/51_preview_description/index.vue'
 import elDragDialog from '@/directive/el-drag-dialog'
@@ -271,7 +275,8 @@ export default {
 
   components: {
     WorkflowRunDetail,
-    PreviewDescription
+    PreviewDescription,
+    AiBusinessDialogLoader
   },
 
   props: {
@@ -530,206 +535,204 @@ export default {
 
       // 用于累积工作流输出
       let accumulatedOutput = ''
+      let hasChunks = false // 标记是否收到过chunk流式数据
       let currentRuntimeUuid = null
       let lastOutputData = null // 保存最后一次NODE_OUTPUT的数据（用于兜底恢复）
 
       // 使用回调函数处理SSE事件流
+      // 对齐Spring AI Alibaba：无event名，通过data.type区分消息类型
       workflowRun({
-        wfUuid: this.workflow.workflowUuid,
+        uuid: this.workflow.workflowUuid,
         inputs: inputList,
         signal: controller.signal,
 
-        // [START]事件回调：工作流启动
-        startCallback: (wfRuntimeJson) => {
-          if (!wfRuntimeJson) {
-            this.$message.error('启动失败')
-            this.running = false
-            return
-          }
+        // 统一消息处理：根据data.type区分消息类型
+        onMessage: (data) => {
+          switch (data.type) {
+            case 'runtime':
+              // 工作流启动（原startCallback）
+              this.handleRuntimeData(data, inputs, (uuid) => { currentRuntimeUuid = uuid })
+              break
 
-          // 解析runtime对象
-          const runtime = JSON.parse(wfRuntimeJson)
+            case 'chunk':
+              // LLM流式输出块
+              if (data.chunk !== null && data.chunk !== undefined) {
+                hasChunks = true
+                accumulatedOutput += data.chunk
 
-          // 保存runtime UUID用于后续更新
-          currentRuntimeUuid = runtime.runtimeUuid
-
-          // 将用户输入保存到runtime.input（用于聊天显示）
-          runtime.input = {}
-          inputs.forEach(item => {
-            // 如果是附件类型，保存完整附件对象数组；否则保存content
-            if (item.attachments) {
-              runtime.input[item.name] = item.attachments
-            } else {
-              runtime.input[item.name] = item.content
-            }
-          })
-
-          // 初始化output为空字符串
-          runtime.output = ''
-          runtime.loading = true // 设置loading状态
-
-          // 添加到本地列表（最新的在最后面，像微信聊天一样）
-          this.localRuntimeList.push(runtime)
-
-          // 成功提示
-          this.$message.success('工作流已开始执行')
-
-          // 滚动到底部（显示最新消息）
-          this.$nextTick(() => {
-            const container = this.$refs.scrollContainer
-            if (container) {
-              container.scrollTop = container.scrollHeight
-            }
-          })
-        },
-
-        // 节点事件回调：NODE_RUN_xxx, NODE_CHUNK_xxx, NODE_OUTPUT_xxx, NODE_WAIT_FEEDBACK_BY_xxx
-        messageReceived: (chunk, eventName) => {
-          // 处理人机交互提示事件
-          if (eventName && eventName.includes('[NODE_WAIT_FEEDBACK_BY_') && currentRuntimeUuid) {
-            const tip = chunk || '请输入您的反馈'
-            // 调用WorkflowRunDetail组件的setHumanFeedback方法
-            if (this.$refs.runDetailRef) {
-              this.$refs.runDetailRef.setHumanFeedback(currentRuntimeUuid, tip)
-            }
-            // 更新runtime状态为等待输入(status=2)
-            const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
-            if (index !== -1) {
-              const oldRuntime = this.localRuntimeList[index]
-              const newRuntime = {
-                ...oldRuntime,
-                status: 2, // 2-等待输入 (后端WORKFLOW_PROCESS_STATUS_WAITING_INPUT)
-                loading: false
+                if (currentRuntimeUuid) {
+                  const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+                  if (index !== -1) {
+                    const oldRuntime = this.localRuntimeList[index]
+                    const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                    this.localRuntimeList.splice(index, 1, newRuntime)
+                  }
+                }
               }
-              this.localRuntimeList.splice(index, 1, newRuntime)
-            }
-          }
+              break
 
-          // 处理NODE_CHUNK事件：累积LLM流式输出
-          if (eventName && eventName.startsWith('[NODE_CHUNK_')) {
-            // 修复：检查chunk是否有效，避免拼接null/undefined导致显示"null"/"undefined"
-            if (chunk !== null && chunk !== undefined) {
-              accumulatedOutput += chunk
+            case 'output':
+              // 节点完整输出
+              if (data.data && currentRuntimeUuid) {
+                lastOutputData = data.data
+                const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
+                if (index !== -1) {
+                  // 遍历节点输出数据，提取output变量
+                  Object.values(data.data).forEach(outputItem => {
+                    if (outputItem && outputItem.name === 'output' && outputItem.content && outputItem.content.value) {
+                      const nodeOutput = outputItem.content.value
+                      if (nodeOutput !== 'null' && nodeOutput !== '') {
+                        // 无chunk流式数据时，每个output事件都更新（最后一个节点的输出为最终结果）
+                        // 有chunk流式数据时，保持chunk累积结果不被output覆盖
+                        if (!hasChunks) {
+                          accumulatedOutput = nodeOutput
+                        }
+                        const oldRuntime = this.localRuntimeList[index]
+                        const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                        this.localRuntimeList.splice(index, 1, newRuntime)
+                      }
+                    }
+                  })
+                }
+              }
+              break
 
-              // 使用splice替换对象（不使用$nextTick，避免批量合并）
+            case 'interrupt':
+              // 人机交互中断
               if (currentRuntimeUuid) {
+                const tip = data.tip || '请输入您的反馈'
+                if (this.$refs.runDetailRef) {
+                  this.$refs.runDetailRef.setHumanFeedback(currentRuntimeUuid, tip)
+                }
                 const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
                 if (index !== -1) {
                   const oldRuntime = this.localRuntimeList[index]
-                  const newRuntime = { ...oldRuntime, output: accumulatedOutput }
+                  const newRuntime = {
+                    ...oldRuntime,
+                    status: 2, // 2-等待输入
+                    loading: false
+                  }
                   this.localRuntimeList.splice(index, 1, newRuntime)
                 }
               }
-            }
-          }
+              break
 
-          // 处理NODE_OUTPUT事件：节点执行完成，提取最终输出
-          if (eventName && eventName.startsWith('[NODE_OUTPUT_')) {
-            if (chunk && currentRuntimeUuid) {
-              try {
-                const outputData = JSON.parse(chunk)
-                lastOutputData = outputData // 保存最后一次NODE_OUTPUT数据（用于doneCallback兜底恢复）
-                const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
-                if (index !== -1) {
-                  // 检查输出数据格式：{name:"output", content:{value:"xxx"}}
-                  // 关键修复：只处理name="output"的NODE_OUTPUT事件，忽略其他name（如var_files、attachments等）
-                  if (outputData.name === 'output' && outputData.content && outputData.content.value !== undefined && outputData.content.value !== null) {
-                    const nodeOutput = outputData.content.value
-
-                    // 修复：只有当nodeOutput不是字符串"null"且不为空时才处理
-                    // 关键问题：某些节点可能输出字符串"null"，需要过滤掉并允许后续真正内容覆盖
-                    if (nodeOutput !== 'null' && nodeOutput !== '') {
-                      // 关键修复：如果已经累积了流式输出，保留累积内容；否则使用NODE_OUTPUT的完整内容
-                      // 特别处理：如果accumulatedOutput是字符串"null"，也要覆盖它
-                      if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
-                        accumulatedOutput = nodeOutput
-                      }
-                      const oldRuntime = this.localRuntimeList[index]
-                      const newRuntime = { ...oldRuntime, output: accumulatedOutput }
-                      this.localRuntimeList.splice(index, 1, newRuntime)
-                    }
-                  } else if (outputData.name && outputData.name !== 'output') {
-                    // 忽略非output的NODE_OUTPUT事件（如var_files、attachments等）
-                  } else if (outputData.name === 'output' && outputData.output !== undefined && outputData.output !== null) {
-                    // 兼容旧格式：{name:"output", output: "xxx"}
-                    // 修复：只有当name="output"且output不是字符串"null"且不为空时才处理
-                    if (outputData.output !== 'null' && outputData.output !== '') {
-                      if (accumulatedOutput.length === 0 || accumulatedOutput === 'null') {
-                        accumulatedOutput = outputData.output
-                      }
-                      const oldRuntime = this.localRuntimeList[index]
-                      const newRuntime = { ...oldRuntime, output: accumulatedOutput }
-                      this.localRuntimeList.splice(index, 1, newRuntime)
-                    }
-                  } else if (outputData.name && outputData.name !== 'output' && outputData.output !== undefined) {
-                    // 忽略非output的NODE_OUTPUT事件（旧格式）
-                  }
-                }
-              } catch (e) {
-                // 忽略解析错误
-              }
-            }
+            default:
+              console.warn('[WorkflowRuntimeList] 未知消息类型:', data.type)
           }
         },
 
-        // [DONE]事件回调：工作流执行完成
-        doneCallback: (chunk) => {
+        // Flux完成回调（对齐Spring AI Alibaba）
+        onComplete: () => {
           this.running = false
           this.currentController = null
 
-          // 通知WorkflowRunDetail组件运行完成
           if (this.$refs.runDetailRef) {
             this.$refs.runDetailRef.runDone()
           }
 
-          // 更新runtime状态为成功，保存最终输出（使用splice确保响应式）
           if (currentRuntimeUuid) {
             const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
             if (index !== -1) {
               const oldRuntime = this.localRuntimeList[index]
 
-              // 增强的output处理逻辑：多重fallback确保output不为空
               let finalOutput = oldRuntime.output || accumulatedOutput
 
-              // 兜底1：如果finalOutput仍然为空，尝试从lastOutputData恢复
+              // 兜底：如果finalOutput仍然为空，尝试从lastOutputData恢复
               if (!finalOutput && lastOutputData) {
-                if (lastOutputData.content && lastOutputData.content.value) {
-                  finalOutput = lastOutputData.content.value
-                } else if (lastOutputData.output) {
-                  finalOutput = lastOutputData.output
-                }
+                Object.values(lastOutputData).forEach(outputItem => {
+                  if (outputItem && outputItem.name === 'output' && outputItem.content && outputItem.content.value) {
+                    finalOutput = outputItem.content.value
+                  }
+                })
               }
 
-              // 兜底2：如果仍然为空，设置为空字符串（避免null）
               if (finalOutput === null || finalOutput === undefined) {
                 finalOutput = ''
               }
 
               const newRuntime = {
                 ...oldRuntime,
-                status: 3, // 3-成功 (后端WORKFLOW_PROCESS_STATUS_SUCCESS)
+                status: 3, // 3-成功
                 loading: false,
-                output: finalOutput // 使用增强后的output
+                output: finalOutput
               }
               this.localRuntimeList.splice(index, 1, newRuntime)
+
+              // 检测输出是否为AI业务动作JSON，自动打开对应弹窗
+              this.$refs.aiDialogLoader.open(finalOutput)
             }
           }
 
           this.$message.success('工作流执行完成')
         },
 
-        // [ERROR]事件回调：工作流执行失败
-        errorCallback: (error) => {
+        // 错误回调（对齐Spring AI Alibaba）
+        onError: (error) => {
           this.running = false
           this.currentController = null
 
           console.error('运行工作流失败:', error)
           this.$message.error(error || '工作流执行失败')
 
-          // 通知WorkflowRunDetail组件运行失败
           if (this.$refs.runDetailRef) {
             this.$refs.runDetailRef.runError()
           }
+        }
+      })
+    },
+
+    /**
+     * 处理runtime类型的消息
+     * 对齐Spring AI Alibaba：data.type === 'runtime'
+     *
+     * @param {object} data runtime数据
+     * @param {Array} inputs 用户输入
+     * @param {function} setCurrentRuntimeUuid 设置当前runtimeUuid的回调
+     */
+    handleRuntimeData (data, inputs, setCurrentRuntimeUuid) {
+      if (!data.runtimeUuid) {
+        this.$message.error('启动失败')
+        this.running = false
+        return
+      }
+
+      // 构造runtime对象
+      const runtime = {
+        id: data.runtimeId,
+        runtimeUuid: data.runtimeUuid,
+        workflowUuid: data.workflowUuid,
+        conversationId: data.conversationId
+      }
+
+      // 保存runtime UUID用于后续更新
+      setCurrentRuntimeUuid(runtime.runtimeUuid)
+
+      // 将用户输入保存到runtime.input（用于聊天显示）
+      runtime.input = {}
+      inputs.forEach(item => {
+        if (item.attachments) {
+          runtime.input[item.name] = item.attachments
+        } else {
+          runtime.input[item.name] = item.content
+        }
+      })
+
+      // 初始化output为空字符串
+      runtime.output = ''
+      runtime.loading = true
+
+      // 添加到本地列表
+      this.localRuntimeList.push(runtime)
+
+      // 成功提示
+      this.$message.success('工作流已开始执行')
+
+      // 滚动到底部
+      this.$nextTick(() => {
+        const container = this.$refs.scrollContainer
+        if (container) {
+          container.scrollTop = container.scrollHeight
         }
       })
     },

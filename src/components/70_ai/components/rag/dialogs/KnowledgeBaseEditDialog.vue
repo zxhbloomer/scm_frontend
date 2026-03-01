@@ -16,6 +16,14 @@
     <div class="kb-edit-container">
       <!-- 基本信息 -->
       <div class="form-section">
+        <div v-if="isEdit" class="form-item">
+          <div class="form-label">ID</div>
+          <el-input
+            v-model="formData.id"
+            :disabled="true"
+          />
+        </div>
+
         <div class="form-item">
           <div class="form-label">
             标题<span class="required">*</span>

@@ -159,24 +159,30 @@ export function workflowBaseInfoUpdate (data) {
 
 /**
  * 运行工作流（SSE流式）
+ * 对齐Spring AI Alibaba：无event名，通过data.type区分消息类型
+ *
+ * 消息类型（data.type）：
+ * - runtime: 工作流运行时初始化数据
+ * - chunk: LLM流式输出块
+ * - output: 节点完整输出
+ * - interrupt: 人机交互中断
+ *
  * @param {object} params
  * @param {string} params.uuid 工作流UUID
  * @param {Array} params.inputs 用户输入数组 [{ name: string, content: { value: string, type: number } }]
  * @param {AbortSignal} params.signal 中止信号
- * @param {function} params.startCallback 开始回调
- * @param {function} params.messageReceived 消息接收回调 (chunk: string, eventName: string)
- * @param {function} params.doneCallback 完成回调
- * @param {function} params.errorCallback 错误回调
+ * @param {function} params.onMessage 消息回调 (data: object) - 解析后的JSON对象
+ * @param {function} params.onComplete 完成回调 - Flux流结束时调用
+ * @param {function} params.onError 错误回调 (error: string)
  */
 export function workflowRun (params) {
   const {
     uuid,
     inputs,
     signal,
-    startCallback,
-    messageReceived,
-    doneCallback,
-    errorCallback
+    onMessage,
+    onComplete,
+    onError
   } = params
 
   const url = `${import.meta.env.VITE_BASE_API}/api/v1/ai/workflow/run/${uuid}`
@@ -196,37 +202,42 @@ export function workflowRun (params) {
     openWhenHidden: true, // 防止页面切换时自动重连导致重复触发回调
     async onopen (response) {
       if (response.ok) {
-        // SSE连接建立成功，等待后端发送start事件
+        // SSE连接建立成功
         return
       } else if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         const errorText = await response.text()
-        if (errorCallback) errorCallback(errorText || `HTTP Error ${response.status}`)
+        if (onError) onError(errorText || `HTTP Error ${response.status}`)
         throw new FatalError()
       } else {
         throw new RetriableError()
       }
     },
     onmessage (msg) {
-      // 特殊处理START事件
-      if (msg.event === 'start') {
-        if (startCallback) startCallback(msg.data)
-        return
-      }
+      // 对齐Spring AI Alibaba：无event名，所有消息都是data
+      // 检查空值和空字符串
+      if (!msg.data || msg.data.trim() === '') return
 
-      // 处理其他事件（NODE_RUN, NODE_CHUNK, NODE_OUTPUT等）
-      if (msg.event) {
-        if (messageReceived) messageReceived(msg.data || '', msg.event)
-      } else if (msg.data) {
-        if (messageReceived) messageReceived(msg.data, '')
+      console.log('[workflowRun] SSE收到数据:', msg.data?.substring(0, 100))
+
+      try {
+        const data = JSON.parse(msg.data)
+        console.log('[workflowRun] 解析数据类型:', data.type)
+
+        // 统一调用onMessage，由调用方根据data.type处理
+        if (onMessage) onMessage(data)
+      } catch (e) {
+        console.error('[workflowRun] 解析SSE数据失败:', e, msg.data)
       }
     },
     onclose () {
-      if (doneCallback) doneCallback()
+      // 对齐Spring AI Alibaba：Flux.complete()信号
+      console.log('[workflowRun] SSE连接关闭')
+      if (onComplete) onComplete()
     },
     onerror (err) {
       // 对于工作流场景，不应该自动重试（每次重试都会创建新runtime）
       // 必须抛出所有错误，阻止fetch-event-source的自动重试机制
-      if (errorCallback) errorCallback(err.message || '工作流运行失败')
+      if (onError) onError(err.message || '工作流运行失败')
       throw err
     }
   })

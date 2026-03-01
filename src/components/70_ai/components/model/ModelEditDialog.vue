@@ -336,6 +336,9 @@ export default {
           deploymentName: deploymentName,
           apiKey: apiKey,
           baseUrl: baseUrl,
+          supportChat: detail.supportChat || false,
+          supportVision: detail.supportVision || false,
+          supportEmbedding: detail.supportEmbedding || false,
           advSettingDTOList: advSettings
         }
       } catch (error) {

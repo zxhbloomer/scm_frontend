@@ -35,7 +35,10 @@ const state = {
   // ==================== Workflow Slash Command 状态 (2025-11-24) ====================
   availableWorkflows: [], // 可用workflow列表
   selectedWorkflow: null, // 当前选中的workflow
-  isWorkflowMode: false // 是否处于workflow命令模式
+  isWorkflowMode: false, // 是否处于workflow命令模式
+
+  // AI业务弹窗触发状态
+  pendingAiDialogOutput: null
 }
 
 const mutations = {
@@ -149,6 +152,10 @@ const mutations = {
   CLEAR_WORKFLOW_STATE (state) {
     state.selectedWorkflow = null
     state.isWorkflowMode = false
+  },
+
+  SET_PENDING_AI_DIALOG_OUTPUT (state, output) {
+    state.pendingAiDialogOutput = output
   }
 }
 
@@ -352,6 +359,11 @@ const actions = {
                 workflowRuntime: workflowRuntime // 保存工作流运行时信息
               }
             })
+
+            // 触发AI业务弹窗检测
+            // 优先使用workflowOutputData(Synthesizer路径中保留的含ai_new_route的原始工作流输出)
+            const dialogOutput = chatResponse?.workflowOutputData || finalContent
+            commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
           }
         },
         onError: (_error) => {
@@ -635,6 +647,11 @@ const actions = {
                 } : undefined
               }
             })
+
+            // 触发AI业务弹窗检测
+            // 优先使用workflowOutputData(Synthesizer路径中保留的含ai_new_route的原始工作流输出)
+            const dialogOutput = workflowResponse?.workflowOutputData || finalContent
+            commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
           }
 
           // 【2025-11-25】方案A: 保持workflow选择状态,不自动清除

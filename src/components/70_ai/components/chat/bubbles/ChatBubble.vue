@@ -215,7 +215,7 @@ export default {
   position: fixed;
   bottom: 50px;
   right: 20px;
-  z-index: 9999;
+  z-index: 1990; /* 低于Element UI弹窗基础值(2000)，确保所有append-to-body的弹窗自然浮于聊天面板之上 */
 }
 
 .chat-bubble-badge {

@@ -497,6 +497,21 @@ export default {
     async handleSave (isContinue = false) {
       this.loading = true
       try {
+        // 手动输入模型名称时（未通过自动完成选择），根据modelType自动推导能力标记
+        if (!this.form.supportChat && !this.form.supportVision && !this.form.supportEmbedding) {
+          switch (this.form.modelType) {
+            case 'LLM':
+              this.form.supportChat = true
+              break
+            case 'VISION':
+              this.form.supportVision = true
+              break
+            case 'EMBEDDING':
+              this.form.supportEmbedding = true
+              break
+          }
+        }
+
         // 将advSettingDTOList转换为直接字段
         const submitData = {
           name: this.form.name,
