@@ -148,6 +148,24 @@ export function setDefaultModel (data) {
   })
 }
 
+/**
+ * 获取远程模型列表（第三方供应商）
+ * @param {Object} data - 请求参数
+ * @param {string} data.baseUrl - API地址
+ * @param {string} data.apiKey - API密钥
+ * @returns {Promise} - 模型ID列表
+ */
+export function fetchRemoteModels (data) {
+  return request({
+    url: `${API_BASE}/fetch-remote-models`,
+    method: 'post',
+    data: {
+      baseUrl: data.baseUrl,
+      apiKey: data.apiKey
+    }
+  })
+}
+
 // 删除了getModelConfigNameList - 新系统暂不需要此接口
 // 删除了个人模型相关API - 新系统不区分个人/系统模型
 
@@ -161,5 +179,6 @@ export default {
   getVisionModels,
   getEmbeddingModels,
   getDefaultModels,
-  setDefaultModel
+  setDefaultModel,
+  fetchRemoteModels
 }

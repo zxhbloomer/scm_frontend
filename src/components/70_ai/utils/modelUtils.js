@@ -43,6 +43,8 @@ export function getModelSvg (modelItem) {
       return 'openAi'
     case ModelBaseTypeEnum.SiliconFlow:
       return 'siliconflow'
+    case ModelBaseTypeEnum.ThirdParty:
+      return 'thirdPartyApi'
     default:
       return 'openAi'
   }

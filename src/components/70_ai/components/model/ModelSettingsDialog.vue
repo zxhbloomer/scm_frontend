@@ -507,8 +507,8 @@ export default {
      */
     getDeploymentName (item) {
       if (!item) return '-'
-      // 兼容两种命名：deploymentName 或 base_name
-      return item.deploymentName || item.base_name || '-'
+      // 卡片"基础模型"显示的是模型标识符（modelName），不是Azure部署名称
+      return item.modelName || item.model_name || '-'
     },
 
     /**

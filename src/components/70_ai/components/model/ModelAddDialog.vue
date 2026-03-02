@@ -26,7 +26,7 @@
             <h3>基础信息</h3>
           </div>
 
-          <div class="section-content">
+          <div class="section-content" :class="{ 'tp-layout': isThirdParty }">
             <el-form-item prop="name" class="model-name-form" required>
               <template #label>
                 <div class="flex items-center">
@@ -76,24 +76,37 @@
                       </el-tooltip>
                     </div>
                   </template>
-                  <el-autocomplete
-                    v-model="form.modelName"
-                    :fetch-suggestions="fetchSuggestions"
-                    placeholder="请输入或选择基础模型"
-                    class="w-full"
-                    clearable
-                    @select="selectAutoComplete"
-                    @clear="clearModelName"
-                  >
-                    <template #default="{ item }">
-                      <div class="flex w-full items-center gap-2">
-                        <span>{{ item.label }}</span>
-                        <el-tooltip v-if="item.tooltip" :content="item.tooltip">
-                          <i class="el-icon-info text-gray-400" />
-                        </el-tooltip>
-                      </div>
-                    </template>
-                  </el-autocomplete>
+                  <div class="model-name-row">
+                    <el-autocomplete
+                      v-model="form.modelName"
+                      :fetch-suggestions="fetchSuggestions"
+                      placeholder="请输入或选择基础模型"
+                      class="model-name-input"
+                      clearable
+                      @select="selectAutoComplete"
+                      @clear="clearModelName"
+                    >
+                      <template #default="{ item }">
+                        <div class="flex w-full items-center gap-2">
+                          <span>{{ item.label }}</span>
+                          <el-tooltip v-if="item.tooltip" :content="item.tooltip">
+                            <i class="el-icon-info text-gray-400" />
+                          </el-tooltip>
+                        </div>
+                      </template>
+                    </el-autocomplete>
+                    <el-button
+                      v-if="isThirdParty"
+                      type="primary"
+                      size="small"
+                      :loading="fetchingModels"
+                      :disabled="!form.baseUrl || !form.apiKey"
+                      class="fetch-models-btn"
+                      @click="fetchRemoteModelList"
+                    >
+                      获取模型
+                    </el-button>
+                  </div>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -102,7 +115,8 @@
               <el-input
                 v-model="form.baseUrl"
                 maxlength="255"
-                placeholder="请输入API地址"
+                placeholder="请输入API地址（如 https://api.example.com）"
+                autocomplete="off"
               />
             </el-form-item>
 
@@ -113,6 +127,7 @@
                 maxlength="255"
                 placeholder="请输入API密钥"
                 show-password
+                autocomplete="new-password"
               />
             </el-form-item>
           </div>
@@ -198,7 +213,7 @@ import {
   baseModelTypeMap,
   ModelBaseTypeEnum
 } from '../../constants/model'
-import { editModelConfig } from '../../api/model'
+import { editModelConfig, fetchRemoteModels } from '../../api/model'
 import elDragDialog from '@/directive/el-drag-dialog'
 
 export default {
@@ -228,6 +243,9 @@ export default {
       modelTypeOptions: modelTypeOptions,
       loading: false,
       baseModelTypeOptions: [],
+      // 第三方供应商：远程模型列表
+      remoteModelOptions: [],
+      fetchingModels: false,
 
       // 表单数据
       form: {
@@ -281,6 +299,13 @@ export default {
     },
 
     /**
+     * 是否为第三方供应商
+     */
+    isThirdParty () {
+      return this.supplierModelItem.value === ModelBaseTypeEnum.ThirdParty
+    },
+
+    /**
      * 根据模型类型过滤基础模型列表
      */
     filteredBaseModelOptions () {
@@ -329,6 +354,8 @@ export default {
      * 初始化表单
      */
     initForm () {
+      this.remoteModelOptions = []
+      this.fetchingModels = false
       this.form = {
         name: '',
         modelName: '',
@@ -403,9 +430,25 @@ export default {
     },
 
     /**
-     * 自动完成建议 - 使用根据模型类型过滤后的选项
+     * 自动完成建议 - 第三方从远程获取，其他从静态列表获取
      */
     fetchSuggestions (queryString, callback) {
+      // 第三方供应商从远程模型列表取数据
+      if (this.isThirdParty) {
+        const suggestions = this.remoteModelOptions
+          .filter(item => {
+            if (!queryString) return true
+            return item.label.toLowerCase().includes(queryString.toLowerCase())
+          })
+          .map(item => ({
+            value: item.value,
+            label: item.label,
+            tooltip: item.tooltip || ''
+          }))
+        callback(suggestions)
+        return
+      }
+
       const suggestions = this.filteredBaseModelOptions
         .filter(item => {
           if (!queryString) return true
@@ -426,12 +469,19 @@ export default {
     selectAutoComplete (item) {
       this.form.modelName = item.value
 
-      // 自动填充模型能力标记（不显示在UI，但保存到后端）
-      const selectedModel = this.filteredBaseModelOptions.find(m => m.value === item.value)
-      if (selectedModel) {
-        this.form.supportChat = selectedModel.supportChat || false
-        this.form.supportVision = selectedModel.supportVision || false
-        this.form.supportEmbedding = selectedModel.supportEmbedding || false
+      if (this.isThirdParty) {
+        // 第三方供应商：根据modelType推导能力标记
+        this.form.supportChat = this.form.modelType === 'LLM'
+        this.form.supportVision = this.form.modelType === 'VISION'
+        this.form.supportEmbedding = this.form.modelType === 'EMBEDDING'
+      } else {
+        // 其他供应商：从静态模型列表获取能力标记
+        const selectedModel = this.filteredBaseModelOptions.find(m => m.value === item.value)
+        if (selectedModel) {
+          this.form.supportChat = selectedModel.supportChat || false
+          this.form.supportVision = selectedModel.supportVision || false
+          this.form.supportEmbedding = selectedModel.supportEmbedding || false
+        }
       }
 
       // 生成默认高级设置用于UI展示
@@ -559,6 +609,37 @@ export default {
     getParamValue (paramName) {
       const param = this.form.advSettingDTOList.find(p => p.name === paramName)
       return param && param.enable ? param.value : null
+    },
+
+    /**
+     * 获取远程模型列表（第三方供应商）
+     */
+    async fetchRemoteModelList () {
+      if (!this.form.baseUrl || !this.form.apiKey) {
+        this.$message.warning('请先填写API地址和API密钥')
+        return
+      }
+
+      this.fetchingModels = true
+      try {
+        const response = await fetchRemoteModels({
+          baseUrl: this.form.baseUrl,
+          apiKey: this.form.apiKey
+        })
+        const modelIds = response.data || response || []
+
+        this.remoteModelOptions = modelIds.map(id => ({
+          value: id,
+          label: id
+        }))
+
+        this.$message.success(`获取到 ${modelIds.length} 个模型`)
+      } catch (error) {
+        this.remoteModelOptions = []
+        this.$message.error('连接失败: ' + (error.message || '请检查API地址和密钥'))
+      } finally {
+        this.fetchingModels = false
+      }
     }
   }
 }
@@ -695,7 +776,7 @@ export default {
   flex-shrink: 0;
 }
 
-.model-name-form :deep(.el-form-item__label) {
+.section-content :deep(.el-form-item__label) {
   display: flex !important;
   align-items: center;
   flex-wrap: nowrap;
@@ -734,5 +815,31 @@ export default {
 
 .capability-checkboxes :deep(.el-checkbox) {
   margin-right: 0;
+}
+
+/* 第三方供应商布局：API地址和密钥显示在模型选择之前 */
+.tp-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.tp-layout > .el-row {
+  order: 10;
+}
+
+/* 基础模型行样式（含获取按钮） */
+.model-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.model-name-input {
+  flex: 1;
+}
+
+.fetch-models-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 </style>

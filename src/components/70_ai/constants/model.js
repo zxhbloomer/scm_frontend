@@ -6,7 +6,8 @@ export const ModelBaseTypeEnum = {
   DeepSeek: 'DeepSeek',
   ZhiPuAI: 'ZhiPu AI', // 智谱 AI
   OpenAI: 'Open AI',
-  SiliconFlow: 'SiliconFlow' // 硅基流动
+  SiliconFlow: 'SiliconFlow', // 硅基流动
+  ThirdParty: 'ThirdParty' // 第三方供应商
 }
 
 // 模型类型枚举
@@ -345,8 +346,8 @@ export const baseModelTypeMap = {
       supportVision: false,
       supportEmbedding: true
     }
-  ]
-  // 支持上述4个厂商
+  ],
+  [ModelBaseTypeEnum.ThirdParty]: []
 }
 
 // DeepSeek推理模型默认参数
@@ -485,6 +486,32 @@ export const defaultAdvancedSetValueMap = {
       minValue: 1,
       maxValue: 32768
     }
+  ],
+  [ModelBaseTypeEnum.ThirdParty]: [
+    {
+      name: 'temperature',
+      label: '温度',
+      value: 0.7,
+      enable: true,
+      minValue: 0,
+      maxValue: 2
+    },
+    {
+      name: 'top_p',
+      label: 'Top P',
+      value: 1.0,
+      enable: true,
+      minValue: 0,
+      maxValue: 1
+    },
+    {
+      name: 'max_tokens',
+      label: '最大Token数',
+      value: 4096,
+      enable: true,
+      minValue: 1,
+      maxValue: 100000
+    }
   ]
 }
 
@@ -514,5 +541,10 @@ export const modelList = [
     value: ModelBaseTypeEnum.SiliconFlow,
     name: '硅基流动',
     icon: 'siliconflow'
+  },
+  {
+    value: ModelBaseTypeEnum.ThirdParty,
+    name: '第三方',
+    icon: 'thirdPartyApi'
   }
 ]
