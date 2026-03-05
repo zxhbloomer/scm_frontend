@@ -152,6 +152,13 @@
           :wf-node="selectedNode"
         />
 
+        <!-- OpenPage 打开前端页面节点 -->
+        <open-page-node-property
+          v-else-if="selectedNode.wfComponent.name === 'OpenPage'"
+          :workflow="workflow"
+          :wf-node="selectedNode"
+        />
+
         <!-- 默认属性显示（未匹配的节点类型） -->
         <div v-else class="default-properties">
           <el-alert
@@ -204,6 +211,7 @@ import HumanFeedbackNodeProperty from './properties/HumanFeedbackNodeProperty.vu
 import SubWorkflowNodeProperty from './properties/SubWorkflowNodeProperty.vue'
 import McpNodeProperty from './properties/McpNodeProperty.vue'
 import TempKnowledgeBaseNodeProperty from './properties/TempKnowledgeBaseNodeProperty.vue'
+import OpenPageNodeProperty from './properties/OpenPageNodeProperty.vue'
 
 export default {
   name: 'WorkflowPropertyPanel',
@@ -224,7 +232,8 @@ export default {
     HumanFeedbackNodeProperty,
     SubWorkflowNodeProperty,
     McpNodeProperty,
-    TempKnowledgeBaseNodeProperty
+    TempKnowledgeBaseNodeProperty,
+    OpenPageNodeProperty
   },
 
   props: {
@@ -314,7 +323,8 @@ export default {
         'MailSend': 'el-icon-message',
         'HttpRequest': 'el-icon-link',
         'SubWorkflow': 'el-icon-connection',
-        'McpTool': 'el-icon-cpu'
+        'McpTool': 'el-icon-cpu',
+        'OpenPage': 'el-icon-monitor'
       }
 
       return iconMap[name] || 'el-icon-s-operation'

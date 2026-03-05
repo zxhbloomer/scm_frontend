@@ -1,5 +1,14 @@
 <template>
-  <div class="answer-node-property">
+  <div class="openpage-node-property">
+    <!-- 功能说明 -->
+    <el-alert
+      title="将上游数据透传给前端自动打开业务弹窗，有提示词时调用LLM生成回复"
+      type="info"
+      :closable="false"
+      show-icon
+      style="margin-bottom: 16px;"
+    />
+
     <!-- 引用输入配置 -->
     <node-property-input
       :workflow="workflow"
@@ -19,7 +28,7 @@
     <div class="property-section">
       <div class="section-title">
         提示词
-        <el-tooltip content="为空则表示使用上一个节点的输出做为提示词" placement="top">
+        <el-tooltip content="为空时仅存储数据并打开页面，不调用LLM" placement="top">
           <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
         </el-tooltip>
       </div>
@@ -44,7 +53,7 @@ import WfLLMSelector from '../WfLLMSelector.vue'
 import ExpandableTextarea from '../ExpandableTextarea.vue'
 
 export default {
-  name: 'AnswerNodeProperty',
+  name: 'OpenPageNodeProperty',
 
   components: {
     NodePropertyInput,
@@ -66,12 +75,11 @@ export default {
 
   computed: {
     nodeConfig () {
-      // 初始化默认值
-      if (!this.wfNode.nodeConfig.prompt) {
-        this.$set(this.wfNode.nodeConfig, 'prompt', '')
-      }
       if (!this.wfNode.nodeConfig.model_name) {
         this.$set(this.wfNode.nodeConfig, 'model_name', '')
+      }
+      if (!this.wfNode.nodeConfig.prompt) {
+        this.$set(this.wfNode.nodeConfig, 'prompt', '')
       }
       return this.wfNode.nodeConfig
     }
@@ -79,15 +87,9 @@ export default {
 
   methods: {
     handleLLMSelected (modelName) {
-      this.nodeConfig.model_name = modelName
-
-      // 手动触发 X6 节点重新渲染
-      // 使用 Vue.set 确保响应式更新
       this.$set(this.wfNode.nodeConfig, 'model_name', modelName)
 
-      // 强制更新父组件
       this.$nextTick(() => {
-        // 通过事件总线通知 WorkflowDesigner 更新 X6
         this.$root.$emit('workflow:update-node', {
           nodeUuid: this.wfNode.uuid,
           nodeData: this.wfNode
@@ -99,7 +101,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.answer-node-property {
+.openpage-node-property {
   padding: 16px 0;
 
   .property-section {

@@ -133,7 +133,7 @@ export default {
   position: fixed !important;
   left: 0 !important;
   top: 0 !important;
-  width: calc(100vw - 480px) !important;
+  width: 100vw !important;
   height: 100vh !important;
   margin: 0 !important;
   border-radius: 0 !important;

@@ -13,12 +13,24 @@
       <!-- 引用提示 -->
       <refer-comment />
 
+      <!-- 模式说明 -->
+      <div class="mode-hint">
+        <div class="hint-item">
+          <span class="hint-label">留空</span>
+          <span class="hint-text">自动将所有输入变量合并为 JSON 对象输出</span>
+        </div>
+        <div class="hint-item">
+          <span class="hint-label">填写模板</span>
+          <span class="hint-text">使用 ${变量名} 引用输入变量，按模板格式输出文本</span>
+        </div>
+      </div>
+
       <!-- 模板输入框 -->
-      <el-input
+      <expandable-textarea
         v-model="nodeConfig.template"
-        type="textarea"
-        :autosize="{ minRows: 3, maxRows: 10 }"
-        placeholder="请输入模板内容，可使用 {变量名} 引用输入变量"
+        placeholder="留空则自动输出 JSON，填写则按模板格式输出"
+        dialog-title="编辑模板内容"
+        @input="handleTemplateChange"
       />
     </div>
   </div>
@@ -27,13 +39,15 @@
 <script>
 import NodePropertyInput from '../NodePropertyInput.vue'
 import ReferComment from '../ReferComment.vue'
+import ExpandableTextarea from '../ExpandableTextarea.vue'
 
 export default {
   name: 'TemplateNodeProperty',
 
   components: {
     NodePropertyInput,
-    ReferComment
+    ReferComment,
+    ExpandableTextarea
   },
 
   props: {
@@ -55,6 +69,18 @@ export default {
       }
       return this.wfNode.nodeConfig
     }
+  },
+
+  methods: {
+    handleTemplateChange () {
+      // 手动触发 X6 节点重新渲染
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
+    }
   }
 }
 </script>
@@ -71,6 +97,35 @@ export default {
       font-weight: 500;
       margin-bottom: 8px;
       color: #303133;
+    }
+  }
+
+  .mode-hint {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #f5f7fa;
+    border-radius: 4px;
+    font-size: 12px;
+
+    .hint-item {
+      line-height: 22px;
+      display: flex;
+      align-items: baseline;
+    }
+
+    .hint-label {
+      flex-shrink: 0;
+      display: inline-block;
+      padding: 0 6px;
+      margin-right: 8px;
+      background: #e6f0ff;
+      color: #409eff;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .hint-text {
+      color: #909399;
     }
   }
 }

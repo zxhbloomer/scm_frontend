@@ -23,8 +23,6 @@ export function validateWorkflow (workflow) {
   const endNodes = workflow.nodes.filter(n => n.wfComponent.name === 'End')
   if (endNodes.length === 0) {
     errors.push('工作流必须有一个结束节点')
-  } else if (endNodes.length > 1) {
-    errors.push('工作流只能有一个结束节点')
   }
 
   // 验证节点数量

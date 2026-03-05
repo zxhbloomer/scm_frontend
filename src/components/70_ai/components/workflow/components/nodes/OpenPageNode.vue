@@ -1,15 +1,13 @@
 <template>
-  <div class="template-node">
+  <div class="openpage-node">
     <!-- 节点头部 -->
     <common-node-header :wf-node="node" />
 
-    <!-- 节点内容 -->
+    <!-- 模型信息 -->
     <div class="node-content">
-      <div v-if="localTemplate" class="template-preview">
-        {{ localTemplate }}
-      </div>
-      <div v-else class="template-preview json-mode">
-        自动合并为 JSON
+      <div class="model-line">
+        <i class="el-icon-monitor model-icon" />
+        <span class="model-name">{{ localModelName || '默认模型' }}</span>
       </div>
     </div>
   </div>
@@ -17,13 +15,13 @@
 
 <script>
 /**
- * TemplateNode 组件
- * 模板节点
+ * OpenPageNode 组件
+ * 打开前端页面节点：调用LLM生成友好回复，同时将JSON数据透传给前端打开业务弹窗
  */
 import CommonNodeHeader from './CommonNodeHeader.vue'
 
 export default {
-  name: 'TemplateNode',
+  name: 'OpenPageNode',
 
   components: {
     CommonNodeHeader
@@ -33,7 +31,7 @@ export default {
 
   data () {
     return {
-      localTemplate: ''
+      localModelName: ''
     }
   },
 
@@ -45,18 +43,17 @@ export default {
 
   mounted () {
     const node = this.getNode()
-    this.localTemplate = node.data.nodeConfig?.template || ''
+    this.localModelName = node.data.nodeConfig?.model_name || ''
 
-    // 监听 X6 节点数据变化事件
     node.on('change:data', ({ current }) => {
-      this.localTemplate = current?.nodeConfig?.template || ''
+      this.localModelName = current.nodeConfig?.model_name || ''
     })
   }
 }
 </script>
 
 <style scoped>
-.template-node {
+.openpage-node {
   width: 220px;
   background: #fff;
   border: 1px solid #eee;
@@ -70,22 +67,28 @@ export default {
   flex-direction: column;
 }
 
-.template-preview {
-  line-height: 32px;
+.model-line {
+  height: 40px;
+  line-height: 40px;
   background: rgba(150, 150, 150, 0.1);
-  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
   border-radius: 4px;
-  font-size: 13px;
-  color: #606266;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
 }
 
-.template-preview.json-mode {
-  color: #409eff;
+.model-icon {
+  font-size: 20px;
+  margin-right: 8px;
+  color: #409EFF;
+}
+
+.model-name {
+  flex: 1;
   font-size: 12px;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

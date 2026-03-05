@@ -24,6 +24,7 @@
         @message-action="handleMessageAction"
         @quick-question="handleQuickQuestion"
         @resize-chat="handleResizeChat"
+        @open-page="handleOpenPage"
       />
     </div>
 
@@ -182,7 +183,20 @@ export default {
 
   methods: {
     handleSendMessage (message) {
+      if (this.$refs.messageList) {
+        this.$refs.messageList.prepareScrollToUserMessage()
+      }
       this.$emit('send-message', message)
+    },
+
+    /**
+     * 从消息中的"打开页面"按钮触发业务弹窗
+     * @param {string} aiOpenDialogPara - 含ai_new_route的JSON字符串
+     */
+    handleOpenPage (aiOpenDialogPara) {
+      if (this.$refs.aiDialogLoader) {
+        this.$refs.aiDialogLoader.open(aiOpenDialogPara)
+      }
     },
 
     handleMessageAction (action, data) {
@@ -238,6 +252,9 @@ export default {
     },
 
     handleQuickQuestion (question) {
+      if (this.$refs.messageList) {
+        this.$refs.messageList.prepareScrollToUserMessage()
+      }
       this.$emit('send-message', question)
     },
 

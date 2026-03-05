@@ -20,6 +20,7 @@ import HttpRequestNode from '../components/nodes/HttpRequestNode.vue'
 import SubWorkflowNode from '../components/nodes/SubWorkflowNode.vue'
 import McpNode from '../components/nodes/McpNode.vue'
 import TempKnowledgeBaseNode from '../components/nodes/TempKnowledgeBaseNode.vue'
+import OpenPageNode from '../components/nodes/OpenPageNode.vue'
 
 /**
  * 注册所有工作流节点形状
@@ -137,7 +138,7 @@ export function registerAllWorkflowNodes () {
    * - 左侧输入端口
    * - 右侧多个输出端口（动态，根据 cases 数量）
    * - 每个 case 对应一个输出端口（端口ID = case.uuid）
-   * - 保底情况对应一个固定端口（端口ID = 'default_handle'）
+   * - 默认分支对应一个固定端口（端口ID = 'default_handle'）
    */
   register({
     shape: 'switcher',
@@ -673,6 +674,50 @@ export function registerAllWorkflowNodes () {
     width: 220,
     height: 80,
     component: TempKnowledgeBaseNode,
+    ports: {
+      groups: {
+        target: {
+          position: 'left',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        },
+        source: {
+          position: 'right',
+          attrs: {
+            circle: {
+              r: 4,
+              magnet: true,
+              stroke: '#555',
+              strokeWidth: 1,
+              fill: '#fff'
+            }
+          }
+        }
+      },
+      items: [
+        { group: 'target', id: 'left' },
+        { group: 'source', id: 'right' }
+      ]
+    }
+  })
+
+  /**
+   * OpenPage 节点（打开前端页面）
+   * - 左侧输入端口 + 右侧输出端口
+   * - 接收上游JSON，调用LLM生成友好回复，同时透传JSON给前端触发业务弹窗
+   */
+  register({
+    shape: 'openpage',
+    width: 220,
+    height: 80,
+    component: OpenPageNode,
     ports: {
       groups: {
         target: {

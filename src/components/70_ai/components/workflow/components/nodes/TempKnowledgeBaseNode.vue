@@ -14,7 +14,7 @@
       <!-- 模型信息 -->
       <div class="model-line">
         <i class="el-icon-folder-add model-icon" />
-        <span class="model-name">{{ localModelName || '未选择模型' }}</span>
+        <span class="model-name">{{ localModelName || '默认模型' }}</span>
       </div>
     </div>
   </div>
@@ -35,7 +35,7 @@
  * 显示逻辑：
  * - 显示用户输入的简介（用于区分不同临时知识库节点）
  * - 显示选择的模型名称（与MCP工具节点一致）
- * - 未选择模型时显示"未选择模型"
+ * - 未选择模型时显示"默认模型"
  *
  * @author zzxxhh
  * @since 2025-12-04

@@ -7,7 +7,7 @@
     <div class="node-content">
       <div class="model-line">
         <i class="el-icon-cpu model-icon" />
-        <span class="model-name">{{ localModelName || '未选择模型' }}</span>
+        <span class="model-name">{{ localModelName || '默认模型' }}</span>
       </div>
     </div>
   </div>

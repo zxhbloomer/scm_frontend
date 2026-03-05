@@ -33,7 +33,8 @@ class AIChatService {
       onContent = () => {},
       onComplete = () => {},
       onError = () => {},
-      onOpenPage = null // 新增：页面跳转回调
+      onOpenPage = null, // 新增：页面跳转回调
+      onNodeEvent = null // 工作流节点事件回调(node_start/node_complete)
     } = callbacks
 
     let cancelled = false
@@ -125,6 +126,11 @@ class AIChatService {
                 const chatResponse = JSON.parse(jsonData)
                 console.log('✅ 【SSE-JSON解析】解析成功, keys:', Object.keys(chatResponse))
 
+                // 节点事件处理（工作流执行步骤展示）
+                if (chatResponse.nodeEventType && typeof onNodeEvent === 'function') {
+                  onNodeEvent(chatResponse)
+                }
+
                 // 【优先检查】MCP工具返回结果(后端新增字段,用于页面跳转等特殊指令)
                 if (chatResponse.mcpToolResults && Array.isArray(chatResponse.mcpToolResults)) {
                   console.log('🔧 【MCP工具结果】检测到MCP工具结果,数量:', chatResponse.mcpToolResults.length)
@@ -212,7 +218,7 @@ class AIChatService {
 
                     // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
                     // 只有当内容不为空且包含有效字符时才触发回调
-                    if (content !== undefined && content !== null && content.trim().length > 0) {
+                    if (content !== undefined && content !== null && content !== '') {
                       console.log('⏩【SSE-流式】触发onContent回调,内容长度:', content.length)
                       accumulatedContent += content // 累积到本地buffer
                       onContent(content)

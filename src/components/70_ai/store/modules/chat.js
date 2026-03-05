@@ -38,7 +38,11 @@ const state = {
   isWorkflowMode: false, // 是否处于workflow命令模式
 
   // AI业务弹窗触发状态
-  pendingAiDialogOutput: null
+  pendingAiDialogOutput: null,
+
+  // 工作流节点执行步骤（按消息ID索引）
+  // 格式：{ [messageId]: { steps: [{ nodeUuid, nodeName, nodeTitle, status, timestamp, duration, summary }] } }
+  workflowProcessNodes: {}
 }
 
 const mutations = {
@@ -156,6 +160,84 @@ const mutations = {
 
   SET_PENDING_AI_DIALOG_OUTPUT (state, output) {
     state.pendingAiDialogOutput = output
+  },
+
+  CLEAR_WORKFLOW_PROCESS_NODE (state, messageId) {
+    if (state.workflowProcessNodes[messageId]) {
+      const copy = { ...state.workflowProcessNodes }
+      delete copy[messageId]
+      state.workflowProcessNodes = copy
+    }
+  },
+
+  SET_WORKFLOW_PROCESS_NODE (state, { messageId, nodeEvent }) {
+    if (!state.workflowProcessNodes[messageId]) {
+      // Vue 2需要替换对象引用才能触发响应式更新，不能直接赋值新属性
+      state.workflowProcessNodes = { ...state.workflowProcessNodes, [messageId]: { steps: [], pendingComplete: null }}
+    }
+    const processData = state.workflowProcessNodes[messageId]
+    const steps = processData.steps
+    if (nodeEvent.nodeEventType === 'node_start') {
+      // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
+      if (processData.pendingComplete) {
+        const pending = processData.pendingComplete
+        const prevStep = steps.find(s => s.nodeUuid === pending.nodeUuid)
+        if (prevStep) {
+          prevStep.status = 'done'
+          prevStep.duration = pending.nodeDuration
+          prevStep.summary = pending.nodeSummary || null
+        }
+        processData.pendingComplete = null
+      }
+      // 处理虚拟"问题分析"步骤 → 真实步骤的过渡
+      const virtualIdx = steps.findIndex(s => s.nodeUuid === '__virtual_analysis__')
+      if (virtualIdx !== -1) {
+        if (nodeEvent.nodeName === 'Classifier') {
+          // 真实Classifier到达 → 替换虚拟步骤
+          steps.splice(virtualIdx, 1, {
+            nodeUuid: nodeEvent.nodeUuid,
+            nodeName: nodeEvent.nodeName,
+            nodeTitle: nodeEvent.nodeTitle,
+            status: 'running',
+            timestamp: nodeEvent.nodeTimestamp,
+            duration: null,
+            summary: null
+          })
+          return
+        } else {
+          // 非Classifier节点到达 → 虚拟步骤标记完成
+          steps[virtualIdx].status = 'done'
+          steps[virtualIdx].duration = nodeEvent.nodeTimestamp - steps[virtualIdx].timestamp
+        }
+      }
+      steps.push({
+        nodeUuid: nodeEvent.nodeUuid,
+        nodeName: nodeEvent.nodeName,
+        nodeTitle: nodeEvent.nodeTitle,
+        status: 'running',
+        timestamp: nodeEvent.nodeTimestamp,
+        duration: null,
+        summary: null
+      })
+    } else if (nodeEvent.nodeEventType === 'node_complete') {
+      // 缓冲node_complete，等下一个node_start到达或流结束时才应用
+      processData.pendingComplete = nodeEvent
+    }
+  },
+
+  // 刷新缓冲的node_complete（流结束时调用，确保最后一步正确标记为done）
+  FLUSH_PENDING_NODE_COMPLETE (state, messageId) {
+    const processData = state.workflowProcessNodes[messageId]
+    if (processData && processData.pendingComplete) {
+      const pending = processData.pendingComplete
+      const step = processData.steps.find(s => s.nodeUuid === pending.nodeUuid)
+      if (step) {
+        step.status = 'done'
+        step.duration = pending.nodeDuration
+        step.summary = pending.nodeSummary || null
+      }
+      processData.pendingComplete = null
+    }
   }
 }
 
@@ -252,8 +334,19 @@ const actions = {
         isHidden: true // 标记为隐藏，不在UI中显示
       }
       commit('ADD_MESSAGE', aiMessage)
-      // 开始思考状态
-      commit('SET_TYPING', true)
+      // 立即显示"深度思考 · 问题分析中..."（虚拟步骤，等真实Classifier事件替换）
+      commit('SET_WORKFLOW_PROCESS_NODE', {
+        messageId: aiMessageId,
+        nodeEvent: {
+          nodeEventType: 'node_start',
+          nodeUuid: '__virtual_analysis__',
+          nodeName: 'Classifier',
+          nodeTitle: '问题分析',
+          nodeTimestamp: Date.now()
+        }
+      })
+      // 关闭旧typing indicator，由ThinkingSteps接管显示
+      commit('SET_TYPING', false)
 
       _cancelFunction = aiChatService.sendMessageStream({
         conversationId: state.conversationId,
@@ -285,6 +378,12 @@ const actions = {
               window.location.hash = '#' + url
             }
           }
+        },
+        onNodeEvent: (nodeEvent) => {
+          commit('SET_WORKFLOW_PROCESS_NODE', {
+            messageId: aiMessageId,
+            nodeEvent
+          })
         },
         onContent: (contentChunk) => {
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
@@ -344,6 +443,15 @@ const actions = {
               }
             }
 
+            // 刷新缓冲的node_complete（确保最后一步标记为done后再持久化）
+            commit('FLUSH_PENDING_NODE_COMPLETE', aiMessageId)
+
+            // 持久化工作流步骤到消息对象（折叠模式：完成后保留，不消失）
+            const processData = state.workflowProcessNodes[aiMessageId]
+            const workflowSteps = processData && processData.steps
+              ? JSON.parse(JSON.stringify(processData.steps))
+              : null
+
             commit('UPDATE_MESSAGE', {
               messageId: aiMessageId,
               updates: {
@@ -356,19 +464,26 @@ const actions = {
                 isHidden: !hasEnoughContent, // 只有有足够内容才显示
                 streamFormat: 'flux-chat-response',
                 completedAt: new Date().toISOString(),
-                workflowRuntime: workflowRuntime // 保存工作流运行时信息
+                workflowRuntime: workflowRuntime, // 保存工作流运行时信息
+                workflowSteps: workflowSteps, // 持久化步骤数据，供折叠回看
+                ai_open_dialog_para: chatResponse?.ai_open_dialog_para || null // OpenPage节点JSON数据，用于"打开页面"按钮
               }
             })
 
             // 触发AI业务弹窗检测
-            // 优先使用workflowOutputData(Synthesizer路径中保留的含ai_new_route的原始工作流输出)
-            const dialogOutput = chatResponse?.workflowOutputData || finalContent
+            // 优先使用ai_open_dialog_para(OpenPage节点或Synthesizer路径透传的含ai_new_route的原始JSON)
+            const dialogOutput = chatResponse?.ai_open_dialog_para || finalContent
             commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
+
+            // 清除临时步骤数据（已持久化到消息对象）
+            commit('CLEAR_WORKFLOW_PROCESS_NODE', aiMessageId)
           }
         },
         onError: (_error) => {
           // 错误时结束思考状态
           commit('SET_TYPING', false)
+          // 清除工作流步骤（包括虚拟步骤）
+          commit('CLEAR_WORKFLOW_PROCESS_NODE', aiMessageId)
 
           commit('UPDATE_MESSAGE', {
             messageId: userMessage.id,
@@ -437,6 +552,16 @@ const actions = {
           uuid: runtimeUuid
         } : null
 
+        // 恢复持久化的工作流思考步骤
+        let workflowSteps = null
+        if (msg.workflow_steps) {
+          try {
+            workflowSteps = JSON.parse(msg.workflow_steps)
+          } catch (e) {
+            console.warn('解析workflow_steps失败', e)
+          }
+        }
+
         return {
           id: msg.message_id || msg.id || Date.now(),
           content: msg.content,
@@ -444,7 +569,9 @@ const actions = {
           timestamp: formattedTimestamp,
           avatar: msg.avatar,
           status: 'delivered',
-          workflowRuntime: workflowRuntime // 工作流运行时信息对象
+          workflowRuntime: workflowRuntime, // 工作流运行时信息对象
+          ai_open_dialog_para: msg.ai_open_dialog_para || null, // OpenPage节点JSON数据，用于"打开页面"按钮
+          workflowSteps: workflowSteps // 持久化的工作流思考步骤
         }
       })
 
@@ -644,15 +771,20 @@ const actions = {
                   uuid: workflowResponse.runtimeUuid,
                   id: workflowResponse.runtimeId,
                   workflowUuid: workflowResponse.workflowUuid || state.selectedWorkflow.workflowUuid
-                } : undefined
+                } : undefined,
+                ai_open_dialog_para: workflowResponse?.ai_open_dialog_para || null // OpenPage节点JSON数据，用于"打开页面"按钮
               }
             })
 
             // 触发AI业务弹窗检测
-            // 优先使用workflowOutputData(Synthesizer路径中保留的含ai_new_route的原始工作流输出)
-            const dialogOutput = workflowResponse?.workflowOutputData || finalContent
+            // 优先使用ai_open_dialog_para(OpenPage节点或Synthesizer路径透传的含ai_new_route的原始JSON)
+            const dialogOutput = workflowResponse?.ai_open_dialog_para || finalContent
             commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
           }
+
+          // 工作流完成后清除步骤列表（设计文档：步骤列表完成后消失）
+          commit('FLUSH_PENDING_NODE_COMPLETE', aiMessageId)
+          commit('CLEAR_WORKFLOW_PROCESS_NODE', aiMessageId)
 
           // 【2025-11-25】方案A: 保持workflow选择状态,不自动清除
           // 用户可以通过点击tag或重新输入/来切换workflow

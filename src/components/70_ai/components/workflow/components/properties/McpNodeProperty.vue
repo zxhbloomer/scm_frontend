@@ -15,11 +15,11 @@
       />
     </div>
 
-    <!-- 输入参数配置 -->
+    <!-- 提示词配置 -->
     <div class="property-section">
       <div class="section-title">
-        输入参数
-        <el-tooltip content="配置传递给MCP工具的参数,可使用 {变量名} 引用输入变量" placement="top">
+        提示词
+        <el-tooltip content="配置传递给MCP工具的提示词,可使用 {变量名} 引用输入变量" placement="top">
           <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
         </el-tooltip>
       </div>
@@ -27,12 +27,11 @@
       <!-- 引用提示 -->
       <refer-comment />
 
-      <!-- 参数输入框 -->
-      <el-input
+      <!-- 提示词输入框 -->
+      <expandable-textarea
         v-model="nodeConfig.tool_input"
-        type="textarea"
-        :autosize="{ minRows: 3, maxRows: 10 }"
-        placeholder="请输入MCP工具的输入参数，可使用 {变量名} 引用输入变量"
+        placeholder="请输入MCP工具的提示词，可使用 {变量名} 引用输入变量"
+        dialog-title="编辑提示词"
       />
     </div>
 
@@ -57,6 +56,7 @@
 import NodePropertyInput from '../NodePropertyInput.vue'
 import ReferComment from '../ReferComment.vue'
 import WfLLMSelector from '../WfLLMSelector.vue'
+import ExpandableTextarea from '../ExpandableTextarea.vue'
 
 export default {
   name: 'McpNodeProperty',
@@ -64,7 +64,8 @@ export default {
   components: {
     NodePropertyInput,
     ReferComment,
-    WfLLMSelector
+    WfLLMSelector,
+    ExpandableTextarea
   },
 
   props: {

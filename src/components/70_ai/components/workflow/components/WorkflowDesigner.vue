@@ -253,6 +253,9 @@ export default {
   beforeDestroy () {
     this.$root.$off('workflow:update-node')
 
+    if (this._handleKeydown) {
+      document.removeEventListener('keydown', this._handleKeydown)
+    }
     if (this.resizeObserver) {
       this.resizeObserver.disconnect()
     }
@@ -496,6 +499,32 @@ export default {
         this.selectedWfNode = null
       })
 
+      // Delete/Backspace键删除选中的节点或边
+      this._handleKeydown = (e) => {
+        if (e.key !== 'Delete' && e.key !== 'Backspace') return
+
+        // 焦点在输入框时不触发删除
+        const tag = document.activeElement ? document.activeElement.tagName : ''
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement && document.activeElement.isContentEditable)) {
+          return
+        }
+
+        const cells = this.graph.getSelectedCells()
+        if (!cells || cells.length === 0) return
+
+        cells.forEach(cell => {
+          if (cell.isNode()) {
+            // 开始节点不允许删除
+            const wfNode = this.workflow.nodes.find(n => n.uuid === cell.id)
+            if (wfNode && wfNode.wfComponent && wfNode.wfComponent.name === 'Start') {
+              return
+            }
+          }
+          cell.remove()
+        })
+      }
+      document.addEventListener('keydown', this._handleKeydown)
+
       this.graph.on('cell:removed', ({ cell }) => {
         if (cell.isNode()) {
           this.deleteNode(cell.id)
@@ -674,10 +703,10 @@ export default {
         }
       }
 
-      const graphContainer = this.$refs.graphContainer
-      const rect = graphContainer.getBoundingClientRect()
-      const x = event.clientX - rect.left
-      const y = event.clientY - rect.top
+      // 将浏览器坐标转换为画布内部坐标，处理平移和缩放偏移
+      const localPoint = this.graph.clientToLocal(event.clientX, event.clientY)
+      const x = localPoint.x
+      const y = localPoint.y
 
       this.createNewNode(component, { x, y })
 

@@ -160,8 +160,14 @@
 
             <div class="message-content">
               <div class="message-bubble message-bubble--ai">
-                <!-- 消息内容 -->
-                <div class="bubble-content">
+                <!-- 工作流执行步骤（仅对有步骤数据的AI消息显示） -->
+                <thinking-steps
+                  v-if="getNodeSteps(message.id)"
+                  :steps="getNodeSteps(message.id)"
+                  :stream-complete="isStreamComplete(message.id)"
+                />
+                <!-- 消息内容（思考中隐藏，完成后显示） -->
+                <div v-show="!isThinking(message.id)" class="bubble-content">
                   <div v-if="message.isError" class="error-content">
                     <i class="el-icon-warning" />
                     <md-renderer
@@ -212,6 +218,21 @@
                   >
                     {{ action.text }}
                   </el-button>
+                </div>
+
+                <!-- 打开页面按钮（OpenPage节点数据存在且未过期时显示） -->
+                <div v-if="hasOpenPageData(message)" class="ai-open-page-action">
+                  <el-button
+                    type="primary"
+                    size="mini"
+                    icon="el-icon-monitor"
+                    class="open-page-button"
+                    :disabled="isOpenPageExpired(message)"
+                    @click="openPageFromMessage(message)"
+                  >
+                    {{ isOpenPageExpired(message) ? '页面已过期' : '打开页面' }}
+                  </el-button>
+                  <span v-if="isOpenPageExpired(message)" class="expired-tip">（超过24小时，数据可能已失效）</span>
                 </div>
 
               </div>
@@ -331,6 +352,18 @@
       </div>
     </div>
 
+    <!-- 滚动到底部按钮 -->
+    <transition name="scroll-btn-fade">
+      <div
+        v-if="userScrolled"
+        class="scroll-to-bottom-btn"
+        title="滚动到底部"
+        @click="scrollToBottomAndReset"
+      >
+        <i class="el-icon-arrow-down" />
+      </div>
+    </transition>
+
     <!-- 执行详情弹窗 -->
     <execution-detail-dialog
       :visible.sync="detailDialogVisible"
@@ -345,6 +378,7 @@
 <script>
 import { MdRenderer } from '../markdown'
 import ExecutionDetailDialog from '../../common/ExecutionDetailDialog.vue'
+import ThinkingSteps from './ThinkingSteps.vue'
 import aiChatService from '../../../api/aiChatService'
 
 export default {
@@ -352,7 +386,8 @@ export default {
 
   components: {
     MdRenderer,
-    ExecutionDetailDialog
+    ExecutionDetailDialog,
+    ThinkingSteps
   },
 
   props: {
@@ -409,7 +444,10 @@ export default {
       detailLoading: false,
       currentRuntimeDetail: null,
       currentNodes: [],
-      currentMessageId: null // 当前查看的消息ID(ai_conversation_content.id)
+      currentMessageId: null, // 当前查看的消息ID(ai_conversation_content.id)
+      userScrolled: false, // 用户是否已滚动离开底部（参考Dify开源模式）
+      isAutoScrolling: false, // 程序化滚动中，防止scroll事件误判
+      scrollToUserOnNextUpdate: false // 下次watcher触发时滚动到用户消息
     }
   },
 
@@ -417,9 +455,17 @@ export default {
     hasConversation () {
       return this.messages && this.messages.length > 0
     },
+    workflowProcessNodes () {
+      return this.$store.state.chat.workflowProcessNodes || {}
+    },
     visibleMessages () {
       // 过滤掉隐藏的消息和实际内容为空的消息，避免显示空白区域
       return this.messages.filter(message => {
+        // 有思考步骤（实时或持久化）的消息始终可见
+        const activeSteps = this.workflowProcessNodes[message.id]
+        if (activeSteps && activeSteps.steps && activeSteps.steps.length > 0) return true
+        if (message.workflowSteps && message.workflowSteps.length > 0) return true
+
         if (message.isHidden) return false
 
         // 对AI和agent消息进行内容检查
@@ -438,31 +484,86 @@ export default {
   watch: {
     messages: {
       handler () {
-        this.scrollToBottom()
+        if (this.scrollToUserOnNextUpdate) {
+          this.scrollToUserOnNextUpdate = false
+          // 立即标记为已滚动离开底部，防止其他watcher抢先调scrollToBottom
+          this.userScrolled = true
+          this.doScrollToLastUserMessage()
+          return
+        }
+        if (!this.userScrolled) {
+          this.scrollToBottom()
+        }
       },
       deep: true
     },
 
     visibleMessages: {
       handler () {
-        // 当可见消息变化时（比如隐藏消息变为可见）也滚动到底部
-        this.scrollToBottom()
+        if (!this.userScrolled) {
+          this.scrollToBottom()
+        }
       },
       deep: true
     },
 
-    isTyping (newVal, oldVal) {
-      this.scrollToBottom()
+    isTyping (newVal) {
+      if (!this.userScrolled) {
+        this.scrollToBottom()
+      }
     }
   },
 
   mounted () {
     this.initializeQuestions()
-    // 组件挂载后滚动到底部，确保聊天打开时显示最新消息
     this.scrollToBottom()
+    this.$nextTick(() => {
+      const wrapper = this.$refs.messagesWrapper
+      if (wrapper) {
+        wrapper.addEventListener('scroll', this.handleScroll)
+      }
+    })
+  },
+
+  beforeDestroy () {
+    const wrapper = this.$refs.messagesWrapper
+    if (wrapper) {
+      wrapper.removeEventListener('scroll', this.handleScroll)
+    }
   },
 
   methods: {
+    getNodeSteps (messageId) {
+      // 优先读实时数据（执行中）
+      const realtime = this.workflowProcessNodes[messageId]
+      if (realtime && realtime.steps && realtime.steps.length > 0) {
+        return realtime.steps
+      }
+      // 其次读持久化数据（完成后折叠回看）
+      const message = this.visibleMessages.find(m => m.id === messageId)
+      return (message && message.workflowSteps && message.workflowSteps.length > 0)
+        ? message.workflowSteps
+        : null
+    },
+
+    isThinking (messageId) {
+      const steps = this.getNodeSteps(messageId)
+      if (!steps || steps.length === 0) return false
+
+      // Answer/LLM节点已出现 → 答案开始流式输出，显示内容
+      if (steps.some(s => s.nodeName === 'Answer' || s.nodeName === 'LLM')) return false
+
+      // 还没到Answer阶段 → 仅实时流模式下隐藏（排除历史消息）
+      const realtime = this.workflowProcessNodes[messageId]
+      return !!(realtime && realtime.steps && realtime.steps.length > 0)
+    },
+
+    isStreamComplete (messageId) {
+      // 没有实时数据 = 流已完成（数据来自持久化的workflowSteps）
+      const realtime = this.workflowProcessNodes[messageId]
+      return !(realtime && realtime.steps && realtime.steps.length > 0)
+    },
+
     initializeQuestions () {
       const shuffled = [...this.quickQuestions].sort(() => 0.5 - Math.random())
       this.displayQuestions = shuffled.slice(0, 6)
@@ -517,11 +618,91 @@ export default {
       this.$nextTick(() => {
         const wrapper = this.$refs.messagesWrapper
         if (wrapper) {
+          this.isAutoScrolling = true
           wrapper.scrollTo({
             top: wrapper.scrollHeight,
             behavior: 'smooth'
           })
+          setTimeout(() => {
+            this.isAutoScrolling = false
+          }, 150)
         }
+      })
+    },
+
+    /**
+     * 滚动事件处理：检测用户是否手动滚动离开底部
+     * 参考Dify开源项目的userScrolled模式
+     */
+    handleScroll () {
+      if (this.isAutoScrolling) return
+      const wrapper = this.$refs.messagesWrapper
+      if (!wrapper) return
+      const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight
+      const wasScrolled = this.userScrolled
+      this.userScrolled = distanceToBottom > 150
+      // 用户滚动回底部时，移除额外的padding
+      if (wasScrolled && !this.userScrolled && wrapper.style.paddingBottom) {
+        this.isAutoScrolling = true
+        wrapper.style.paddingBottom = ''
+        this.$nextTick(() => {
+          wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'auto' })
+          setTimeout(() => {
+            this.isAutoScrolling = false
+          }, 50)
+        })
+      }
+    },
+
+    /**
+     * 准备滚动到用户消息（供父组件在发送消息前调用）
+     */
+    prepareScrollToUserMessage () {
+      this.scrollToUserOnNextUpdate = true
+    },
+
+    /**
+     * 将最后一条用户消息滚动到视口顶部
+     */
+    doScrollToLastUserMessage () {
+      this.$nextTick(() => {
+        const wrapper = this.$refs.messagesWrapper
+        if (!wrapper) return
+
+        const messageItems = wrapper.querySelectorAll('.message-item--user')
+        const lastUserMessage = messageItems[messageItems.length - 1]
+        if (!lastUserMessage) {
+          this.userScrolled = false
+          this.scrollToBottom()
+          return
+        }
+
+        // 增大底部padding，确保用户消息能滚到视口顶部
+        wrapper.style.paddingBottom = wrapper.clientHeight + 'px'
+
+        const wrapperRect = wrapper.getBoundingClientRect()
+        const messageRect = lastUserMessage.getBoundingClientRect()
+        const scrollTarget = wrapper.scrollTop + (messageRect.top - wrapperRect.top) - 16
+
+        wrapper.scrollTo({ top: scrollTarget, behavior: 'auto' })
+        this.userScrolled = true
+      })
+    },
+
+    /**
+     * 点击"滚动到底部"按钮：移除padding，滚动到底部，恢复auto-scroll
+     */
+    scrollToBottomAndReset () {
+      const wrapper = this.$refs.messagesWrapper
+      if (!wrapper) return
+      this.isAutoScrolling = true
+      wrapper.style.paddingBottom = ''
+      this.$nextTick(() => {
+        wrapper.scrollTo({ top: wrapper.scrollHeight, behavior: 'smooth' })
+        this.userScrolled = false
+        setTimeout(() => {
+          this.isAutoScrolling = false
+        }, 300)
       })
     },
 
@@ -569,6 +750,41 @@ export default {
 
     executeAction (action, message) {
       this.$emit('message-action', 'execute', { action, message })
+    },
+
+    /**
+     * 检查消息是否包含OpenPage数据（含ai_new_route的JSON）
+     */
+    hasOpenPageData (message) {
+      if (!message.ai_open_dialog_para) return false
+      try {
+        const str = message.ai_open_dialog_para
+        return str.includes('ai_new_route')
+      } catch (e) {
+        return false
+      }
+    },
+
+    /**
+     * 检查OpenPage数据是否已过期（超过24小时）
+     */
+    isOpenPageExpired (message) {
+      if (!message.timestamp) return true
+      const messageTime = new Date(message.timestamp).getTime()
+      const now = Date.now()
+      const hours24 = 24 * 60 * 60 * 1000
+      return (now - messageTime) > hours24
+    },
+
+    /**
+     * 从消息中打开页面（点击"打开页面"按钮）
+     */
+    openPageFromMessage (message) {
+      if (this.isOpenPageExpired(message)) {
+        this.$message.warning('页面数据已过期（超过24小时），请重新执行工作流')
+        return
+      }
+      this.$emit('open-page', message.ai_open_dialog_para)
     },
 
     handleQuickQuestion (question) {
@@ -770,6 +986,47 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+}
+
+/* 滚动到底部浮动按钮 */
+.scroll-to-bottom-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s;
+}
+
+.scroll-to-bottom-btn:hover {
+  background: #f0f7ff;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.scroll-to-bottom-btn i {
+  font-size: 18px;
+  color: #409eff;
+}
+
+/* 按钮淡入淡出动画 */
+.scroll-btn-fade-enter-active,
+.scroll-btn-fade-leave-active {
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.scroll-btn-fade-enter,
+.scroll-btn-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
 }
 
 .messages-container {
@@ -1113,6 +1370,9 @@ export default {
 .ai-avatar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
 }
 
 .agent-avatar {
@@ -1210,6 +1470,40 @@ export default {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.ai-open-page-action {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.open-page-button {
+  background: linear-gradient(135deg, #409EFF 0%, #667eea 100%);
+  border: none;
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 6px 14px;
+  height: auto;
+}
+
+.open-page-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #667eea 0%, #409EFF 100%);
+  color: white;
+}
+
+.open-page-button:disabled {
+  background: #c0c4cc;
+  cursor: not-allowed;
+}
+
+.expired-tip {
+  font-size: 11px;
+  color: #909399;
 }
 
 .action-button {

@@ -80,7 +80,7 @@ export default {
 
     /**
      * 安全解析JSON，处理工作流输出中可能存在的双转义
-     * Synthesizer路径的workflowOutputData经过多层JSON序列化，可能含有字面量\n和\"
+     * Synthesizer路径的ai_open_dialog_para经过多层JSON序列化，可能含有字面量\n和\"
      */
     parseJsonSafe (str) {
       try {

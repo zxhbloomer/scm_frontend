@@ -121,12 +121,12 @@
       </el-button>
     </div>
 
-    <!-- 保底情况 -->
+    <!-- 默认分支 -->
     <div class="default-case-section">
       <el-collapse v-model="activeDefault">
         <el-collapse-item name="default" class="default-case-item">
           <template slot="title">
-            <span style="padding-left: 8px;">保底情况</span>
+            <span style="padding-left: 8px;">默认分支</span>
           </template>
 
           <div class="default-case-content">

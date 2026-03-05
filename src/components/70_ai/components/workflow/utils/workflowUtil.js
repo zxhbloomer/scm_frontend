@@ -702,7 +702,8 @@ export function getIconClassByComponentName (name) {
     mailsend: 'el-icon-message',
     httprequest: 'el-icon-connection',
     end: 'el-icon-circle-check',
-    start: 'el-icon-video-play'
+    start: 'el-icon-video-play',
+    openpage: 'el-icon-monitor'
   }
   return iconMap[lowerName] || 'el-icon-help'
 }

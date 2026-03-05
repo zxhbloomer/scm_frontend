@@ -13,7 +13,7 @@
       <!-- 图谱检索模型显示（仅当启用图谱检索时显示） -->
       <div v-if="localEnableGraphRetrieval" class="model-line">
         <i class="el-icon-cpu model-icon" />
-        <span class="model-name">{{ localGraphModelName || '未选择模型' }}</span>
+        <span class="model-name">{{ localGraphModelName || '默认模型' }}</span>
       </div>
     </div>
   </div>

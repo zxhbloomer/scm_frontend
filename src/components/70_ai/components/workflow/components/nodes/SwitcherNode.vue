@@ -52,9 +52,9 @@
         </div>
       </div>
 
-      <!-- 保底情况 -->
+      <!-- 默认分支 -->
       <div class="default-case" data-port-id="default_handle">
-        保底情况
+        默认分支
       </div>
     </div>
   </div>
@@ -67,7 +67,7 @@
  *
  * 关键技术点：
  * 1. 每个 case 对应一个独立的输出端口（端口ID = case.uuid）
- * 2. 保底情况对应一个固定端口（端口ID = 'default_handle'）
+ * 2. 默认分支对应一个固定端口（端口ID = 'default_handle'）
  * 3. 端口在 mounted 时动态添加到 X6 节点
  * 4. 监听 nodeConfig.cases 变化，动态更新端口
  */
@@ -216,7 +216,7 @@ export default {
         yOffset += wfCase.conditions.length * conditionHeight
       })
 
-      // 保底情况头部
+      // 默认分支头部
       yOffset += caseHeaderHeight / 2
 
       return yOffset

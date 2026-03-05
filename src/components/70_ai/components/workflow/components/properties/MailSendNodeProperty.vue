@@ -88,11 +88,10 @@
         <span class="required-mark">*</span>
       </div>
       <refer-comment />
-      <el-input
+      <expandable-textarea
         v-model="nodeConfig.content"
-        type="textarea"
-        :autosize="{ minRows: 3, maxRows: 10 }"
         placeholder="请输入邮件内容"
+        dialog-title="编辑邮件内容"
       />
     </div>
   </div>
@@ -102,6 +101,7 @@
 import NodePropertyInput from '../NodePropertyInput.vue'
 import ReferComment from '../ReferComment.vue'
 import ReferTooltip from '../ReferTooltip.vue'
+import ExpandableTextarea from '../ExpandableTextarea.vue'
 
 export default {
   name: 'MailSendNodeProperty',
@@ -109,7 +109,8 @@ export default {
   components: {
     NodePropertyInput,
     ReferComment,
-    ReferTooltip
+    ReferTooltip,
+    ExpandableTextarea
   },
 
   props: {

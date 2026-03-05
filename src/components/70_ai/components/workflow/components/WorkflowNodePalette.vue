@@ -69,7 +69,8 @@ export default {
         'HttpRequest': 'el-icon-link',
         'SubWorkflow': 'el-icon-connection',
         'McpTool': 'el-icon-cpu',
-        'TempKnowledgeBase': 'el-icon-folder-add'
+        'TempKnowledgeBase': 'el-icon-folder-add',
+        'OpenPage': 'el-icon-monitor'
       }
 
       return iconMap[name] || 'el-icon-s-operation'
@@ -92,7 +93,8 @@ export default {
         'HttpRequest': '#708090',
         'SubWorkflow': '#409EFF',
         'McpTool': '#E6A23C',
-        'TempKnowledgeBase': '#FF6B6B'
+        'TempKnowledgeBase': '#FF6B6B',
+        'OpenPage': '#409EFF'
       }
 
       return colorMap[name] || '#606266'
@@ -180,4 +182,5 @@ export default {
 .node-item:nth-child(14) .node-icon { color: #409EFF; } // SubWorkflow
 .node-item:nth-child(15) .node-icon { color: #E6A23C; } // McpTool
 .node-item:nth-child(16) .node-icon { color: #FF6B6B; } // TempKnowledgeBase
+.node-item:nth-child(17) .node-icon { color: #409EFF; } // OpenPage
 </style>

@@ -587,14 +587,8 @@ export default {
      */
     getModelOptionLabel (model) {
       if (!model) return ''
-      // 后端返回的字段是下划线命名：model_name, base_name
-      const modelName = model.model_name || model.modelName || ''
-      const baseName = model.base_name || model.deploymentName || ''
-
-      if (baseName) {
-        return `${modelName} (${baseName})`
-      }
-      return modelName
+      // 使用 name（用户定义的配置名称），与工作流模型选择器保持一致
+      return model.name || model.model_name || model.modelName || ''
     }
   }
 }
