@@ -87,6 +87,13 @@
                     size="mini"
                     @click="handleEdit(item)"
                   />
+                  <el-button
+                    type="text"
+                    icon="el-icon-copy-document"
+                    size="mini"
+                    :loading="copyingUuid === item.workflowUuid"
+                    @click="handleCopy(item)"
+                  />
                 </div>
                 <div
                   v-else
@@ -155,6 +162,7 @@
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
 import SelectDict from '@/components/00_dict/select/SelectDict'
+import { copyWorkflow } from '@/components/70_ai/api/workflowService'
 
 export default {
   name: 'WorkflowList',
@@ -167,6 +175,7 @@ export default {
     return {
       activeTab: 'mine',
       showActions: '',
+      copyingUuid: '',
       currentPage: 1,
       pageSize: 20,
       // 筛选条件
@@ -257,6 +266,29 @@ export default {
     handleView (workflow) {
       this.setCreateOrEditWfUuid(workflow.workflowUuid)
       this.setShowCreateView(true)
+    },
+
+    async handleCopy (workflow) {
+      try {
+        await this.$confirm('您确定要复制该工作流吗?该操作会复制一个新的工作流。', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        this.copyingUuid = workflow.workflowUuid
+        await copyWorkflow(workflow.workflowUuid)
+        this.$message.success('复制成功')
+        await this.loadMyWorkflows({ page: this.currentPage, pageSize: this.pageSize })
+      } catch (e) {
+        if (e === 'cancel') {
+          // 用户取消操作,不显示错误消息
+          return
+        }
+        this.$message.error('复制失败: ' + (e.message || '未知错误'))
+      } finally {
+        this.copyingUuid = ''
+      }
     },
 
     handleFilterChange () {
