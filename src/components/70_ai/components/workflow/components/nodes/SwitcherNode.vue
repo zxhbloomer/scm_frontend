@@ -13,7 +13,7 @@
       >
         <!-- 分支标题 -->
         <div class="case-header" :data-port-id="wfCase.uuid">
-          分支情况{{ idx + 1 }}
+          {{ wfCase.name || ('分支情况' + (idx + 1)) }}
         </div>
 
         <!-- 条件列表 -->
@@ -54,7 +54,7 @@
 
       <!-- 默认分支 -->
       <div class="default-case" data-port-id="default_handle">
-        默认分支
+        {{ node.nodeConfig.default_case_name || '默认分支' }}
       </div>
     </div>
   </div>

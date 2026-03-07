@@ -10,7 +10,13 @@
       >
         <template slot="title">
           <div class="case-title-wrapper">
-            <span class="case-title-text">分支情况{{ idx + 1 }}</span>
+            <el-input
+              v-model="wfCase.name"
+              :placeholder="'分支情况' + (idx + 1)"
+              size="mini"
+              class="case-title-input"
+              @click.native.stop
+            />
             <el-button
               v-if="nodeConfig.cases.length > 1"
               type="text"
@@ -126,7 +132,15 @@
       <el-collapse v-model="activeDefault">
         <el-collapse-item name="default" class="default-case-item">
           <template slot="title">
-            <span style="padding-left: 8px;">默认分支</span>
+            <div class="case-title-wrapper" style="padding-left: 8px;">
+              <el-input
+                v-model="nodeConfig.default_case_name"
+                placeholder="默认分支"
+                size="mini"
+                class="case-title-input"
+                @click.native.stop
+              />
+            </div>
           </template>
 
           <div class="default-case-content">
@@ -343,6 +357,7 @@ export default {
 
       const newCase = {
         uuid: uuid,
+        name: '',
         operator: 'and',
         target_node_uuid: '',
         conditions: [
@@ -432,6 +447,31 @@ export default {
 
     .case-title-text {
       flex: 1;
+    }
+
+    .case-title-input {
+      flex: 1;
+      margin-right: 8px;
+
+      ::v-deep .el-input__inner {
+        height: 24px;
+        line-height: 24px;
+        padding: 0 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid transparent;
+        background: transparent;
+
+        &:hover {
+          border-color: #dcdfe6;
+          background: #fff;
+        }
+
+        &:focus {
+          border-color: #409eff;
+          background: #fff;
+        }
+      }
     }
 
     .case-delete-btn {
