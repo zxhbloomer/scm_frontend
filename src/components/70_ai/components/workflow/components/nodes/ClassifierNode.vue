@@ -104,7 +104,8 @@ export default {
      */
     updatePorts () {
       const x6Node = this.getNode()
-      const categories = this.node.nodeConfig.categories || []
+      // 优先用 localCategories，mounted 时已从 node.data 直接赋值，比 computed node 更可靠
+      const categories = this.localCategories.length > 0 ? this.localCategories : (this.node.nodeConfig?.categories || [])
 
       // 获取当前所有端口
       const currentPorts = x6Node.getPorts() || []
