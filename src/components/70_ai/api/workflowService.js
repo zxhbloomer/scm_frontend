@@ -55,15 +55,14 @@ export function workflowUpdate (data) {
 
 /**
  * 删除工作流
- * 对应AIDeepin: workflowDel(id: number)
- * 对应后端: WorkflowController.delete(@PathVariable Long id)
- * @param {number} id - 工作流ID
+ * 对应后端: WorkflowController.delete(@PathVariable String uuid)
+ * @param {string} wfUuid - 工作流UUID
  * @returns {Promise} - 删除结果
  */
-export function workflowDel (id) {
+export function workflowDel (wfUuid) {
   return request({
-    url: `${API_BASE}/${id}`,
-    method: 'delete'
+    url: `${API_BASE}/del/${wfUuid}`,
+    method: 'post'
   })
 }
 
@@ -289,14 +288,13 @@ export function getWorkflowComponents () {
 
 /**
  * 复制工作流
- * 对应AIDeepin: copyWorkflow(id: number)
- * 对应后端: WorkflowController.copy(@PathVariable Long id)
- * @param {number} id - 工作流ID
+ * 对应后端: WorkflowController.copy(@PathVariable String wfUuid)
+ * @param {string} wfUuid - 工作流UUID
  * @returns {Promise} - 复制结果
  */
-export function copyWorkflow (id) {
+export function copyWorkflow (wfUuid) {
   return request({
-    url: `${API_BASE}/copy/${id}`,
+    url: `${API_BASE}/copy/${wfUuid}`,
     method: 'post'
   })
 }

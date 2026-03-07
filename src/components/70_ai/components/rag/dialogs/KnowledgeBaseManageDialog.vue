@@ -136,7 +136,7 @@
                 <el-button
                   type="text"
                   size="small"
-                  :disabled="scope.row.isTemp === 1"
+                  :disabled="!!scope.row.isTemp"
                   @click="handleEdit(scope.row)"
                 >
                   编辑

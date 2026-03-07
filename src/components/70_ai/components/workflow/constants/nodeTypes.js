@@ -147,6 +147,8 @@ export const NODE_DEFAULT_CONFIG = {
   [NODE_TYPES.KNOWLEDGE_RETRIEVAL]: {
     knowledge_base_uuid: '',
     knowledge_base_name: '',
+    knowledge_base_uuids: [],
+    knowledge_base_list: [],
     score: 0.7,
     top_n: 3,
     is_strict: false,

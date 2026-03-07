@@ -18,6 +18,30 @@
         <!-- 顶部工具栏 -->
         <div class="designer-toolbar">
           <el-button
+            v-if="workflow.isEnable"
+            type="warning"
+            size="small"
+            :loading="publishing"
+            @click="handleUnpublish"
+          >
+            停用
+          </el-button>
+          <el-button
+            v-else
+            type="success"
+            size="small"
+            :loading="publishing"
+            @click="handlePublish"
+          >
+            发布
+          </el-button>
+          <el-button
+            size="small"
+            @click="handleCancel"
+          >
+            取消
+          </el-button>
+          <el-button
             type="primary"
             size="small"
             :loading="saving"
@@ -81,6 +105,7 @@ export default {
     return {
       graph: null,
       saving: false,
+      publishing: false,
       hidePropertyPanel: true,
       selectedWfNode: null,
       draggedComponentName: null,
@@ -874,6 +899,56 @@ export default {
         // 后端期望 deleteEdges 是 List<String>，不是 List<Edge>
         this.workflow.deleteEdges.push(deletedEdge.uuid)
       }
+    },
+
+    async handlePublish () {
+      this.publishing = true
+      try {
+        const { workflowPublish } = await import('@/components/70_ai/components/workflow/utils')
+        await workflowPublish(this.workflow.workflowUuid)
+        this.workflow.isEnable = true
+        this.$message.success('发布成功')
+      } catch (error) {
+        this.$message.error('发布失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.publishing = false
+      }
+    },
+
+    async handleUnpublish () {
+      this.publishing = true
+      try {
+        const { workflowUnpublish } = await import('@/components/70_ai/components/workflow/utils')
+        await workflowUnpublish(this.workflow.workflowUuid)
+        this.workflow.isEnable = false
+        this.$message.success('已停用')
+      } catch (error) {
+        this.$message.error('停用失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.publishing = false
+      }
+    },
+
+    handleCancel () {
+      this.$confirm('当前修改尚未保存，确定要放弃修改并重新加载最新数据吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const wfUuid = this.workflow.workflowUuid
+          // 清空列表并重新加载，确保拿到服务器最新数据
+          this.$store.commit('ai/workflow/CLEAR_MY_WORKFLOWS')
+          await this.$store.dispatch('ai/workflow/loadMyWorkflows', { page: 1, pageSize: 20 })
+          // 重新设置激活状态，触发深拷贝刷新 activeWorkflowInfo
+          this.$store.commit('ai/workflow/SET_ACTIVE', wfUuid)
+          // 清空画布并重新渲染
+          this.clearAndRerenderGraph()
+          this.$message.success('已重新加载最新数据')
+        } catch (error) {
+          this.$message.error('重新加载失败: ' + (error.message || '未知错误'))
+        }
+      }).catch(() => {})
     },
 
     async handleSave () {

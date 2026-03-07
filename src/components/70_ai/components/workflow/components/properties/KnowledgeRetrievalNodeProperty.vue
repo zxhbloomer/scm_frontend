@@ -10,12 +10,14 @@
     <div class="property-section">
       <div class="section-title">知识库</div>
 
-      <!-- 统一的知识库选择器,支持永久知识库和临时知识库 -->
+      <!-- 知识库选择器，支持多选 -->
       <el-select
-        v-model="selectedKbSource"
-        placeholder="请选择知识库"
+        v-model="selectedKbSources"
+        placeholder="请选择知识库（可多选）"
+        multiple
         filterable
         clearable
+        collapse-tags
         @change="handleKbSourceChange"
         @clear="handleKbClear"
       >
@@ -216,12 +218,10 @@ export default {
 
   data () {
     return {
-      // 上游临时知识库节点列表
       upstreamTempKbNodes: [],
-      // 永久知识库列表
       permanentKbs: [],
-      // 当前选择的知识库来源(格式: permanent_{uuid} 或 temp_{nodeUuid})
-      selectedKbSource: ''
+      // 多选：数组格式
+      selectedKbSources: []
     }
   },
 
@@ -262,6 +262,13 @@ export default {
       if (!this.wfNode.nodeConfig.temp_kb_node_uuid) {
         this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', null)
       }
+      // 多知识库字段初始化
+      if (!this.wfNode.nodeConfig.knowledge_base_uuids) {
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuids', [])
+      }
+      if (!this.wfNode.nodeConfig.knowledge_base_list) {
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_list', [])
+      }
       // 执行过程输出开关，默认为true（显示）
       if (this.wfNode.nodeConfig.show_process_output === undefined) {
         this.$set(this.wfNode.nodeConfig, 'show_process_output', true)
@@ -277,7 +284,7 @@ export default {
         if (newUuid !== oldUuid) {
           console.log('=== 节点切换 ===', oldUuid, '->', newUuid)
           // 重置选择状态
-          this.selectedKbSource = ''
+          this.selectedKbSources = []
           // 重新检测上游临时知识库节点
           this.detectUpstreamTempKbNodes()
           // 重新初始化选择(永久知识库列表已加载,无需重新加载)
@@ -379,29 +386,26 @@ export default {
      * 验证临时知识库选择的有效性
      */
     validateTempKbSelection () {
-      if (!this.nodeConfig.is_temp_kb || !this.nodeConfig.temp_kb_node_uuid) {
-        return
-      }
+      // 检查knowledge_base_list中的临时知识库是否仍有效
+      const kbList = this.nodeConfig.knowledge_base_list || []
+      const tempItems = kbList.filter(item => item.is_temp)
+      if (tempItems.length === 0) return
 
-      const stillExists = this.upstreamTempKbNodes.some(
-        node => node.uuid === this.nodeConfig.temp_kb_node_uuid
-      )
+      let changed = false
+      const validList = kbList.filter(item => {
+        if (!item.is_temp) return true
+        const stillExists = this.upstreamTempKbNodes.some(node => node.uuid === item.temp_node_uuid)
+        if (!stillExists) {
+          changed = true
+          return false
+        }
+        return true
+      })
 
-      if (!stillExists) {
-        this.nodeConfig.knowledge_base_uuid = ''
-        this.nodeConfig.knowledge_base_name = ''
-        this.nodeConfig.is_temp_kb = false
-        this.nodeConfig.temp_kb_node_uuid = null
-        this.selectedKbSource = ''
-
-        this.$message.warning('上游临时知识库节点已移除,已清除选择')
-
-        this.$nextTick(() => {
-          this.$root.$emit('workflow:update-node', {
-            nodeUuid: this.wfNode.uuid,
-            nodeData: this.wfNode
-          })
-        })
+      if (changed) {
+        this.syncKbListToConfig(validList)
+        this.rebuildSelectedKbSources()
+        this.$message.warning('上游临时知识库节点已移除，已清除相关选择')
       }
     },
 
@@ -455,80 +459,80 @@ export default {
     },
 
     /**
-     * 初始化当前选择
+     * 初始化当前选择（兼容新旧格式）
      */
     initializeSelection () {
-      console.log('=== initializeSelection ===')
-      console.log('nodeConfig.knowledge_base_uuid:', this.nodeConfig.knowledge_base_uuid)
-      console.log('nodeConfig.is_temp_kb:', this.nodeConfig.is_temp_kb)
-      console.log('nodeConfig.temp_kb_node_uuid:', this.nodeConfig.temp_kb_node_uuid)
-      console.log('permanentKbs数量:', this.permanentKbs.length)
+      // 新格式：多知识库列表
+      const kbList = this.nodeConfig.knowledge_base_list
+      if (kbList && kbList.length > 0) {
+        this.selectedKbSources = kbList.map(item => {
+          return item.is_temp ? `temp_${item.temp_node_uuid}` : `permanent_${item.uuid}`
+        })
+        return
+      }
 
-      // 1. 如果是临时知识库
+      // 旧格式：单知识库（向后兼容）
       if (this.nodeConfig.is_temp_kb && this.nodeConfig.temp_kb_node_uuid) {
-        this.selectedKbSource = `temp_${this.nodeConfig.temp_kb_node_uuid}`
-        console.log('初始化为临时知识库:', this.selectedKbSource)
+        this.selectedKbSources = [`temp_${this.nodeConfig.temp_kb_node_uuid}`]
         return
       }
 
-      // 2. 如果是永久知识库
       if (this.nodeConfig.knowledge_base_uuid) {
-        // 移除可能的大括号(变量引用格式)
-        const uuid = this.nodeConfig.knowledge_base_uuid
-          .replace(/^{/, '')
-          .replace(/}$/, '')
-
-        // 检查是否是变量引用格式(包含下划线,如 {xxx_kbUuid})
-        if (uuid.includes('_kbUuid')) {
-          // 这是临时知识库的变量引用,不处理
-          console.log('检测到临时知识库变量引用,跳过')
-          return
-        }
-
-        // 在永久知识库列表中查找匹配项
-        const matchedKb = this.permanentKbs.find(kb => kb.value === this.nodeConfig.knowledge_base_uuid)
-        if (matchedKb) {
-          this.selectedKbSource = `permanent_${matchedKb.value}`
-          console.log('初始化为永久知识库:', this.selectedKbSource)
-        } else {
-          console.warn('未找到匹配的永久知识库, uuid:', this.nodeConfig.knowledge_base_uuid)
-          // 即使列表中没有找到,也设置选择值(可能是历史数据)
-          this.selectedKbSource = `permanent_${this.nodeConfig.knowledge_base_uuid}`
-        }
+        const uuid = this.nodeConfig.knowledge_base_uuid.replace(/^{/, '').replace(/}$/, '')
+        if (uuid.includes('_kbUuid')) return
+        this.selectedKbSources = [`permanent_${this.nodeConfig.knowledge_base_uuid}`]
       }
     },
 
     /**
-     * 处理知识库来源选择变化
+     * 处理知识库多选变化
      */
-    handleKbSourceChange (value) {
-      if (!value) {
+    handleKbSourceChange (values) {
+      if (!values || values.length === 0) {
+        this.handleKbClear()
         return
       }
 
-      if (value.startsWith('permanent_')) {
-        this.handlePermanentKbSelected(value.replace('permanent_', ''))
-      } else if (value.startsWith('temp_')) {
-        this.handleTempKbSelected(value.replace('temp_', ''))
-      }
+      // 构建 knowledge_base_list
+      const kbList = values.map(val => {
+        if (val.startsWith('permanent_')) {
+          const kbUuid = val.replace('permanent_', '')
+          const kb = this.permanentKbs.find(k => k.value === kbUuid)
+          return { uuid: kbUuid, name: kb ? kb.label : '', is_temp: false, temp_node_uuid: null }
+        } else if (val.startsWith('temp_')) {
+          const tempNodeUuid = val.replace('temp_', '')
+          const tempNode = this.upstreamTempKbNodes.find(n => n.uuid === tempNodeUuid)
+          const variableRef = `{${tempNodeUuid}_kbUuid}`
+          return { uuid: variableRef, name: tempNode ? `${tempNode.title}(临时)` : '临时知识库', is_temp: true, temp_node_uuid: tempNodeUuid }
+        }
+        return null
+      }).filter(Boolean)
+
+      this.syncKbListToConfig(kbList)
     },
 
     /**
-     * 处理永久知识库选择
+     * 将知识库列表同步到nodeConfig
      */
-    handlePermanentKbSelected (kbUuid) {
-      const kb = this.permanentKbs.find(k => k.value === kbUuid)
-      const kbName = kb ? kb.label : ''
+    syncKbListToConfig (kbList) {
+      // 写入新格式
+      const uuids = kbList.map(item => item.uuid)
+      this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuids', uuids)
+      this.$set(this.wfNode.nodeConfig, 'knowledge_base_list', kbList)
 
-      this.nodeConfig.knowledge_base_uuid = kbUuid
-      this.nodeConfig.knowledge_base_name = kbName
-      this.nodeConfig.is_temp_kb = false
-      this.nodeConfig.temp_kb_node_uuid = null
-
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', kbUuid)
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', kbName)
-      this.$set(this.wfNode.nodeConfig, 'is_temp_kb', false)
-      this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', null)
+      // 同时写入旧格式（向后兼容，取第一个）
+      if (kbList.length > 0) {
+        const first = kbList[0]
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', first.uuid)
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', first.name)
+        this.$set(this.wfNode.nodeConfig, 'is_temp_kb', first.is_temp || false)
+        this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', first.temp_node_uuid || null)
+      } else {
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', '')
+        this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', '')
+        this.$set(this.wfNode.nodeConfig, 'is_temp_kb', false)
+        this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', null)
+      }
 
       this.$nextTick(() => {
         this.$root.$emit('workflow:update-node', {
@@ -539,33 +543,12 @@ export default {
     },
 
     /**
-     * 处理临时知识库选择
+     * 从knowledge_base_list重建selectedKbSources
      */
-    handleTempKbSelected (tempKbNodeUuid) {
-      const tempKbNode = this.upstreamTempKbNodes.find(node => node.uuid === tempKbNodeUuid)
-
-      if (!tempKbNode) {
-        this.$message.error('未找到指定的临时知识库节点')
-        return
-      }
-
-      const variableRef = `{${tempKbNodeUuid}_kbUuid}`
-
-      this.nodeConfig.knowledge_base_uuid = variableRef
-      this.nodeConfig.knowledge_base_name = `${tempKbNode.title}(临时)`
-      this.nodeConfig.is_temp_kb = true
-      this.nodeConfig.temp_kb_node_uuid = tempKbNodeUuid
-
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', variableRef)
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', `${tempKbNode.title}(临时)`)
-      this.$set(this.wfNode.nodeConfig, 'is_temp_kb', true)
-      this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', tempKbNodeUuid)
-
-      this.$nextTick(() => {
-        this.$root.$emit('workflow:update-node', {
-          nodeUuid: this.wfNode.uuid,
-          nodeData: this.wfNode
-        })
+    rebuildSelectedKbSources () {
+      const kbList = this.nodeConfig.knowledge_base_list || []
+      this.selectedKbSources = kbList.map(item => {
+        return item.is_temp ? `temp_${item.temp_node_uuid}` : `permanent_${item.uuid}`
       })
     },
 
@@ -573,31 +556,14 @@ export default {
      * 处理知识库清除
      */
     handleKbClear () {
-      this.nodeConfig.knowledge_base_uuid = ''
-      this.nodeConfig.knowledge_base_name = ''
-      this.nodeConfig.is_temp_kb = false
-      this.nodeConfig.temp_kb_node_uuid = null
-      this.selectedKbSource = ''
-
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_uuid', '')
-      this.$set(this.wfNode.nodeConfig, 'knowledge_base_name', '')
-      this.$set(this.wfNode.nodeConfig, 'is_temp_kb', false)
-      this.$set(this.wfNode.nodeConfig, 'temp_kb_node_uuid', null)
-
-      this.$nextTick(() => {
-        this.$root.$emit('workflow:update-node', {
-          nodeUuid: this.wfNode.uuid,
-          nodeData: this.wfNode
-        })
-      })
+      this.selectedKbSources = []
+      this.syncKbListToConfig([])
     },
 
     /**
      * 处理图谱检索模型选择
      */
     handleGraphModelSelected (modelName) {
-      this.nodeConfig.graph_model_name = modelName
-
       this.$set(this.wfNode.nodeConfig, 'graph_model_name', modelName)
 
       this.$nextTick(() => {

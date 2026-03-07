@@ -94,6 +94,13 @@
                     :loading="copyingUuid === item.workflowUuid"
                     @click="handleCopy(item)"
                   />
+                  <el-button
+                    type="text"
+                    icon="el-icon-delete"
+                    size="mini"
+                    style="color: #F56C6C;"
+                    @click="handleDelete(item)"
+                  />
                 </div>
                 <div
                   v-else
@@ -162,7 +169,7 @@
 <script>
 import { mapState, mapMutations, mapActions } from 'vuex'
 import SelectDict from '@/components/00_dict/select/SelectDict'
-import { copyWorkflow } from '@/components/70_ai/api/workflowService'
+import { copyWorkflow, workflowDel } from '@/components/70_ai/api/workflowService'
 
 export default {
   name: 'WorkflowList',
@@ -293,6 +300,29 @@ export default {
 
     handleFilterChange () {
       // 筛选条件变化时触发,computed会自动重新计算filteredMyWorkflows
+    },
+
+    async handleDelete (workflow) {
+      try {
+        await this.$confirm('确定要删除该流程吗？删除后不可以恢复。', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        await workflowDel(workflow.workflowUuid)
+        this.$message.success('删除成功')
+
+        // 如果删除的是当前选中的工作流,清除选中状态
+        if (this.activeUuid === workflow.workflowUuid) {
+          this.setActive('')
+        }
+
+        await this.loadMyWorkflows({ page: this.currentPage, pageSize: this.pageSize })
+      } catch (e) {
+        if (e === 'cancel') return
+        this.$message.error('删除失败: ' + (e.message || '未知错误'))
+      }
     }
   }
 }

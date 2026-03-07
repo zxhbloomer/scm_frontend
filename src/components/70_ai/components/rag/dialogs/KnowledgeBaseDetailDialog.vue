@@ -25,7 +25,7 @@
                 size="small"
                 type="primary"
                 icon="el-icon-plus"
-                :disabled="!kbUuid || kbInfo.isTemp === 1"
+                :disabled="!kbUuid || !!kbInfo.isTemp"
                 @click="handleAdd"
               >
                 新建知识点
@@ -33,7 +33,7 @@
               <el-button
                 size="small"
                 icon="el-icon-upload"
-                :disabled="!kbUuid || kbInfo.isTemp === 1"
+                :disabled="!kbUuid || !!kbInfo.isTemp"
                 @click="handleUpload"
               >
                 上传文件
@@ -41,7 +41,7 @@
               <el-button
                 size="small"
                 icon="el-icon-setting"
-                :disabled="selectedItems.length === 0 || kbInfo.isTemp === 1"
+                :disabled="selectedItems.length === 0 || !!kbInfo.isTemp"
                 @click="handleBatchIndex"
               >
                 批量索引 ({{ selectedItems.length }})
@@ -212,7 +212,7 @@
             >
               <template slot-scope="scope">
                 <el-button
-                  v-if="kbInfo.isTemp !== 1"
+                  v-if="!kbInfo.isTemp"
                   type="text"
                   size="small"
                   @click="handleEdit(scope.row)"
@@ -382,7 +382,7 @@ export default {
       tableData: [],
       selectedItems: [],
       kbInfo: {
-        isTemp: 0
+        isTemp: false
       },
       pagination: {
         page: 1,
@@ -438,10 +438,10 @@ export default {
       if (this.kbUuid) {
         try {
           const kbResponse = await knowledgeBaseService.getInfo(this.kbUuid)
-          this.kbInfo = kbResponse.data || { isTemp: 0 }
+          this.kbInfo = kbResponse.data || { isTemp: false }
         } catch (error) {
           console.error('获取知识库信息失败:', error)
-          this.kbInfo = { isTemp: 0 }
+          this.kbInfo = { isTemp: false }
         }
       }
 

@@ -511,6 +511,13 @@ const mutations = {
   CLEAR_WORKFLOWS (state) {
     state.myWorkflows = []
     state.publicWorkflows = []
+  },
+
+  /**
+   * 清空我的工作流列表
+   */
+  CLEAR_MY_WORKFLOWS (state) {
+    state.myWorkflows = []
   }
 }
 
@@ -568,6 +575,8 @@ const actions = {
           return workflow
         })
 
+        // 先清空再追加，确保删除/复制后列表数据是最新的
+        commit('CLEAR_MY_WORKFLOWS')
         commit('APPEND_WORKFLOWS', { workflows: cleanedWorkflows, isMine: true })
 
         // 如果是第一次加载且activeUuid为空，自动选中第一个

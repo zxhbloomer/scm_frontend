@@ -40,6 +40,12 @@ const state = {
   // AI业务弹窗触发状态
   pendingAiDialogOutput: null,
 
+  // AI页面导航加载浮层
+  aiLoadingOverlay: false,
+
+  // 当前活跃的人机交互请求
+  activeInteraction: null,
+
   // 工作流节点执行步骤（按消息ID索引）
   // 格式：{ [messageId]: { steps: [{ nodeUuid, nodeName, nodeTitle, status, timestamp, duration, summary }] } }
   workflowProcessNodes: {}
@@ -160,6 +166,14 @@ const mutations = {
 
   SET_PENDING_AI_DIALOG_OUTPUT (state, output) {
     state.pendingAiDialogOutput = output
+  },
+
+  SET_AI_LOADING_OVERLAY (state, visible) {
+    state.aiLoadingOverlay = visible
+  },
+
+  SET_ACTIVE_INTERACTION (state, interaction) {
+    state.activeInteraction = interaction
   },
 
   CLEAR_WORKFLOW_PROCESS_NODE (state, messageId) {
@@ -292,7 +306,7 @@ const actions = {
     }
   },
 
-  async sendMessage ({ commit, state, dispatch, rootState }, content) {
+  async sendMessage ({ commit, state, dispatch, rootState, rootGetters }, content) {
     if (!content.trim()) return
 
     // eslint-disable-next-line no-unused-vars
@@ -383,6 +397,18 @@ const actions = {
           commit('SET_WORKFLOW_PROCESS_NODE', {
             messageId: aiMessageId,
             nodeEvent
+          })
+        },
+        onOpenPageCommand: (command) => {
+          // 页面导航指令：调用AiPageRouter执行RouterTab导航
+          import('@/components/70_ai/components/navigator/AiPageRouter.js').then(({ navigateToPage }) => {
+            navigateToPage(command, router, { getters: rootGetters, commit })
+          })
+        },
+        onInteractionRequest: (request) => {
+          // 人机交互请求：启动交互状态管理
+          import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
+            startInteraction(request, { state: { chat: state }, commit })
           })
         },
         onContent: (contentChunk) => {

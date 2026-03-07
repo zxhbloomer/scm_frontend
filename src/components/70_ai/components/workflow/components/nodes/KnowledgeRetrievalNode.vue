@@ -7,7 +7,7 @@
     <div class="node-content">
       <div class="kb-line">
         <i :class="localIsStrict ? 'el-icon-lock' : 'el-icon-unlock'" class="kb-icon" />
-        <span class="kb-name">{{ localKnowledgeBaseName || '未选择知识库' }}</span>
+        <span class="kb-name">{{ displayKbName }}</span>
       </div>
 
       <!-- 图谱检索模型显示（仅当启用图谱检索时显示） -->
@@ -37,8 +37,8 @@ export default {
 
   data () {
     return {
-      // 本地响应式状态，用于显示
       localKnowledgeBaseName: '',
+      localKnowledgeBaseList: [],
       localIsStrict: true,
       localEnableGraphRetrieval: false,
       localGraphModelName: ''
@@ -48,21 +48,31 @@ export default {
   computed: {
     node () {
       return this.getNode().data
+    },
+    displayKbName () {
+      // 多知识库模式
+      if (this.localKnowledgeBaseList && this.localKnowledgeBaseList.length > 0) {
+        if (this.localKnowledgeBaseList.length === 1) {
+          return this.localKnowledgeBaseList[0].name || '未命名知识库'
+        }
+        return `${this.localKnowledgeBaseList[0].name} 等${this.localKnowledgeBaseList.length}个`
+      }
+      // 旧单知识库模式
+      return this.localKnowledgeBaseName || '未选择知识库'
     }
   },
 
   mounted () {
-    // 初始化本地状态
     const node = this.getNode()
-    this.localKnowledgeBaseName = node.data.nodeConfig?.knowledge_base_name || '未选择知识库'
+    this.localKnowledgeBaseName = node.data.nodeConfig?.knowledge_base_name || ''
+    this.localKnowledgeBaseList = node.data.nodeConfig?.knowledge_base_list || []
     this.localIsStrict = node.data.nodeConfig?.is_strict !== false
     this.localEnableGraphRetrieval = node.data.nodeConfig?.enable_graph_retrieval || false
     this.localGraphModelName = node.data.nodeConfig?.graph_model_name || ''
 
-    // 监听 X6 节点数据变化事件
     node.on('change:data', ({ current }) => {
-      // 更新本地状态，触发视图更新
-      this.localKnowledgeBaseName = current.nodeConfig?.knowledge_base_name || '未选择知识库'
+      this.localKnowledgeBaseName = current.nodeConfig?.knowledge_base_name || ''
+      this.localKnowledgeBaseList = current.nodeConfig?.knowledge_base_list || []
       this.localIsStrict = current.nodeConfig?.is_strict !== false
       this.localEnableGraphRetrieval = current.nodeConfig?.enable_graph_retrieval || false
       this.localGraphModelName = current.nodeConfig?.graph_model_name || ''

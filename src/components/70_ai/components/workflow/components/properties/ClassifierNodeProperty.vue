@@ -9,6 +9,22 @@
       />
     </div>
 
+    <!-- 分类指令（可选） -->
+    <div class="property-section">
+      <div class="section-title">
+        分类指令
+        <el-tooltip content="可选。补充说明分类判断逻辑，LLM 会参考此指令提升分类准确率" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-input
+        v-model="nodeConfig.instruction"
+        type="textarea"
+        :autosize="{ minRows: 2, maxRows: 5 }"
+        placeholder="例如：根据上游输出的 pagecode 字段判断路由数量"
+      />
+    </div>
+
     <!-- 类别列表 -->
     <div class="property-section">
       <div class="section-title">类别</div>
@@ -102,25 +118,30 @@ export default {
 
   computed: {
     nodeConfig () {
-      // 初始化默认值
-      if (!this.wfNode.nodeConfig.model_name) {
-        this.$set(this.wfNode.nodeConfig, 'model_name', '')
-      }
-      if (!this.wfNode.nodeConfig.categories) {
-        this.$set(this.wfNode.nodeConfig, 'categories', [
-          {
-            category_uuid: nanoid(32).replace(/-/g, ''),
-            category_name: '',
-            target_node_uuid: ''
-          },
-          {
-            category_uuid: nanoid(32).replace(/-/g, ''),
-            category_name: '',
-            target_node_uuid: ''
-          }
-        ])
-      }
       return this.wfNode.nodeConfig
+    }
+  },
+
+  created () {
+    if (!this.wfNode.nodeConfig.model_name) {
+      this.$set(this.wfNode.nodeConfig, 'model_name', '')
+    }
+    if (this.wfNode.nodeConfig.instruction === undefined) {
+      this.$set(this.wfNode.nodeConfig, 'instruction', '')
+    }
+    if (!this.wfNode.nodeConfig.categories) {
+      this.$set(this.wfNode.nodeConfig, 'categories', [
+        {
+          category_uuid: nanoid(32).replace(/-/g, ''),
+          category_name: '',
+          target_node_uuid: ''
+        },
+        {
+          category_uuid: nanoid(32).replace(/-/g, ''),
+          category_name: '',
+          target_node_uuid: ''
+        }
+      ])
     }
   },
 

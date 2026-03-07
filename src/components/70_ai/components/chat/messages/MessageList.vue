@@ -329,6 +329,28 @@
         </div>
       </transition-group>
 
+      <!-- 人机交互组件（在消息列表末尾渲染） -->
+      <div v-if="activeInteraction && activeInteraction.status === 'WAITING'" class="ai-interaction-area">
+        <ai-user-select
+          v-if="activeInteraction.type === 'user_select'"
+          :interaction="activeInteraction"
+          @submit="handleInteractionSubmit"
+          @cancel="handleInteractionCancel"
+        />
+        <ai-user-confirm
+          v-else-if="activeInteraction.type === 'user_confirm'"
+          :interaction="activeInteraction"
+          @submit="handleInteractionSubmit"
+          @cancel="handleInteractionCancel"
+        />
+        <ai-user-form
+          v-else-if="activeInteraction.type === 'user_form'"
+          :interaction="activeInteraction"
+          @submit="handleInteractionSubmit"
+          @cancel="handleInteractionCancel"
+        />
+      </div>
+
       <!-- 正在输入指示器 -->
       <div v-if="isTyping" class="typing-indicator">
         <div class="message-avatar">
@@ -380,6 +402,10 @@ import { MdRenderer } from '../markdown'
 import ExecutionDetailDialog from '../../common/ExecutionDetailDialog.vue'
 import ThinkingSteps from './ThinkingSteps.vue'
 import aiChatService from '../../../api/aiChatService'
+import AiUserSelect from '../../interaction/AiUserSelect.vue'
+import AiUserConfirm from '../../interaction/AiUserConfirm.vue'
+import AiUserForm from '../../interaction/AiUserForm.vue'
+import { submitFeedback, cancelInteraction } from '../../interaction/AiInteractionManager'
 
 export default {
   name: 'MessageList',
@@ -387,7 +413,10 @@ export default {
   components: {
     MdRenderer,
     ExecutionDetailDialog,
-    ThinkingSteps
+    ThinkingSteps,
+    AiUserSelect,
+    AiUserConfirm,
+    AiUserForm
   },
 
   props: {
@@ -452,6 +481,9 @@ export default {
   },
 
   computed: {
+    activeInteraction () {
+      return this.$store.state.chat.activeInteraction
+    },
     hasConversation () {
       return this.messages && this.messages.length > 0
     },
@@ -533,6 +565,18 @@ export default {
   },
 
   methods: {
+    handleInteractionSubmit (action, data) {
+      const feedbackMessage = submitFeedback(action, data, this.$store)
+      if (feedbackMessage) {
+        this.$store.dispatch('chat/sendMessage', feedbackMessage)
+      }
+    },
+    handleInteractionCancel () {
+      const feedbackMessage = cancelInteraction(this.$store)
+      if (feedbackMessage) {
+        this.$store.dispatch('chat/sendMessage', feedbackMessage)
+      }
+    },
     getNodeSteps (messageId) {
       // 优先读实时数据（执行中）
       const realtime = this.workflowProcessNodes[messageId]

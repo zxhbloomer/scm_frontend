@@ -34,7 +34,9 @@ class AIChatService {
       onComplete = () => {},
       onError = () => {},
       onOpenPage = null, // 新增：页面跳转回调
-      onNodeEvent = null // 工作流节点事件回调(node_start/node_complete)
+      onNodeEvent = null, // 工作流节点事件回调(node_start/node_complete)
+      onOpenPageCommand = null, // 新增：RouterTab页面导航指令回调
+      onInteractionRequest = null // 新增：人机交互请求回调
     } = callbacks
 
     let cancelled = false
@@ -129,6 +131,26 @@ class AIChatService {
                 // 节点事件处理（工作流执行步骤展示）
                 if (chatResponse.nodeEventType && typeof onNodeEvent === 'function') {
                   onNodeEvent(chatResponse)
+                }
+
+                // 检测页面导航指令（OpenPage route模式）
+                if (chatResponse.open_page_command && typeof onOpenPageCommand === 'function') {
+                  try {
+                    const command = JSON.parse(chatResponse.open_page_command)
+                    onOpenPageCommand(command)
+                  } catch (e) {
+                    console.error('[aiChatService] 解析open_page_command失败:', e)
+                  }
+                }
+
+                // 检测人机交互请求
+                if (chatResponse.interaction_request && typeof onInteractionRequest === 'function') {
+                  try {
+                    const interactionReq = JSON.parse(chatResponse.interaction_request)
+                    onInteractionRequest(interactionReq)
+                  } catch (e) {
+                    console.error('[aiChatService] 解析interaction_request失败:', e)
+                  }
                 }
 
                 // 【优先检查】MCP工具返回结果(后端新增字段,用于页面跳转等特殊指令)

@@ -23,6 +23,9 @@
 
     <!-- 全局聊天组件 -->
     <ChatBubble v-if="showChatBubble" />
+
+    <!-- AI页面加载浮层 -->
+    <AiLoadingOverlay :visible="aiLoadingOverlay" @timeout="handleAiLoadingTimeout" />
   </div>
 </template>
 
@@ -33,6 +36,7 @@ import { AppMain, Navbar, Settings, Sidebar } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
 import { ChatBubble } from '@/components/70_ai'
+import AiLoadingOverlay from '@/components/70_ai/components/navigator/AiLoadingOverlay.vue'
 
 export default {
   name: 'Layout',
@@ -42,7 +46,8 @@ export default {
     RightPanel,
     Settings,
     Sidebar,
-    ChatBubble
+    ChatBubble,
+    AiLoadingOverlay
     // TagsView
   },
   mixins: [ResizeMixin],
@@ -52,7 +57,8 @@ export default {
       device: state => state.app.device,
       showSettings: state => state.settings.showSettings,
       // needTagsView: state => state.settings.tagsView,
-      fixedHeader: state => state.settings.fixedHeader
+      fixedHeader: state => state.settings.fixedHeader,
+      aiLoadingOverlay: state => state.chat ? state.chat.aiLoadingOverlay : false
     }),
     classObj () {
       return {
@@ -90,6 +96,9 @@ export default {
   methods: {
     handleClickOutside () {
       this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
+    },
+    handleAiLoadingTimeout () {
+      this.$store.commit('SET_AI_LOADING_OVERLAY', false)
     }
   }
 }

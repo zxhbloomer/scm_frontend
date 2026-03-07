@@ -145,6 +145,26 @@ export function workflowSetPublic (uuid, isPublic) {
 }
 
 /**
+ * 发布工作流
+ */
+export function workflowPublish (uuid) {
+  return request({
+    url: `/api/v1/ai/workflow/publish/${uuid}`,
+    method: 'post'
+  })
+}
+
+/**
+ * 取消发布工作流(停用)
+ */
+export function workflowUnpublish (uuid) {
+  return request({
+    url: `/api/v1/ai/workflow/unpublish/${uuid}`,
+    method: 'post'
+  })
+}
+
+/**
  * 更新工作流基本信息（不包括节点和边）
  * @param {object} data { uuid: string, title: string, remark: string, isPublic: boolean, dbversion: number }
  * @returns {Promise}

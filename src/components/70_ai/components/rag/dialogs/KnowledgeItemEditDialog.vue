@@ -37,12 +37,12 @@
         </el-form-item>
 
         <el-form-item label="内容">
-          <el-input
+          <expandable-textarea
             v-model="formData.remark"
-            type="textarea"
-            :rows="5"
-            show-word-limit
             placeholder="请输入内容"
+            dialog-title="编辑内容"
+            :min-rows="5"
+            :max-rows="15"
           />
         </el-form-item>
 
@@ -86,11 +86,13 @@
 import { createEmptyKbItem } from '../utils/knowledgeBaseUtils'
 import knowledgeBaseService from '../../../api/knowledgeBaseService'
 import elDragDialog from '@/directive/el-drag-dialog'
+import ExpandableTextarea from '../../workflow/components/ExpandableTextarea.vue'
 
 export default {
 
   name: 'KnowledgeItemEditDialog',
   directives: { elDragDialog },
+  components: { ExpandableTextarea },
 
   props: {
     visible: {

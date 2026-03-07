@@ -17,10 +17,12 @@
     </span>
     <el-dialog
       v-if="dialogVisible"
+      v-el-drag-dialog
       :visible="dialogVisible"
       :title="dialogTitle"
-      width="70%"
+      width="90%"
       top="5vh"
+      custom-class="expandable-textarea-dialog"
       :modal="true"
       :close-on-click-modal="false"
       :append-to-body="true"
@@ -30,7 +32,6 @@
       <el-input
         :value="value"
         type="textarea"
-        :rows="20"
         :placeholder="placeholder"
         @input="$emit('input', $event)"
       />
@@ -42,8 +43,11 @@
 </template>
 
 <script>
+import elDragDialog from '@/directive/el-drag-dialog'
+
 export default {
   name: 'ExpandableTextarea',
+  directives: { elDragDialog },
   props: {
     value: { type: String, default: '' },
     placeholder: { type: String, default: '' },
@@ -89,6 +93,33 @@ export default {
   }
   50% {
     transform: scale(1.3);
+  }
+}
+</style>
+
+<style lang="scss">
+/* 不能scoped，因为el-dialog append-to-body后脱离当前组件 */
+.expandable-textarea-dialog {
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+
+  .el-dialog__body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .el-textarea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .el-textarea__inner {
+        flex: 1;
+        resize: none;
+      }
+    }
   }
 }
 </style>
