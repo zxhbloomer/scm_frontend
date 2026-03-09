@@ -23,29 +23,48 @@
         v-for="(step, index) in steps"
         :key="step.nodeUuid"
         class="step-row"
+        :class="{ 'step-row--sub': step.depth === 1 }"
       >
-        <!-- 左侧：圆点 + 连接线 -->
-        <div class="step-timeline">
-          <div class="step-circle" :class="step.status">
-            <template v-if="step.status === 'running'">
-              <div class="circle-pulse" />
-            </template>
-            <template v-else>
-              <svg viewBox="0 0 12 12" class="check-icon">
-                <path d="M3.5 6L5.5 8L8.5 4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
-            </template>
-          </div>
-          <div v-if="index < steps.length - 1" class="step-line" />
-        </div>
-
-        <!-- 右侧：步骤内容 -->
-        <div class="step-content" :class="{ 'step-content--last': index === steps.length - 1 }">
-          <div class="step-header">
-            <span class="step-title" :class="step.status">{{ getStepText(step) }}</span>
+        <!-- agent 行：特殊渲染，无圆点 -->
+        <template v-if="step.isAgentRow">
+          <div class="agent-row">
+            <span class="agent-icon">⚡</span>
+            <span class="agent-label" :class="step.status">
+              {{ step.status === 'running' ? `调用agent：${step.nodeTitle}` : `调用agent完成` }}
+            </span>
             <span v-if="step.duration != null" class="step-duration">{{ formatDuration(step.duration) }}</span>
           </div>
-        </div>
+        </template>
+
+        <!-- 普通步骤行（含子步骤） -->
+        <template v-else>
+          <!-- 左侧：圆点 + 连接线 -->
+          <div class="step-timeline">
+            <div class="step-circle" :class="step.status">
+              <template v-if="step.status === 'running'">
+                <div class="circle-pulse" />
+              </template>
+              <template v-else>
+                <svg viewBox="0 0 12 12" class="check-icon">
+                  <path d="M3.5 6L5.5 8L8.5 4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </template>
+            </div>
+            <div v-if="index < steps.length - 1 && !steps[index + 1].isAgentRow" class="step-line" />
+          </div>
+
+          <!-- 右侧：步骤内容 -->
+          <div class="step-content" :class="{ 'step-content--last': index === steps.length - 1 }">
+            <div class="step-header">
+              <span class="step-title" :class="step.status">{{ getStepText(step) }}</span>
+              <span v-if="step.duration != null" class="step-duration">{{ formatDuration(step.duration) }}</span>
+            </div>
+            <!-- outputText：show_process_output=true 时后端在 summary 中携带 -->
+            <div v-if="step.summary && step.summary.outputText" class="step-output">
+              {{ step.summary.outputText }}
+            </div>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -61,7 +80,9 @@ const NODE_CONFIG = {
   KnowledgeRetrieval: { title: '知识库检索', runningText: '检索中...' },
   TempKnowledgeBase: { title: '临时知识库', runningText: '创建中...' },
   McpTool: { title: '调用工具', runningText: '执行中...' },
-  DocumentExtractor: { title: '文档解析', runningText: '解析中...' }
+  DocumentExtractor: { title: '文档解析', runningText: '解析中...' },
+  OpenPage: { title: '打开页面', runningText: '正在打开...' },
+  Switcher: { title: '路由判断', runningText: '判断中...' }
 }
 
 export default {
@@ -98,7 +119,13 @@ export default {
       if (!this.isAllDone) return false
       if (this.streamComplete) return true
       const lastStep = this.steps[this.steps.length - 1]
-      return lastStep && (lastStep.nodeName === 'Answer' || lastStep.nodeName === 'LLM') && lastStep.status === 'done'
+      // Answer/LLM：终端文本节点；OpenPage：终端导航节点；agent行done：子工作流完成
+      return lastStep && (
+        lastStep.nodeName === 'Answer' ||
+        lastStep.nodeName === 'LLM' ||
+        lastStep.nodeName === 'OpenPage' ||
+        (lastStep.isAgentRow && lastStep.status === 'done')
+      ) && lastStep.status === 'done'
     },
 
     totalDuration () {
@@ -376,5 +403,45 @@ export default {
 /* 底部分割线（卡片模式下隐藏） */
 .step-divider {
   display: none;
+}
+
+/* 子步骤缩进 */
+.step-row--sub {
+  padding-left: 16px;
+}
+
+/* agent 行 */
+.agent-row {
+  display: flex;
+  align-items: center;
+  padding: 4px 0 4px 2px;
+  width: 100%;
+  min-height: 30px;
+}
+
+.agent-icon {
+  font-size: 12px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.agent-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2329;
+  flex: 1;
+}
+
+.agent-label.running {
+  color: #1890ff;
+}
+
+/* 输出文本（show_process_output=true 时显示） */
+.step-output {
+  font-size: 12px;
+  color: #606266;
+  margin-top: 2px;
+  padding-left: 2px;
+  line-height: 1.4;
 }
 </style>
