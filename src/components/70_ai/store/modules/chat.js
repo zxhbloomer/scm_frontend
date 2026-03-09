@@ -191,6 +191,13 @@ const mutations = {
     }
     const processData = state.workflowProcessNodes[messageId]
     const steps = processData.steps
+
+    // agent 行：直接 push，不走 node_start/node_complete 逻辑
+    if (nodeEvent.nodeEventType === '__agent_row__') {
+      steps.push(nodeEvent.agentRow)
+      return
+    }
+
     if (nodeEvent.nodeEventType === 'node_start') {
       // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
       if (processData.pendingComplete) {
@@ -206,8 +213,8 @@ const mutations = {
       // 处理虚拟"问题分析"步骤 → 真实步骤的过渡
       const virtualIdx = steps.findIndex(s => s.nodeUuid === '__virtual_analysis__')
       if (virtualIdx !== -1) {
-        if (nodeEvent.nodeName === 'Classifier') {
-          // 真实Classifier到达 → 替换虚拟步骤
+        if (nodeEvent.nodeName === 'Classifier' && steps[virtualIdx].status !== 'done') {
+          // 真实Classifier到达且虚拟步骤还在running → 替换虚拟步骤
           steps.splice(virtualIdx, 1, {
             nodeUuid: nodeEvent.nodeUuid,
             nodeName: nodeEvent.nodeName,
@@ -215,8 +222,12 @@ const mutations = {
             status: 'running',
             timestamp: nodeEvent.nodeTimestamp,
             duration: null,
-            summary: null
+            summary: null,
+            depth: 1
           })
+          return
+        } else if (nodeEvent.nodeName === 'Classifier' && steps[virtualIdx].status === 'done') {
+          // 虚拟步骤已完成（被中间节点标记done），Classifier到达时跳过，不重复显示
           return
         } else {
           // 非Classifier节点到达 → 虚拟步骤标记完成
@@ -231,7 +242,8 @@ const mutations = {
         status: 'running',
         timestamp: nodeEvent.nodeTimestamp,
         duration: null,
-        summary: null
+        summary: null,
+        depth: 1
       })
     } else if (nodeEvent.nodeEventType === 'node_complete') {
       // 缓冲node_complete，等下一个node_start到达或流结束时才应用
@@ -251,6 +263,18 @@ const mutations = {
         step.summary = pending.nodeSummary || null
       }
       processData.pendingComplete = null
+    }
+    // 子步骤全完成时，更新最近的 agent 行为 done
+    if (processData) {
+      const subSteps = processData.steps.filter(s => s.depth === 1)
+      const allSubDone = subSteps.length > 0 && subSteps.every(s => s.status === 'done')
+      if (allSubDone) {
+        const agentRow = [...processData.steps].reverse().find(s => s.isAgentRow && s.status === 'running')
+        if (agentRow) {
+          agentRow.status = 'done'
+          agentRow.duration = subSteps.reduce((sum, s) => sum + (s.duration || 0), 0)
+        }
+      }
     }
   }
 }
@@ -394,15 +418,48 @@ const actions = {
           }
         },
         onNodeEvent: (nodeEvent) => {
+          // runtime 事件：插入"调用agent：xxx"行（depth=0，isAgentRow=true）
+          if (nodeEvent.nodeEventType === 'runtime' && nodeEvent.workflowTitle) {
+            const agentRow = {
+              nodeUuid: `__agent_${nodeEvent.workflowUuid || ''}_${Date.now()}`,
+              nodeName: '__agent_row__',
+              nodeTitle: nodeEvent.workflowTitle,
+              status: 'running',
+              timestamp: Date.now(),
+              duration: null,
+              summary: null,
+              depth: 0,
+              isAgentRow: true
+            }
+            commit('SET_WORKFLOW_PROCESS_NODE', {
+              messageId: aiMessageId,
+              nodeEvent: { nodeEventType: '__agent_row__', agentRow }
+            })
+            return
+          }
+          // node_start / node_complete 事件
           commit('SET_WORKFLOW_PROCESS_NODE', {
             messageId: aiMessageId,
             nodeEvent
           })
         },
-        onOpenPageCommand: (command) => {
-          // 页面导航指令：调用AiPageRouter执行RouterTab导航
+        onOpenPageCommand: (command, realMessageId) => {
           import('@/components/70_ai/components/navigator/AiPageRouter.js').then(({ navigateToPage }) => {
-            navigateToPage(command, router, { getters: rootGetters, commit })
+            navigateToPage(command, router, { getters: rootGetters, commit, dispatch })
+              .then((success) => {
+                const routeLabel = command.page_mode === 'new' ? '新增页面'
+                  : (command.page_mode === 'edit' ? '编辑页面' : '页面')
+                const resultContent = success ? `已为您打开${routeLabel}` : '页面打开失败'
+                const finalMsgId = realMessageId || aiMessageId
+                commit('UPDATE_MESSAGE', {
+                  messageId: finalMsgId,
+                  updates: {
+                    content: resultContent,
+                    status: 'delivered',
+                    isStreaming: false
+                  }
+                })
+              })
           })
         },
         onInteractionRequest: (request) => {
@@ -478,20 +535,24 @@ const actions = {
               ? JSON.parse(JSON.stringify(processData.steps))
               : null
 
+            // 有open_page_command时，消息内容由onOpenPageCommand负责写入，onComplete不覆盖
+            const hasOpenPageCommand = !!(chatResponse?.open_page_command)
+
             commit('UPDATE_MESSAGE', {
               messageId: aiMessageId,
               updates: {
                 // 关键修复: 使用后端返回的真实messageId替换临时ID
                 // 解决删除消息时因ID不匹配导致删除失败的问题
                 id: chatResponse?.messageId || aiMessageId,
-                content: finalContent,
+                // open_page_command时不覆盖content（导航进度已写入），否则用finalContent
+                ...(hasOpenPageCommand ? {} : { content: finalContent }),
                 status: 'delivered',
                 isStreaming: false,
-                isHidden: !hasEnoughContent, // 只有有足够内容才显示
+                isHidden: !hasOpenPageCommand && !hasEnoughContent, // open_page_command时消息可见
                 streamFormat: 'flux-chat-response',
                 completedAt: new Date().toISOString(),
                 workflowRuntime: workflowRuntime, // 保存工作流运行时信息
-                workflowSteps: workflowSteps, // 持久化步骤数据，供折叠回看
+                workflowSteps: workflowSteps,
                 ai_open_dialog_para: chatResponse?.ai_open_dialog_para || null // OpenPage节点JSON数据，用于"打开页面"按钮
               }
             })
