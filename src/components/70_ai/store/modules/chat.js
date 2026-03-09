@@ -192,12 +192,6 @@ const mutations = {
     const processData = state.workflowProcessNodes[messageId]
     const steps = processData.steps
 
-    // agent 行：直接 push，不走 node_start/node_complete 逻辑
-    if (nodeEvent.nodeEventType === '__agent_row__') {
-      steps.push(nodeEvent.agentRow)
-      return
-    }
-
     if (nodeEvent.nodeEventType === 'node_start') {
       // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
       if (processData.pendingComplete) {
@@ -210,30 +204,11 @@ const mutations = {
         }
         processData.pendingComplete = null
       }
-      // 处理虚拟"问题分析"步骤 → 真实步骤的过渡
+      // 处理虚拟"问题分析"步骤：任何真实节点到达时，将虚拟步骤标记完成
       const virtualIdx = steps.findIndex(s => s.nodeUuid === '__virtual_analysis__')
-      if (virtualIdx !== -1) {
-        if (nodeEvent.nodeName === 'Classifier' && steps[virtualIdx].status !== 'done') {
-          // 真实Classifier到达且虚拟步骤还在running → 替换虚拟步骤
-          steps.splice(virtualIdx, 1, {
-            nodeUuid: nodeEvent.nodeUuid,
-            nodeName: nodeEvent.nodeName,
-            nodeTitle: nodeEvent.nodeTitle,
-            status: 'running',
-            timestamp: nodeEvent.nodeTimestamp,
-            duration: null,
-            summary: null,
-            depth: 1
-          })
-          return
-        } else if (nodeEvent.nodeName === 'Classifier' && steps[virtualIdx].status === 'done') {
-          // 虚拟步骤已完成（被中间节点标记done），Classifier到达时跳过，不重复显示
-          return
-        } else {
-          // 非Classifier节点到达 → 虚拟步骤标记完成
-          steps[virtualIdx].status = 'done'
-          steps[virtualIdx].duration = nodeEvent.nodeTimestamp - steps[virtualIdx].timestamp
-        }
+      if (virtualIdx !== -1 && steps[virtualIdx].status !== 'done') {
+        steps[virtualIdx].status = 'done'
+        steps[virtualIdx].duration = nodeEvent.nodeTimestamp - steps[virtualIdx].timestamp
       }
       steps.push({
         nodeUuid: nodeEvent.nodeUuid,
@@ -264,16 +239,14 @@ const mutations = {
       }
       processData.pendingComplete = null
     }
-    // 子步骤全完成时，更新最近的 agent 行为 done
+    // 标记agent包裹行完成
     if (processData) {
-      const subSteps = processData.steps.filter(s => s.depth === 1)
-      const allSubDone = subSteps.length > 0 && subSteps.every(s => s.status === 'done')
-      if (allSubDone) {
-        const agentRow = [...processData.steps].reverse().find(s => s.isAgentRow && s.status === 'running')
-        if (agentRow) {
-          agentRow.status = 'done'
-          agentRow.duration = subSteps.reduce((sum, s) => sum + (s.duration || 0), 0)
-        }
+      const agentStep = processData.steps.find(s => s.nodeUuid === '__agent_call__')
+      if (agentStep && agentStep.status !== 'done') {
+        agentStep.status = 'done'
+        agentStep.duration = processData.steps
+          .filter(s => s.nodeUuid !== '__agent_call__' && s.nodeUuid !== '__virtual_analysis__')
+          .reduce((sum, s) => sum + (s.duration || 0), 0)
       }
     }
   }
@@ -418,22 +391,17 @@ const actions = {
           }
         },
         onNodeEvent: (nodeEvent) => {
-          // runtime 事件：插入"调用agent：xxx"行（depth=0，isAgentRow=true）
-          if (nodeEvent.nodeEventType === 'runtime' && nodeEvent.workflowTitle) {
-            const agentRow = {
-              nodeUuid: `__agent_${nodeEvent.workflowUuid || ''}_${Date.now()}`,
-              nodeName: '__agent_row__',
-              nodeTitle: nodeEvent.workflowTitle,
-              status: 'running',
-              timestamp: Date.now(),
-              duration: null,
-              summary: null,
-              depth: 0,
-              isAgentRow: true
-            }
+          if (nodeEvent.nodeEventType === 'runtime') {
+            // runtime事件：插入"调用agent：xxx"包裹行
             commit('SET_WORKFLOW_PROCESS_NODE', {
               messageId: aiMessageId,
-              nodeEvent: { nodeEventType: '__agent_row__', agentRow }
+              nodeEvent: {
+                nodeEventType: 'node_start',
+                nodeUuid: '__agent_call__',
+                nodeName: 'AgentCall',
+                nodeTitle: nodeEvent.workflowTitle || '工作流',
+                nodeTimestamp: Date.now()
+              }
             })
             return
           }
@@ -560,6 +528,12 @@ const actions = {
             // 触发AI业务弹窗检测
             // 优先使用ai_open_dialog_para(OpenPage节点或Synthesizer路径透传的含ai_new_route的原始JSON)
             const dialogOutput = chatResponse?.ai_open_dialog_para || finalContent
+
+            // 上报完整workflowSteps到后端持久化（含虚拟节点和summary，刷新后可恢复）
+            const realMessageId = chatResponse?.messageId || aiMessageId
+            if (workflowSteps && workflowSteps.length > 0 && realMessageId) {
+              aiChatService.updateWorkflowSteps(realMessageId, workflowSteps)
+            }
             commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
 
             // 清除临时步骤数据（已持久化到消息对象）

@@ -2,7 +2,7 @@
  * AI页面导航器
  *
  * 接收后端open_page_command指令，执行RouterTab级别的页面跳转。
- * 支持权限校验、加载浮层、参数传递、page_mode后续操作。
+ * 权限由后端MCP工具校验，前端直接跳转。
  *
  * @param {Object} command - open_page_command JSON对象
  * @param {string} command.route - 目标路由路径
@@ -15,92 +15,55 @@
 import Vue from 'vue'
 
 /**
- * 标准化路径：确保以 / 开头，去除尾部 /
- */
-function normalizePath (path) {
-  if (!path) return ''
-  let p = path.trim()
-  if (!p.startsWith('/')) p = '/' + p
-  if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1)
-  return p
-}
-
-/**
- * 检查路由是否在用户权限菜单中
- */
-function checkRoutePermission (route, store) {
-  const menus = store.getters.permission_menus_routers || []
-  const normalizedRoute = normalizePath(route)
-  return findRouteInMenus(normalizedRoute, menus)
-}
-
-function findRouteInMenus (targetPath, menus) {
-  for (const menu of menus) {
-    if (normalizePath(menu.path) === targetPath) return true
-    if (menu.children && findRouteInMenus(targetPath, menu.children)) return true
-  }
-  return false
-}
-
-/**
  * 执行页面导航
+ * @param {Object} command - open_page_command JSON对象
+ * @param {Object} router - Vue Router 实例
+ * @param {Object} store - 包含 { commit } 的 store 对象
+ * @param {Function} [onStep] - 步骤回调
  */
-export async function navigateToPage (command, router, store) {
+export async function navigateToPage (command, router, store, onStep) {
+  const step = onStep || (() => {})
+
   if (!command || !command.route) {
     console.warn('[AiPageRouter] 无效的导航指令:', command)
     return false
   }
 
-  // 1. 权限校验
-  if (!checkRoutePermission(command.route, store)) {
-    Vue.prototype.$message.warning('没有访问该页面的权限: ' + command.route)
-    return false
-  }
-
-  // 2. 显示加载浮层
   store.commit('SET_AI_LOADING_OVERLAY', true)
 
   try {
-    // 3. 构建路由参数
+    // 构建路由参数并跳转（权限已由后端校验）
+    step('⏳ 正在打开页面，等待加载...')
     const query = { _ai: '1' }
-    if (command.page_mode) {
-      query._ai_mode = command.page_mode
-    }
-    if (command.query_params) {
-      Object.assign(query, command.query_params)
-    }
-    if (command.record_id) {
-      query._ai_record_id = command.record_id
-    }
-    if (command.form_data) {
-      query._ai_form_data = JSON.stringify(command.form_data)
-    }
+    if (command.page_mode) query._ai_mode = command.page_mode
+    if (command.query_params) Object.assign(query, command.query_params)
+    if (command.record_id) query._ai_record_id = command.record_id
+    if (command.form_data) query._ai_form_data = JSON.stringify(command.form_data)
 
-    // 4. 执行导航
     await router.push({ path: command.route, query })
-
-    // 5. 等待页面渲染完成
     await waitForNextTick()
+    step('✅ 页面加载完成')
 
-    // 6. 通过全局事件总线通知目标页面执行page_mode操作
+    // 触发 page_mode 操作
     if (command.page_mode && command.page_mode !== 'list') {
+      step('⏳ 正在触发操作...')
       Vue.prototype.$bus && Vue.prototype.$bus.$emit('ai-page-action', {
         mode: command.page_mode,
         record_id: command.record_id,
         form_data: command.form_data
       })
+      step('✅ 完成')
     }
 
     return true
   } catch (err) {
-    // NavigationDuplicated不算错误
     if (err.name !== 'NavigationDuplicated') {
       console.error('[AiPageRouter] 导航失败:', err)
+      step('❌ 页面导航失败')
       Vue.prototype.$message.error('页面导航失败')
     }
     return false
   } finally {
-    // 7. 关闭加载浮层（延迟500ms让页面渲染）
     setTimeout(() => {
       store.commit('SET_AI_LOADING_OVERLAY', false)
     }, 500)

@@ -282,7 +282,6 @@ export default {
     'wfNode.uuid': {
       handler (newUuid, oldUuid) {
         if (newUuid !== oldUuid) {
-          console.log('=== 节点切换 ===', oldUuid, '->', newUuid)
           // 重置选择状态
           this.selectedKbSources = []
           // 重新检测上游临时知识库节点
@@ -298,8 +297,6 @@ export default {
   },
 
   mounted () {
-    console.log('=== KnowledgeRetrievalNodeProperty mounted ===')
-
     // 初始化:检测上游临时知识库节点
     this.detectUpstreamTempKbNodes()
 
@@ -308,8 +305,6 @@ export default {
 
     // 监听X6 graph事件
     this.watchGraphChanges()
-
-    console.log('=== mounted完成, upstreamTempKbNodes:', this.upstreamTempKbNodes.length, '个 ===')
   },
 
   beforeDestroy () {
@@ -354,7 +349,6 @@ export default {
       })
 
       this.upstreamTempKbNodes = tempKbNodes
-      console.log('检测到上游临时知识库节点:', tempKbNodes.length, '个')
     },
 
     /**

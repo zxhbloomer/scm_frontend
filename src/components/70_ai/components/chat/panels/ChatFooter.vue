@@ -51,7 +51,6 @@ export default {
     },
 
     handleFileUploaded (file) {
-      console.log('文件上传成功：', file)
     },
 
     handleFileUploadError ({ file, error }) {

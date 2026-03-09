@@ -43,6 +43,7 @@ class AIChatService {
     const controller = new AbortController()
     let hasStarted = false
     let accumulatedContent = '' // 本地累积buffer，用于在onComplete时传递完整内容
+    let openPageCommandFired = false // 防止open_page_command重复触发
 
     const connectSSE = async () => {
       try {
@@ -110,23 +111,17 @@ class AIChatService {
           for (const message of messages) {
             if (message.trim() === '') continue
 
-            console.log('🔵 【SSE原始消息】收到消息:', message.substring(0, 200)) // 只打印前200字符
-
-            // 解析SSE格式的data行 - 修复多行JSON问题
+            // 解析SSE格式的data行
             if (message.startsWith('data:')) {
               const jsonData = message.slice(5) // 移除 "data:" 前缀
 
-              console.log('🔵 【SSE-data字段】提取data:', jsonData.substring(0, 200)) // 只打印前200字符
-
               if (jsonData.trim() === '') {
-                console.log('⚠️ 【SSE-data字段】data为空,跳过')
                 continue
               }
 
               try {
                 // 解析ChatResponse JSON对象
                 const chatResponse = JSON.parse(jsonData)
-                console.log('✅ 【SSE-JSON解析】解析成功, keys:', Object.keys(chatResponse))
 
                 // 节点事件处理（工作流执行步骤展示）
                 if (chatResponse.nodeEventType && typeof onNodeEvent === 'function') {
@@ -134,17 +129,22 @@ class AIChatService {
                 }
 
                 // 检测页面导航指令（OpenPage route模式）
-                if (chatResponse.open_page_command && typeof onOpenPageCommand === 'function') {
+                // 仅在完成事件(isComplete)中处理，避免中间chunk重复触发
+                if (chatResponse.open_page_command && chatResponse.isComplete === true &&
+                    !openPageCommandFired && typeof onOpenPageCommand === 'function') {
+                  openPageCommandFired = true
                   try {
                     const command = JSON.parse(chatResponse.open_page_command)
-                    onOpenPageCommand(command)
+                    // 同时传入真实messageId，因为onComplete会把临时ID替换成真实ID
+                    onOpenPageCommand(command, chatResponse.messageId)
                   } catch (e) {
                     console.error('[aiChatService] 解析open_page_command失败:', e)
                   }
                 }
 
-                // 检测人机交互请求
-                if (chatResponse.interaction_request && typeof onInteractionRequest === 'function') {
+                // 检测人机交互请求（仅完成事件中处理）
+                if (chatResponse.interaction_request && chatResponse.isComplete === true &&
+                    typeof onInteractionRequest === 'function') {
                   try {
                     const interactionReq = JSON.parse(chatResponse.interaction_request)
                     onInteractionRequest(interactionReq)
@@ -153,21 +153,13 @@ class AIChatService {
                   }
                 }
 
-                // 【优先检查】MCP工具返回结果(后端新增字段,用于页面跳转等特殊指令)
+                // 【优先检查】MCP工具返回结果
                 if (chatResponse.mcpToolResults && Array.isArray(chatResponse.mcpToolResults)) {
-                  console.log('🔧 【MCP工具结果】检测到MCP工具结果,数量:', chatResponse.mcpToolResults.length)
                   for (const toolResult of chatResponse.mcpToolResults) {
                     const { toolName, result } = toolResult
-                    console.log('🔧 【MCP工具结果】工具名:', toolName, '结果keys:', Object.keys(result || {}))
 
                     // 检查是否是openPage工具
                     if (toolName === 'PermissionMcpTools.openPage' && result) {
-                      console.log('✅ 【MCP-openPage】检测到页面跳转指令:', {
-                        url: result.url,
-                        target: result.target,
-                        action: result.action
-                      })
-
                       // 解析openPage指令
                       if (result.action === 'openPage' && result.success === true) {
                         const url = result.url
@@ -176,9 +168,8 @@ class AIChatService {
                         // 通过回调通知上层组件执行路由跳转
                         if (onOpenPage && typeof onOpenPage === 'function') {
                           onOpenPage({ url, target })
-                          console.log('🎉 【页面跳转成功】已触发页面跳转到:', url)
                         } else {
-                          console.error('❌ 【页面跳转失败】onOpenPage回调不存在或不是函数')
+                          console.error('[aiChatService] onOpenPage回调不存在或不是函数')
                         }
                       }
                     }
@@ -186,19 +177,16 @@ class AIChatService {
                 }
 
                 if (chatResponse.results && chatResponse.results.length > 0) {
-                  console.log('📝 【SSE-results】检测到results字段,数量:', chatResponse.results.length)
                   const generation = chatResponse.results[0]
                   let content = generation.output?.content || ''
-                  console.log('📝 【SSE-content】原始content长度:', content.length, '前100字符:', content.substring(0, 100))
 
                   // 尝试解析content,因为工作流输出是JSON格式 {"output":{"type":1,"value":"实际文本"}}
                   // 或者MCP工具返回的页面跳转指令 {"action":"openPage","url":"/path","target":"_self"}
                   try {
                     const contentObj = JSON.parse(content)
 
-                    // 检测页面跳转指令(旧逻辑,应该已被mcpToolResults取代)
+                    // 检测页面跳转指令(旧逻辑,已被mcpToolResults取代)
                     if (contentObj.action === 'openPage') {
-                      console.warn('⚠️ 【MCP-openPage】在content中检测到openPage指令(旧逻辑,应该被mcpToolResults取代)')
                       const url = contentObj.url
                       const target = contentObj.target || '_self'
 
@@ -225,35 +213,25 @@ class AIChatService {
 
                   // 检查是否为完成事件（有finishReason或isComplete标志)
                   if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
-                    console.log('🏁 【SSE-完成】检测到完成标志, finishReason:', generation.metadata?.finishReason, 'isComplete:', chatResponse.isComplete)
                     // 完成事件 - 优先使用done事件的content(后端确定的完整内容),
                     // 如果done事件没有content则使用前端累积的内容
                     const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
-                    console.log('🏁 【SSE-完成】最终内容长度:', finalContent.length, '前100字符:', finalContent.substring(0, 100))
 
                     // 传递完整的chatResponse对象,包含workflowRuntime等信息
                     onComplete(finalContent, chatResponse)
                     return
                   } else {
-                    console.log('⏩【SSE-流式】流式内容块')
                     // 流式进行中的内容块
-
-                    // 处理增量内容：Spring AI可能发送空内容块或完整累积内容
                     // 只有当内容不为空且包含有效字符时才触发回调
                     if (content !== undefined && content !== null && content !== '') {
-                      console.log('⏩【SSE-流式】触发onContent回调,内容长度:', content.length)
-                      accumulatedContent += content // 累积到本地buffer
+                      accumulatedContent += content
                       onContent(content)
-                    } else {
-                      console.log('⚠️ 【SSE-流式】content为空,不触发回调')
                     }
                   }
-                } else {
-                  console.log('⚠️ 【SSE-results】无results字段或为空')
                 }
               } catch (parseError) {
                 // 继续处理其他消息，不中断流
-                console.error('❌ 解析SSE消息失败:', parseError)
+                console.error('[aiChatService] 解析SSE消息失败:', parseError)
               }
             }
           }
@@ -946,6 +924,23 @@ class AIChatService {
     return () => {
       cancelled = true
       controller.abort()
+    }
+  }
+
+  /**
+   * 更新消息的工作流思考步骤
+   * 流结束后上报完整steps（含虚拟节点和summary），刷新页面后可恢复显示
+   */
+  async updateWorkflowSteps (messageId, workflowSteps) {
+    try {
+      await request({
+        url: `/api/v1/ai/conversation/chat/workflow-steps/${messageId}`,
+        method: 'post',
+        data: JSON.stringify(workflowSteps),
+        headers: { 'Content-Type': 'application/json' }
+      })
+    } catch (e) {
+      console.error('[aiChatService] 更新工作流步骤失败:', e)
     }
   }
 }

@@ -116,6 +116,21 @@
         </div>
       </template>
     </template>
+
+    <!-- 执行过程输出开关 -->
+    <div class="property-section">
+      <div class="section-title">
+        执行过程输出
+        <el-tooltip content="关闭后，节点执行结果不会显示在对话中，但仍会传递给下游节点" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.show_process_output"
+        active-text="显示"
+        inactive-text="隐藏"
+      />
+    </div>
   </div>
 </template>
 
@@ -148,39 +163,22 @@ export default {
 
   computed: {
     nodeConfig () {
-      const config = this.wfNode.nodeConfig
-      // dialog模式字段
-      if (!config.model_name) {
-        this.$set(config, 'model_name', '')
-      }
-      if (!config.prompt) {
-        this.$set(config, 'prompt', '')
-      }
-      // 打开模式（默认dialog保持向后兼容）
-      if (!config.open_mode) {
-        this.$set(config, 'open_mode', 'dialog')
-      }
-      // route模式字段
-      if (config.route === undefined) {
-        this.$set(config, 'route', '')
-      }
-      if (config.page_mode === undefined) {
-        this.$set(config, 'page_mode', 'list')
-      }
-      if (config.interaction_enabled === undefined) {
-        this.$set(config, 'interaction_enabled', false)
-      }
-      if (config.interaction_type === undefined) {
-        this.$set(config, 'interaction_type', 'user_select')
-      }
-      if (config.interaction_description === undefined) {
-        this.$set(config, 'interaction_description', '')
-      }
-      if (config.timeout_minutes === undefined) {
-        this.$set(config, 'timeout_minutes', 30)
-      }
-      return config
+      return this.wfNode.nodeConfig
     }
+  },
+
+  created () {
+    const config = this.wfNode.nodeConfig
+    if (!config.model_name) this.$set(config, 'model_name', '')
+    if (!config.prompt) this.$set(config, 'prompt', '')
+    if (!config.open_mode) this.$set(config, 'open_mode', 'dialog')
+    if (config.route === undefined) this.$set(config, 'route', '')
+    if (config.page_mode === undefined) this.$set(config, 'page_mode', 'list')
+    if (config.interaction_enabled === undefined) this.$set(config, 'interaction_enabled', false)
+    if (config.interaction_type === undefined) this.$set(config, 'interaction_type', 'user_select')
+    if (config.interaction_description === undefined) this.$set(config, 'interaction_description', '')
+    if (config.timeout_minutes === undefined) this.$set(config, 'timeout_minutes', 30)
+    if (config.show_process_output === undefined) this.$set(config, 'show_process_output', true)
   },
 
   methods: {

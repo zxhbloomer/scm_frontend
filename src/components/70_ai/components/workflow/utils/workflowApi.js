@@ -237,11 +237,8 @@ export function workflowRun (params) {
       // 检查空值和空字符串
       if (!msg.data || msg.data.trim() === '') return
 
-      console.log('[workflowRun] SSE收到数据:', msg.data?.substring(0, 100))
-
       try {
         const data = JSON.parse(msg.data)
-        console.log('[workflowRun] 解析数据类型:', data.type)
 
         // 统一调用onMessage，由调用方根据data.type处理
         if (onMessage) onMessage(data)
@@ -250,8 +247,6 @@ export function workflowRun (params) {
       }
     },
     onclose () {
-      // 对齐Spring AI Alibaba：Flux.complete()信号
-      console.log('[workflowRun] SSE连接关闭')
       if (onComplete) onComplete()
     },
     onerror (err) {

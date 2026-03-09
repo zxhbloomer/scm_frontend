@@ -760,13 +760,6 @@ export default {
     },
 
     async createNewEdge (edge) {
-      console.log('[DEBUG createNewEdge] 开始', {
-        edgeId: edge.id,
-        sourceCell: edge.getSourceCellId(),
-        sourcePort: edge.getSourcePortId(),
-        targetCell: edge.getTargetCellId()
-      })
-
       const { createNewEdgeData } = await import('@/components/70_ai/components/workflow/utils')
 
       const sourceNodeId = edge.getSourceCellId()
@@ -784,11 +777,6 @@ export default {
         console.error('Source or target node not found', { sourceNodeId, targetNodeId })
         return
       }
-
-      console.log('[DEBUG createNewEdge] 调用 createNewEdgeData 前', {
-        workflowEdgesCount: this.workflow.edges.length,
-        workflowEdges: this.workflow.edges.map(e => ({ uuid: e.uuid, source: e.sourceNodeUuid, target: e.targetNodeUuid }))
-      })
 
       const sourcePort = edge.getSourcePortId()
       const targetPort = edge.getTargetPortId()

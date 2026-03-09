@@ -285,7 +285,6 @@ export default {
       if (e.dataTransfer && e.dataTransfer.types) {
         const hasFiles = Array.from(e.dataTransfer.types).includes('Files')
         if (hasFiles) {
-          console.log('🌍 全局检测到文件拖动')
           this.showGlobalDropZone = true
         }
       }
@@ -305,39 +304,33 @@ export default {
       }
 
       this.dragLeaveTimer = setTimeout(() => {
-        console.log('👋 离开拖放区域')
         this.showGlobalDropZone = false
       }, 100)
     },
 
     handleGlobalDrop (e) {
-      console.log('🎯 全局drop触发')
       // 隐藏overlay
       this.showGlobalDropZone = false
 
       // 获取文件
       const files = e.dataTransfer?.files
       if (!files || files.length === 0) {
-        console.warn('⚠️ 没有检测到文件')
         return
       }
 
       // 转发到ChatFooter的ChatInputWrap处理
-      // 通过ref访问ChatFooter，再访问其子组件ChatInputWrap
       const chatFooter = this.$children.find(child => child.$options.name === 'ChatFooter')
       if (chatFooter) {
         const chatInputWrap = chatFooter.$children.find(child => child.$options.name === 'ChatInputWrap')
         if (chatInputWrap) {
-          // 模拟调用processFile方法
           Array.from(files).forEach(file => {
-            console.log('📤 转发文件到ChatInputWrap:', file.name)
             chatInputWrap.processFile(file)
           })
         } else {
-          console.error('❌ 找不到ChatInputWrap组件')
+          console.error('[ChatPanel] 找不到ChatInputWrap组件')
         }
       } else {
-        console.error('❌ 找不到ChatFooter组件')
+        console.error('[ChatPanel] 找不到ChatFooter组件')
       }
     }
   }

@@ -23,66 +23,79 @@
         v-for="(step, index) in steps"
         :key="step.nodeUuid"
         class="step-row"
-        :class="{ 'step-row--sub': step.depth === 1 }"
+        :class="{ 'step-row--agent-call': step.nodeUuid === '__agent_call__' }"
       >
-        <!-- agent 行：特殊渲染，无圆点 -->
-        <template v-if="step.isAgentRow">
-          <div class="agent-row">
-            <span class="agent-icon">⚡</span>
-            <span class="agent-label" :class="step.status">
-              {{ step.status === 'running' ? `调用agent：${step.nodeTitle}` : `调用agent完成` }}
-            </span>
+        <!-- 左侧：圆点 + 连接线 -->
+        <div class="step-timeline">
+          <div class="step-circle" :class="step.status">
+            <template v-if="step.status === 'running'">
+              <div class="circle-pulse" />
+            </template>
+            <template v-else>
+              <svg viewBox="0 0 12 12" class="check-icon">
+                <path d="M3.5 6L5.5 8L8.5 4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </template>
+          </div>
+          <div v-if="index < steps.length - 1" class="step-line" />
+        </div>
+
+        <!-- 右侧：步骤内容 -->
+        <div class="step-content" :class="{ 'step-content--last': index === steps.length - 1 }">
+          <div class="step-header">
+            <span class="step-title" :class="step.status">{{ getStepText(step) }}</span>
             <span v-if="step.duration != null" class="step-duration">{{ formatDuration(step.duration) }}</span>
           </div>
-        </template>
-
-        <!-- 普通步骤行（含子步骤） -->
-        <template v-else>
-          <!-- 左侧：圆点 + 连接线 -->
-          <div class="step-timeline">
-            <div class="step-circle" :class="step.status">
-              <template v-if="step.status === 'running'">
-                <div class="circle-pulse" />
-              </template>
-              <template v-else>
-                <svg viewBox="0 0 12 12" class="check-icon">
-                  <path d="M3.5 6L5.5 8L8.5 4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </template>
-            </div>
-            <div v-if="index < steps.length - 1 && !steps[index + 1].isAgentRow" class="step-line" />
-          </div>
-
-          <!-- 右侧：步骤内容 -->
-          <div class="step-content" :class="{ 'step-content--last': index === steps.length - 1 }">
-            <div class="step-header">
-              <span class="step-title" :class="step.status">{{ getStepText(step) }}</span>
-              <span v-if="step.duration != null" class="step-duration">{{ formatDuration(step.duration) }}</span>
-            </div>
-            <!-- outputText：show_process_output=true 时后端在 summary 中携带 -->
-            <div v-if="step.summary && step.summary.outputText" class="step-output">
-              {{ step.summary.outputText }}
-            </div>
-            <!-- 子工作流折叠面板：summary.steps 存在时显示 -->
-            <div v-if="step.summary && step.summary.steps && step.summary.steps.length" class="sub-steps-panel">
-              <div class="sub-steps-toggle" @click.stop="toggleSubSteps(step.nodeUuid)">
-                <span>查看详情</span>
-                <svg class="sub-steps-arrow" :class="{ expanded: expandedSubSteps[step.nodeUuid] }" viewBox="0 0 12 12" width="10" height="10">
-                  <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+          <!-- Start节点参数：换行显示，格式：title = value -->
+          <div v-if="step.nodeName === 'Start' && step.summary && step.summary.params && step.summary.params.length" class="step-output">
+            <div class="step-output-text">
+              <div v-for="p in step.summary.params" :key="p.name" class="step-output-param">
+                <span class="param-title">{{ p.title }}</span>
+                <span v-if="p.value" class="param-value"> = {{ p.value }}</span>
               </div>
-              <div v-show="expandedSubSteps[step.nodeUuid]" class="sub-steps-body">
-                <div v-for="subStep in step.summary.steps" :key="subStep.nodeUuid" class="sub-step-row">
-                  <div class="sub-step-circle" />
-                  <div class="sub-step-content">
-                    <span class="sub-step-title">{{ getSubStepText(subStep) }}</span>
-                    <span v-if="subStep.duration != null" class="step-duration">{{ formatDuration(subStep.duration) }}</span>
-                  </div>
+            </div>
+            <el-button
+              type="text"
+              size="mini"
+              :icon="copiedUuid === step.nodeUuid ? 'el-icon-check' : 'el-icon-copy-document'"
+              class="step-output-copy"
+              :class="{ copied: copiedUuid === step.nodeUuid }"
+              title="复制"
+              @click.stop="copyStartParams(step)"
+            />
+          </div>
+          <!-- outputText：show_process_output=true 时后端在 summary 中携带 -->
+          <div v-if="step.summary && step.summary.outputText" class="step-output">
+            <span class="step-output-text">{{ step.summary.outputText }}</span>
+            <el-button
+              type="text"
+              size="mini"
+              :icon="copiedUuid === step.nodeUuid ? 'el-icon-check' : 'el-icon-copy-document'"
+              class="step-output-copy"
+              :class="{ copied: copiedUuid === step.nodeUuid }"
+              title="复制"
+              @click.stop="copyOutput(step)"
+            />
+          </div>
+          <!-- 子工作流折叠面板：summary.steps 存在时显示 -->
+          <div v-if="step.summary && step.summary.steps && step.summary.steps.length" class="sub-steps-panel">
+            <div class="sub-steps-toggle" @click.stop="toggleSubSteps(step.nodeUuid)">
+              <span>查看详情</span>
+              <svg class="sub-steps-arrow" :class="{ expanded: expandedSubSteps[step.nodeUuid] }" viewBox="0 0 12 12" width="10" height="10">
+                <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <div v-show="expandedSubSteps[step.nodeUuid]" class="sub-steps-body">
+              <div v-for="subStep in step.summary.steps" :key="subStep.nodeUuid" class="sub-step-row">
+                <div class="sub-step-circle" />
+                <div class="sub-step-content">
+                  <span class="sub-step-title">{{ getSubStepText(subStep) }}</span>
+                  <span v-if="subStep.duration != null" class="step-duration">{{ formatDuration(subStep.duration) }}</span>
                 </div>
               </div>
             </div>
           </div>
-        </template>
+        </div>
       </div>
     </div>
 
@@ -120,9 +133,9 @@ export default {
 
   data () {
     return {
-      // 历史消息(streamComplete且全done)默认折叠，实时消息默认展开
       collapsed: this.streamComplete && this.steps && this.steps.length > 0 && this.steps.every(s => s.status === 'done'),
-      expandedSubSteps: {}
+      expandedSubSteps: {},
+      copiedUuid: null
     }
   },
 
@@ -138,18 +151,22 @@ export default {
     isCompleted () {
       if (!this.isAllDone) return false
       if (this.streamComplete) return true
-      const lastStep = this.steps[this.steps.length - 1]
-      // Answer/LLM：终端文本节点；OpenPage：终端导航节点；agent行done：子工作流完成
+      // 找最后一个非agent包裹行的步骤
+      const realSteps = this.steps.filter(s => s.nodeUuid !== '__agent_call__')
+      const lastStep = realSteps[realSteps.length - 1]
       return lastStep && (
         lastStep.nodeName === 'Answer' ||
         lastStep.nodeName === 'LLM' ||
         lastStep.nodeName === 'OpenPage' ||
-        (lastStep.isAgentRow && lastStep.status === 'done')
+        lastStep.nodeName === 'End'
       ) && lastStep.status === 'done'
     },
 
     totalDuration () {
-      return this.steps.reduce((sum, s) => sum + (s.duration || 0), 0)
+      // 排除agent包裹行（其duration是内部步骤之和，避免重复计算）
+      return this.steps
+        .filter(s => s.nodeUuid !== '__agent_call__')
+        .reduce((sum, s) => sum + (s.duration || 0), 0)
     },
 
     totalTokens () {
@@ -158,15 +175,17 @@ export default {
 
     headerDesc () {
       if (this.isCompleted) {
-        let desc = `思考${this.formatDuration(this.totalDuration)} · ${this.steps.length}个步骤`
+        // 不计入agent包裹行
+        const realStepCount = this.steps.filter(s => s.nodeUuid !== '__agent_call__').length
+        let desc = `思考${this.formatDuration(this.totalDuration)} · ${realStepCount}个步骤`
         if (this.totalTokens > 0) {
           desc += ` · ${this.totalTokens} tokens`
         }
         return desc
       }
-      // 执行中：看是否只有问题分析阶段
-      const hasNonClassifier = this.steps.some(s => s.nodeName !== 'Classifier')
-      return hasNonClassifier ? '正在思考...' : '正在分析问题...'
+      // 执行中：看是否只有虚拟问题分析阶段
+      const hasRealNode = this.steps.some(s => s.nodeUuid !== '__virtual_analysis__')
+      return hasRealNode ? '正在思考...' : '正在分析问题...'
     }
   },
 
@@ -182,9 +201,33 @@ export default {
     getStepText (step) {
       const name = step.nodeName
 
-      // Classifier → 问题分析（合并式）
-      if (name === 'Classifier') {
+      // 虚拟问题分析步骤
+      if (step.nodeUuid === '__virtual_analysis__') {
         return step.status === 'running' ? '问题分析中...' : '问题分析完成'
+      }
+
+      // Agent包裹行
+      if (step.nodeUuid === '__agent_call__') {
+        return step.status === 'running'
+          ? `调用agent：${step.nodeTitle}...`
+          : `调用agent：${step.nodeTitle} 完成`
+      }
+
+      // Start节点：标题行只显示节点标题，参数通过 summary.params 在 step-output 区域换行显示
+      if (name === 'Start') {
+        if (step.status === 'running') return `${step.nodeTitle || '开始'}...`
+        return step.nodeTitle || '开始'
+      }
+
+      // End节点：直接用后端传来的nodeTitle
+      if (name === 'End') {
+        return step.nodeTitle || '结束'
+      }
+
+      // Classifier → 用节点标题显示
+      if (name === 'Classifier') {
+        const title = step.nodeTitle || '分析'
+        return step.status === 'running' ? `${title}中...` : `${title}完成`
       }
 
       // Answer/LLM → 生成答案（合并式）
@@ -193,8 +236,9 @@ export default {
       }
 
       // 其他节点 → 标题 + 摘要（分离式）
+      // 优先使用后端传来的节点标题，NODE_CONFIG仅作fallback
       const cfg = NODE_CONFIG[name]
-      const title = cfg ? cfg.title : (step.nodeTitle || name || '执行')
+      const title = step.nodeTitle || (cfg ? cfg.title : name) || '执行'
 
       if (step.status === 'running') {
         const runText = cfg ? cfg.runningText : '执行中...'
@@ -234,6 +278,25 @@ export default {
       if (name === 'KnowledgeRetrieval' && s.matchCount != null) return `${title}  命中${s.matchCount}条`
       if (name === 'McpTool' && s.toolName) return `${title}  → ${s.toolName}`
       return `${title}  完成`
+    },
+
+    copyOutput (step) {
+      const text = step.summary && step.summary.outputText
+      if (!text) return
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedUuid = step.nodeUuid
+        setTimeout(() => { this.copiedUuid = null }, 1500)
+      })
+    },
+
+    copyStartParams (step) {
+      const params = step.summary && step.summary.params
+      if (!params || !params.length) return
+      const text = params.map(p => p.value ? `${p.title} = ${p.value}` : p.title).join('\n')
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedUuid = step.nodeUuid
+        setTimeout(() => { this.copiedUuid = null }, 1500)
+      })
     },
 
     formatDuration (ms) {
@@ -342,6 +405,16 @@ export default {
   min-height: 30px;
 }
 
+/* agent包裹行：加粗标题，视觉上作为分组标题 */
+.step-row--agent-call .step-title {
+  font-weight: 600;
+  color: #1f2329;
+}
+
+.step-row--agent-call .step-title.running {
+  color: #1890ff;
+}
+
 /* 左侧时间轴 */
 .step-timeline {
   display: flex;
@@ -421,7 +494,7 @@ export default {
 /* 步骤标题 */
 .step-title {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: #1f2329;
 }
 
@@ -443,44 +516,58 @@ export default {
   display: none;
 }
 
-/* 子步骤缩进 */
-.step-row--sub {
-  padding-left: 16px;
-}
-
-/* agent 行 */
-.agent-row {
-  display: flex;
-  align-items: center;
-  padding: 4px 0 4px 2px;
-  width: 100%;
-  min-height: 30px;
-}
-
-.agent-icon {
-  font-size: 12px;
-  margin-right: 6px;
-  flex-shrink: 0;
-}
-
-.agent-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1f2329;
-  flex: 1;
-}
-
-.agent-label.running {
-  color: #1890ff;
-}
-
 /* 输出文本（show_process_output=true 时显示） */
 .step-output {
   font-size: 12px;
-  color: #606266;
-  margin-top: 2px;
-  padding-left: 2px;
-  line-height: 1.4;
+  color: #4a4f5a;
+  margin-top: 4px;
+  padding: 4px 8px 4px 8px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+  line-height: 1.6;
+  word-break: break-all;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.step-output-text {
+  flex: 1;
+}
+
+.step-output-copy {
+  flex-shrink: 0;
+  align-self: flex-end;
+  padding: 2px 4px;
+  font-size: 12px;
+  color: #c0c4cc;
+  min-height: auto;
+  height: auto;
+  border-radius: 4px;
+}
+
+.step-output-copy:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.step-output-copy.copied {
+  color: #1a9c72;
+}
+
+/* Start节点参数行 */
+.step-output-param {
+  line-height: 1.8;
+}
+
+.param-title {
+  color: #4a4f5a;
+}
+
+.param-value {
+  color: #4a4f5a;
+  font-weight: 400;
 }
 
 /* 子工作流折叠面板 */

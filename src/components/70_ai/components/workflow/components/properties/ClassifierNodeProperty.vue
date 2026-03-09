@@ -1,5 +1,11 @@
 <template>
   <div class="classifier-node-property">
+    <!-- 引用输入配置 -->
+    <node-property-input
+      :workflow="workflow"
+      :wf-node="wfNode"
+    />
+
     <!-- 模型选择 -->
     <div class="property-section">
       <div class="section-title">模型</div>
@@ -17,11 +23,10 @@
           <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
         </el-tooltip>
       </div>
-      <el-input
+      <expandable-textarea
         v-model="nodeConfig.instruction"
-        type="textarea"
-        :autosize="{ minRows: 2, maxRows: 5 }"
         placeholder="例如：根据上游输出的 pagecode 字段判断路由数量"
+        dialog-title="编辑分类指令"
       />
     </div>
 
@@ -78,21 +83,40 @@
         + 新增类别
       </el-button>
     </div>
+
+    <!-- 执行过程输出开关 -->
+    <div class="property-section">
+      <div class="section-title">
+        执行过程输出
+        <el-tooltip content="关闭后，节点执行结果不会显示在对话中，但仍会传递给下游节点" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.show_process_output"
+        active-text="显示"
+        inactive-text="隐藏"
+      />
+    </div>
   </div>
 </template>
 
 <script>
 import { nanoid } from 'nanoid'
+import NodePropertyInput from '../NodePropertyInput.vue'
 import WfLLMSelector from '../WfLLMSelector.vue'
 import NodeSelector from '../NodeSelector.vue'
+import ExpandableTextarea from '../ExpandableTextarea.vue'
 import { createNewEdge, deleteEdgesBySourceHandle, updateEdgeBySourceHandle } from '@/components/70_ai/components/workflow/utils/workflowUtil'
 
 export default {
   name: 'ClassifierNodeProperty',
 
   components: {
+    NodePropertyInput,
     WfLLMSelector,
-    NodeSelector
+    NodeSelector,
+    ExpandableTextarea
   },
 
   props: {
@@ -128,6 +152,9 @@ export default {
     }
     if (this.wfNode.nodeConfig.instruction === undefined) {
       this.$set(this.wfNode.nodeConfig, 'instruction', '')
+    }
+    if (this.wfNode.nodeConfig.show_process_output === undefined) {
+      this.$set(this.wfNode.nodeConfig, 'show_process_output', true)
     }
     if (!this.wfNode.nodeConfig.categories) {
       this.$set(this.wfNode.nodeConfig, 'categories', [

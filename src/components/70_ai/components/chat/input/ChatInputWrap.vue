@@ -613,51 +613,36 @@ export default {
     },
 
     processFile (rawFile) {
-      console.log('🔍 processFile开始处理:', rawFile.name)
-
       // 检查文件数量限制
       if (this.isFilesLimitReached) {
-        console.warn('⚠️ 文件数量已达上限')
         this.$message.warning(`最多上传${this.fileUploadSetting.maxFiles}个文件`)
         return
       }
 
       // 验证文件大小
-      console.log('📏 验证文件大小:', rawFile.size, 'bytes, 限制:', this.fileUploadSetting.fileLimit, 'MB')
       if (!validateFileSize(rawFile, this.fileUploadSetting.fileLimit)) {
         if (rawFile.size === 0) {
-          console.warn('⚠️ 文件大小为0')
           this.$message.warning('不能上传空文件')
         } else {
-          console.warn('⚠️ 文件过大')
           this.$message.warning(`文件大小不能超过${this.fileUploadSetting.fileLimit}MB`)
         }
         return
       }
 
       // 验证文件类型
-      console.log('📝 验证文件类型:', rawFile.type, '允许的扩展名:', this.allAllowedExtensions)
       if (!validateFileType(rawFile, this.allAllowedExtensions)) {
-        console.warn('⚠️ 文件类型不支持')
         this.$message.warning('不支持该文件类型')
         return
       }
 
-      // 创建文件对象
+      // 创建文件对象并开始上传
       const elFile = createElUploadFile(rawFile)
-      console.log('📦 创建文件对象:', elFile)
-
-      // 开始上传
-      console.log('🚀 调用uploadFile')
       this.uploadFile(elFile)
     },
 
     async uploadFile (file) {
-      console.log('📤 uploadFile开始:', file.name, file.uid)
-
       // 标记为上传中
       this.$set(this.uploadingDict, file.uid, true)
-      console.log('⏳ 标记为上传中')
 
       try {
         // 构建FormData
@@ -667,14 +652,10 @@ export default {
         // 获取上传URL（带认证参数）
         const uploadUrl = `/api/service/v1/upload?app_key=${import.meta.env.VITE_FILE_SYSTEM_APP_KEY}&secret_key=${import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY}`
 
-        console.log('🌐 开始上传到FS服务器:', uploadUrl)
-
         // 调用FS服务器上传API
         const response = await fsRequest.post(uploadUrl, formData, {
           headers: { 'content-type': 'multipart/form-data' }
         })
-
-        console.log('✅ FS服务器响应:', response)
 
         // 响应验证（FS服务器返回格式：{code: 0, message: '', data: {...}}）
         if (!response || !response.data) {
@@ -689,13 +670,6 @@ export default {
         file.serverSize = response.data.fileSize || response.data.size || file.size
         file.serverPath = response.data.path // 服务器路径
         file.uploadTime = new Date().toISOString()
-
-        console.log('📦 保存的文件数据:', {
-          url: file.url,
-          file_id: file.file_id,
-          serverFileName: file.serverFileName,
-          fsResponse: file.fsResponse
-        })
 
         // 添加到文件列表
         this.fileAllList.push(file)
@@ -752,7 +726,6 @@ export default {
       // 只在第一次进入时设置isDragging
       if (this.dragCounter === 1) {
         this.isDragging = true
-        console.log('🎯 拖拽进入区域')
       }
     },
 
@@ -764,36 +737,26 @@ export default {
       // 只在完全离开时（计数器归零）才取消isDragging
       if (this.dragCounter === 0) {
         this.isDragging = false
-        console.log('👋 拖拽离开区域')
       }
     },
 
     // 拖拽上传
     handleDrop (event) {
-      console.log('🎯 handleDrop触发', event)
-
       // 重置拖拽状态
       this.isDragging = false
       this.dragCounter = 0
 
-      console.log('📁 fileUploadSetting.enabled:', this.fileUploadSetting.enabled)
-
       if (!this.fileUploadSetting.enabled) {
-        console.warn('⚠️ 文件上传功能已禁用')
         return
       }
 
       const files = event.dataTransfer?.files
-      console.log('📁 拖动的文件数量:', files?.length)
       if (!files || files.length === 0) {
-        console.warn('⚠️ 没有检测到文件')
         return
       }
 
       // 处理拖拽的文件
-      console.log('✅ 开始处理拖拽的文件')
       Array.from(files).forEach(rawFile => {
-        console.log('📄 处理文件:', rawFile.name, rawFile.size, rawFile.type)
         this.processFile(rawFile)
       })
     },
