@@ -63,6 +63,24 @@
             <div v-if="step.summary && step.summary.outputText" class="step-output">
               {{ step.summary.outputText }}
             </div>
+            <!-- 子工作流折叠面板：summary.steps 存在时显示 -->
+            <div v-if="step.summary && step.summary.steps && step.summary.steps.length" class="sub-steps-panel">
+              <div class="sub-steps-toggle" @click.stop="toggleSubSteps(step.nodeUuid)">
+                <span>查看详情</span>
+                <svg class="sub-steps-arrow" :class="{ expanded: expandedSubSteps[step.nodeUuid] }" viewBox="0 0 12 12" width="10" height="10">
+                  <path d="M3 5L6 8L9 5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </div>
+              <div v-show="expandedSubSteps[step.nodeUuid]" class="sub-steps-body">
+                <div v-for="subStep in step.summary.steps" :key="subStep.nodeUuid" class="sub-step-row">
+                  <div class="sub-step-circle" />
+                  <div class="sub-step-content">
+                    <span class="sub-step-title">{{ getSubStepText(subStep) }}</span>
+                    <span v-if="subStep.duration != null" class="step-duration">{{ formatDuration(subStep.duration) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </template>
       </div>
@@ -82,7 +100,8 @@ const NODE_CONFIG = {
   McpTool: { title: '调用工具', runningText: '执行中...' },
   DocumentExtractor: { title: '文档解析', runningText: '解析中...' },
   OpenPage: { title: '打开页面', runningText: '正在打开...' },
-  Switcher: { title: '路由判断', runningText: '判断中...' }
+  Switcher: { title: '路由判断', runningText: '判断中...' },
+  SubWorkflow: { title: '子工作流', runningText: '执行中...' }
 }
 
 export default {
@@ -102,7 +121,8 @@ export default {
   data () {
     return {
       // 历史消息(streamComplete且全done)默认折叠，实时消息默认展开
-      collapsed: this.streamComplete && this.steps && this.steps.length > 0 && this.steps.every(s => s.status === 'done')
+      collapsed: this.streamComplete && this.steps && this.steps.length > 0 && this.steps.every(s => s.status === 'done'),
+      expandedSubSteps: {}
     }
   },
 
@@ -193,9 +213,27 @@ export default {
           return s.matchCount != null ? `命中${s.matchCount}条` : null
         case 'McpTool':
           return s.toolName ? `→ ${s.toolName}` : null
+        case 'SubWorkflow':
+          return s.workflowName ? `→ ${s.workflowName}` : null
         default:
           return null
       }
+    },
+
+    toggleSubSteps (nodeUuid) {
+      this.$set(this.expandedSubSteps, nodeUuid, !this.expandedSubSteps[nodeUuid])
+    },
+
+    getSubStepText (subStep) {
+      const name = subStep.nodeName
+      const cfg = NODE_CONFIG[name]
+      const title = cfg ? cfg.title : (subStep.nodeTitle || name || '执行')
+      const s = subStep.summary
+      if (!s) return `${title}  完成`
+      if (s.outputText) return `${title}  ${s.outputText}`
+      if (name === 'KnowledgeRetrieval' && s.matchCount != null) return `${title}  命中${s.matchCount}条`
+      if (name === 'McpTool' && s.toolName) return `${title}  → ${s.toolName}`
+      return `${title}  完成`
     },
 
     formatDuration (ms) {
@@ -443,5 +481,67 @@ export default {
   margin-top: 2px;
   padding-left: 2px;
   line-height: 1.4;
+}
+
+/* 子工作流折叠面板 */
+.sub-steps-panel {
+  margin-top: 4px;
+}
+
+.sub-steps-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #1890ff;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sub-steps-toggle:hover {
+  opacity: 0.8;
+}
+
+.sub-steps-arrow {
+  transition: transform 0.2s ease;
+  color: #1890ff;
+}
+
+.sub-steps-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.sub-steps-body {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 2px solid #e8e8ec;
+}
+
+.sub-step-row {
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.sub-step-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: #1a9c72;
+}
+
+.sub-step-content {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+}
+
+.sub-step-title {
+  font-size: 12px;
+  color: #606266;
 }
 </style>
