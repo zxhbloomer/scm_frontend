@@ -114,7 +114,8 @@ const NODE_CONFIG = {
   DocumentExtractor: { title: '文档解析', runningText: '解析中...' },
   OpenPage: { title: '打开页面', runningText: '正在打开...' },
   Switcher: { title: '路由判断', runningText: '判断中...' },
-  SubWorkflow: { title: '子工作流', runningText: '执行中...' }
+  SubWorkflow: { title: '子工作流', runningText: '执行中...' },
+  Template: { title: '合并结果', runningText: '处理中...' }
 }
 
 export default {
@@ -271,10 +272,15 @@ export default {
     getSubStepText (subStep) {
       const name = subStep.nodeName
       const cfg = NODE_CONFIG[name]
-      const title = cfg ? cfg.title : (subStep.nodeTitle || name || '执行')
+      // 优先用后端传来的 nodeTitle，NODE_CONFIG 仅作 fallback
+      const title = subStep.nodeTitle || (cfg ? cfg.title : name) || '执行'
       const s = subStep.summary
       if (!s) return `${title}  完成`
       if (s.outputText) return `${title}  ${s.outputText}`
+      if (name === 'Start' && s.params && s.params.length) {
+        const paramText = s.params.map(p => p.value ? `${p.title} = ${p.value}` : p.title).join('，')
+        return `${title}  ${paramText}`
+      }
       if (name === 'KnowledgeRetrieval' && s.matchCount != null) return `${title}  命中${s.matchCount}条`
       if (name === 'McpTool' && s.toolName) return `${title}  → ${s.toolName}`
       return `${title}  完成`
