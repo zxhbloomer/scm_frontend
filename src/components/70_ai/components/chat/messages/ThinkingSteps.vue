@@ -233,9 +233,10 @@ export default {
         return step.status === 'running' ? `${title}中...` : `${title}完成`
       }
 
-      // Answer/LLM → 生成答案（合并式）
+      // Answer/LLM → 优先用节点标题，无标题时用默认文字
       if (name === 'Answer' || name === 'LLM') {
-        return step.status === 'running' ? '正在生成答案...' : '答案生成完成'
+        const title = step.nodeTitle || '答案生成'
+        return step.status === 'running' ? `${title}中...` : `${title}完成`
       }
 
       // 其他节点 → 标题 + 摘要（分离式）
