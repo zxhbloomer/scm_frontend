@@ -16,6 +16,7 @@
               size="mini"
               class="case-title-input"
               @click.native.stop
+              @input="emitUpdate"
             />
             <el-button
               v-if="nodeConfig.cases.length > 1"
@@ -139,6 +140,7 @@
                 size="mini"
                 class="case-title-input"
                 @click.native.stop
+                @input="emitUpdate"
               />
             </div>
           </template>
@@ -252,6 +254,18 @@ export default {
   },
 
   methods: {
+    /**
+     * 通知画布同步节点数据（分支名称修改时调用）
+     */
+    emitUpdate () {
+      this.$nextTick(() => {
+        this.$root.$emit('workflow:update-node', {
+          nodeUuid: this.wfNode.uuid,
+          nodeData: this.wfNode
+        })
+      })
+    },
+
     /**
      * 获取Start节点
      */

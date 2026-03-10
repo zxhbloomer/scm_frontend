@@ -54,7 +54,7 @@
 
       <!-- 默认分支 -->
       <div class="default-case" data-port-id="default_handle">
-        {{ node.nodeConfig.default_case_name || '默认分支' }}
+        {{ localDefaultCaseName || '默认分支' }}
       </div>
     </div>
   </div>
@@ -101,7 +101,8 @@ export default {
   data () {
     return {
       // 本地响应式状态，用于强制更新视图
-      localCases: []
+      localCases: [],
+      localDefaultCaseName: ''
     }
   },
 
@@ -116,6 +117,7 @@ export default {
 
     // 初始化本地状态
     this.localCases = this.node.nodeConfig?.cases || []
+    this.localDefaultCaseName = this.node.nodeConfig?.default_case_name || ''
 
     // 动态添加端口
     this.updatePorts()
@@ -124,6 +126,7 @@ export default {
     x6Node.on('change:data', ({ current }) => {
       if (current && current.nodeConfig) {
         this.localCases = current.nodeConfig.cases || []
+        this.localDefaultCaseName = current.nodeConfig.default_case_name || ''
         // 更新端口
         this.$nextTick(() => {
           this.updatePorts()
