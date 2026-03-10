@@ -46,8 +46,8 @@
             <span class="step-title" :class="step.status">{{ getStepText(step) }}</span>
             <span v-if="step.duration != null" class="step-duration">{{ formatDuration(step.duration) }}</span>
           </div>
-          <!-- Start节点参数：换行显示，格式：title = value -->
-          <div v-if="step.nodeName === 'Start' && step.summary && step.summary.params && step.summary.params.length" class="step-output">
+          <!-- 节点参数：换行显示，格式：title = value -->
+          <div v-if="step.summary && step.summary.params && step.summary.params.length" class="step-output">
             <div class="step-output-text">
               <div v-for="p in step.summary.params" :key="p.name" class="step-output-param">
                 <span class="param-title">{{ p.title }}</span>
@@ -66,7 +66,9 @@
           </div>
           <!-- outputText：show_process_output=true 时后端在 summary 中携带 -->
           <div v-if="step.summary && step.summary.outputText" class="step-output">
-            <span class="step-output-text">{{ step.summary.outputText }}</span>
+            <el-tooltip :content="step.summary.outputText" placement="top" :open-delay="300" popper-class="step-output-tooltip">
+              <span class="step-output-text step-output-text--clamp">{{ step.summary.outputText }}</span>
+            </el-tooltip>
             <el-button
               type="text"
               size="mini"
@@ -542,6 +544,15 @@ export default {
   flex: 1;
 }
 
+/* 最多显示3行，超出省略，鼠标悬浮 tooltip 显示全文 */
+.step-output-text--clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: default;
+}
+
 .step-output-copy {
   flex-shrink: 0;
   align-self: flex-end;
@@ -636,5 +647,15 @@ export default {
 .sub-step-title {
   font-size: 12px;
   color: #606266;
+}
+</style>
+
+<!-- tooltip popper 挂在 body，scoped 无效，用独立 style 块 -->
+<style>
+.step-output-tooltip {
+  max-width: 400px;
+  word-break: break-all;
+  line-height: 1.6;
+  font-size: 12px;
 }
 </style>

@@ -193,8 +193,8 @@ const mutations = {
     const steps = processData.steps
 
     if (nodeEvent.nodeEventType === 'node_start') {
-      // Start/End节点只在子工作流summary.steps里显示，不加入顶层步骤列表
-      if (nodeEvent.nodeName === 'Start' || nodeEvent.nodeName === 'End') return
+      // Start节点只在子工作流summary.steps里显示，不加入顶层步骤列表
+      if (nodeEvent.nodeName === 'Start') return
       // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
       if (processData.pendingComplete) {
         const pending = processData.pendingComplete
@@ -223,8 +223,8 @@ const mutations = {
         depth: 1
       })
     } else if (nodeEvent.nodeEventType === 'node_complete') {
-      // Start/End节点不在顶层显示，跳过
-      if (nodeEvent.nodeName === 'Start' || nodeEvent.nodeName === 'End') return
+      // Start节点不在顶层显示，跳过
+      if (nodeEvent.nodeName === 'Start') return
       // 缓冲node_complete，等下一个node_start到达或流结束时才应用
       processData.pendingComplete = nodeEvent
     }
@@ -727,7 +727,7 @@ const actions = {
   /**
    * 执行workflow命令（SSE流式响应）
    */
-  async executeWorkflowCommand ({ commit, state }, { userInput, fileUrls = [] }) {
+  async executeWorkflowCommand ({ commit, state, dispatch, rootGetters }, { userInput, fileUrls = [] }) {
     if (!state.selectedWorkflow) {
       throw new Error('未选择workflow')
     }
@@ -818,6 +818,7 @@ const actions = {
 
           if (currentMessage) {
             const trimmedFinalContent = finalContent.trim()
+            const hasOpenPageCommand = !!(workflowResponse?.open_page_command)
             const hasEnoughContent = trimmedFinalContent.length > 5 &&
                                    trimmedFinalContent.replace(/\s+/g, ' ').length > 3
 
@@ -825,10 +826,10 @@ const actions = {
               messageId: aiMessageId,
               updates: {
                 id: workflowResponse?.messageId || aiMessageId,
-                content: finalContent,
+                ...(hasOpenPageCommand ? {} : { content: finalContent }),
                 status: 'delivered',
                 isStreaming: false,
-                isHidden: !hasEnoughContent,
+                isHidden: !hasOpenPageCommand && !hasEnoughContent,
                 completedAt: new Date().toISOString(),
                 workflowUuid: state.selectedWorkflow.workflowUuid,
                 // 设置workflowRuntime以显示执行详情icon
@@ -841,10 +842,27 @@ const actions = {
               }
             })
 
-            // 触发AI业务弹窗检测
-            // 优先使用ai_open_dialog_para(OpenPage节点或Synthesizer路径透传的含ai_new_route的原始JSON)
-            const dialogOutput = workflowResponse?.ai_open_dialog_para || finalContent
-            commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
+            // 处理 open_page_command（route模式页面跳转）
+            if (hasOpenPageCommand) {
+              import('@/components/70_ai/components/navigator/AiPageRouter.js').then(({ navigateToPage }) => {
+                const command = JSON.parse(workflowResponse.open_page_command)
+                const realMessageId = workflowResponse?.messageId || aiMessageId
+                navigateToPage(command, router, { getters: rootGetters, commit, dispatch })
+                  .then((success) => {
+                    const routeLabel = command.page_mode === 'new' ? '新增页面'
+                      : (command.page_mode === 'edit' ? '编辑页面' : '页面')
+                    const resultContent = success ? `已为您打开${routeLabel}` : '页面打开失败'
+                    commit('UPDATE_MESSAGE', {
+                      messageId: realMessageId,
+                      updates: { content: resultContent, isHidden: false }
+                    })
+                  })
+              })
+            } else {
+              // 触发AI业务弹窗检测
+              const dialogOutput = workflowResponse?.ai_open_dialog_para || finalContent
+              commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
+            }
           }
 
           // 工作流完成后清除步骤列表（设计文档：步骤列表完成后消失）
