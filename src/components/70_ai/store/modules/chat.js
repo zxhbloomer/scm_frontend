@@ -417,12 +417,16 @@ const actions = {
               .then((success) => {
                 const routeLabel = command.page_mode === 'new' ? '新增页面'
                   : (command.page_mode === 'edit' ? '编辑页面' : '页面')
-                const resultContent = success ? `已为您打开${routeLabel}` : '页面打开失败'
+                const appendText = success ? `\n\n已为您打开${routeLabel}` : '\n\n页面打开失败'
                 const finalMsgId = realMessageId || aiMessageId
+                // 追加到已有内容，而不是覆盖
+                const existingMsg = state.messages.find(msg => msg.id === finalMsgId)
+                const existingContent = existingMsg?.content || ''
+                const newContent = existingContent ? existingContent + appendText : appendText.trim()
                 commit('UPDATE_MESSAGE', {
                   messageId: finalMsgId,
                   updates: {
-                    content: resultContent,
+                    content: newContent,
                     status: 'delivered',
                     isStreaming: false
                   }
@@ -847,10 +851,14 @@ const actions = {
                   .then((success) => {
                     const routeLabel = command.page_mode === 'new' ? '新增页面'
                       : (command.page_mode === 'edit' ? '编辑页面' : '页面')
-                    const resultContent = success ? `已为您打开${routeLabel}` : '页面打开失败'
+                    const appendText = success ? `\n\n已为您打开${routeLabel}` : '\n\n页面打开失败'
+                    // 追加到已有内容，而不是覆盖（工作流可能有多个End节点，前面分支已产生内容）
+                    const existingMsg = state.messages.find(msg => msg.id === realMessageId)
+                    const existingContent = existingMsg?.content || ''
+                    const newContent = existingContent ? existingContent + appendText : appendText.trim()
                     commit('UPDATE_MESSAGE', {
                       messageId: realMessageId,
-                      updates: { content: resultContent, isHidden: false }
+                      updates: { content: newContent, isHidden: false }
                     })
                   })
               })
