@@ -193,8 +193,6 @@ const mutations = {
     const steps = processData.steps
 
     if (nodeEvent.nodeEventType === 'node_start') {
-      // Start节点只在子工作流summary.steps里显示，不加入顶层步骤列表
-      if (nodeEvent.nodeName === 'Start') return
       // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
       if (processData.pendingComplete) {
         const pending = processData.pendingComplete
@@ -223,8 +221,6 @@ const mutations = {
         depth: 1
       })
     } else if (nodeEvent.nodeEventType === 'node_complete') {
-      // Start节点不在顶层显示，跳过
-      if (nodeEvent.nodeName === 'Start') return
       // 缓冲node_complete，等下一个node_start到达或流结束时才应用
       processData.pendingComplete = nodeEvent
     }
