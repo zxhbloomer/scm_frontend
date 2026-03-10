@@ -7,6 +7,7 @@
       <div class="ai-loading-content">
         <i class="el-icon-loading ai-loading-icon" />
         <span class="ai-loading-text">{{ displayText }}</span>
+        <span v-if="!isTimeout && countdown > 0" class="ai-loading-countdown">{{ countdown }}</span>
       </div>
     </div>
   </transition>
@@ -26,16 +27,18 @@ export default {
   data () {
     return {
       isTimeout: false,
+      countdown: 2,
       timer: null,
+      countdownTimer: null,
       autoCloseTimer: null
     }
   },
 
   computed: {
     displayText () {
-      return this.isTimeout
-        ? '加载超时，请重试'
-        : '请稍候，正在打开页面...'
+      if (this.isTimeout) return '加载超时，请重试'
+      if (this.countdown <= 1) return '页面已就绪，即将打开新增...'
+      return '正在打开页面，请稍候...'
     }
   },
 
@@ -43,7 +46,9 @@ export default {
     visible (val) {
       if (val) {
         this.isTimeout = false
+        this.countdown = 2
         this.startTimer()
+        this.startCountdown()
       } else {
         this.clearTimer()
       }
@@ -55,6 +60,20 @@ export default {
   },
 
   methods: {
+    startCountdown () {
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer)
+      }
+      this.countdownTimer = setInterval(() => {
+        if (this.countdown > 0) {
+          this.countdown--
+        } else {
+          clearInterval(this.countdownTimer)
+          this.countdownTimer = null
+        }
+      }, 1000)
+    },
+
     startTimer () {
       this.clearTimer()
       this.timer = setTimeout(() => {
@@ -70,6 +89,10 @@ export default {
       if (this.timer) {
         clearTimeout(this.timer)
         this.timer = null
+      }
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer)
+        this.countdownTimer = null
       }
       if (this.autoCloseTimer) {
         clearTimeout(this.autoCloseTimer)
@@ -112,6 +135,22 @@ export default {
 .ai-loading-text {
   font-size: 14px;
   color: #606266;
+}
+
+.ai-loading-countdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background: #409eff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
 .ai-loading-fade-enter-active,

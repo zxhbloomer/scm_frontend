@@ -161,6 +161,10 @@ export default {
   mounted () {
     this.initData()
   },
+  activated () {
+    // RouterTab 切回工作台时，触发 vue-grid-layout 重新计算容器宽度
+    window.dispatchEvent(new Event('resize'))
+  },
   methods: {
     // 初始化面板项
     initPanel () {

@@ -94,10 +94,12 @@ import new_template from './tabs/20_new/index.vue'
 import update_template from './tabs/30_edit/index.vue'
 import detail_template from './tabs/40_view/index.vue'
 import approve_template from './tabs/50_approve/index.vue'
+import aiPageActionMixin from '@/mixin/aiPageActionMixin'
 
 export default {
   components: { list_template, new_template, update_template, detail_template, approve_template },
   directives: { elDragDialog },
+  mixins: [aiPageActionMixin],
   props: {
     height: {
       type: Number,
