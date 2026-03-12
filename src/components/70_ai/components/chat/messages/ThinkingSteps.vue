@@ -88,11 +88,63 @@
               </svg>
             </div>
             <div v-show="expandedSubSteps[step.nodeUuid]" class="sub-steps-body">
-              <div v-for="subStep in step.summary.steps" :key="subStep.nodeUuid" class="sub-step-row">
-                <div class="sub-step-circle" />
-                <div class="sub-step-content">
-                  <span class="sub-step-title">{{ getSubStepText(subStep) }}</span>
-                  <span v-if="subStep.duration != null" class="step-duration">{{ formatDuration(subStep.duration) }}</span>
+              <div
+                v-for="(subStep, subIndex) in step.summary.steps"
+                :key="subStep.nodeUuid"
+                class="sub-step-row"
+              >
+                <!-- 左侧 timeline：圆点 + 连接线 -->
+                <div class="sub-step-timeline">
+                  <div class="sub-step-circle">
+                    <svg viewBox="0 0 12 12" class="check-icon">
+                      <path d="M3.5 6L5.5 8L8.5 4" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <div v-if="subIndex < step.summary.steps.length - 1" class="sub-step-line" />
+                </div>
+                <!-- 右侧内容 -->
+                <div class="sub-step-content" :class="{ 'sub-step-content--last': subIndex === step.summary.steps.length - 1 }">
+                  <!-- 标题行 -->
+                  <div class="sub-step-header">
+                    <span class="sub-step-title">{{ getSubStepTitle(subStep) }}</span>
+                    <span v-if="subStep.duration != null" class="step-duration">{{ formatDuration(subStep.duration) }}</span>
+                  </div>
+                  <!-- Start节点参数：换行显示，格式：title = value（带tooltip） -->
+                  <div v-if="subStep.summary && subStep.summary.params && subStep.summary.params.length" class="step-output">
+                    <div class="step-output-text">
+                      <div v-for="p in subStep.summary.params" :key="p.name" class="step-output-param">
+                        <span class="param-title">{{ p.title }}</span>
+                        <el-tooltip v-if="p.value && p.value.length > 80" :content="p.value" placement="top" :open-delay="300" popper-class="step-output-tooltip">
+                          <span class="param-value"> = {{ truncate(p.value, 80) }}</span>
+                        </el-tooltip>
+                        <span v-else-if="p.value" class="param-value"> = {{ p.value }}</span>
+                      </div>
+                    </div>
+                    <el-button
+                      type="text"
+                      size="mini"
+                      :icon="copiedUuid === subStep.nodeUuid ? 'el-icon-check' : 'el-icon-copy-document'"
+                      class="step-output-copy"
+                      :class="{ copied: copiedUuid === subStep.nodeUuid }"
+                      title="复制"
+                      @click.stop="copySubStepParams(subStep)"
+                    />
+                  </div>
+                  <!-- outputText：带tooltip + 复制 -->
+                  <div v-if="subStep.summary && subStep.summary.outputText" class="step-output">
+                    <el-tooltip :content="subStep.summary.outputText" placement="top" :open-delay="300" popper-class="step-output-tooltip">
+                      <span class="step-output-text step-output-text--clamp">{{ subStep.summary.outputText }}</span>
+                    </el-tooltip>
+                    <el-button
+                      type="text"
+                      size="mini"
+                      :icon="copiedUuid === subStep.nodeUuid ? 'el-icon-check' : 'el-icon-copy-document'"
+                      class="step-output-copy"
+                      :class="{ copied: copiedUuid === subStep.nodeUuid }"
+                      title="复制"
+                      @click.stop="copySubStepOutput(subStep)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -272,21 +324,42 @@ export default {
       this.$set(this.expandedSubSteps, nodeUuid, !this.expandedSubSteps[nodeUuid])
     },
 
-    getSubStepText (subStep) {
+    getSubStepTitle (subStep) {
       const name = subStep.nodeName
       const cfg = NODE_CONFIG[name]
-      // 优先用后端传来的 nodeTitle，NODE_CONFIG 仅作 fallback
       const title = subStep.nodeTitle || (cfg ? cfg.title : name) || '执行'
       const s = subStep.summary
       if (!s) return `${title}  完成`
-      if (s.outputText) return `${title}  ${s.outputText}`
-      if (name === 'Start' && s.params && s.params.length) {
-        const paramText = s.params.map(p => p.value ? `${p.title} = ${p.value}` : p.title).join('，')
-        return `${title}  ${paramText}`
-      }
       if (name === 'KnowledgeRetrieval' && s.matchCount != null) return `${title}  命中${s.matchCount}条`
       if (name === 'McpTool' && s.toolName) return `${title}  → ${s.toolName}`
+      // params 和 outputText 在独立区域显示，标题只显示完成状态
+      if (s.params && s.params.length) return title
+      if (s.outputText) return title
       return `${title}  完成`
+    },
+
+    truncate (text, maxLen) {
+      if (!text || text.length <= maxLen) return text
+      return text.substring(0, maxLen) + '...'
+    },
+
+    copySubStepParams (subStep) {
+      const params = subStep.summary && subStep.summary.params
+      if (!params || !params.length) return
+      const text = params.map(p => p.value ? `${p.title} = ${p.value}` : p.title).join('\n')
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedUuid = subStep.nodeUuid
+        setTimeout(() => { this.copiedUuid = null }, 1500)
+      })
+    },
+
+    copySubStepOutput (subStep) {
+      const text = subStep.summary && subStep.summary.outputText
+      if (!text) return
+      navigator.clipboard.writeText(text).then(() => {
+        this.copiedUuid = subStep.nodeUuid
+        setTimeout(() => { this.copiedUuid = null }, 1500)
+      })
     },
 
     copyOutput (step) {
@@ -624,30 +697,62 @@ export default {
 
 .sub-step-row {
   display: flex;
+  align-items: stretch;
+  min-height: 28px;
+}
+
+.sub-step-timeline {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  min-height: 24px;
-  gap: 8px;
-  padding: 2px 0;
+  width: 18px;
+  flex-shrink: 0;
 }
 
 .sub-step-circle {
-  width: 8px;
-  height: 8px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
   background-color: #1a9c72;
+  box-sizing: border-box;
+}
+
+.sub-step-line {
+  width: 1.5px;
+  flex-grow: 1;
+  min-height: 6px;
+  background-color: #dfe0e4;
 }
 
 .sub-step-content {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   flex: 1;
+  padding-left: 8px;
+  padding-bottom: 8px;
+  gap: 4px;
+}
+
+.sub-step-content--last {
+  padding-bottom: 2px;
+}
+
+.sub-step-header {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  line-height: 20px;
 }
 
 .sub-step-title {
-  font-size: 12px;
-  color: #606266;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2329;
 }
 </style>
 
