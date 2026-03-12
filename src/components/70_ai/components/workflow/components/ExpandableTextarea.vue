@@ -20,7 +20,7 @@
       v-el-drag-dialog
       :visible="dialogVisible"
       :title="dialogTitle"
-      width="90%"
+      width="72%"
       top="5vh"
       custom-class="expandable-textarea-dialog"
       :modal="true"
@@ -100,7 +100,7 @@ export default {
 <style lang="scss">
 /* 不能scoped，因为el-dialog append-to-body后脱离当前组件 */
 .expandable-textarea-dialog {
-  height: 90vh;
+  height: 72vh;
   display: flex;
   flex-direction: column;
 

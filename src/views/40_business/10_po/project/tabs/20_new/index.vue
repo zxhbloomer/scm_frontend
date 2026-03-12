@@ -693,12 +693,34 @@ export default {
   created () {
   },
   mounted () {
-    // 描绘完成
     this.init()
+    // 监听 AI 表单预填（由 aiPageActionMixin 在 index.vue 触发）
+    EventBus.$on('ai-form-prefill', this._onAiFormPrefill)
+  },
+
+  beforeDestroy () {
+    EventBus.$off('ai-form-prefill', this._onAiFormPrefill)
   },
   destroyed () {
   },
   methods: {
+    // AI 表单预填
+    _onAiFormPrefill (formData) {
+      if (!formData) return
+      const fieldMap = {
+        'project_name': 'name',
+        'name': 'name',
+        'remark': 'remark',
+        'delivery_location': 'delivery_location',
+        'project_remark': 'project_remark'
+      }
+      Object.keys(formData).forEach(key => {
+        const targetKey = fieldMap[key] || key
+        if (Object.prototype.hasOwnProperty.call(this.dataJson.tempJson, targetKey)) {
+          this.dataJson.tempJson[targetKey] = formData[key]
+        }
+      })
+    },
     // 初始化处理
     init () {
       this.settings.loading = false

@@ -217,6 +217,12 @@ class AIChatService {
                     // 如果done事件没有content则使用前端累积的内容
                     const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
 
+                    // 错误响应：触发 onError 而不是 onComplete
+                    if (chatResponse.isError === true || (generation.metadata && generation.metadata.finishReason === 'error')) {
+                      onError(new Error(finalContent || '工作流执行失败'))
+                      return
+                    }
+
                     // 传递完整的chatResponse对象,包含workflowRuntime等信息
                     onComplete(finalContent, chatResponse)
                     return

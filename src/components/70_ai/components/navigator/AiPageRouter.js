@@ -13,6 +13,7 @@
  */
 
 import Vue from 'vue'
+import { EventBus } from '@/common/eventbus/eventbus'
 
 /**
  * 执行页面导航
@@ -24,8 +25,6 @@ import Vue from 'vue'
 export async function navigateToPage (command, router, store, onStep) {
   const step = onStep || (() => {})
 
-  console.log('[AiPageRouter] navigateToPage called, command:', JSON.stringify(command))
-
   if (!command || !command.route) {
     console.warn('[AiPageRouter] 无效的导航指令:', command)
     return false
@@ -36,36 +35,35 @@ export async function navigateToPage (command, router, store, onStep) {
   try {
     // 构建路由参数并跳转（权限已由后端校验）
     step('⏳ 正在打开页面，等待加载...')
-    const query = { _ai: '1' }
+    const query = {}
     if (command.page_mode) query._ai_mode = command.page_mode
     if (command.query_params) Object.assign(query, command.query_params)
     if (command.record_id) query._ai_record_id = command.record_id
-    if (command.form_data) query._ai_form_data = JSON.stringify(command.form_data)
+    // form_data 通过 store 传递，不放 URL
+    if (command.form_data) store.commit('SET_AI_PAGE_FORM_DATA', command.form_data)
 
-    console.log('[AiPageRouter] router.push:', command.route, query)
     await router.push({ path: command.route, query })
-    console.log('[AiPageRouter] router.push done, current path:', router.currentRoute.fullPath)
     await waitForNextTick()
     step('✅ 页面加载完成')
 
-    // 触发 page_mode 操作
+    // 主动触发 mixin（处理 RouterTab 缓存不重新 mount 的情况）
+    // consumed flag 保证即使 mounted 也执行了，这里也不会重复消费 formData
     if (command.page_mode && command.page_mode !== 'list') {
-      step('⏳ 正在触发操作...')
-      console.log('[AiPageRouter] $bus emit ai-page-action, mode:', command.page_mode, '$bus exists:', !!Vue.prototype.$bus)
-      Vue.prototype.$bus && Vue.prototype.$bus.$emit('ai-page-action', {
+      EventBus.$emit('ai-page-action-repeat', {
         mode: command.page_mode,
-        record_id: command.record_id,
-        form_data: command.form_data
+        route: command.route
       })
-      step('✅ 完成')
     }
 
     return true
   } catch (err) {
     if (err.name === 'NavigationDuplicated') {
-      console.log('[AiPageRouter] NavigationDuplicated, emit ai-page-action-repeat, route:', command.route)
-      // 页面已存在，直接通过 $bus 触发动作（activated 不会再触发）
-      Vue.prototype.$bus && Vue.prototype.$bus.$emit('ai-page-action-repeat', {
+      // form_data 通过 store 传递
+      if (command.form_data) {
+        store.commit('SET_AI_PAGE_FORM_DATA', command.form_data)
+      }
+      // 页面已存在，直接通过 EventBus 触发动作（activated 不会再触发）
+      EventBus.$emit('ai-page-action-repeat', {
         mode: command.page_mode,
         route: command.route
       })

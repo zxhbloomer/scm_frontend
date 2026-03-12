@@ -1,63 +1,48 @@
-/**
- * AI页面动作 Mixin
- *
- * 在业务页面 index.vue 中引入此 mixin，
- * 当 AI 工作流通过 open_page_command 跳转到本页面时，
- * 自动根据 $route.query._ai_mode 触发对应操作。
- *
- * 支持的 _ai_mode 值：
- * - new: 自动打开新增 tab（调用 handleNew）
- */
-/**
- * AI页面动作 Mixin
- *
- * 在业务页面 index.vue 中引入此 mixin，
- * 当 AI 工作流通过 open_page_command 跳转到本页面时，
- * 自动根据 $route.query._ai_mode 触发对应操作。
- *
- * 支持的 _ai_mode 值：
- * - new: 自动打开新增 tab（调用 handleNew）
- *
- * 两种触发场景：
- * 1. 页面首次打开：mounted() → $handleAiPageAction()
- * 2. 页面已存在（RouterTab缓存）：$bus.$on('ai-page-action-repeat') → $handleAiPageAction()
- */
+import { EventBus } from '@/common/eventbus/eventbus'
+
 export default {
   mounted () {
     this.$handleAiPageAction()
-    // 监听"页面已存在时重复触发"事件
-    this.$bus && this.$bus.$on('ai-page-action-repeat', this._onAiPageActionRepeat)
+    EventBus.$on('ai-page-action-repeat', this._onAiPageActionRepeat)
   },
 
   beforeDestroy () {
-    this.$bus && this.$bus.$off('ai-page-action-repeat', this._onAiPageActionRepeat)
+    EventBus.$off('ai-page-action-repeat', this._onAiPageActionRepeat)
   },
 
   methods: {
     _onAiPageActionRepeat (payload) {
-      // 只响应当前页面的路由
       if (payload && payload.route && this.$route.path !== payload.route) return
-      this.$handleAiPageAction()
+      this.$handleAiPageAction(payload && payload.mode)
     },
 
-    $handleAiPageAction () {
-      const aiMode = this.$route && this.$route.query && this.$route.query._ai_mode
-      console.log('[aiPageActionMixin] $handleAiPageAction called, aiMode:', aiMode, 'route:', this.$route && this.$route.fullPath)
+    $handleAiPageAction (modeOverride) {
+      const query = this.$route && this.$route.query
+      const aiMode = modeOverride || (query && query._ai_mode)
       if (!aiMode) return
 
+      let formData = {}
+      // 从 store 读取 form_data，用 consumed flag 防止重复消费
+      const aiPageAction = this.$store && this.$store.state.chat && this.$store.state.chat.aiPageAction
+      if (aiPageAction && !aiPageAction.consumed) {
+        this.$store.commit('chat/CONSUME_AI_PAGE_ACTION') // 立即标记，防止并发
+        formData = aiPageAction.data || {}
+      }
+
       if (aiMode === 'new' && typeof this.handleNew === 'function') {
-        console.log('[aiPageActionMixin] will call handleNew in 300ms')
-        setTimeout(() => {
-          console.log('[aiPageActionMixin] calling handleNew now')
-          this.handleNew({
-            data: {},
-            operate_tab_info: { show: true, name: '新增' },
-            canEdit: false,
-            editStatus: 'insert'
+        this.handleNew({
+          data: {},
+          operate_tab_info: { show: true, name: '新增' },
+          canEdit: false,
+          editStatus: 'insert'
+        })
+        if (Object.keys(formData).length > 0) {
+          this.$nextTick(() => {
+            EventBus.$emit('ai-form-prefill', formData)
           })
-        }, 300)
+        }
       } else if (aiMode === 'new') {
-        console.warn('[aiPageActionMixin] handleNew is not a function on this component:', typeof this.handleNew)
+        console.warn('[aiPageActionMixin] handleNew is not a function:', typeof this.handleNew)
       }
     }
   }

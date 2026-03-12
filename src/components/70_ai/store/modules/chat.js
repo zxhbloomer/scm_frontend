@@ -40,6 +40,9 @@ const state = {
   // AI业务弹窗触发状态
   pendingAiDialogOutput: null,
 
+  // AI页面导航预填数据（route模式，consumed标记防止重复消费）
+  aiPageAction: null, // { data: {}, consumed: false }
+
   // AI页面导航加载浮层
   aiLoadingOverlay: false,
 
@@ -166,6 +169,17 @@ const mutations = {
 
   SET_PENDING_AI_DIALOG_OUTPUT (state, output) {
     state.pendingAiDialogOutput = output
+  },
+
+  SET_AI_PAGE_FORM_DATA (state, formData) {
+    // 兼容旧调用，同时更新 aiPageAction
+    state.aiPageAction = formData ? { data: formData, consumed: false } : null
+  },
+
+  CONSUME_AI_PAGE_ACTION (state) {
+    if (state.aiPageAction) {
+      state.aiPageAction = { ...state.aiPageAction, consumed: true }
+    }
   },
 
   SET_AI_LOADING_OVERLAY (state, visible) {
@@ -560,7 +574,7 @@ const actions = {
           commit('UPDATE_MESSAGE', {
             messageId: aiMessageId,
             updates: {
-              content: '抱歉，消息发送失败，请稍后重试。',
+              content: _error && _error.message ? _error.message : '抱歉，消息发送失败，请稍后重试。',
               status: 'error',
               isStreaming: false
             }
@@ -890,7 +904,7 @@ const actions = {
           commit('UPDATE_MESSAGE', {
             messageId: aiMessageId,
             updates: {
-              content: '抱歉，workflow执行失败，请稍后重试。',
+              content: _error && _error.message ? _error.message : '抱歉，workflow执行失败，请稍后重试。',
               status: 'error',
               isStreaming: false
             }

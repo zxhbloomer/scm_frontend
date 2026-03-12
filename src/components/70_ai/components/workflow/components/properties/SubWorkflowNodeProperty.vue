@@ -52,43 +52,39 @@
         </el-tooltip>
       </div>
 
-      <el-table
-        :data="nodeConfig.input_mapping"
-        border
-        size="small"
-        style="margin-bottom: 8px;"
-      >
-        <el-table-column label="父流程参数" width="180">
-          <template slot-scope="scope">
-            <el-input
-              v-model="scope.row.source_key"
-              placeholder="请输入参数名"
-              size="small"
-            />
-          </template>
-        </el-table-column>
-
-        <el-table-column label="子流程参数" width="180">
-          <template slot-scope="scope">
-            <el-input
-              v-model="scope.row.target_key"
-              placeholder="请输入参数名"
-              size="small"
-            />
-          </template>
-        </el-table-column>
-
-        <el-table-column label="操作" width="80" align="center">
-          <template slot-scope="scope">
+      <div class="mapping-table">
+        <div class="mapping-header">
+          <span class="mapping-col">父流程参数</span>
+          <span class="mapping-col">子流程参数</span>
+          <span class="mapping-action" />
+        </div>
+        <div
+          v-for="(item, index) in nodeConfig.input_mapping"
+          :key="index"
+          class="mapping-row"
+        >
+          <el-input
+            v-model="item.source_key"
+            placeholder="请输入参数名"
+            size="small"
+            class="mapping-col"
+          />
+          <el-input
+            v-model="item.target_key"
+            placeholder="请输入参数名"
+            size="small"
+            class="mapping-col"
+          />
+          <span class="mapping-action">
             <el-button
               type="text"
               icon="el-icon-delete"
               size="small"
-              @click="handleDeleteMapping(scope.$index)"
+              @click="handleDeleteMapping(index)"
             />
-          </template>
-        </el-table-column>
-      </el-table>
+          </span>
+        </div>
+      </div>
 
       <el-button size="small" @click="handleAddMapping">+ 添加映射</el-button>
     </div>
@@ -178,16 +174,7 @@ export default {
     },
 
     handleAddMapping () {
-      const newMapping = {
-        source_key: '',
-        target_key: ''
-      }
-      // 使用$set确保新对象是响应式的
-      const currentMappings = this.nodeConfig.input_mapping
-      this.$set(this.nodeConfig, 'input_mapping', [
-        ...currentMappings,
-        newMapping
-      ])
+      this.$set(this.nodeConfig.input_mapping, this.nodeConfig.input_mapping.length, { source_key: '', target_key: '' })
     },
 
     handleDeleteMapping (index) {
@@ -217,13 +204,42 @@ export default {
   margin-bottom: 16px;
 }
 
-.section-title {
+.mapping-table {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.mapping-header {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-bottom: 8px;
-  font-size: 14px;
+  background: #f5f7fa;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #909399;
   font-weight: 600;
-  color: #303133;
+}
+
+.mapping-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-top: 1px solid #ebeef5;
+  gap: 8px;
+}
+
+.mapping-col {
+  flex: 1;
+}
+
+.mapping-header .mapping-col {
+  flex: 1;
+}
+
+.mapping-action {
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
 }
 </style>

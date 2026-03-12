@@ -152,6 +152,12 @@ export default {
       this.$refs.refTabs.$el.children[0].style.display = 'none'
     })
   },
+  activated () {
+    // RouterTab 缓存复用时走这里（keep-alive 场景备用）
+    if (this.$store.state.chat && this.$store.state.chat.aiPageAction && !this.$store.state.chat.aiPageAction.consumed) {
+      this.$handleAiPageAction()
+    }
+  },
   created () {
     // 设置页面标识，让FloatMenu组件能够正确管理列配置
     this.$options.name = this.$route.meta.page_code
