@@ -34,6 +34,21 @@
         dialog-title="编辑提示词"
       />
     </div>
+
+    <!-- 工作流共享 -->
+    <div class="property-section">
+      <div class="section-title">
+        工作流共享
+        <el-tooltip content="开启后，本节点的输出可被工作流中任意节点引用" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.shared_output"
+        active-text="开启"
+        inactive-text="关闭"
+      />
+    </div>
   </div>
 </template>
 
@@ -66,14 +81,19 @@ export default {
 
   computed: {
     nodeConfig () {
-      // 初始化默认值
-      if (!this.wfNode.nodeConfig.prompt) {
-        this.$set(this.wfNode.nodeConfig, 'prompt', '')
-      }
-      if (!this.wfNode.nodeConfig.model_name) {
-        this.$set(this.wfNode.nodeConfig, 'model_name', '')
-      }
       return this.wfNode.nodeConfig
+    }
+  },
+
+  created () {
+    if (!this.wfNode.nodeConfig.prompt) {
+      this.$set(this.wfNode.nodeConfig, 'prompt', '')
+    }
+    if (!this.wfNode.nodeConfig.model_name) {
+      this.$set(this.wfNode.nodeConfig, 'model_name', '')
+    }
+    if (this.wfNode.nodeConfig.shared_output === undefined) {
+      this.$set(this.wfNode.nodeConfig, 'shared_output', false)
     }
   },
 

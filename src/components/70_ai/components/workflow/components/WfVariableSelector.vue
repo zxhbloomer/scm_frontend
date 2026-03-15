@@ -72,6 +72,7 @@ export default {
     upstreamNodeUuids () {
       const edges = this.workflow.edges || []
       const currentNodeUuid = this.wfNode.uuid || this.wfNode.nodeUuid
+      if (!currentNodeUuid) return new Set()
 
       // 找到所有目标是当前节点的边，获取源节点UUID
       const upstreamUuids = edges
@@ -157,7 +158,38 @@ export default {
         addedNodeUuids.add(node.uuid)
       }
 
-      return [userInputGroup, componentOutputGroup]
+      // 工作流共享分组：显示开启了 shared_output 的非直接上游节点
+      const sharedOutputGroup = {
+        key: 'sharedOutput',
+        label: '工作流共享',
+        children: []
+      }
+
+      const currentNodeUuid = this.wfNode.uuid || this.wfNode.nodeUuid
+      // 注意：使用 excludeUuids 避免遮蔽同名 prop this.excludeNodes
+      const excludeUuids = [...(this.excludeNodes || []), currentNodeUuid]
+
+      ;(this.workflow.nodes || []).forEach(node => {
+        if (excludeUuids.includes(node.uuid)) return
+        if (!node.wfComponent) return
+        if (['End', 'Start'].includes(node.wfComponent.name)) return
+        // 白名单过滤：与直接上游分组保持一致
+        if (this.whiteListComponents.length > 0 && !this.whiteListComponents.includes(node.wfComponent.name)) return
+        if (!node.nodeConfig || !node.nodeConfig.shared_output) return
+        // 已在直接上游分组中的节点，不重复显示
+        if (this.upstreamNodeUuids.has(node.uuid)) return
+
+        sharedOutputGroup.children.push({
+          label: node.title || node.wfComponent.title || node.wfComponent.name,
+          value: `${node.uuid}::output`
+        })
+      })
+
+      const groups = [userInputGroup, componentOutputGroup]
+      if (sharedOutputGroup.children.length > 0) {
+        groups.push(sharedOutputGroup)
+      }
+      return groups
     }
   },
 

@@ -798,6 +798,14 @@ const actions = {
             updates: { status: 'sent' }
           })
         },
+        onNodeEvent: (nodeEvent) => {
+          if (nodeEvent.nodeEventType === 'node_start' || nodeEvent.nodeEventType === 'node_complete') {
+            commit('SET_WORKFLOW_PROCESS_NODE', {
+              messageId: aiMessageId,
+              nodeEvent
+            })
+          }
+        },
         onContent: (contentChunk) => {
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
 

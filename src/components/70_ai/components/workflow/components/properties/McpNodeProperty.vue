@@ -49,6 +49,21 @@
         inactive-text="隐藏"
       />
     </div>
+
+    <!-- 工作流共享 -->
+    <div class="property-section">
+      <div class="section-title">
+        工作流共享
+        <el-tooltip content="开启后，本节点的输出可被工作流中任意节点引用" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.shared_output"
+        active-text="开启"
+        inactive-text="关闭"
+      />
+    </div>
   </div>
 </template>
 
@@ -91,6 +106,10 @@ export default {
       // 执行过程输出开关，默认为true（显示）
       if (this.wfNode.nodeConfig.show_process_output === undefined) {
         this.$set(this.wfNode.nodeConfig, 'show_process_output', true)
+      }
+      // 工作流共享输出开关，默认为false（关闭）
+      if (this.wfNode.nodeConfig.shared_output === undefined) {
+        this.$set(this.wfNode.nodeConfig, 'shared_output', false)
       }
       return this.wfNode.nodeConfig
     }
