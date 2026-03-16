@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import aiChatService from '@/components/70_ai/api/aiChatService'
 import router from '@/router'
 // import SockJS from 'sockjs-client'
@@ -198,32 +199,61 @@ const mutations = {
     }
   },
 
+  ADD_WORKFLOW_VIRTUAL_STEP (state, { messageId, step }) {
+    if (!state.workflowProcessNodes[messageId]) {
+      state.workflowProcessNodes = { ...state.workflowProcessNodes, [messageId]: { steps: [] }}
+    }
+    const steps = state.workflowProcessNodes[messageId].steps
+    // 去重：同一 nodeUuid 的虚拟步骤只插入一次
+    if (!steps.find(s => s.nodeUuid === step.nodeUuid)) {
+      steps.push(step)
+    }
+  },
+
   SET_WORKFLOW_PROCESS_NODE (state, { messageId, nodeEvent }) {
     if (!state.workflowProcessNodes[messageId]) {
-      // Vue 2需要替换对象引用才能触发响应式更新，不能直接赋值新属性
-      state.workflowProcessNodes = { ...state.workflowProcessNodes, [messageId]: { steps: [], pendingComplete: null }}
+      // 注意：不再有 pendingCompletes 字段
+      state.workflowProcessNodes = { ...state.workflowProcessNodes, [messageId]: { steps: [] }}
     }
     const processData = state.workflowProcessNodes[messageId]
     const steps = processData.steps
 
-    if (nodeEvent.nodeEventType === 'node_start') {
-      // 刷新缓冲的node_complete（上一步完成时才显示"done"，避免步骤间空转）
-      if (processData.pendingComplete) {
-        const pending = processData.pendingComplete
-        const prevStep = steps.find(s => s.nodeUuid === pending.nodeUuid)
-        if (prevStep) {
-          prevStep.status = 'done'
-          prevStep.duration = pending.nodeDuration
-          prevStep.summary = pending.nodeSummary || null
-        }
-        processData.pendingComplete = null
-      }
-      // 处理虚拟"问题分析"步骤：任何真实节点到达时，将虚拟步骤标记完成
+    if (nodeEvent.nodeEventType === 'node_complete') {
+      // 处理虚拟"问题分析"步骤：第一个真实节点完成时，将虚拟步骤标记完成
       const virtualIdx = steps.findIndex(s => s.nodeUuid === '__virtual_analysis__')
       if (virtualIdx !== -1 && steps[virtualIdx].status !== 'done') {
-        steps[virtualIdx].status = 'done'
-        steps[virtualIdx].duration = nodeEvent.nodeTimestamp - steps[virtualIdx].timestamp
+        Vue.set(steps[virtualIdx], 'status', 'done')
+        Vue.set(steps[virtualIdx], 'duration', nodeEvent.nodeTimestamp - steps[virtualIdx].timestamp)
       }
+      // 先查找由 node_running 插入的步骤，找到则更新三个字段，找不到则兜底插入
+      const existing = steps.find(s => s.nodeUuid === nodeEvent.nodeUuid)
+      if (existing) {
+        Vue.set(existing, 'status', 'done')
+        Vue.set(existing, 'duration', nodeEvent.nodeDuration || null)
+        Vue.set(existing, 'summary', nodeEvent.nodeSummary || null)
+      } else {
+        // 兜底：node_running 未到达时直接插入完成状态
+        steps.push({
+          nodeUuid: nodeEvent.nodeUuid,
+          nodeName: nodeEvent.nodeName,
+          nodeTitle: nodeEvent.nodeTitle,
+          status: 'done',
+          timestamp: nodeEvent.nodeTimestamp,
+          duration: nodeEvent.nodeDuration || null,
+          summary: nodeEvent.nodeSummary || null,
+          depth: 1
+        })
+      }
+    }
+  },
+
+  SET_WORKFLOW_NODE_RUNNING (state, { messageId, nodeEvent }) {
+    if (!state.workflowProcessNodes[messageId]) {
+      Vue.set(state.workflowProcessNodes, messageId, { steps: [] })
+    }
+    const steps = state.workflowProcessNodes[messageId].steps
+    // 去重：同一 nodeUuid 只插入一次（当前系统为 DAG，不支持循环）
+    if (!steps.find(s => s.nodeUuid === nodeEvent.nodeUuid)) {
       steps.push({
         nodeUuid: nodeEvent.nodeUuid,
         nodeName: nodeEvent.nodeName,
@@ -234,33 +264,17 @@ const mutations = {
         summary: null,
         depth: 1
       })
-    } else if (nodeEvent.nodeEventType === 'node_complete') {
-      // 缓冲node_complete，等下一个node_start到达或流结束时才应用
-      processData.pendingComplete = nodeEvent
     }
   },
 
   // 刷新缓冲的node_complete（流结束时调用，确保最后一步正确标记为done）
   FLUSH_PENDING_NODE_COMPLETE (state, messageId) {
     const processData = state.workflowProcessNodes[messageId]
-    if (processData && processData.pendingComplete) {
-      const pending = processData.pendingComplete
-      const step = processData.steps.find(s => s.nodeUuid === pending.nodeUuid)
-      if (step) {
-        step.status = 'done'
-        step.duration = pending.nodeDuration
-        step.summary = pending.nodeSummary || null
-      }
-      processData.pendingComplete = null
-    }
-    // 标记agent包裹行完成
+    // 标记 agent 包裹行完成（__agent_call__ 虚拟步骤在流结束时收尾）
     if (processData) {
       const agentStep = processData.steps.find(s => s.nodeUuid === '__agent_call__')
       if (agentStep && agentStep.status !== 'done') {
-        agentStep.status = 'done'
-        agentStep.duration = processData.steps
-          .filter(s => s.nodeUuid !== '__agent_call__' && s.nodeUuid !== '__virtual_analysis__')
-          .reduce((sum, s) => sum + (s.duration || 0), 0)
+        Vue.set(agentStep, 'status', 'done')
       }
     }
   }
@@ -359,15 +373,18 @@ const actions = {
         isHidden: true // 标记为隐藏，不在UI中显示
       }
       commit('ADD_MESSAGE', aiMessage)
-      // 立即显示"深度思考 · 问题分析中..."（虚拟步骤，等真实Classifier事件替换）
-      commit('SET_WORKFLOW_PROCESS_NODE', {
+      // 立即显示"深度思考 · 问题分析中..."（虚拟步骤，等真实节点事件到来后标记完成）
+      commit('ADD_WORKFLOW_VIRTUAL_STEP', {
         messageId: aiMessageId,
-        nodeEvent: {
-          nodeEventType: 'node_start',
+        step: {
           nodeUuid: '__virtual_analysis__',
           nodeName: 'Classifier',
           nodeTitle: '问题分析',
-          nodeTimestamp: Date.now()
+          status: 'running',
+          timestamp: Date.now(),
+          duration: null,
+          summary: null,
+          depth: 1
         }
       })
       // 关闭旧typing indicator，由ThinkingSteps接管显示
@@ -407,23 +424,31 @@ const actions = {
         onNodeEvent: (nodeEvent) => {
           if (nodeEvent.nodeEventType === 'runtime') {
             // runtime事件：插入"调用agent：xxx"包裹行
-            commit('SET_WORKFLOW_PROCESS_NODE', {
+            commit('ADD_WORKFLOW_VIRTUAL_STEP', {
               messageId: aiMessageId,
-              nodeEvent: {
-                nodeEventType: 'node_start',
+              step: {
                 nodeUuid: '__agent_call__',
                 nodeName: 'AgentCall',
                 nodeTitle: nodeEvent.workflowTitle || '工作流',
-                nodeTimestamp: Date.now()
+                status: 'running',
+                timestamp: Date.now(),
+                duration: null,
+                summary: null,
+                depth: 1
               }
             })
             return
           }
-          // node_start / node_complete 事件
-          commit('SET_WORKFLOW_PROCESS_NODE', {
-            messageId: aiMessageId,
-            nodeEvent
-          })
+          if (nodeEvent.nodeEventType === 'node_running') {
+            commit('SET_WORKFLOW_NODE_RUNNING', { messageId: aiMessageId, nodeEvent })
+            return
+          }
+          if (nodeEvent.nodeEventType === 'node_complete') {
+            commit('SET_WORKFLOW_PROCESS_NODE', {
+              messageId: aiMessageId,
+              nodeEvent
+            })
+          }
         },
         onOpenPageCommand: (command, realMessageId) => {
           import('@/components/70_ai/components/navigator/AiPageRouter.js').then(({ navigateToPage }) => {
@@ -783,7 +808,21 @@ const actions = {
         workflowUuid: state.selectedWorkflow.workflowUuid
       }
       commit('ADD_MESSAGE', aiMessage)
-      commit('SET_TYPING', true)
+      commit('SET_TYPING', false)
+      // 立即显示"深度思考 · 问题分析中..."（虚拟步骤，等真实节点事件到来后标记完成）
+      commit('ADD_WORKFLOW_VIRTUAL_STEP', {
+        messageId: aiMessageId,
+        step: {
+          nodeUuid: '__virtual_analysis__',
+          nodeName: 'Classifier',
+          nodeTitle: '问题分析',
+          status: 'running',
+          timestamp: Date.now(),
+          duration: null,
+          summary: null,
+          depth: 1
+        }
+      })
 
       _cancelFunction = aiChatService.executeWorkflowCommand({
         conversationId: state.conversationId,
@@ -799,7 +838,11 @@ const actions = {
           })
         },
         onNodeEvent: (nodeEvent) => {
-          if (nodeEvent.nodeEventType === 'node_start' || nodeEvent.nodeEventType === 'node_complete') {
+          if (nodeEvent.nodeEventType === 'node_running') {
+            commit('SET_WORKFLOW_NODE_RUNNING', { messageId: aiMessageId, nodeEvent })
+            return
+          }
+          if (nodeEvent.nodeEventType === 'node_complete') {
             commit('SET_WORKFLOW_PROCESS_NODE', {
               messageId: aiMessageId,
               nodeEvent
