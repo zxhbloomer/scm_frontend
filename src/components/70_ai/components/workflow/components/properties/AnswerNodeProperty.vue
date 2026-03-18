@@ -35,6 +35,21 @@
       />
     </div>
 
+    <!-- 执行过程输出 -->
+    <div class="property-section">
+      <div class="section-title">
+        执行过程输出
+        <el-tooltip content="关闭后，节点执行结果不会显示在对话中，但仍会传递给下游节点" placement="top">
+          <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+        </el-tooltip>
+      </div>
+      <el-switch
+        v-model="nodeConfig.show_process_output"
+        active-text="显示"
+        inactive-text="隐藏"
+      />
+    </div>
+
     <!-- 工作流共享 -->
     <div class="property-section">
       <div class="section-title">
@@ -94,6 +109,9 @@ export default {
     }
     if (this.wfNode.nodeConfig.shared_output === undefined) {
       this.$set(this.wfNode.nodeConfig, 'shared_output', false)
+    }
+    if (this.wfNode.nodeConfig.show_process_output === undefined) {
+      this.$set(this.wfNode.nodeConfig, 'show_process_output', false)
     }
   },
 

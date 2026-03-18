@@ -34,7 +34,7 @@ class AIChatService {
       onComplete = () => {},
       onError = () => {},
       onOpenPage = null, // 新增：页面跳转回调
-      onNodeEvent = null, // 工作流节点事件回调(node_start/node_complete)
+      onNodeEvent = null, // 工作流节点事件回调(node_complete/runtime)
       onOpenPageCommand = null, // 新增：RouterTab页面导航指令回调
       onInteractionRequest = null // 新增：人机交互请求回调
     } = callbacks

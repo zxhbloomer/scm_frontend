@@ -23,6 +23,7 @@
         <el-option label="自由文本" value="text" />
         <el-option label="确认驳回" value="confirm" />
         <el-option label="单项选择" value="select" />
+        <el-option label="表格选择" value="table_select" />
         <el-option label="表单填写" value="form" />
       </el-select>
     </div>
@@ -122,6 +123,60 @@
           />
         </div>
       </template>
+    </template>
+
+    <!-- table_select 类型配置 -->
+    <template v-if="nodeConfig.interactionType === 'table_select'">
+      <div class="property-section">
+        <div class="section-title">选项来源</div>
+        <el-radio-group v-model="nodeConfig.optionsSource" size="small">
+          <el-radio-button label="static">静态配置</el-radio-button>
+          <el-radio-button label="dynamic">动态获取</el-radio-button>
+        </el-radio-group>
+      </div>
+
+      <template v-if="nodeConfig.optionsSource === 'static'">
+        <div class="property-section">
+          <div class="section-title">选项列表</div>
+          <div
+            v-for="(option, index) in nodeConfig.options"
+            :key="index"
+            class="list-row"
+          >
+            <el-input v-model="option.key" size="small" placeholder="key" style="width: 35%" />
+            <el-input v-model="option.label" size="small" placeholder="显示名称" style="width: 50%; margin-left: 4px" />
+            <el-button type="text" icon="el-icon-delete" size="small" style="margin-left: 4px; color: #F56C6C" @click="removeOption(index)" />
+          </div>
+          <el-button type="text" icon="el-icon-plus" size="small" @click="addOption">添加选项</el-button>
+        </div>
+      </template>
+
+      <template v-if="nodeConfig.optionsSource === 'dynamic'">
+        <div class="property-section">
+          <div class="section-title">
+            上游参数名
+            <el-tooltip content="从上游节点输出中获取选项数据，格式需为[{key,label,data}]数组" placement="top">
+              <i class="el-icon-question" style="color: #909399; font-size: 14px; margin-left: 4px;" />
+            </el-tooltip>
+          </div>
+          <el-input v-model="nodeConfig.dynamicOptionsParam" size="small" placeholder="上游节点输出的参数名" />
+        </div>
+      </template>
+
+      <div class="property-section">
+        <div class="section-title">列定义</div>
+        <div
+          v-for="(col, index) in nodeConfig.columns"
+          :key="index"
+          class="list-row"
+        >
+          <el-input v-model="col.key" size="small" placeholder="字段key" style="width: 28%" />
+          <el-input v-model="col.label" size="small" placeholder="列头名称" style="width: 35%; margin-left: 4px" />
+          <el-input-number v-model="col.width" size="small" :min="60" :max="500" placeholder="宽度" style="width: 80px; margin-left: 4px" />
+          <el-button type="text" icon="el-icon-delete" size="small" style="margin-left: 4px; color: #F56C6C" @click="removeColumn(index)" />
+        </div>
+        <el-button type="text" icon="el-icon-plus" size="small" @click="addColumn">添加列</el-button>
+      </div>
     </template>
 
     <!-- form 类型配置 -->
@@ -289,6 +344,10 @@ export default {
       if (!config.fields) {
         this.$set(config, 'fields', [])
       }
+      // table_select 字段
+      if (!config.columns) {
+        this.$set(config, 'columns', [])
+      }
       return config
     }
   },
@@ -324,6 +383,14 @@ export default {
     },
     removeFieldOption (fieldIndex, optionIndex) {
       this.nodeConfig.fields[fieldIndex].options.splice(optionIndex, 1)
+    },
+
+    // table_select 列操作
+    addColumn () {
+      this.nodeConfig.columns.push({ key: '', label: '', width: null })
+    },
+    removeColumn (index) {
+      this.nodeConfig.columns.splice(index, 1)
     },
 
     emitUpdate () {

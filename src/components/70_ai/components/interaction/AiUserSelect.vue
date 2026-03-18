@@ -66,7 +66,13 @@ export default {
       if (!this.selectedKey) return
       this.submitted = true
       const selected = this.options.find(o => o.key === this.selectedKey)
-      this.$emit('submit', 'select_record', selected ? selected.data : { key: this.selectedKey })
+      // data先展开，key/label后覆盖，防止data中同名字段覆盖关键标识
+      const submitData = {
+        ...(selected && selected.data ? selected.data : {}),
+        key: this.selectedKey,
+        label: selected ? selected.label : this.selectedKey
+      }
+      this.$emit('submit', 'select_record', submitData)
     },
     handleCancel () {
       this.submitted = true

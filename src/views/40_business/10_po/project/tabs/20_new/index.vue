@@ -629,7 +629,14 @@ export default {
           purchaser_name: null,
           financier_name: '-',
           detailListData: [],
-          delivery_type: null
+          delivery_type: null,
+          delivery_location: null,
+          remark: null,
+          payment_days: null,
+          project_cycle: null,
+          amount: null,
+          rate: null,
+          project_remark: null
         },
         inputSettings: {
           maxLength: {
@@ -704,19 +711,26 @@ export default {
   destroyed () {
   },
   methods: {
-    // AI 表单预填
+    // AI 表单预填（白名单控制可填字段，key=LLM字段名，value=tempJson字段名）
     _onAiFormPrefill (formData) {
       if (!formData) return
-      const fieldMap = {
+      const ALLOWED_FIELDS = {
         'project_name': 'name',
         'name': 'name',
-        'remark': 'remark',
+        'supplier_name': 'supplier_name',
+        'purchaser_name': 'purchaser_name',
+        'delivery_type': 'delivery_type',
         'delivery_location': 'delivery_location',
+        'remark': 'remark',
+        'payment_days': 'payment_days',
+        'project_cycle': 'project_cycle',
+        'amount': 'amount',
+        'rate': 'rate',
         'project_remark': 'project_remark'
       }
       Object.keys(formData).forEach(key => {
-        const targetKey = fieldMap[key] || key
-        if (Object.prototype.hasOwnProperty.call(this.dataJson.tempJson, targetKey)) {
+        const targetKey = ALLOWED_FIELDS[key]
+        if (targetKey && formData[key] != null) {
           this.dataJson.tempJson[targetKey] = formData[key]
         }
       })

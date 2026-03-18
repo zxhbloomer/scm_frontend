@@ -349,6 +349,12 @@
           @submit="handleInteractionSubmit"
           @cancel="handleInteractionCancel"
         />
+        <ai-user-table-select
+          v-else-if="activeInteraction.type === 'user_table_select'"
+          :interaction="activeInteraction"
+          @submit="handleInteractionSubmit"
+          @cancel="handleInteractionCancel"
+        />
       </div>
 
       <!-- 正在输入指示器 -->
@@ -405,6 +411,7 @@ import aiChatService from '../../../api/aiChatService'
 import AiUserSelect from '../../interaction/AiUserSelect.vue'
 import AiUserConfirm from '../../interaction/AiUserConfirm.vue'
 import AiUserForm from '../../interaction/AiUserForm.vue'
+import AiUserTableSelect from '../../interaction/AiUserTableSelect.vue'
 import { submitFeedback, cancelInteraction } from '../../interaction/AiInteractionManager'
 
 export default {
@@ -416,7 +423,8 @@ export default {
     ThinkingSteps,
     AiUserSelect,
     AiUserConfirm,
-    AiUserForm
+    AiUserForm,
+    AiUserTableSelect
   },
 
   props: {
