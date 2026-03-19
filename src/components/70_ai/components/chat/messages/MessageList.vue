@@ -329,33 +329,31 @@
         </div>
       </transition-group>
 
-      <!-- 人机交互组件（在消息列表末尾渲染） -->
-      <div v-if="activeInteraction && activeInteraction.status === 'WAITING'" class="ai-interaction-area">
-        <ai-user-select
-          v-if="activeInteraction.type === 'user_select'"
-          :interaction="activeInteraction"
-          @submit="handleInteractionSubmit"
-          @cancel="handleInteractionCancel"
-        />
-        <ai-user-confirm
-          v-else-if="activeInteraction.type === 'user_confirm'"
-          :interaction="activeInteraction"
-          @submit="handleInteractionSubmit"
-          @cancel="handleInteractionCancel"
-        />
-        <ai-user-form
-          v-else-if="activeInteraction.type === 'user_form'"
-          :interaction="activeInteraction"
-          @submit="handleInteractionSubmit"
-          @cancel="handleInteractionCancel"
-        />
-        <ai-user-table-select
-          v-else-if="activeInteraction.type === 'user_table_select'"
-          :interaction="activeInteraction"
-          @submit="handleInteractionSubmit"
-          @cancel="handleInteractionCancel"
-        />
-      </div>
+      <!-- 人机交互弹窗（4个同时挂载，各自通过 visible 控制显隐） -->
+      <ai-user-confirm
+        :visible="interactionVisibleFor('user_confirm')"
+        :interaction="activeInteraction || {}"
+        @submit="handleInteractionSubmit"
+        @cancel="handleInteractionCancel"
+      />
+      <ai-user-select
+        :visible="interactionVisibleFor('user_select')"
+        :interaction="activeInteraction || {}"
+        @submit="handleInteractionSubmit"
+        @cancel="handleInteractionCancel"
+      />
+      <ai-user-form
+        :visible="interactionVisibleFor('user_form')"
+        :interaction="activeInteraction || {}"
+        @submit="handleInteractionSubmit"
+        @cancel="handleInteractionCancel"
+      />
+      <ai-user-table-select
+        :visible="interactionVisibleFor('user_table_select')"
+        :interaction="activeInteraction || {}"
+        @submit="handleInteractionSubmit"
+        @cancel="handleInteractionCancel"
+      />
 
       <!-- 正在输入指示器 -->
       <div v-if="isTyping" class="typing-indicator">
@@ -491,6 +489,11 @@ export default {
   computed: {
     activeInteraction () {
       return this.$store.state.chat.activeInteraction
+    },
+    interactionVisibleFor () {
+      return (type) => !!(this.activeInteraction &&
+        this.activeInteraction.type === type &&
+        this.activeInteraction.status === 'WAITING')
     },
     hasConversation () {
       return this.messages && this.messages.length > 0

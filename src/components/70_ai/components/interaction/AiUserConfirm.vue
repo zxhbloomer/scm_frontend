@@ -1,8 +1,16 @@
 <template>
-  <div class="ai-user-confirm">
+  <el-dialog
+    :visible.sync="localVisible"
+    title="请确认"
+    width="400px"
+    append-to-body
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    @close="handleCancel"
+  >
     <div class="ai-interaction-desc">{{ interaction.description }}</div>
     <div v-if="detail" class="ai-confirm-detail">{{ detail }}</div>
-    <div class="ai-interaction-footer">
+    <span slot="footer" class="dialog-footer">
       <el-button
         type="primary"
         size="small"
@@ -27,8 +35,8 @@
         取消
       </el-button>
       <span class="ai-countdown">{{ formattedTime }}</span>
-    </div>
-  </div>
+    </span>
+  </el-dialog>
 </template>
 
 <script>
@@ -38,14 +46,13 @@ export default {
   name: 'AiUserConfirm',
 
   props: {
-    interaction: {
-      type: Object,
-      required: true
-    }
+    visible: { type: Boolean, default: false },
+    interaction: { type: Object, default: () => ({}) }
   },
 
   data () {
     return {
+      localVisible: false,
       submitted: false
     }
   },
@@ -62,16 +69,28 @@ export default {
     }
   },
 
+  watch: {
+    visible (val) {
+      this.localVisible = val
+      if (val) {
+        this.submitted = false
+      }
+    }
+  },
+
   methods: {
     handleConfirm () {
+      if (this.submitted) return
       this.submitted = true
       this.$emit('submit', 'confirm', { confirmed: true })
     },
     handleReject () {
+      if (this.submitted) return
       this.submitted = true
       this.$emit('submit', 'reject', { confirmed: false })
     },
     handleCancel () {
+      if (this.submitted) return
       this.submitted = true
       this.$emit('cancel')
     }
@@ -80,12 +99,6 @@ export default {
 </script>
 
 <style scoped>
-.ai-user-confirm {
-  padding: 12px;
-  background: #f4f7fe;
-  border-radius: 8px;
-  margin-top: 8px;
-}
 .ai-interaction-desc {
   font-size: 13px;
   color: #303133;
@@ -100,7 +113,7 @@ export default {
   border: 1px solid #e4e7ed;
   margin-bottom: 10px;
 }
-.ai-interaction-footer {
+.dialog-footer {
   display: flex;
   align-items: center;
   gap: 8px;

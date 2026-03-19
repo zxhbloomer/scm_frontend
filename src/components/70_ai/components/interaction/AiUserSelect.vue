@@ -1,5 +1,13 @@
 <template>
-  <div class="ai-user-select">
+  <el-dialog
+    :visible.sync="localVisible"
+    title="请选择"
+    width="480px"
+    append-to-body
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    @close="handleCancel"
+  >
     <div class="ai-interaction-desc">{{ interaction.description }}</div>
     <el-radio-group v-model="selectedKey" class="ai-select-options">
       <el-radio
@@ -11,7 +19,7 @@
         {{ option.label }}
       </el-radio>
     </el-radio-group>
-    <div class="ai-interaction-footer">
+    <span slot="footer" class="dialog-footer">
       <el-button
         type="primary"
         size="small"
@@ -28,8 +36,8 @@
         取消
       </el-button>
       <span class="ai-countdown">{{ formattedTime }}</span>
-    </div>
-  </div>
+    </span>
+  </el-dialog>
 </template>
 
 <script>
@@ -39,14 +47,13 @@ export default {
   name: 'AiUserSelect',
 
   props: {
-    interaction: {
-      type: Object,
-      required: true
-    }
+    visible: { type: Boolean, default: false },
+    interaction: { type: Object, default: () => ({}) }
   },
 
   data () {
     return {
+      localVisible: false,
       selectedKey: '',
       submitted: false
     }
@@ -61,12 +68,21 @@ export default {
     }
   },
 
+  watch: {
+    visible (val) {
+      this.localVisible = val
+      if (val) {
+        this.submitted = false
+        this.selectedKey = ''
+      }
+    }
+  },
+
   methods: {
     handleSubmit () {
-      if (!this.selectedKey) return
+      if (!this.selectedKey || this.submitted) return
       this.submitted = true
       const selected = this.options.find(o => o.key === this.selectedKey)
-      // data先展开，key/label后覆盖，防止data中同名字段覆盖关键标识
       const submitData = {
         ...(selected && selected.data ? selected.data : {}),
         key: this.selectedKey,
@@ -75,6 +91,7 @@ export default {
       this.$emit('submit', 'select_record', submitData)
     },
     handleCancel () {
+      if (this.submitted) return
       this.submitted = true
       this.$emit('cancel')
     }
@@ -83,12 +100,6 @@ export default {
 </script>
 
 <style scoped>
-.ai-user-select {
-  padding: 12px;
-  background: #f4f7fe;
-  border-radius: 8px;
-  margin-top: 8px;
-}
 .ai-interaction-desc {
   font-size: 13px;
   color: #303133;
@@ -106,8 +117,7 @@ export default {
   border-radius: 4px;
   border: 1px solid #e4e7ed;
 }
-.ai-interaction-footer {
-  margin-top: 12px;
+.dialog-footer {
   display: flex;
   align-items: center;
   gap: 8px;

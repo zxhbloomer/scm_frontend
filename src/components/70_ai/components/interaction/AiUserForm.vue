@@ -1,5 +1,13 @@
 <template>
-  <div class="ai-user-form">
+  <el-dialog
+    :visible.sync="localVisible"
+    title="请填写"
+    width="520px"
+    append-to-body
+    :close-on-click-modal="false"
+    :close-on-press-escape="false"
+    @close="handleCancel"
+  >
     <div class="ai-interaction-desc">{{ interaction.description }}</div>
     <el-form
       ref="formRef"
@@ -47,7 +55,7 @@
         />
       </el-form-item>
     </el-form>
-    <div class="ai-interaction-footer">
+    <span slot="footer" class="dialog-footer">
       <el-button
         type="primary"
         size="small"
@@ -64,8 +72,8 @@
         取消
       </el-button>
       <span class="ai-countdown">{{ formattedTime }}</span>
-    </div>
-  </div>
+    </span>
+  </el-dialog>
 </template>
 
 <script>
@@ -75,23 +83,17 @@ export default {
   name: 'AiUserForm',
 
   props: {
-    interaction: {
-      type: Object,
-      required: true
-    }
+    visible: { type: Boolean, default: false },
+    interaction: { type: Object, default: () => ({}) }
   },
 
   data () {
-    const formData = {}
-    const formRules = {}
-    const fields = (this.interaction.params && this.interaction.params.fields) || []
-    fields.forEach(f => {
-      formData[f.key] = f.type === 'number' ? null : ''
-      if (f.required) {
-        formRules[f.key] = [{ required: true, message: f.label + '不能为空', trigger: 'blur' }]
-      }
-    })
-    return { formData, formRules, submitted: false }
+    return {
+      localVisible: false,
+      formData: {},
+      formRules: {},
+      submitted: false
+    }
   },
 
   computed: {
@@ -103,8 +105,44 @@ export default {
     }
   },
 
+  watch: {
+    visible (val) {
+      this.localVisible = val
+      if (val) {
+        this.submitted = false
+        this.initFormData()
+      }
+    },
+    // interaction 变化时重新初始化（防止父组件先设 visible 后更新 interaction 的时序问题）
+    interaction (val) {
+      if (val && this.localVisible) {
+        this.initFormData()
+      }
+    }
+  },
+
   methods: {
+    initFormData () {
+      const fields = (this.interaction.params && this.interaction.params.fields) || []
+      const formData = {}
+      const formRules = {}
+      fields.forEach(f => {
+        formData[f.key] = f.type === 'number' ? null : ''
+        if (f.required) {
+          formRules[f.key] = [{ required: true, message: f.label + '不能为空', trigger: 'blur' }]
+        }
+      })
+      this.formData = formData
+      this.formRules = formRules
+      // 清除上一次的校验状态
+      this.$nextTick(() => {
+        if (this.$refs.formRef) {
+          this.$refs.formRef.clearValidate()
+        }
+      })
+    },
     handleSubmit () {
+      if (this.submitted) return
       this.$refs.formRef.validate(valid => {
         if (!valid) return
         this.submitted = true
@@ -112,6 +150,7 @@ export default {
       })
     },
     handleCancel () {
+      if (this.submitted) return
       this.submitted = true
       this.$emit('cancel')
     }
@@ -120,19 +159,12 @@ export default {
 </script>
 
 <style scoped>
-.ai-user-form {
-  padding: 12px;
-  background: #f4f7fe;
-  border-radius: 8px;
-  margin-top: 8px;
-}
 .ai-interaction-desc {
   font-size: 13px;
   color: #303133;
   margin-bottom: 10px;
 }
-.ai-interaction-footer {
-  margin-top: 8px;
+.dialog-footer {
   display: flex;
   align-items: center;
   gap: 8px;
