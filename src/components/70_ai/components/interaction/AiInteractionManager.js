@@ -153,7 +153,7 @@ export function formatRemainingTime (seconds) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-function stopCountdown () {
+export function stopCountdown () {
   if (countdownTimer) {
     clearInterval(countdownTimer)
     countdownTimer = null
@@ -166,5 +166,6 @@ export default {
   cancelInteraction,
   clearInteraction,
   getActiveInteraction,
-  formatRemainingTime
+  formatRemainingTime,
+  stopCountdown
 }
