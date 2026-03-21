@@ -474,9 +474,9 @@ const actions = {
           })
         },
         onInteractionRequest: (request) => {
-          // 人机交互请求：启动交互状态管理
+          // 人机交互请求：启动交互状态管理，存入 aiMessageId 供 resumeInteraction 追加内容使用
           import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
-            startInteraction(request, { state: { chat: state }, commit })
+            startInteraction({ ...request, _aiMessageId: aiMessageId }, { state: { chat: state }, commit })
           })
         },
         onContent: (contentChunk) => {
@@ -626,6 +626,72 @@ const actions = {
     }
   },
 
+  async resumeInteraction ({ commit, state }) {
+    const interaction = state.activeInteraction
+    if (!interaction) return
+
+    const aiMessageId = interaction._aiMessageId
+    const conversationId = state.conversationId
+
+    if (!aiMessageId || !conversationId) return
+
+    // 构建 feedback 消息
+    const feedbackMessage = JSON.stringify({
+      type: 'ai_interaction_feedback',
+      interaction_uuid: interaction.interaction_uuid,
+      action: interaction._pendingAction,
+      data: interaction._pendingData
+    })
+
+    // 标记气泡为 resuming 状态
+    commit('UPDATE_MESSAGE', { messageId: aiMessageId, updates: { status: 'streaming', isStreaming: true, isHidden: false }})
+    commit('SET_TYPING', true)
+
+    // 停止倒计时
+    import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ stopCountdown }) => {
+      stopCountdown()
+    })
+
+    aiChatService.sendMessageStream(
+      { conversationId, prompt: feedbackMessage, chatModelId: 'default' },
+      {
+        onContent: (content) => {
+          const msg = state.messages.find(m => m.id === aiMessageId)
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: { content: (msg?.content || '') + content, status: 'streaming', isHidden: false }
+          })
+        },
+        onComplete: (fullContent, chatResponse) => {
+          commit('SET_TYPING', false)
+          // 用气泡当前内容（已追加完毕），不用 fullContent（只含本轮内容，会抹掉第一轮输出）
+          const finalContent = state.messages.find(m => m.id === aiMessageId)?.content || ''
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: {
+              content: finalContent,
+              status: 'delivered',
+              isStreaming: false
+            }
+          })
+        },
+        onError: (error) => {
+          commit('SET_TYPING', false)
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: { status: 'error', isStreaming: false, content: error.message || '执行失败' }
+          })
+        },
+        onInteractionRequest: (request) => {
+          // 多个连续 HumanFeedback 节点：继续存入新的 interaction
+          import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
+            startInteraction({ ...request, _aiMessageId: aiMessageId }, { state: { chat: state }, commit })
+          })
+        }
+      }
+    )
+  },
+
   async loadMessages ({ commit, state }, params = {}) {
     if (!state.conversationId) {
       return
@@ -634,50 +700,61 @@ const actions = {
     try {
       const messages = await aiChatService.getAiChatDetail(state.conversationId)
 
-      const formattedMessages = messages.map(msg => {
-        // 将API返回的type转换为前端期望的格式
-        let messageType = msg.type || 'agent'
-        if (messageType === 'ASSISTANT' || messageType === 'assistant') {
-          messageType = 'ai'
-        } else if (messageType === 'USER' || messageType === 'user') {
-          messageType = 'user'
-        }
-
-        // 时间戳格式化
-        let formattedTimestamp = msg.c_time || msg.createTime || msg.timestamp || new Date().toISOString()
-        if (typeof formattedTimestamp === 'number') {
-          formattedTimestamp = new Date(formattedTimestamp).toISOString()
-        }
-
-        // 构建工作流运行时信息（如果存在）
-        const runtimeUuid = msg.runtime_uuid || msg.runtimeUuid
-        const workflowRuntime = runtimeUuid ? {
-          id: runtimeUuid,
-          uuid: runtimeUuid
-        } : null
-
-        // 恢复持久化的工作流思考步骤
-        let workflowSteps = null
-        if (msg.workflow_steps) {
-          try {
-            workflowSteps = JSON.parse(msg.workflow_steps)
-          } catch (e) {
-            console.warn('解析workflow_steps失败', e)
+      const formattedMessages = messages
+        .filter(msg => {
+          // 过滤掉 ai_interaction_feedback 类型的用户消息（HumanFeedback 中断产生的旧数据）
+          if (msg.type === 'USER' || msg.type === 'user') {
+            try {
+              const parsed = JSON.parse(msg.content)
+              if (parsed && parsed.type === 'ai_interaction_feedback') return false
+            } catch (e) { /* 非 JSON，正常显示 */ }
           }
-        }
+          return true
+        })
+        .map(msg => {
+        // 将API返回的type转换为前端期望的格式
+          let messageType = msg.type || 'agent'
+          if (messageType === 'ASSISTANT' || messageType === 'assistant') {
+            messageType = 'ai'
+          } else if (messageType === 'USER' || messageType === 'user') {
+            messageType = 'user'
+          }
 
-        return {
-          id: msg.message_id || msg.id || Date.now(),
-          content: msg.content,
-          type: messageType,
-          timestamp: formattedTimestamp,
-          avatar: msg.avatar,
-          status: 'delivered',
-          workflowRuntime: workflowRuntime, // 工作流运行时信息对象
-          ai_open_dialog_para: msg.ai_open_dialog_para || null, // OpenPage节点JSON数据，用于"打开页面"按钮
-          workflowSteps: workflowSteps // 持久化的工作流思考步骤
-        }
-      })
+          // 时间戳格式化
+          let formattedTimestamp = msg.c_time || msg.createTime || msg.timestamp || new Date().toISOString()
+          if (typeof formattedTimestamp === 'number') {
+            formattedTimestamp = new Date(formattedTimestamp).toISOString()
+          }
+
+          // 构建工作流运行时信息（如果存在）
+          const runtimeUuid = msg.runtime_uuid || msg.runtimeUuid
+          const workflowRuntime = runtimeUuid ? {
+            id: runtimeUuid,
+            uuid: runtimeUuid
+          } : null
+
+          // 恢复持久化的工作流思考步骤
+          let workflowSteps = null
+          if (msg.workflow_steps) {
+            try {
+              workflowSteps = JSON.parse(msg.workflow_steps)
+            } catch (e) {
+              console.warn('解析workflow_steps失败', e)
+            }
+          }
+
+          return {
+            id: msg.message_id || msg.id || Date.now(),
+            content: msg.content,
+            type: messageType,
+            timestamp: formattedTimestamp,
+            avatar: msg.avatar,
+            status: 'delivered',
+            workflowRuntime: workflowRuntime, // 工作流运行时信息对象
+            ai_open_dialog_para: msg.ai_open_dialog_para || null, // OpenPage节点JSON数据，用于"打开页面"按钮
+            workflowSteps: workflowSteps // 持久化的工作流思考步骤
+          }
+        })
 
       // 直接使用服务器数据,数据库是唯一数据源
       commit('SET_MESSAGES', formattedMessages)
@@ -835,6 +912,11 @@ const actions = {
           commit('UPDATE_MESSAGE', {
             messageId: userMessage.id,
             updates: { status: 'sent' }
+          })
+        },
+        onInteractionRequest: (request) => {
+          import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
+            startInteraction(request, { state: { chat: state }, commit })
           })
         },
         onNodeEvent: (nodeEvent) => {
