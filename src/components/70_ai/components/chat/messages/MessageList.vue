@@ -410,7 +410,6 @@ import AiUserSelect from '../../interaction/AiUserSelect.vue'
 import AiUserConfirm from '../../interaction/AiUserConfirm.vue'
 import AiUserForm from '../../interaction/AiUserForm.vue'
 import AiUserTableSelect from '../../interaction/AiUserTableSelect.vue'
-import { submitFeedback, cancelInteraction } from '../../interaction/AiInteractionManager'
 
 export default {
   name: 'MessageList',
@@ -577,16 +576,24 @@ export default {
 
   methods: {
     handleInteractionSubmit (action, data) {
-      const feedbackMessage = submitFeedback(action, data, this.$store)
-      if (feedbackMessage) {
-        this.$store.dispatch('chat/sendMessage', feedbackMessage)
-      }
+      // 把 action/data 暂存到 activeInteraction，由 resumeInteraction 使用
+      this.$store.commit('SET_ACTIVE_INTERACTION', {
+        ...this.$store.state.chat.activeInteraction,
+        status: 'SUBMITTED',
+        _pendingAction: action,
+        _pendingData: data
+      })
+      this.$store.dispatch('chat/resumeInteraction')
     },
     handleInteractionCancel () {
-      const feedbackMessage = cancelInteraction(this.$store)
-      if (feedbackMessage) {
-        this.$store.dispatch('chat/sendMessage', feedbackMessage)
-      }
+      // cancel 同样走 resumeInteraction，避免产生 feedback JSON 气泡
+      this.$store.commit('SET_ACTIVE_INTERACTION', {
+        ...this.$store.state.chat.activeInteraction,
+        status: 'SUBMITTED',
+        _pendingAction: 'cancel',
+        _pendingData: null
+      })
+      this.$store.dispatch('chat/resumeInteraction')
     },
     getNodeSteps (messageId) {
       // 优先读实时数据（执行中）
