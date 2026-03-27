@@ -82,16 +82,19 @@ export default {
     handleConfirm () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('submit', 'confirm', { confirmed: true })
     },
     handleReject () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('submit', 'reject', { confirmed: false })
     },
     handleCancel () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('cancel')
     }
   }

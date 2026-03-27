@@ -108,7 +108,25 @@
             <div v-if="humanFeedbackTip" class="feedback-tip">
               提示：{{ humanFeedbackTip }}
             </div>
+
+            <!-- user_select 类型：下拉选择 -->
+            <el-select
+              v-if="humanFeedbackType === 'select' || humanFeedbackType === 'user_select'"
+              v-model="humanFeedbackContent"
+              placeholder="请选择"
+              style="width: 100%;"
+            >
+              <el-option
+                v-for="opt in humanFeedbackOptions"
+                :key="opt.key"
+                :label="opt.label"
+                :value="opt.key"
+              />
+            </el-select>
+
+            <!-- 默认：文本输入 -->
             <el-input
+              v-else
               v-model="humanFeedbackContent"
               type="textarea"
               :rows="3"
@@ -170,6 +188,8 @@ export default {
       humanFeedback: false,
       humanFeedbackTip: '',
       humanFeedbackContent: '',
+      humanFeedbackType: 'text', // text / select / confirm 等
+      humanFeedbackOptions: [], // select 类型的选项列表
       currentRuntimeUuid: '' // 保存当前运行的runtimeUuid，用于resume
     }
   },
@@ -396,12 +416,25 @@ export default {
 
     /**
      * 设置人机交互模式（由父组件调用）
+     * @param {string} runtimeUuid 运行时UUID
+     * @param {string} tip 提示文字
+     * @param {string} interactionType 交互类型 (text/select/confirm等)
+     * @param {object} interactionRequest 完整的interaction_request对象（含params.options）
      */
-    setHumanFeedback (runtimeUuid, tip) {
+    setHumanFeedback (runtimeUuid, tip, interactionType, interactionRequest) {
       this.humanFeedback = true
       this.humanFeedbackTip = tip || '请输入您的反馈'
       this.humanFeedbackContent = ''
+      this.humanFeedbackType = interactionType || 'text'
       this.currentRuntimeUuid = runtimeUuid
+
+      // 解析 select 类型的选项
+      if (interactionRequest && interactionRequest.params && interactionRequest.params.options) {
+        this.humanFeedbackOptions = interactionRequest.params.options
+      } else {
+        this.humanFeedbackOptions = []
+      }
+
       this.$message.info(this.humanFeedbackTip)
     },
 
@@ -409,17 +442,25 @@ export default {
      * 恢复工作流执行（人机交互）
      */
     async handleResume () {
-      if (!this.humanFeedbackContent || this.humanFeedbackContent.trim() === '') {
+      if (!this.humanFeedbackContent && this.humanFeedbackContent !== 0) {
         this.$message.warning('请输入反馈内容')
         return
       }
 
       this.submitting = true
       try {
-        // 需要通过runtime.id获取，所以需要父组件传递
+        // select 类型：找到选中项的完整 data，作为 feedbackContent
+        let feedbackContent = this.humanFeedbackContent
+        if ((this.humanFeedbackType === 'select' || this.humanFeedbackType === 'user_select') && this.humanFeedbackOptions.length) {
+          const selected = this.humanFeedbackOptions.find(opt => opt.key === this.humanFeedbackContent)
+          if (selected) {
+            feedbackContent = JSON.stringify(selected)
+          }
+        }
+
         this.$emit('resume', {
           runtimeUuid: this.currentRuntimeUuid,
-          feedbackContent: this.humanFeedbackContent
+          feedbackContent
         })
       } catch (error) {
         console.error('恢复工作流失败:', error)
@@ -429,6 +470,8 @@ export default {
         this.humanFeedback = false
         this.humanFeedbackTip = ''
         this.humanFeedbackContent = ''
+        this.humanFeedbackType = 'text'
+        this.humanFeedbackOptions = []
         this.currentRuntimeUuid = ''
       }
     }

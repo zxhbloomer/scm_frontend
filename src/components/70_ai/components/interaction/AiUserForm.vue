@@ -146,12 +146,14 @@ export default {
       this.$refs.formRef.validate(valid => {
         if (!valid) return
         this.submitted = true
+        this.localVisible = false
         this.$emit('submit', 'form_submit', { ...this.formData })
       })
     },
     handleCancel () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('cancel')
     }
   }

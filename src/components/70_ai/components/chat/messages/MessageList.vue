@@ -510,14 +510,7 @@ export default {
 
         if (message.isHidden) return false
 
-        // 对AI和agent消息进行内容检查
-        if (message.type === 'ai' || message.type === 'agent') {
-          const content = (message.content || '').trim()
-          // 确保有足够的实际内容才显示
-          return content.length > 10 && content.replace(/\s+/g, ' ').length > 5
-        }
-
-        // 其他类型消息(用户、系统)正常显示
+        // 其他类型消息(用户、系统、AI、agent)正常显示
         return true
       })
     }
@@ -577,7 +570,7 @@ export default {
   methods: {
     handleInteractionSubmit (action, data) {
       // 把 action/data 暂存到 activeInteraction，由 resumeInteraction 使用
-      this.$store.commit('SET_ACTIVE_INTERACTION', {
+      this.$store.commit('chat/SET_ACTIVE_INTERACTION', {
         ...this.$store.state.chat.activeInteraction,
         status: 'SUBMITTED',
         _pendingAction: action,
@@ -587,7 +580,7 @@ export default {
     },
     handleInteractionCancel () {
       // cancel 同样走 resumeInteraction，避免产生 feedback JSON 气泡
-      this.$store.commit('SET_ACTIVE_INTERACTION', {
+      this.$store.commit('chat/SET_ACTIVE_INTERACTION', {
         ...this.$store.state.chat.activeInteraction,
         status: 'SUBMITTED',
         _pendingAction: 'cancel',

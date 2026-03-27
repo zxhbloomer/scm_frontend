@@ -602,7 +602,7 @@ export default {
               if (currentRuntimeUuid) {
                 const tip = data.tip || '请输入您的反馈'
                 if (this.$refs.runDetailRef) {
-                  this.$refs.runDetailRef.setHumanFeedback(currentRuntimeUuid, tip)
+                  this.$refs.runDetailRef.setHumanFeedback(currentRuntimeUuid, tip, data.interactionType, data.interaction_request)
                 }
                 const index = this.localRuntimeList.findIndex(r => r.runtimeUuid === currentRuntimeUuid)
                 if (index !== -1) {

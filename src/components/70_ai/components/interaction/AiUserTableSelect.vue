@@ -118,11 +118,13 @@ export default {
       }
       delete submitData._key
       delete submitData._label
+      this.localVisible = false
       this.$emit('submit', 'select_record', submitData)
     },
     handleCancel () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('cancel')
     }
   }

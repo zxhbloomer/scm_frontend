@@ -88,11 +88,13 @@ export default {
         key: this.selectedKey,
         label: selected ? selected.label : this.selectedKey
       }
+      this.localVisible = false
       this.$emit('submit', 'select_record', submitData)
     },
     handleCancel () {
       if (this.submitted) return
       this.submitted = true
+      this.localVisible = false
       this.$emit('cancel')
     }
   }

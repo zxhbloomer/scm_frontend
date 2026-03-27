@@ -142,11 +142,14 @@ class AIChatService {
                   }
                 }
 
-                // 检测人机交互请求（仅完成事件中处理）
-                if (chatResponse.interaction_request && chatResponse.isComplete === true &&
-                    typeof onInteractionRequest === 'function') {
+                // 检测人机交互请求（收到即触发，不等待isComplete）
+                // isComplete=true时跳过：isComplete事件携带interaction_request是为了状态保存，不重复触发弹窗
+                if (chatResponse.interaction_request && typeof onInteractionRequest === 'function' && !chatResponse.isComplete) {
                   try {
-                    const interactionReq = JSON.parse(chatResponse.interaction_request)
+                    // interaction_request可能是字符串或对象
+                    const interactionReq = typeof chatResponse.interaction_request === 'string'
+                      ? JSON.parse(chatResponse.interaction_request)
+                      : chatResponse.interaction_request
                     onInteractionRequest(interactionReq)
                   } catch (e) {
                     console.error('[aiChatService] 解析interaction_request失败:', e)
@@ -174,6 +177,14 @@ class AIChatService {
                       }
                     }
                   }
+                }
+
+                // isComplete=true 但 results 为空时（如 resume 后的完成事件），直接触发 onComplete
+                if (chatResponse.isComplete === true && (!chatResponse.results || chatResponse.results.length === 0)) {
+                  if (chatResponse.isWaitingInput !== true && chatResponse.isError !== true) {
+                    onComplete(accumulatedContent, chatResponse)
+                  }
+                  return
                 }
 
                 if (chatResponse.results && chatResponse.results.length > 0) {
@@ -220,6 +231,11 @@ class AIChatService {
                     // 错误响应：触发 onError 而不是 onComplete
                     if (chatResponse.isError === true || (generation.metadata && generation.metadata.finishReason === 'error')) {
                       onError(new Error(finalContent || '工作流执行失败'))
+                      return
+                    }
+
+                    // isWaitingInput=true 时工作流中断等待输入，不触发 onComplete（弹窗已由 onInteractionRequest 处理）
+                    if (chatResponse.isWaitingInput === true) {
                       return
                     }
 
@@ -774,7 +790,9 @@ class AIChatService {
       onStart = () => {},
       onContent = () => {},
       onComplete = () => {},
-      onError = () => {}
+      onError = () => {},
+      onInteractionRequest = null,
+      onNodeEvent = null
     } = callbacks
 
     let cancelled = false
@@ -862,6 +880,24 @@ class AIChatService {
                   if (!hasStarted) {
                     hasStarted = true
                     onStart(jsonData)
+                  }
+
+                  // 节点事件处理
+                  if (jsonData.nodeEventType && typeof onNodeEvent === 'function') {
+                    onNodeEvent(jsonData)
+                  }
+
+                  // 检测人机交互请求（收到即触发，不等待isComplete）
+                  // isComplete=true 时跳过，避免重复触发弹窗
+                  if (jsonData.interaction_request && !jsonData.isComplete && typeof onInteractionRequest === 'function') {
+                    try {
+                      const interactionReq = typeof jsonData.interaction_request === 'string'
+                        ? JSON.parse(jsonData.interaction_request)
+                        : jsonData.interaction_request
+                      onInteractionRequest(interactionReq)
+                    } catch (e) {
+                      console.error('[aiChatService] 解析interaction_request失败:', e)
+                    }
                   }
 
                   // 从嵌套结构提取content

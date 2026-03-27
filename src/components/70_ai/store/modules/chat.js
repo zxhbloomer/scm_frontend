@@ -474,7 +474,15 @@ const actions = {
           })
         },
         onInteractionRequest: (request) => {
-          // 人机交互请求：启动交互状态管理，存入 aiMessageId 供 resumeInteraction 追加内容使用
+          // 人机交互请求：更新AI气泡为等待状态，启动交互状态管理
+          commit('SET_TYPING', false)
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: {
+              status: 'delivered',
+              isStreaming: false
+            }
+          })
           import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
             startInteraction({ ...request, _aiMessageId: aiMessageId }, { state: { chat: state }, commit })
           })
@@ -643,9 +651,8 @@ const actions = {
       data: interaction._pendingData
     })
 
-    // 标记气泡为 resuming 状态
+    // 标记气泡为 resuming 状态（不设 SET_TYPING，避免出现多余的 typing indicator）
     commit('UPDATE_MESSAGE', { messageId: aiMessageId, updates: { status: 'streaming', isStreaming: true, isHidden: false }})
-    commit('SET_TYPING', true)
 
     // 停止倒计时
     import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ stopCountdown }) => {
@@ -683,7 +690,12 @@ const actions = {
           })
         },
         onInteractionRequest: (request) => {
-          // 多个连续 HumanFeedback 节点：继续存入新的 interaction
+          // 多个连续 HumanFeedback 节点：更新气泡状态，继续存入新的 interaction
+          commit('SET_TYPING', false)
+          commit('UPDATE_MESSAGE', {
+            messageId: aiMessageId,
+            updates: { status: 'delivered', isStreaming: false }
+          })
           import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
             startInteraction({ ...request, _aiMessageId: aiMessageId }, { state: { chat: state }, commit })
           })
