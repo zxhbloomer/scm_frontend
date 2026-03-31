@@ -44,6 +44,7 @@ class AIChatService {
     let hasStarted = false
     let accumulatedContent = '' // 本地累积buffer，用于在onComplete时传递完整内容
     let openPageCommandFired = false // 防止open_page_command重复触发
+    let cachedWorkflowTitle = null // 【修复】缓存 runtime 事件中的 workflowTitle
 
     const connectSSE = async () => {
       try {
@@ -126,6 +127,10 @@ class AIChatService {
                 // 节点事件处理（工作流执行步骤展示）
                 if (chatResponse.nodeEventType && typeof onNodeEvent === 'function') {
                   onNodeEvent(chatResponse)
+                  // 缓存 runtime 事件中的 workflowTitle
+                  if (chatResponse.nodeEventType === 'runtime' && chatResponse.workflowTitle) {
+                    cachedWorkflowTitle = chatResponse.workflowTitle
+                  }
                 }
 
                 // 检测页面导航指令（OpenPage route模式）
@@ -224,6 +229,11 @@ class AIChatService {
 
                   // 检查是否为完成事件（有finishReason或isComplete标志)
                   if ((generation.metadata && generation.metadata.finishReason === 'stop') || chatResponse.isComplete === true) {
+                    // 如果 workflowTitle 为 null，使用缓存的值
+                    if (!chatResponse.workflowTitle && cachedWorkflowTitle) {
+                      chatResponse.workflowTitle = cachedWorkflowTitle
+                    }
+
                     // 完成事件 - 优先使用done事件的content(后端确定的完整内容),
                     // 如果done事件没有content则使用前端累积的内容
                     const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
@@ -799,6 +809,7 @@ class AIChatService {
     const controller = new AbortController()
     let hasStarted = false
     let accumulatedContent = ''
+    let cachedWorkflowTitle = null // 【修复】缓存 runtime 事件中的 workflowTitle
 
     const connectSSE = async () => {
       try {
@@ -885,6 +896,10 @@ class AIChatService {
                   // 节点事件处理
                   if (jsonData.nodeEventType && typeof onNodeEvent === 'function') {
                     onNodeEvent(jsonData)
+                    // 缓存 runtime 事件中的 workflowTitle
+                    if (jsonData.nodeEventType === 'runtime' && jsonData.workflowTitle) {
+                      cachedWorkflowTitle = jsonData.workflowTitle
+                    }
                   }
 
                   // 检测人机交互请求（收到即触发，不等待isComplete）
@@ -914,6 +929,10 @@ class AIChatService {
 
                   // 检查完成标志
                   if (jsonData.isComplete) {
+                    // 如果 workflowTitle 为 null，使用缓存的值
+                    if (!jsonData.workflowTitle && cachedWorkflowTitle) {
+                      jsonData.workflowTitle = cachedWorkflowTitle
+                    }
                     const finalContent = (content && content.trim().length > 0) ? content : accumulatedContent
                     onComplete(finalContent, jsonData)
                     controller.abort()

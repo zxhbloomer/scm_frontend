@@ -210,6 +210,25 @@ const mutations = {
     }
   },
 
+  // 完成"调用agent"虚拟步骤（根据workflowTitle匹配）
+  COMPLETE_WORKFLOW_VIRTUAL_STEP (state, { messageId, workflowTitle }) {
+    const processData = state.workflowProcessNodes[messageId]
+    if (!processData || !processData.steps) {
+      return
+    }
+
+    // 找到匹配的"调用agent"虚拟步骤
+    const agentStep = processData.steps.find(
+      s => s.nodeName === 'AgentCall' && s.nodeTitle === workflowTitle
+    )
+    if (agentStep && agentStep.status === 'running') {
+      agentStep.status = 'done'
+      agentStep.duration = Date.now() - agentStep.timestamp
+      // 触发响应式更新
+      state.workflowProcessNodes = { ...state.workflowProcessNodes }
+    }
+  },
+
   SET_WORKFLOW_PROCESS_NODE (state, { messageId, nodeEvent }) {
     if (!state.workflowProcessNodes[messageId]) {
       // 注意：不再有 pendingCompletes 字段
@@ -545,6 +564,14 @@ const actions = {
               }
             }
 
+            // 关闭"调用agent"虚拟行（如果存在workflowTitle）
+            if (chatResponse && chatResponse.workflowTitle) {
+              commit('COMPLETE_WORKFLOW_VIRTUAL_STEP', {
+                messageId: aiMessageId,
+                workflowTitle: chatResponse.workflowTitle
+              })
+            }
+
             // 刷新缓冲的node_complete（确保最后一步标记为done后再持久化）
             commit('FLUSH_PENDING_NODE_COMPLETE', aiMessageId)
 
@@ -673,6 +700,15 @@ const actions = {
           commit('SET_TYPING', false)
           // 用气泡当前内容（已追加完毕），不用 fullContent（只含本轮内容，会抹掉第一轮输出）
           const finalContent = state.messages.find(m => m.id === aiMessageId)?.content || ''
+
+          // 关闭"调用agent"虚拟行（如果存在workflowTitle）
+          if (chatResponse && chatResponse.workflowTitle) {
+            commit('COMPLETE_WORKFLOW_VIRTUAL_STEP', {
+              messageId: aiMessageId,
+              workflowTitle: chatResponse.workflowTitle
+            })
+          }
+
           commit('UPDATE_MESSAGE', {
             messageId: aiMessageId,
             updates: {
@@ -980,6 +1016,14 @@ const actions = {
             const hasOpenPageCommand = !!(workflowResponse?.open_page_command)
             const hasEnoughContent = trimmedFinalContent.length > 5 &&
                                    trimmedFinalContent.replace(/\s+/g, ' ').length > 3
+
+            // 关闭"调用agent"虚拟行（如果存在workflowTitle）
+            if (workflowResponse && workflowResponse.workflowTitle) {
+              commit('COMPLETE_WORKFLOW_VIRTUAL_STEP', {
+                messageId: aiMessageId,
+                workflowTitle: workflowResponse.workflowTitle
+              })
+            }
 
             commit('UPDATE_MESSAGE', {
               messageId: aiMessageId,
