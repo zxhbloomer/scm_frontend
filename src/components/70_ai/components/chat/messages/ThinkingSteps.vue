@@ -246,8 +246,12 @@ export default {
 
   watch: {
     isCompleted (val) {
-      if (val) {
+      if (val && this.streamComplete) {
+        // 只有 SSE 流真正结束后才自动收缩，避免 Orchestrator 多子任务场景中途误收缩
         this.collapsed = true
+      } else if (!val && !this.streamComplete) {
+        // 流还在运行中且 isCompleted 变为 false（新步骤进来），确保展开
+        this.collapsed = false
       }
     }
   },
