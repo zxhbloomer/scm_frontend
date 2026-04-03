@@ -246,12 +246,18 @@ export default {
 
   watch: {
     isCompleted (val) {
-      if (val && this.streamComplete) {
-        // 只有 SSE 流真正结束后才自动收缩，避免 Orchestrator 多子任务场景中途误收缩
+      if (val) {
+        // 所有步骤完成后自动收缩（含等待输入中断场景，不依赖 streamComplete）
         this.collapsed = true
       } else if (!val && !this.streamComplete) {
         // 流还在运行中且 isCompleted 变为 false（新步骤进来），确保展开
         this.collapsed = false
+      }
+    },
+    streamComplete (val) {
+      if (val) {
+        // SSE 流结束后自动折叠（不依赖 isCompleted，避免 steps 清除后的竞态条件）
+        this.collapsed = true
       }
     }
   },

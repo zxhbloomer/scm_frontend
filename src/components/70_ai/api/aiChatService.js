@@ -33,10 +33,11 @@ class AIChatService {
       onContent = () => {},
       onComplete = () => {},
       onError = () => {},
-      onOpenPage = null, // 新增：页面跳转回调
-      onNodeEvent = null, // 工作流节点事件回调(node_complete/runtime)
-      onOpenPageCommand = null, // 新增：RouterTab页面导航指令回调
-      onInteractionRequest = null // 新增：人机交互请求回调
+      onOpenPage = null,
+      onNodeEvent = null,
+      onOpenPageCommand = null,
+      onInteractionRequest = null,
+      onWorkflowStepsPersist = null // 中断等待输入时持久化步骤数据的回调
     } = callbacks
 
     let cancelled = false
@@ -245,7 +246,11 @@ class AIChatService {
                     }
 
                     // isWaitingInput=true 时工作流中断等待输入，不触发 onComplete（弹窗已由 onInteractionRequest 处理）
+                    // 但需要触发 onWorkflowStepsPersist 回调，让 store 持久化含 tokens 的步骤数据
                     if (chatResponse.isWaitingInput === true) {
+                      if (onWorkflowStepsPersist && typeof onWorkflowStepsPersist === 'function') {
+                        onWorkflowStepsPersist(chatResponse)
+                      }
                       return
                     }
 

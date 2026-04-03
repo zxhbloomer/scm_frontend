@@ -502,9 +502,37 @@ const actions = {
               isStreaming: false
             }
           })
+          // 中断时持久化当前步骤（含tokens），避免resume后被后端无tokens版本覆盖
+          commit('FLUSH_PENDING_NODE_COMPLETE', aiMessageId)
+          const interruptProcessData = state.workflowProcessNodes[aiMessageId]
+          const interruptSteps = interruptProcessData && interruptProcessData.steps
+            ? JSON.parse(JSON.stringify(interruptProcessData.steps))
+            : null
+          if (interruptSteps && interruptSteps.length > 0) {
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: { workflowSteps: interruptSteps }
+            })
+            // messageId此时还是临时id，等后端saveContent后前端会通过updateWorkflowSteps再次上报
+          }
           import('@/components/70_ai/components/interaction/AiInteractionManager.js').then(({ startInteraction }) => {
             startInteraction({ ...request, _aiMessageId: aiMessageId }, { state: { chat: state }, commit })
           })
+        },
+        onWorkflowStepsPersist: (chatResponse) => {
+          // isWaitingInput=true 时 SSE 流结束，此时有真实 messageId，持久化含 tokens 的步骤到数据库
+          const realMessageId = chatResponse?.messageId || null
+          const persistData = state.workflowProcessNodes[aiMessageId]
+          const stepsToSave = (persistData && persistData.steps && persistData.steps.length > 0)
+            ? JSON.parse(JSON.stringify(persistData.steps))
+            : (state.messages.find(m => m.id === aiMessageId)?.workflowSteps || null)
+          if (stepsToSave && stepsToSave.length > 0 && realMessageId && realMessageId !== aiMessageId) {
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: { id: realMessageId, workflowSteps: stepsToSave }
+            })
+            aiChatService.updateWorkflowSteps(realMessageId, stepsToSave)
+          }
         },
         onContent: (contentChunk) => {
           const currentMessage = state.messages.find(msg => msg.id === aiMessageId)
@@ -1072,8 +1100,22 @@ const actions = {
             }
           }
 
-          // 工作流完成后清除步骤列表（设计文档：步骤列表完成后消失）
+          // 持久化resume执行的workflowSteps（含tokens），覆盖后端buildWorkflowStepsJson的无tokens版本
           commit('FLUSH_PENDING_NODE_COMPLETE', aiMessageId)
+          const resumeProcessData = state.workflowProcessNodes[aiMessageId]
+          const resumeWorkflowSteps = resumeProcessData && resumeProcessData.steps
+            ? JSON.parse(JSON.stringify(resumeProcessData.steps))
+            : null
+          if (resumeWorkflowSteps && resumeWorkflowSteps.length > 0) {
+            const realMessageId = workflowResponse?.messageId || aiMessageId
+            commit('UPDATE_MESSAGE', {
+              messageId: aiMessageId,
+              updates: { workflowSteps: resumeWorkflowSteps }
+            })
+            aiChatService.updateWorkflowSteps(realMessageId, resumeWorkflowSteps)
+          }
+
+          // 工作流完成后清除步骤列表
           commit('CLEAR_WORKFLOW_PROCESS_NODE', aiMessageId)
 
           // 【2025-11-25】方案A: 保持workflow选择状态,不自动清除
