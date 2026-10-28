@@ -24,3 +24,13 @@ export function updatePwd (query) {
   })
 }
 
+/**
+ * 生成当前用户默认头像
+ */
+export function generateAvatar () {
+  return request({
+    url: '/api/v1/user/avatar/generate',
+    method: 'post'
+  })
+}
+

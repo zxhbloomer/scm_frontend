@@ -78,7 +78,7 @@
               下游客户（主体企业）
             </div>
             <el-form-item
-              prop="purchaser_id"
+              prop="purchaser_name"
               label-width="0"
             >
               <input-search
@@ -717,7 +717,11 @@ export default {
       const ALLOWED_FIELDS = {
         'project_name': 'name',
         'name': 'name',
+        'supplier_id': 'supplier_id',
+        'supplier_code': 'supplier_code',
         'supplier_name': 'supplier_name',
+        'purchaser_id': 'purchaser_id',
+        'purchaser_code': 'purchaser_code',
         'purchaser_name': 'purchaser_name',
         'delivery_type': 'delivery_type',
         'delivery_location': 'delivery_location',
@@ -734,6 +738,10 @@ export default {
           this.dataJson.tempJson[targetKey] = formData[key]
         }
       })
+      // 商品明细单独处理（数组类型）
+      if (Array.isArray(formData.detailListData) && formData.detailListData.length > 0) {
+        this.dataJson.tempJson.detailListData = formData.detailListData
+      }
     },
     // 初始化处理
     init () {

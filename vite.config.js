@@ -99,7 +99,7 @@ export default defineConfig(() => {
         },
         // 文件系统后台端代理
         '/fs': {
-          target: 'http://file.xinyirunscm.com/', // 使用生产文件服务地址
+          target: 'http://127.0.0.1:8089/', // 本地 scm_filesystem
           changeOrigin: true,
           timeout: 55000, // 55秒超时
           ws: true // 支持WebSocket

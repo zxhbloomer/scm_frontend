@@ -5,10 +5,19 @@
       @click="editCropper()"
     >
       <img
+        v-if="options.img"
         :src="options.img"
         title="点击上传头像"
         class="img-circle img-lg"
       >
+      <div
+        v-else
+        class="img-circle img-lg avatar-upload-placeholder"
+        title="点击上传头像"
+      >
+        <i class="el-icon-camera" />
+        <span>上传头像</span>
+      </div>
     </div>
     <el-dialog
       :title="title"
@@ -112,6 +121,15 @@
           :md="2"
         >
           <el-button
+            size="small"
+            @click="generateDefaultAvatar()"
+          >生成默认头像</el-button>
+        </el-col>
+        <el-col
+          :lg="{span: 2, offset: 1}"
+          :md="2"
+        >
+          <el-button
             type="primary"
             size="small"
             @click="uploadImg()"
@@ -127,6 +145,7 @@ import store from '@/store'
 import { VueCropper } from 'vue-cropper'
 // import { updateAvatarApi } from '@/api/20_master/staff/staff'
 import fsRequest from '@/utils/fsRequest'
+import { generateAvatar } from '@/api/10_system/user/user'
 
 export default {
   components: { VueCropper },
@@ -206,8 +225,6 @@ export default {
       this.$refs.cropper.getCropBlob(data => {
         var f = new File([data], this.fileName)
         const param = new FormData() // 创建form对象
-        param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
-        param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
         param.append('file', f)// 通过append向form对象添加数据
 
         // param.append('groupid', process.env.VUE_APP_FILE_SYSTEM_GROUPID)
@@ -247,6 +264,17 @@ export default {
     closeDialog () {
       this.options.img = store.getters.avatar
       this.visible = false
+    },
+    // 生成默认头像
+    generateDefaultAvatar () {
+      generateAvatar().then(res => {
+        const avatarUrl = res.data
+        this.options.img = avatarUrl
+        store.commit('SET_AVATAR', avatarUrl)
+        this.$modal.msgSuccess('默认头像生成成功')
+      }).catch(() => {
+        this.$modal.msgError('生成失败，请重试')
+      })
     }
   }
 }
@@ -294,6 +322,21 @@ export default {
 }
 .img-circle {
   border-radius: 50%;
+}
+.avatar-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f5f7fa;
+  border: 2px dashed #d9d9d9;
+  color: #909399;
+  font-size: 12px;
+  cursor: pointer;
+}
+.avatar-upload-placeholder i {
+  font-size: 28px;
+  margin-bottom: 4px;
 }
 .list-group-striped > .list-group-item {
   border-left: 0;

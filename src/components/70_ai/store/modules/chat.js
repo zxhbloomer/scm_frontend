@@ -689,7 +689,7 @@ const actions = {
     }
   },
 
-  async resumeInteraction ({ commit, state }) {
+  async resumeInteraction ({ commit, state, dispatch, rootGetters }) {
     const interaction = state.activeInteraction
     if (!interaction) return
 
@@ -737,14 +737,41 @@ const actions = {
             })
           }
 
+          const hasOpenPageCommand = !!(chatResponse?.open_page_command)
+
           commit('UPDATE_MESSAGE', {
             messageId: aiMessageId,
             updates: {
               content: finalContent,
               status: 'delivered',
-              isStreaming: false
+              isStreaming: false,
+              isHidden: !hasOpenPageCommand && finalContent.trim().length <= 5,
+              ai_open_dialog_para: chatResponse?.ai_open_dialog_para || null
             }
           })
+
+          // 处理 open_page_command（route模式页面跳转）
+          if (hasOpenPageCommand) {
+            import('@/components/70_ai/components/navigator/AiPageRouter.js').then(({ navigateToPage }) => {
+              const command = JSON.parse(chatResponse.open_page_command)
+              navigateToPage(command, router, { getters: rootGetters, commit, dispatch })
+                .then((success) => {
+                  const routeLabel = command.page_mode === 'new' ? '新增页面'
+                    : (command.page_mode === 'edit' ? '编辑页面' : '页面')
+                  const appendText = success ? `\n\n已为您打开${routeLabel}` : '\n\n页面打开失败'
+                  const existingMsg = state.messages.find(msg => msg.id === aiMessageId)
+                  const existingContent = existingMsg?.content || ''
+                  const newContent = existingContent ? existingContent + appendText : appendText.trim()
+                  commit('UPDATE_MESSAGE', {
+                    messageId: aiMessageId,
+                    updates: { content: newContent, isHidden: false }
+                  })
+                })
+            })
+          } else {
+            const dialogOutput = chatResponse?.ai_open_dialog_para || finalContent
+            commit('SET_PENDING_AI_DIALOG_OUTPUT', dialogOutput)
+          }
         },
         onError: (error) => {
           commit('SET_TYPING', false)

@@ -216,8 +216,6 @@ export default {
       this.$refs.cropper.getCropBlob(data => {
         var f = new File([data], this.fileName)
         const param = new FormData() // 创建form对象
-        param.append('app_key', import.meta.env.VITE_FILE_SYSTEM_APP_KEY)
-        param.append('secret_key', import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY)
         param.append('file', f)// 通过append向form对象添加数据
 
         const config = {

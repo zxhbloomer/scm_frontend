@@ -64,6 +64,8 @@ const getters = {
   // 聊天面板状态
   chatPanelExpanded: state => state.chat.isPanelExpanded,
   // 聊天错误状态
-  chatLastError: state => state.chat.lastError
+  chatLastError: state => state.chat.lastError,
+  /** 文件系统 */
+  fsSecretKey: state => state.user.fsSecretKey
 }
 export default getters

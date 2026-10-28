@@ -1,5 +1,6 @@
 ﻿import axios from 'axios'
 import { MessageBox } from 'element-ui'
+import store from '@/store'
 
 // create an axios instance
 const service = axios.create({
@@ -11,6 +12,7 @@ const service = axios.create({
 // request interceptor
 service.interceptors.request.use(
   config => {
+    config.headers['Authorization'] = 'Bearer ' + store.getters.fsSecretKey
     return config
   },
   error => {

@@ -649,8 +649,8 @@ export default {
         const formData = new FormData()
         formData.append('file', file.raw)
 
-        // 获取上传URL（带认证参数）
-        const uploadUrl = `/api/service/v1/upload?app_key=${import.meta.env.VITE_FILE_SYSTEM_APP_KEY}&secret_key=${import.meta.env.VITE_FILE_SYSTEM_SECRET_KEY}`
+        // 获取上传URL
+        const uploadUrl = `/api/service/v1/upload`
 
         // 调用FS服务器上传API
         const response = await fsRequest.post(uploadUrl, formData, {

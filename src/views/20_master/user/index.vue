@@ -18,27 +18,24 @@
             </div>
             <ul class="list-group list-group-striped">
               <li class="list-group-item">
-                <svg-icon icon-class="user" />用户名称
-                <div class="pull-right">{{ user.name }}</div>
+                <span class="item-label"><svg-icon icon-class="user" />用户名称</span>
+                <span class="item-value">{{ user.name }}</span>
               </li>
               <li class="list-group-item">
-                <svg-icon icon-class="phone" />手机号码
-                <div class="pull-right">{{ user.user_session_bean.staff_info.mobile_phone }}</div>
+                <span class="item-label"><svg-icon icon-class="phone" />手机号码</span>
+                <span class="item-value">{{ user.user_session_bean && user.user_session_bean.staff_info ? user.user_session_bean.staff_info.mobile_phone : '' }}</span>
               </li>
               <li class="list-group-item">
-                <svg-icon icon-class="email" />用户邮箱
-                <div class="pull-right">{{ user.email }}</div>
+                <span class="item-label"><svg-icon icon-class="email" />用户邮箱</span>
+                <span class="item-value">{{ user.email }}</span>
               </li>
               <li class="list-group-item">
-                <svg-icon icon-class="tree" />所属部门
-                <div
-                  v-if="user.dept"
-                  class="pull-right"
-                >{{ user.dept.deptName }} / {{ postGroup }}</div>
+                <span class="item-label"><svg-icon icon-class="tree" />所属部门</span>
+                <span class="item-value">{{ user.dept ? user.dept.deptName : '' }}</span>
               </li>
               <li class="list-group-item">
-                <svg-icon icon-class="date" />创建日期
-                <div class="pull-right">{{ formatDateTime(user.user_session_bean.staff_info.c_time) }}</div>
+                <span class="item-label"><svg-icon icon-class="date" />创建日期</span>
+                <span class="item-value">{{ user.user_session_bean && user.user_session_bean.staff_info ? user.user_session_bean.staff_info.c_time : '' }}</span>
               </li>
             </ul>
           </div>
@@ -124,3 +121,39 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.list-group {
+  padding-left: 0;
+  list-style: none;
+  margin: 16px 0 0 0;
+}
+.list-group-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+  color: #606266;
+}
+.list-group-item:last-child {
+  border-bottom: none;
+}
+.item-label {
+  display: flex;
+  align-items: center;
+  color: #909399;
+}
+.item-label .svg-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+.item-value {
+  color: #303133;
+}
+.text-center {
+  text-align: center;
+  margin-bottom: 16px;
+}
+</style>

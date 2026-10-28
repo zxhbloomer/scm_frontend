@@ -112,13 +112,15 @@ export const constantRoutes = [
     path: '/user/info1',
     hidden: true,
     component: Layout,
-    name: 'C00000001', // 设定路由的名字，一定要填写不然使用<keep-alive>时会出现各种问题
+    name: 'C00000001',
+    meta: { title: '个人中心' },
     children: [
       {
         hidden: true,
         path: '/user/info1',
         component: () => import('@/views/20_master/user/index'),
-        name: 'userinfo'
+        name: 'userinfo',
+        meta: { title: '个人中心' }
       }
     ]
   }

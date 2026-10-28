@@ -57,3 +57,10 @@ nul
 *.rsls
 *.backup
 *.bak
+
+# Playwright CLI 页面快照与 Midscene 运行产物
+.playwright-cli/
+midscene_run/
+
+# 测试登录态凭证，不得入库
+tests/.auth/

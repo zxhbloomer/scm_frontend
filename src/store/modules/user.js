@@ -12,7 +12,9 @@ const state = {
   // AI会话UUID
   conv_uuid: '',
   // session信息
-  session_bean: {}
+  session_bean: {},
+  // filesystem secret_key (从 user_session_bean.appConfigBo 获取)
+  fsSecretKey: ''
 }
 
 const mutations = {
@@ -39,6 +41,9 @@ const mutations = {
   },
   SET_SESSION_BEAN: (state, session_bean) => {
     state.session_bean = session_bean
+  },
+  SET_FS_SECRET_KEY: (state, fsSecretKey) => {
+    state.fsSecretKey = fsSecretKey
   }
 }
 
@@ -135,6 +140,13 @@ const actions = {
         } else {
           console.warn('⚠️ 无法从 session_bean 获取 staff_Id')
         }
+
+        // 提取 filesystem secret_key
+        const appConfigBo = user_session_bean?.appConfigBo
+        if (appConfigBo && appConfigBo.secret_key) {
+          commit('SET_FS_SECRET_KEY', appConfigBo.secret_key)
+        }
+
         resolve(data)
       }).catch(error => {
         reject(error)
